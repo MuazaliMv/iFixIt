@@ -65,6 +65,9 @@ The repository is currently in the **pre-coding specification and validation pha
 15. [`STEP_13_CUSTOMER_COMPLAINT_AND_RATING_SYSTEM.md`](STEP_13_CUSTOMER_COMPLAINT_AND_RATING_SYSTEM.md)  
     Records only complaint/rating requirements not already fully covered: complaint entry points and customer tracking, complaint evidence/requested outcomes and priority/escalation, four-dimension rating reconciliation, rating prompts and aggregation, provider review responses, review flags/moderation, data/API additions, and acceptance criteria. Existing complaint states, permissions, audit, media security, notifications, and customer-payment scope remain authoritative.
 
+16. [`STEP_14_PROVIDER_SUBSCRIPTION_LAUNCH_PROMOTION.md`](STEP_14_PROVIDER_SUBSCRIPTION_LAUNCH_PROMOTION.md)  
+    Records the provider launch-promotion model: Professional plan MVR 299 standard price, staged Day 1–90 promotional charges, founding-provider designation, lifetime early-adopter discount candidates, billing-timeline UI, promotion notifications, campaign data model, billing controls, reporting, acceptance criteria, and unresolved billing-period/discount-stacking rules.
+
 ## Approved MVP Business Decisions
 
 - Two booking models: **Direct Provider Booking** and **Smart Matching**.
@@ -112,15 +115,32 @@ Step 13 additionally captures complaint/rating details that were not already exp
 - review flagging and moderation workflow
 - review/complaint API, data and test additions
 
-Items marked **NEEDS DECISION** in Steps 12–13 are not production-frozen until explicitly approved.
+Step 14 additionally captures the provider launch-pricing strategy that was not previously recorded, including:
+- Professional plan standard price of MVR 299 for the launch campaign baseline
+- Day 1–15 MVR 0 promotional stage
+- Day 16–30 MVR 30 promotional stage
+- Day 31–60 MVR 150 promotional stage
+- Day 61–90 MVR 225 promotional stage
+- Day 91+ / Month 4+ MVR 299 standard stage
+- Founding Provider designation
+- lifetime early-adopter discount candidates of 20% / 15% / 10% / 5% by qualification period
+- provider-facing current/next/future billing schedule
+- launch-promotion notifications and truthful scarcity controls
+- subscription campaign/stage/enrollment/price-schedule data requirements
+- cohort-based campaign analytics and conversion reporting
+- server-authoritative promotion qualification and auditable pricing history
+
+The source strategy's stated `MVR 791` first-three-month savings is not treated as a billing constant. Step 14 records that if Month 1 totals MVR 30, Month 2 MVR 150, and Month 3 MVR 225, the comparison against three standard MVR 299 months yields MVR 492 savings. Final billing-period interpretation remains a commercial decision.
+
+Items marked **NEEDS DECISION** in Steps 12–14 are not production-frozen until explicitly approved.
 
 ## Development Gate
 
-Do not treat the documentation as production-approved merely because the files exist. The MVP business decisions above are approved, but customer/provider market validation should still be completed before committing to a full production build. Each step contains an approval checklist. Before production coding begins, any remaining open business decisions should be resolved or explicitly deferred and Steps 5–13 should be reviewed against `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md`, `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`, `STEP_12_BUSINESS_SPECIFICATION_RECONCILIATION.md`, and `STEP_13_CUSTOMER_COMPLAINT_AND_RATING_SYSTEM.md`.
+Do not treat the documentation as production-approved merely because the files exist. The MVP business decisions above are approved, but customer/provider market validation should still be completed before committing to a full production build. Each step contains an approval checklist. Before production coding begins, any remaining open business decisions should be resolved or explicitly deferred and Steps 5–14 should be reviewed against `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md`, `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`, `STEP_12_BUSINESS_SPECIFICATION_RECONCILIATION.md`, `STEP_13_CUSTOMER_COMPLAINT_AND_RATING_SYSTEM.md`, and `STEP_14_PROVIDER_SUBSCRIPTION_LAUNCH_PROMOTION.md`.
 
 Recommended implementation order after approval:
 
-`Project scaffold → Authentication → Canonical Atoll/Island Master → Catalogue/Locations → Provider onboarding → Provider operational bases/service areas → Provider search → Direct Booking/Smart Matching → Local-first matching/fallback → Repair requests → Jobs/Inspections → Fixed-price/Quotation workflows → Repair progress → Reviews/Complaints/Warranty → Subscriptions/Payments → Admin/Reporting → Security/Performance hardening`
+`Project scaffold → Authentication → Canonical Atoll/Island Master → Catalogue/Locations → Provider onboarding → Provider operational bases/service areas → Provider search → Direct Booking/Smart Matching → Local-first matching/fallback → Repair requests → Jobs/Inspections → Fixed-price/Quotation workflows → Repair progress → Reviews/Complaints/Warranty → Subscriptions/Promotion/Payments → Admin/Reporting → Security/Performance hardening`
 
 ## Core Lifecycles
 
