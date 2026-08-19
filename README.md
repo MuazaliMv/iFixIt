@@ -62,6 +62,9 @@ The repository is currently in the **pre-coding specification and validation pha
 14. [`STEP_12_BUSINESS_SPECIFICATION_RECONCILIATION.md`](STEP_12_BUSINESS_SPECIFICATION_RECONCILIATION.md)  
     Reconciles the comprehensive Maldives Handyman & Local Services business specification with the existing iFixIt blueprint. Adds previously missing/partial requirements such as direct Call/WhatsApp contact, favourites, richer availability, expanded pricing models, subscription entitlements, service catalogue seed scope, provider KPIs, broader reporting, launch/marketing guidance, and long-term expansion while preserving approved MVP and island-matching rules.
 
+15. [`STEP_13_CUSTOMER_COMPLAINT_AND_RATING_SYSTEM.md`](STEP_13_CUSTOMER_COMPLAINT_AND_RATING_SYSTEM.md)  
+    Records only complaint/rating requirements not already fully covered: complaint entry points and customer tracking, complaint evidence/requested outcomes and priority/escalation, four-dimension rating reconciliation, rating prompts and aggregation, provider review responses, review flags/moderation, data/API additions, and acceptance criteria. Existing complaint states, permissions, audit, media security, notifications, and customer-payment scope remain authoritative.
+
 ## Approved MVP Business Decisions
 
 - Two booking models: **Direct Provider Booking** and **Smart Matching**.
@@ -97,11 +100,23 @@ Step 12 now accounts for additional business requirements that were not fully re
 - launch, provider acquisition and customer acquisition guidance
 - enterprise, marine, hospitality, integrated-payment and AI future expansion
 
-Items marked **NEEDS DECISION** in Step 12 are not production-frozen until explicitly approved.
+Step 13 additionally captures complaint/rating details that were not already explicit, including:
+- complaint entry from Job History, Active Job, Provider Profile and My Complaints
+- complaint reference/tracking timeline and customer-visible status
+- complaint evidence, requested outcomes, priority and escalation
+- review prompt/remind-later flow and `Rate Now` from Job History
+- four customer-visible rating dimensions plus calculated overall rating
+- provider aggregate rating rules
+- provider public responses to reviews
+- customer review edit/delete architecture with configurable windows
+- review flagging and moderation workflow
+- review/complaint API, data and test additions
+
+Items marked **NEEDS DECISION** in Steps 12–13 are not production-frozen until explicitly approved.
 
 ## Development Gate
 
-Do not treat the documentation as production-approved merely because the files exist. The MVP business decisions above are approved, but customer/provider market validation should still be completed before committing to a full production build. Each step contains an approval checklist. Before production coding begins, any remaining open business decisions should be resolved or explicitly deferred and Steps 5–12 should be reviewed against `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md`, `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`, and `STEP_12_BUSINESS_SPECIFICATION_RECONCILIATION.md`.
+Do not treat the documentation as production-approved merely because the files exist. The MVP business decisions above are approved, but customer/provider market validation should still be completed before committing to a full production build. Each step contains an approval checklist. Before production coding begins, any remaining open business decisions should be resolved or explicitly deferred and Steps 5–13 should be reviewed against `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md`, `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`, `STEP_12_BUSINESS_SPECIFICATION_RECONCILIATION.md`, and `STEP_13_CUSTOMER_COMPLAINT_AND_RATING_SYSTEM.md`.
 
 Recommended implementation order after approval:
 
