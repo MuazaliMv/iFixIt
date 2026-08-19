@@ -2,6 +2,7 @@
 
 **Status:** Implementation traceability source of truth  
 **Current database implementation:** migrations 0001–0006  
+**Specification synchronization:** completed for core database/API/review-payment conflicts  
 **Date:** 2026-08-19
 
 ## Status Definitions
@@ -45,12 +46,13 @@
 | Request↔job coarse status synchronization | IMPLEMENTED FOUNDATION | `0006_repair_jobs_lifecycle.sql` |
 | Job creation from accepted assignment | IMPLEMENTED FOUNDATION | `0006_repair_jobs_lifecycle.sql` |
 | Safe job reassignment linkage | IMPLEMENTED FOUNDATION | `0006_repair_jobs_lifecycle.sql` |
+| DIAGNOSIS_REQUIRED workflow-specific repair-start guard | DOCUMENTED / REQUIRED NEXT | Migration 0007 must enforce before repair-start path is complete |
 | Inspections | DOCUMENTED / PLANNED | Migration 0007 |
 | Versioned quotations / customer approval | DOCUMENTED / PLANNED | Migration 0007 |
 | Completion evidence / warranty foundation | DOCUMENTED / PLANNED | Migration 0007 |
 | Off-platform payment acknowledgement | DOCUMENTED / PLANNED | Migration 0008 |
 | Payment disagreement/dispute records | DOCUMENTED / PLANNED | Migration 0008 |
-| Reviews / ratings | DOCUMENTED / PLANNED | Migration 0009 |
+| Four-dimension verified reviews | DOCUMENTED / PLANNED | Migration 0009; Quality/Punctuality/Communication/Value for Money |
 | Complaints / moderation | DOCUMENTED / PLANNED | Migration 0009 |
 | Multi-channel notification engine | DOCUMENTED / PLANNED | Migration 0009 |
 | Provider subscriptions | DOCUMENTED / PLANNED | Migration 0010 |
@@ -69,9 +71,11 @@
 | Kubernetes | TARGET / OPTIONAL INTEGRATION | Deployment option, not an approved requirement |
 | Full in-app chat | TARGET / OPTIONAL / DEFERRED | Not required for MVP unless explicitly approved |
 
-## Data Model Standard
+## Data & Specification Standards
 
 New database work must follow [`DATA_MODEL_STANDARD.md`](DATA_MODEL_STANDARD.md): domain-driven normalized PostgreSQL, canonical master data, explicit state machines, append-oriented history, strict financial-domain separation and forward-only migrations.
+
+Repository interpretation must also follow [`SPECIFICATION_SYNCHRONIZATION_BASELINE.md`](SPECIFICATION_SYNCHRONIZATION_BASELINE.md), which resolves legacy/current naming and rule conflicts.
 
 ## Non-Negotiable Rules Regardless of Implementation Phase
 
@@ -81,21 +85,22 @@ New database work must follow [`DATA_MODEL_STANDARD.md`](DATA_MODEL_STANDARD.md)
 4. Direct Booking cannot silently reassign the customer to another provider.
 5. Customer repair money is not held, escrowed, split, refunded or paid out by iFixIt in MVP.
 6. Provider subscription payments are distinct from repair-payment acknowledgement.
-7. DIAGNOSIS_REQUIRED repair work cannot bypass customer approval of the current quotation version.
+7. DIAGNOSIS_REQUIRED repair work cannot bypass inspection/diagnosis and customer approval of the current quotation version.
 8. Exclusive provider acceptance must remain atomic/concurrency-safe.
 9. Sensitive administrative decisions require audit history.
 10. Repair request, lead, assignment and repair job remain separate domain entities.
+11. New MVP reviews use four canonical dimensions; the legacy `professionalism` dimension is not required for new review records.
 
 ## Migration Roadmap
 
 ```text
-0001 Core Domain                         IMPLEMENTED
-0002 Authentication & RBAC              IMPLEMENTED
+0001 Core Domain                          IMPLEMENTED
+0002 Authentication & RBAC               IMPLEMENTED
 0003 Location Master & Service Catalogue IMPLEMENTED
-0004 Provider Onboarding                IMPLEMENTED
-0005 Search & Tier-Based Matching       IMPLEMENTED
-0006 Repair Jobs & Lifecycle            IMPLEMENTED
-0007 Inspection / Quotation / Completion NEXT
+0004 Provider Onboarding                 IMPLEMENTED
+0005 Search & Tier-Based Matching        IMPLEMENTED
+0006 Repair Jobs & Lifecycle             IMPLEMENTED
+0007 Inspection / Quotation / Completion + workflow integrity guard NEXT
 0008 Off-Platform Payment Acknowledgement
 0009 Reviews / Complaints / Notifications
 0010 Provider Subscriptions / Promotions
@@ -103,6 +108,19 @@ New database work must follow [`DATA_MODEL_STANDARD.md`](DATA_MODEL_STANDARD.md)
 0012 Security / Performance Hardening
 ```
 
+## Synchronization Status
+
+Completed synchronization targets:
+
+- Step 6 database dictionary → Version 2.0
+- Step 7 API contracts → Version 2.0
+- API catalogue → Version 2.0
+- Step 13 complaint/rating specification → Version 2.0
+- README source-of-truth/precedence rules
+- repository-wide synchronization baseline
+
+Older Step documents may retain historical wording for design traceability. Where they conflict with the synchronized baseline, the precedence rules above resolve the conflict and prevent implementation drift.
+
 ## Usage Rule
 
-For developers and reviewers, this matrix bridges target architecture and committed implementation. Do not infer that an architecture box is production-ready merely because it appears in a diagram.
+For developers and reviewers, this matrix bridges target architecture and committed implementation. Do not infer that an architecture box or API entry is production-ready merely because it appears in documentation.
