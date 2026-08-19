@@ -1,740 +1,711 @@
 # iFixIt — Step 6: Database Schema & Data Dictionary
 
-**Document Type:** Logical Database Design  
-**Status:** Draft for approval  
-**Version:** 1.0  
+**Document Type:** Current Logical Database Design  
+**Status:** Synchronized Implementation Baseline  
+**Version:** 2.0  
 **Date:** 2026-08-19
 
 ---
 
-## 1. Purpose
+## 1. Authority and Purpose
 
-Defines the production logical data model derived from Steps 3–5. PostgreSQL is the target database. UUID primary keys are recommended unless a table is explicitly better served by a sequence/key.
+This document is the synchronized logical data dictionary for iFixIt.
+
+For capabilities already implemented, the committed PostgreSQL migrations are authoritative. This document summarizes those migrations and the approved forward model. It must not be used to reintroduce older generic entities that conflict with the committed schema.
+
+Authoritative precedence:
+
+1. committed migrations for implemented structures
+2. `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md` for MVP business rules
+3. `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md` for Maldives geography and matching
+4. `docs/architecture/DATA_MODEL_STANDARD.md` for modeling conventions
+5. this synchronized Step 6 document for logical/data-dictionary guidance
+6. older specification examples only where they do not conflict with the above
+
+PostgreSQL is the authoritative transactional data store.
 
 Global conventions:
-- `id UUID PRIMARY KEY`
-- `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`
-- `updated_at TIMESTAMPTZ NOT NULL DEFAULT now()` where mutable
-- status values constrained by enum/check/reference table
-- historical business records are not hard-deleted in ordinary flows
-- public-facing ticket/reference numbers are separate from internal IDs
-- monetary values use `NUMERIC(12,2)` or larger as required
-- currency uses ISO-style code, default `MVR` for MVP
+
+- UUID primary keys for domain/transaction records
+- `TIMESTAMPTZ` for event timestamps
+- `NUMERIC` for money; MVR is the default MVP currency
+- foreign keys for authoritative relationships
+- `CHECK`/unique constraints for important invariants
+- append-oriented history for important business changes
+- JSONB only for metadata/snapshots/integration payloads, not core relationships
+- canonical atoll/island IDs; free-text island names are never matching keys
+- customer repair-payment acknowledgement is separate from provider subscription payment transactions
 
 ---
 
-## 2. Core Identity Tables
+## 2. Implemented Migration Map
 
-### users
-Purpose: authoritative application identity linked to authentication provider.
+| Migration | Implemented domain |
+|---|---|
+| `0001_core_domain.sql` | canonical geography, users, provider profiles, repair requests |
+| `0002_auth_rbac.sql` | roles, permissions, OTP/auth/session/security events |
+| `0003_location_catalogue.sql` | island aliases and service catalogue |
+| `0004_provider_onboarding_service_areas_availability.sql` | provider services, pricing, service areas, availability, verification metadata |
+| `0005_search_tier_matching_engine.sql` | matching metrics, attempts, candidates, leads, assignments, direct fallback, atomic acceptance |
+| `0006_repair_jobs_lifecycle.sql` | repair jobs, scheduling/history, job status history, progress events and job lifecycle |
 
-Fields:
-- id UUID PK
-- auth_subject VARCHAR UNIQUE NOT NULL
-- verified_phone VARCHAR UNIQUE
-- email VARCHAR
-- account_status VARCHAR NOT NULL
-- primary_role VARCHAR NOT NULL
-- last_login_at TIMESTAMPTZ
-- created_at
-- updated_at
+Planned extensions:
 
-Indexes: verified_phone, email, account_status.
-
-### user_roles
-- id UUID PK
-- user_id FK users
-- role_code VARCHAR NOT NULL
-- active BOOLEAN NOT NULL DEFAULT true
-- granted_by UUID nullable FK users
-- created_at
-
-Unique: `(user_id, role_code)`.
-
-### customer_profiles
-- id UUID PK
-- user_id UUID UNIQUE FK users
-- full_name VARCHAR(150)
-- default_location_id UUID nullable FK locations
-- notification_preferences JSONB
-- created_at
-- updated_at
-
-### provider_profiles
-- id UUID PK
-- user_id UUID UNIQUE FK users
-- provider_type VARCHAR NOT NULL
-- public_name VARCHAR(150) NOT NULL
-- business_name VARCHAR(200)
-- representative_name VARCHAR(150)
-- description TEXT
-- years_experience INT
-- logo_media_id UUID nullable
-- approval_status VARCHAR NOT NULL
-- suspension_status VARCHAR NOT NULL DEFAULT 'ACTIVE'
-- suspension_reason TEXT
-- availability_status VARCHAR NOT NULL DEFAULT 'UNAVAILABLE'
-- accepting_leads BOOLEAN NOT NULL DEFAULT false
-- approved_at TIMESTAMPTZ
-- suspended_at TIMESTAMPTZ
-- created_at
-- updated_at
-
-Indexes: approval_status, suspension_status, accepting_leads.
+`0007 Inspection / Versioned Quotation / Completion → 0008 Off-Platform Payment Acknowledgement → 0009 Reviews / Complaints / Notifications → 0010 Subscriptions / Promotions → 0011 Admin / Reporting → 0012 Security / Performance Hardening`
 
 ---
 
-## 3. Catalogue & Location
+## 3. Identity & Access — Implemented
 
-### service_categories
-- id UUID PK
-- code VARCHAR UNIQUE NOT NULL
-- name VARCHAR NOT NULL
-- description TEXT
-- display_order INT DEFAULT 0
-- status VARCHAR NOT NULL
-- created_at
-- updated_at
+### `users`
 
-### service_subcategories
-- id UUID PK
-- category_id UUID FK service_categories
-- code VARCHAR UNIQUE NOT NULL
-- name VARCHAR NOT NULL
-- description TEXT
-- display_order INT DEFAULT 0
-- status VARCHAR NOT NULL
-- created_at
-- updated_at
+Authoritative application user identity.
 
-### repair_services
-- id UUID PK
-- subcategory_id UUID FK service_subcategories
-- code VARCHAR UNIQUE NOT NULL
-- name VARCHAR NOT NULL
-- description TEXT
-- requires_qualification BOOLEAN DEFAULT false
-- display_order INT DEFAULT 0
-- status VARCHAR NOT NULL
-- created_at
-- updated_at
+Key fields include:
 
-### locations
-- id UUID PK
-- parent_id UUID nullable FK locations
-- location_type VARCHAR NOT NULL
-- code VARCHAR UNIQUE
-- name VARCHAR NOT NULL
-- marketplace_enabled BOOLEAN NOT NULL DEFAULT true
-- status VARCHAR NOT NULL
-- created_at
-- updated_at
+- `id`
+- `phone_e164`
+- phone verification state
+- optional email
+- full name
+- account status
+- default island reference where configured
+- last login timestamps
+- created/updated timestamps
 
-Indexes: parent_id, marketplace_enabled, status.
+There is **no authoritative `primary_role` field**. Roles are normalized through RBAC.
 
-### provider_services
-- id UUID PK
-- provider_id UUID FK provider_profiles
-- service_id UUID FK repair_services
-- pricing_type VARCHAR NOT NULL
-- base_amount NUMERIC(12,2)
-- currency_code CHAR(3) DEFAULT 'MVR'
-- active BOOLEAN DEFAULT true
-- created_at
-- updated_at
+### `roles`
 
-Unique: `(provider_id, service_id)`.
+Defines roles such as Customer, Provider and Admin.
 
-### provider_service_areas
-- id UUID PK
-- provider_id UUID FK provider_profiles
-- location_id UUID FK locations
-- active BOOLEAN DEFAULT true
-- created_at
+### `permissions`
 
-Unique: `(provider_id, location_id)`.
+Granular permission catalogue.
 
-### provider_availability_windows
-- id UUID PK
-- provider_id UUID FK provider_profiles
-- start_at TIMESTAMPTZ
-- end_at TIMESTAMPTZ
-- availability_type VARCHAR
-- active BOOLEAN DEFAULT true
-- created_at
-- updated_at
+### `role_permissions`
+
+Many-to-many mapping between roles and permissions.
+
+### `user_roles`
+
+Many-to-many mapping between users and roles. One user may hold more than one allowed role.
+
+### Authentication/security entities
+
+Implemented entities include:
+
+- `otp_challenges`
+- `auth_attempts`
+- `auth_sessions`
+- `security_events`
+
+OTP values must not be stored/logged in plaintext. Sessions must support expiry/revocation and replay-safe refresh-token handling.
+
+### Customer profile rule
+
+A separate `customer_profiles` table is **not currently authoritative**. Customer identity is represented by `users`, with customer-specific entities linked by `customer_id` to `users.id`. A future customer-preferences/address table may be added if needed without changing identity authority.
 
 ---
 
-## 4. Verification
+## 4. Maldives Geography — Implemented
 
-### provider_verifications
-- id UUID PK
-- provider_id UUID FK provider_profiles
-- verification_type VARCHAR NOT NULL
-- status VARCHAR NOT NULL
-- submitted_at TIMESTAMPTZ
-- reviewed_at TIMESTAMPTZ
-- reviewed_by UUID nullable FK users
-- rejection_reason TEXT
-- information_request TEXT
-- expires_at TIMESTAMPTZ
-- created_at
-- updated_at
+### `atolls`
 
-### verification_documents
-- id UUID PK
-- verification_id UUID FK provider_verifications
-- media_id UUID FK media_objects
-- document_type VARCHAR
-- issuer VARCHAR
-- issue_date DATE
-- expiry_date DATE
-- created_at
+Canonical atoll master.
 
----
+Important characteristics:
 
-## 5. Media
+- immutable UUID ID
+- canonical code/name/display name
+- active/serviceable flags
+- sort/order metadata
 
-### media_objects
-- id UUID PK
-- owner_user_id UUID nullable FK users
-- storage_provider VARCHAR NOT NULL
-- storage_key TEXT UNIQUE NOT NULL
-- original_filename TEXT
-- mime_type VARCHAR
-- size_bytes BIGINT
-- visibility VARCHAR NOT NULL
-- checksum VARCHAR
-- created_at
+### `islands`
 
-### entity_media_links
-- id UUID PK
-- media_id UUID FK media_objects
-- entity_type VARCHAR NOT NULL
-- entity_id UUID NOT NULL
-- media_purpose VARCHAR NOT NULL
-- customer_visible BOOLEAN DEFAULT true
-- created_at
+Canonical island master linked to `atolls`.
 
-Index: `(entity_type, entity_id)`.
+Important characteristics:
+
+- immutable UUID ID
+- canonical name/display name
+- atoll FK
+- active/serviceable/inhabited attributes
+- optional coordinates
+- composite `(id, atoll_id)` integrity for downstream references
+
+### `island_aliases`
+
+Alternative spellings/search helpers only.
+
+**Rule:** aliases/free text must never determine provider eligibility or matching tier.
+
+### Deprecated logical concept
+
+The previous generic hierarchical `locations` table is superseded for Maldives marketplace matching by canonical `atolls` + `islands`.
 
 ---
 
-## 6. Repair Requests
+## 5. Service Catalogue — Implemented
 
-### repair_requests
-- id UUID PK
-- ticket_no VARCHAR UNIQUE NOT NULL
-- customer_id UUID FK customer_profiles
-- service_id UUID FK repair_services
-- item_type VARCHAR NOT NULL
-- brand VARCHAR
-- model VARCHAR
-- serial_number VARCHAR
-- problem_description TEXT NOT NULL
-- location_id UUID FK locations
-- address_text TEXT
-- access_notes TEXT
-- urgency VARCHAR NOT NULL
-- preferred_start_at TIMESTAMPTZ
-- preferred_end_at TIMESTAMPTZ
-- status VARCHAR NOT NULL
-- submitted_at TIMESTAMPTZ
-- cancelled_at TIMESTAMPTZ
-- cancellation_reason TEXT
-- version_no INT NOT NULL DEFAULT 1
-- created_at
-- updated_at
+### `service_categories`
 
-Indexes: ticket_no, customer_id, service_id, location_id, status, created_at.
+Top-level service category.
 
-### repair_request_status_history
-- id UUID PK
-- repair_request_id UUID FK repair_requests
-- from_status VARCHAR
-- to_status VARCHAR NOT NULL
-- changed_by UUID nullable FK users
-- reason TEXT
-- metadata JSONB
-- created_at
+### `service_subcategories`
 
-Index: `(repair_request_id, created_at)`.
+Subcategory linked to category.
+
+### `repair_services`
+
+Exact service linked to a subcategory.
+
+Important attributes include service activation and workflow classification.
+
+Authoritative workflow types:
+
+- `FIXED_PRICE`
+- `DIAGNOSIS_REQUIRED`
+
+Normal catalogue additions must be data-driven and should not require application code changes.
 
 ---
 
-## 7. Matching, Leads & Assignments
+## 6. Provider Domain — Implemented
 
-### repair_leads
-- id UUID PK
-- repair_request_id UUID FK repair_requests
-- provider_id UUID FK provider_profiles
-- rank_score NUMERIC(12,4)
-- status VARCHAR NOT NULL
-- sent_at TIMESTAMPTZ
-- viewed_at TIMESTAMPTZ
-- responded_at TIMESTAMPTZ
-- expires_at TIMESTAMPTZ
-- decline_reason TEXT
-- created_at
-- updated_at
+### `provider_profiles`
 
-Unique recommended: prevent duplicate active lead per request/provider.
+One provider profile per provider user.
 
-### repair_assignments
-- id UUID PK
-- repair_request_id UUID FK repair_requests
-- provider_id UUID FK provider_profiles
-- source VARCHAR NOT NULL
-- status VARCHAR NOT NULL
-- assigned_by UUID nullable FK users
-- assigned_at TIMESTAMPTZ NOT NULL
-- accepted_at TIMESTAMPTZ
-- ended_at TIMESTAMPTZ
-- end_reason TEXT
-- created_at
-- updated_at
+Key data includes:
 
-Constraint: at most one active exclusive assignment per request when configured.
+- provider/account type
+- public/business name
+- description/experience/profile details
+- preferred contact data
+- legal/registered atoll and island
+- operational-base atoll and island
+- approval status
+- verification status
+- marketplace status
+- availability status
+- accepting-leads flag
+- suspension state
 
-### assignment_history
-- id UUID PK
-- assignment_id UUID FK repair_assignments
-- action VARCHAR NOT NULL
-- actor_user_id UUID nullable FK users
-- reason TEXT
-- metadata JSONB
-- created_at
+**Critical rule:** legal registration location is separate from operational base and approved service areas.
 
----
+### `provider_services`
 
-## 8. Jobs & Inspections
+Exact services a provider is eligible to perform.
 
-### repair_jobs
-- id UUID PK
-- job_no VARCHAR UNIQUE NOT NULL
-- repair_request_id UUID UNIQUE FK repair_requests
-- customer_id UUID FK customer_profiles
-- provider_id UUID FK provider_profiles
-- service_id UUID FK repair_services
-- location_id UUID FK locations
-- status VARCHAR NOT NULL
-- started_at TIMESTAMPTZ
-- repair_completed_at TIMESTAMPTZ
-- customer_confirmed_at TIMESTAMPTZ
-- finalized_at TIMESTAMPTZ
-- cancelled_at TIMESTAMPTZ
-- cancellation_reason TEXT
-- version_no INT DEFAULT 1
-- created_at
-- updated_at
+Typical state values include active/inactive/pending verification/rejected.
 
-Indexes: provider_id, customer_id, status, created_at.
+### `provider_service_pricing`
 
-### job_status_history
-- id UUID PK
-- job_id UUID FK repair_jobs
-- from_status VARCHAR
-- to_status VARCHAR NOT NULL
-- changed_by UUID nullable FK users
-- reason TEXT
-- metadata JSONB
-- created_at
+Service-specific provider pricing.
 
-### inspections
-- id UUID PK
-- job_id UUID FK repair_jobs
-- status VARCHAR NOT NULL
-- scheduled_at TIMESTAMPTZ
-- started_at TIMESTAMPTZ
-- completed_at TIMESTAMPTZ
-- diagnosis_summary TEXT
-- fault_identified TEXT
-- recommended_repair TEXT
-- estimated_labour_amount NUMERIC(12,2)
-- estimated_duration_minutes INT
-- customer_notes TEXT
-- internal_notes TEXT
-- created_at
-- updated_at
+Supported presentation models:
 
-### repair_progress_events
-- id UUID PK
-- job_id UUID FK repair_jobs
-- event_type VARCHAR NOT NULL
-- note TEXT
-- customer_visible BOOLEAN DEFAULT true
-- created_by UUID FK users
-- created_at
+- `FIXED`
+- `STARTING_FROM`
+- `HOURLY`
+- `INSPECTION_REQUIRED`
+- `QUOTE_REQUIRED`
+
+May include base/minimum amount, unit, travel/overtime/weekend/holiday charges and duration estimates.
+
+### `provider_service_areas`
+
+Explicit additional islands a provider is approved/willing to serve.
+
+This table does not replace the operational base. The provider's own operational-base island is Tier 0; explicit target-island service area is Tier 1.
+
+### Availability
+
+Implemented availability entities:
+
+- `provider_weekly_availability`
+- `provider_availability_overrides`
+
+Canonical availability statuses include:
+
+- `AVAILABLE_NOW`
+- `AVAILABLE_TODAY`
+- `BY_APPOINTMENT`
+- `UNAVAILABLE`
+
+The older generic `provider_availability_windows` concept is superseded by this weekly + override model.
+
+### Verification
+
+Implemented verification/document metadata includes `provider_verification_documents` plus provider verification state/history.
+
+Verification file content must be stored privately through a controlled object-storage integration; database rows store metadata/object keys, not public file URLs.
+
+### `provider_status_history`
+
+Append-oriented provider status/approval/verification/suspension history.
 
 ---
 
-## 9. Quotations
+## 7. Repair Request Domain — Implemented
 
-### quotations
-- id UUID PK
-- job_id UUID FK repair_jobs
-- current_version_no INT NOT NULL DEFAULT 1
-- status VARCHAR NOT NULL
-- currency_code CHAR(3) DEFAULT 'MVR'
-- subtotal NUMERIC(12,2) NOT NULL DEFAULT 0
-- fees NUMERIC(12,2) NOT NULL DEFAULT 0
-- discount NUMERIC(12,2) NOT NULL DEFAULT 0
-- tax NUMERIC(12,2) NOT NULL DEFAULT 0
-- total NUMERIC(12,2) NOT NULL DEFAULT 0
-- estimated_duration_minutes INT
-- expires_at TIMESTAMPTZ
-- submitted_at TIMESTAMPTZ
-- viewed_at TIMESTAMPTZ
-- approved_at TIMESTAMPTZ
-- rejected_at TIMESTAMPTZ
-- created_at
-- updated_at
+### `repair_requests`
 
-### quotation_versions
-- id UUID PK
-- quotation_id UUID FK quotations
-- version_no INT NOT NULL
-- status VARCHAR NOT NULL
-- notes TEXT
-- subtotal NUMERIC(12,2)
-- fees NUMERIC(12,2)
-- discount NUMERIC(12,2)
-- tax NUMERIC(12,2)
-- total NUMERIC(12,2)
-- estimated_duration_minutes INT
-- expires_at TIMESTAMPTZ
-- created_by UUID FK users
-- created_at
+Represents customer demand before/through matching and assignment.
 
-Unique: `(quotation_id, version_no)`.
+Important fields include:
 
-### quotation_items
-- id UUID PK
-- quotation_version_id UUID FK quotation_versions
-- item_type VARCHAR NOT NULL
-- description TEXT NOT NULL
-- part_number VARCHAR
-- quantity NUMERIC(12,3) NOT NULL DEFAULT 1
-- unit_price NUMERIC(12,2) NOT NULL DEFAULT 0
-- line_total NUMERIC(12,2) NOT NULL
-- display_order INT DEFAULT 0
-- created_at
+- `ticket_number`
+- `customer_id` → `users`
+- `booking_model`
+- `requested_provider_id` for Direct Booking
+- `workflow_type`
+- exact `service_id`
+- canonical `service_atoll_id`
+- canonical `service_island_id`
+- address/building/floor/landmark
+- optional latitude/longitude
+- problem/equipment/brand/model/serial data
+- urgency
+- preferred date/time window
+- `matching_scope`
+- cross-atoll consent timestamp/source
+- status
+- known price/currency when applicable
+- submission/cancellation timestamps
+
+Booking models:
+
+- `DIRECT_PROVIDER`
+- `SMART_MATCHING`
+
+Matching scopes:
+
+- `LOCAL_ONLY`
+- `TARGET_ISLAND_SERVICE_AREA_ALLOWED`
+- `SAME_ATOLL_ALLOWED`
+- `CROSS_ATOLL_ALLOWED`
+
+Cross-atoll scope requires explicit recorded consent/source.
+
+### Repair request vs job
+
+`repair_requests` represent demand. They must not be collapsed with provider leads, assignment history or accepted operational jobs.
 
 ---
 
-## 10. Parts & Labour
+## 8. Matching & Assignment — Implemented
 
-### job_parts
-- id UUID PK
-- job_id UUID FK repair_jobs
-- part_name VARCHAR NOT NULL
-- part_number VARCHAR
-- brand VARCHAR
-- quantity NUMERIC(12,3) NOT NULL
-- unit_price NUMERIC(12,2) NOT NULL
-- supplier_reference VARCHAR
-- installed_at TIMESTAMPTZ
-- warranty_duration_days INT
-- warranty_terms TEXT
-- created_by UUID FK users
-- created_at
-- updated_at
+### `provider_matching_metrics`
 
-### job_labour
-- id UUID PK
-- job_id UUID FK repair_jobs
-- description TEXT NOT NULL
-- hours NUMERIC(8,2)
-- rate NUMERIC(12,2)
-- amount NUMERIC(12,2) NOT NULL
-- created_by UUID FK users
-- created_at
-- updated_at
+Operational ranking snapshot. Includes rating/acceptance/completion/response/workload metrics and a temporary `subscription_eligible` integration gate.
 
----
+Migration 0010 will bind subscription eligibility to authoritative subscription state.
 
-## 11. Warranty & Claims
+### `matching_attempts`
 
-### warranties
-- id UUID PK
-- job_id UUID FK repair_jobs
-- provider_id UUID FK provider_profiles
-- customer_id UUID FK customer_profiles
-- warranty_type VARCHAR NOT NULL
-- start_date DATE NOT NULL
-- end_date DATE
-- covered_repair TEXT
-- covered_parts TEXT
-- terms TEXT
-- status VARCHAR NOT NULL
-- created_at
-- updated_at
+Audits every matching stage/attempt including mode, geographic tier, service, target atoll/island, algorithm version, outcome and counts.
 
-### warranty_claims
-- id UUID PK
-- warranty_id UUID FK warranties
-- customer_id UUID FK customer_profiles
-- status VARCHAR NOT NULL
-- issue_description TEXT NOT NULL
-- resolution TEXT
-- submitted_at TIMESTAMPTZ
-- resolved_at TIMESTAMPTZ
-- resolved_by UUID nullable FK users
-- created_at
-- updated_at
+### `matching_candidates`
 
-### warranty_claim_history
-- id UUID PK
-- warranty_claim_id UUID FK warranty_claims
-- from_status VARCHAR
-- to_status VARCHAR NOT NULL
-- actor_user_id UUID nullable FK users
-- reason TEXT
-- created_at
+Candidate snapshot per matching attempt.
+
+Separates hard eligibility from ranking scores.
+
+### `repair_leads`
+
+Provider offers/leads.
+
+Canonical states include:
+
+- `NEW`
+- `VIEWED`
+- `ACCEPTED`
+- `DECLINED`
+- `EXPIRED`
+- `CANCELLED`
+- `LOST_RACE`
+
+### `repair_assignments`
+
+Historical assignment records.
+
+A unique partial constraint guarantees at most one active exclusive assignment per request.
+
+### `direct_booking_fallback_decisions`
+
+Records explicit customer choice after Direct Booking decline/expiry/ineligibility.
+
+Direct Booking must never silently broaden to Smart Matching.
+
+### Matching geographic tiers
+
+- Tier 0: operational base = target island
+- Tier 1: explicit target-island service area
+- Tier 2: same-atoll expansion only when scope permits
+- Tier 3: cross-atoll only with explicit authorization/consent
 
 ---
 
-## 12. Reviews
+## 9. Repair Job Domain — Implemented
 
-### reviews
-- id UUID PK
-- job_id UUID UNIQUE FK repair_jobs
-- customer_id UUID FK customer_profiles
-- provider_id UUID FK provider_profiles
-- quality SMALLINT NOT NULL
-- punctuality SMALLINT NOT NULL
-- communication SMALLINT NOT NULL
-- professionalism SMALLINT NOT NULL
-- value_for_money SMALLINT NOT NULL
-- feedback TEXT
-- moderation_status VARCHAR NOT NULL DEFAULT 'PUBLISHED'
-- created_at
-- updated_at
+### `repair_jobs`
 
-Checks: ratings 1–5.
+Represents accepted operational work.
 
-### review_moderation_history
-- id UUID PK
-- review_id UUID FK reviews
-- action VARCHAR NOT NULL
-- reason TEXT NOT NULL
-- actor_user_id UUID FK users
-- created_at
+Relationship chain:
 
----
+`repair_request → repair_assignment → repair_job`
 
-## 13. Complaints & Disputes
+Important fields include:
 
-### complaints
-- id UUID PK
-- complaint_no VARCHAR UNIQUE NOT NULL
-- opened_by_user_id UUID FK users
-- against_user_id UUID nullable FK users
-- repair_request_id UUID nullable FK repair_requests
-- job_id UUID nullable FK repair_jobs
-- category VARCHAR NOT NULL
-- description TEXT NOT NULL
-- status VARCHAR NOT NULL
-- assigned_admin_id UUID nullable FK users
-- resolution TEXT
-- resolved_at TIMESTAMPTZ
-- created_at
-- updated_at
+- `job_number`
+- unique `repair_request_id`
+- `current_assignment_id`
+- `provider_id`
+- `customer_id` → `users`
+- `service_id`
+- `workflow_type`
+- detailed job status
+- scheduled start/end
+- actual start
+- repair completion/customer confirmation/finalization/cancellation timestamps
+- provider completion note/internal note
+- final recorded amount/currency
 
-### complaint_status_history
-- id UUID PK
-- complaint_id UUID FK complaints
-- from_status VARCHAR
-- to_status VARCHAR NOT NULL
-- actor_user_id UUID nullable FK users
-- reason TEXT
-- created_at
+One logical repair job exists per repair request; provider reassignment remains represented by assignment history and current assignment linkage.
 
----
+### Canonical implemented job statuses
 
-## 14. Subscriptions & Payments
+- `ACCEPTED`
+- `SCHEDULED`
+- `INSPECTION_SCHEDULED`
+- `INSPECTED`
+- `QUOTE_PENDING`
+- `QUOTE_APPROVED`
+- `REPAIR_SCHEDULED`
+- `IN_PROGRESS`
+- `WAITING_FOR_PARTS`
+- `ON_HOLD`
+- `REPAIR_COMPLETED`
+- `CUSTOMER_CONFIRMATION`
+- `DISPUTED`
+- `FINALIZED`
+- `CANCELLED`
+- `UNABLE_TO_REPAIR`
 
-### subscription_plans
-- id UUID PK
-- code VARCHAR UNIQUE NOT NULL
-- name VARCHAR NOT NULL
-- description TEXT
-- price NUMERIC(12,2) NOT NULL
-- currency_code CHAR(3) DEFAULT 'MVR'
-- duration_months INT NOT NULL
-- grace_days INT DEFAULT 0
-- active BOOLEAN DEFAULT true
-- features JSONB
-- created_at
-- updated_at
+### `repair_job_status_history`
 
-### provider_subscriptions
-- id UUID PK
-- provider_id UUID FK provider_profiles
-- plan_id UUID FK subscription_plans
-- status VARCHAR NOT NULL
-- starts_at TIMESTAMPTZ
-- ends_at TIMESTAMPTZ
-- grace_ends_at TIMESTAMPTZ
-- source_payment_id UUID nullable
-- created_at
-- updated_at
+Append-oriented status history.
 
-Indexes: provider_id, status, ends_at.
+### `repair_job_schedule_history`
 
-### payments
-- id UUID PK
-- provider_id UUID nullable FK provider_profiles
-- customer_id UUID nullable FK customer_profiles
-- purpose VARCHAR NOT NULL
-- external_reference VARCHAR
-- amount NUMERIC(12,2) NOT NULL
-- currency_code CHAR(3) NOT NULL
-- status VARCHAR NOT NULL
-- initiated_at TIMESTAMPTZ
-- succeeded_at TIMESTAMPTZ
-- failed_at TIMESTAMPTZ
-- refunded_at TIMESTAMPTZ
-- gateway_name VARCHAR
-- gateway_transaction_id VARCHAR
-- metadata JSONB
-- created_at
-- updated_at
+Append-oriented schedule history for service/inspection/repair/follow-up scheduling. `repair_jobs` keeps the current operational schedule for efficient reads.
 
-Unique as appropriate on `(gateway_name, gateway_transaction_id)`.
+### `repair_job_progress_events`
 
-### payment_events
-- id UUID PK
-- payment_id UUID nullable FK payments
-- gateway_name VARCHAR NOT NULL
-- external_event_id VARCHAR NOT NULL
-- event_type VARCHAR NOT NULL
-- signature_valid BOOLEAN
-- payload_hash VARCHAR
-- processed_at TIMESTAMPTZ
-- processing_status VARCHAR
-- created_at
+Customer-visible/private timeline events.
 
-Unique: `(gateway_name, external_event_id)`.
+### Workflow integrity rule for Migration 0007
+
+Migration 0006 provides the generic job state machine. Migration 0007 must add workflow-specific guards so a `DIAGNOSIS_REQUIRED` job cannot start repair until the required inspection/diagnosis and the **current quotation version** has been approved by the customer.
+
+This is a mandatory integrity rule, not an optional UI behavior.
 
 ---
 
-## 15. Notifications
+## 10. Inspection & Versioned Quotation — Planned Migration 0007
 
-### notifications
-- id UUID PK
-- user_id UUID FK users
-- event_type VARCHAR NOT NULL
-- title VARCHAR
-- body TEXT
-- channel VARCHAR NOT NULL
-- status VARCHAR NOT NULL
-- related_entity_type VARCHAR
-- related_entity_id UUID
-- created_at
-- read_at TIMESTAMPTZ
+### `inspections`
 
-### notification_attempts
-- id UUID PK
-- notification_id UUID FK notifications
-- attempt_no INT NOT NULL
-- provider_name VARCHAR
-- status VARCHAR NOT NULL
-- response_code VARCHAR
-- error_message TEXT
-- attempted_at TIMESTAMPTZ NOT NULL
+Planned fields include:
 
----
+- job FK
+- status
+- schedule/start/completion timestamps
+- diagnosis/fault/recommended-repair data
+- estimated labour/duration
+- customer-visible and internal notes
 
-## 16. Admin, Audit & Configuration
+### `quotations`
 
-### audit_events
-- id UUID PK
-- actor_user_id UUID nullable FK users
-- action_code VARCHAR NOT NULL
-- entity_type VARCHAR NOT NULL
-- entity_id UUID
-- previous_value JSONB
-- new_value JSONB
-- reason TEXT
-- correlation_id VARCHAR
-- ip_address INET
-- user_agent TEXT
-- created_at
+Represents the logical quotation for a job and current state/version pointer.
 
-Indexes: actor_user_id, entity_type/entity_id, created_at.
+### `quotation_versions`
 
-### system_settings
-- id UUID PK
-- setting_key VARCHAR UNIQUE NOT NULL
-- setting_value JSONB NOT NULL
-- sensitive BOOLEAN DEFAULT false
-- updated_by UUID nullable FK users
-- updated_at TIMESTAMPTZ
+Immutable/versioned commercial proposals.
 
-### feature_flags
-- id UUID PK
-- flag_key VARCHAR UNIQUE NOT NULL
-- enabled BOOLEAN NOT NULL DEFAULT false
-- configuration JSONB
-- updated_by UUID nullable FK users
-- updated_at TIMESTAMPTZ
+Each revision creates a new version. Approval of version N does not approve version N+1.
+
+### `quotation_items`
+
+Version-specific line items such as labour, parts and authorized fees.
+
+### Mandatory quotation invariants
+
+- server recalculates totals
+- submitted versions are preserved
+- only current unexpired submitted version can be approved
+- customer ownership is validated
+- material change creates a new version
+- `DIAGNOSIS_REQUIRED` repair cannot proceed without approval of the current version
+
+### Completion evidence
+
+Migration 0007 also extends structured completion evidence where required.
 
 ---
 
-## 17. Key Database Constraints
+## 11. Parts & Labour — Planned with Job/Quotation Extensions
 
-1. One verified review per job.
-2. One provider-service relation per provider/service.
-3. One provider-area relation per provider/location.
-4. Quote version numbers unique within quotation.
-5. External payment event IDs unique per gateway.
-6. Ticket/job/complaint public references unique.
-7. Rating fields constrained to 1–5.
-8. Quantity/amount fields cannot be negative except explicit discount model.
-9. State transition validity enforced in service layer and, where appropriate, database constraints/triggers.
-10. Historical rows referenced by completed business processes must not be deleted.
+Logical entities may include:
 
----
+### `job_parts`
 
-## 18. Index Strategy
+Part name/number/brand, quantity, unit price, supplier reference, installation date and warranty details.
 
-High-priority indexes:
-- repair requests by `status, location_id, service_id, created_at`
-- providers by eligibility-related status
-- provider services by `service_id, provider_id, active`
-- provider areas by `location_id, provider_id, active`
-- leads by `provider_id, status, expires_at`
-- jobs by `provider_id, status` and `customer_id, created_at`
-- quotations by `job_id, status`
-- complaints by `status, assigned_admin_id`
-- subscriptions by `provider_id, status, ends_at`
-- payments by `status, created_at, gateway_transaction_id`
-- audit events by `entity_type, entity_id, created_at`
+### `job_labour`
+
+Description, hours/rate where applicable and amount.
+
+Finalized records must remain historically auditable.
 
 ---
 
-## 19. Retention & Deletion Rules
+## 12. Off-Platform Repair Payment Acknowledgement — Planned Migration 0008
 
-- Authentication/security logs: retention policy configurable.
-- Verification documents: private retention per legal/business policy.
-- Repair, quote, payment, complaint, warranty, review and audit history: preserve according to platform retention policy.
-- User account deletion request should anonymize/remove personal data where legally required without corrupting transactional history.
-- Master data referenced historically is archived/disabled, not hard deleted.
+Customer repair money is outside iFixIt MVP.
+
+Planned repair-payment entities must represent **declarations/evidence**, not platform settlement.
+
+Recommended domain entities:
+
+### `provider_payment_methods`
+
+Provider-configured accepted methods/instructions with protected visibility.
+
+### `repair_payment_acknowledgements`
+
+Records customer `I Have Paid` and provider `Payment Received` declarations, amount/method/timestamps/status where applicable.
+
+### `repair_payment_evidence`
+
+Private evidence metadata/links where enabled.
+
+### `repair_payment_status_history`
+
+Append-oriented status/declaration history.
+
+### Prohibited interpretation
+
+These records must not imply that iFixIt:
+
+- held customer funds
+- escrowed funds
+- processed repair checkout
+- split payment
+- paid out the provider
+- automatically refunded customer repair money
 
 ---
 
-## 20. Step 6 Approval Gate
+## 13. Reviews & Ratings — Planned Migration 0009
 
-- [ ] Every Step 3/5 functional entity represented
-- [ ] Tables/fields approved
-- [ ] Relationships approved
-- [ ] Status/history model approved
-- [ ] Quote versioning approved
-- [ ] Payment idempotency model approved
-- [ ] Index strategy approved
-- [ ] Privacy/retention approved
-- [ ] Database migration strategy approved
+The synchronized MVP review model uses **four customer-visible rating dimensions**:
 
-After approval, proceed to Step 7 API Contracts.
+- Quality
+- Punctuality
+- Communication
+- Value for Money
+
+`overall_rating` is calculated from the four dimensions unless a later explicit product decision changes this rule.
+
+`professionalism` is **not a new canonical rating dimension** for Migration 0009. Older documents showing it are historical and superseded by this synchronized model.
+
+Only an eligible completed/finalized platform job may create a verified review, with one logical verified review per job.
+
+Planned entities include:
+
+- `reviews`
+- review edit/version history where required
+- `review_responses`
+- `review_flags`
+- moderation history
+
+Provider aggregate ratings are derived/recalculable; a manually editable aggregate is not source of truth.
+
+---
+
+## 14. Complaints & Disputes — Planned Migration 0009
+
+Planned complaint structures include:
+
+- human-readable complaint number
+- opened-by user
+- related job/request/provider relationship
+- category
+- description
+- priority
+- requested resolution
+- status
+- assigned admin
+- escalation metadata
+- resolution
+- private evidence links
+- append-oriented status/timeline history
+
+Requested refund/compensation is a requested outcome from the provider, not an automatic iFixIt refund action.
+
+---
+
+## 15. Notifications — Planned Migration 0009
+
+Logical notification structures should separate the notification/event from delivery attempts.
+
+Planned capabilities:
+
+- in-app notification records
+- read state
+- user preferences
+- delivery attempts/results
+- adapters for SMS/email/WhatsApp/push where enabled
+
+Notification failure must not roll back the authoritative business transaction that generated the notification.
+
+---
+
+## 16. Provider Subscription & Platform Payments — Planned Migration 0010
+
+This is a separate financial domain from customer repair-payment acknowledgement.
+
+Planned entities include:
+
+### `subscription_plans`
+
+Database-configured Starter/Professional/Business-style plans and entitlements.
+
+### `provider_subscriptions`
+
+Provider subscription lifecycle.
+
+### `subscription_payments`
+
+Platform-processed provider subscription transaction records.
+
+### `subscription_payment_events`
+
+Gateway/webhook events with signature/idempotency controls.
+
+### Promotions
+
+Planned campaign entities include promotion campaigns/stages/enrollments/price schedules and Founding Provider/early-adopter rules.
+
+Migration 0010 must replace the temporary matching `subscription_eligible` authority with an authoritative subscription-derived eligibility calculation.
+
+---
+
+## 17. Warranty — Planned
+
+Warranty is a post-completion service domain, not a payment guarantee.
+
+Logical entities may include:
+
+- `warranties`
+- `warranty_claims`
+- `warranty_claim_history`
+
+Eligibility requires an eligible completed job and active applicable warranty terms.
+
+---
+
+## 18. Admin, Audit & Reporting — Planned Migration 0011
+
+Audit structures must be append-oriented and protected from ordinary administrative deletion.
+
+Audit event data should capture:
+
+- actor
+- action
+- entity type/ID
+- previous value
+- new value
+- reason
+- correlation/request context
+- timestamp
+
+Reporting views/materialized views are derived read models and must not become competing sources of transactional truth.
+
+---
+
+## 19. Security/Performance Hardening — Planned Migration 0012 + Application Layer
+
+Database/application hardening includes:
+
+- least-privilege database access
+- server-side RBAC/ownership checks
+- idempotency for critical writes
+- rate limiting at API/auth boundaries
+- private object access through authorization/signed URLs
+- index/query review
+- backup/PITR verification
+- audit retention
+- concurrency testing
+- OWASP-aligned application controls
+
+---
+
+## 20. Relationship Summary
+
+```text
+users
+  ├─ user_roles ─ roles ─ role_permissions ─ permissions
+  ├─ provider_profiles
+  │    ├─ provider_services ─ provider_service_pricing
+  │    ├─ provider_service_areas ─ islands ─ atolls
+  │    ├─ provider_weekly_availability
+  │    ├─ provider_availability_overrides
+  │    └─ provider_verification_documents
+  │
+  └─ repair_requests
+       ├─ matching_attempts ─ matching_candidates
+       ├─ repair_leads
+       ├─ repair_assignments
+       └─ repair_jobs
+            ├─ repair_job_status_history
+            ├─ repair_job_schedule_history
+            ├─ repair_job_progress_events
+            ├─ inspections                         [0007]
+            ├─ quotations ─ quotation_versions    [0007]
+            ├─ repair payment acknowledgements    [0008]
+            ├─ reviews / complaints                [0009]
+            └─ warranties                          [planned]
+
+provider_profiles
+  └─ provider_subscriptions ─ subscription_payments [0010]
+```
+
+---
+
+## 21. Non-Negotiable Data Rules
+
+1. Canonical `atoll_id`/`island_id` relationships determine geographic eligibility; free text never does.
+2. Provider legal registration location is separate from operational base/service areas.
+3. Direct Booking cannot silently become Smart Matching.
+4. Only one active exclusive assignment may exist per repair request.
+5. `repair_request`, `repair_lead`, `repair_assignment` and `repair_job` are distinct entities.
+6. `DIAGNOSIS_REQUIRED` work cannot bypass inspection/diagnosis and current quotation approval.
+7. Submitted quotation versions are preserved; revision creates a new version.
+8. Customer repair-payment acknowledgement is not platform payment verification/settlement.
+9. Provider subscription payments are a separate financial domain.
+10. Sensitive verification/payment/complaint media remains private.
+11. Important status/administrative changes leave append-oriented history/audit.
+12. Derived reporting/cache aggregates are never the source of transactional truth.
+
+---
+
+## 22. Synchronization Result
+
+This Version 2.0 supersedes the older logical examples that used generic `locations`, `customer_profiles`, `primary_role`, `provider_availability_windows`, generic customer/provider `payments`, and the five-dimension review model.
+
+Future schema work must extend the committed migration chain rather than copying superseded table definitions from Version 1.0.
