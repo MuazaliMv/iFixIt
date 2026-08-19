@@ -19,6 +19,11 @@ Architecture diagrams describe the **target MVP architecture**. Use the implemen
 
 The Markdown context diagrams use repo-native Mermaid so they remain reviewable and version-controlled directly in GitHub.
 
+## API Catalogue
+
+- [`docs/api/API_CATALOGUE.md`](docs/api/API_CATALOGUE.md) — consolidated `/api/v1` endpoint catalogue and implementation sequencing for authentication, catalogue/search, provider onboarding, matching/leads, jobs, quotations, off-platform payment acknowledgement, reviews/complaints, subscriptions/promotions, notifications and admin/reporting.
+- [`STEP_7_API_CONTRACTS.md`](STEP_7_API_CONTRACTS.md) — detailed REST API contract baseline covering authorization, idempotency, error conventions and protected-resource behavior.
+
 ## Implementation Migrations
 
 1. [`migrations/0001_core_domain.sql`](migrations/0001_core_domain.sql) — Users, canonical Atolls/Islands, Provider Profiles and Repair Requests.
