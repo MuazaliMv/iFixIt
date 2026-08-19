@@ -31,9 +31,9 @@ Flow:
 `Create Request → Match Eligible Providers → Provider Response → Assignment → Repair Workflow`
 
 Rules:
-- Matching must use exact service and location.
+- Matching must use exact service and canonical geographic location.
 - Suspension and verification restrictions override ranking.
-- Matching may consider availability, response performance, rating, workload, and other approved ranking signals.
+- Matching may consider availability, response performance, rating, workload, and other approved ranking signals after geographic eligibility is established.
 - Exclusive acceptance must be concurrency-safe.
 
 ---
@@ -164,17 +164,46 @@ Important:
 
 ---
 
-## 7. MVP vs Later Phases
+## 7. Local Island Matching — Approved MVP Rule
+
+Geographic matching is **local-first and island-aware**.
+
+Authoritative location rules:
+- Every atoll and island must be represented by canonical master-data IDs.
+- Free-text island names must never be used as the authoritative equality/matching key.
+- Each repair request must store canonical `service_atoll_id` and `service_island_id`.
+- Provider legal registration location must be stored separately from operational base and approved service areas.
+- Exact same-island operational-base providers receive the highest geographic priority.
+- Providers based elsewhere but explicitly approved to serve the target island form the next fallback tier.
+- Same-atoll cross-island expansion may occur only when configured/allowed.
+- Cross-atoll dispatch must never occur silently and requires configured permission, customer authorization where applicable, or administrative authorization.
+- Straight-line GPS radius is supplementary only; it must not replace island identity or transport-feasibility rules.
+- Matching-stage expansion and manual geographic overrides must be auditable.
+- Direct Provider Booking must still pass exact service and geographic eligibility rules.
+- If a direct provider declines or times out, iFixIt must ask the customer before broadening to Smart Matching.
+
+Authoritative detailed specification:
+
+[`LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`](LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md)
+
+If an older document refers only to a generic `location match`, the local-island architecture above takes precedence.
+
+---
+
+## 8. MVP vs Later Phases
 
 ### MVP — Required
 - customer authentication/profile
 - provider onboarding
 - provider verification/admin approval
 - repair catalogue
-- locations/service areas
+- canonical atoll/island location master
+- provider operational base and normalized service areas
 - provider search
 - Direct Provider Booking
 - Smart Matching
+- local-first same-island matching and controlled fallback
+- matching-attempt audit
 - repair request with photos
 - accept/decline
 - scheduling/contact
@@ -202,6 +231,7 @@ Important:
 - advanced warranty operations
 - richer analytics/reporting
 - advanced parts/inventory functions
+- detailed transport schedules/travel-time intelligence
 
 ### Phase 3 — Intelligent/AI Features
 - AI-assisted service selection
@@ -213,7 +243,7 @@ Important:
 
 ---
 
-## 8. Authoritative Workflow Rules
+## 9. Authoritative Workflow Rules
 
 ### Fixed Price
 
@@ -227,13 +257,19 @@ Important:
 
 `Direct Request → Declined/Expired → Ask Customer → Broaden to Smart Matching OR Cancel/Choose Another Provider`
 
+### Local-First Smart Matching
+
+`Canonical Service Island → Exact Local Operational-Base Providers → Target-Island Service-Area Providers → Same-Atoll Fallback if Allowed → Cross-Atoll/Special Dispatch if Explicitly Allowed → Manual Review/No Provider`
+
 ---
 
-## 9. Cross-Document Precedence
+## 10. Cross-Document Precedence
 
 This file is the approved MVP business-model baseline.
 
-If an earlier requirement, wireframe, use case, database note, API note, state machine, or test assumption conflicts with the decisions in this document, this document takes precedence until that source document is synchronized.
+`LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md` is the approved detailed geographic-matching baseline.
+
+If an earlier requirement, wireframe, use case, database note, API note, state machine, or test assumption conflicts with the decisions in these approved baseline documents, the baseline documents take precedence until that source document is synchronized.
 
 Affected documents include:
 - `SYSTEM_REQUIREMENTS_AND_USE_CASES.md`
@@ -251,7 +287,7 @@ Affected documents include:
 
 ---
 
-## 10. Validation Gate Before Production Build
+## 11. Validation Gate Before Production Build
 
 These decisions are approved as the working MVP baseline, but market validation should still confirm:
 - customers want Direct Booking, Smart Matching, or both
@@ -260,12 +296,14 @@ These decisions are approved as the working MVP baseline, but market validation 
 - providers will use the simplified workflow
 - proposed subscription pricing is acceptable
 - initial launch locations/categories have sufficient supply and demand
+- providers accept the proposed local-first/fallback dispatch model
+- cross-island travel and notice rules are operationally realistic
 
 The implementation architecture must remain flexible enough to adjust these configuration-level choices without a redesign.
 
 ---
 
-## 11. Approval Record
+## 12. Approval Record
 
 - [x] Direct Provider Booking approved
 - [x] Smart Matching approved
@@ -275,7 +313,13 @@ The implementation architecture must remain flexible enough to adjust these conf
 - [x] Provider subscriptions retained as MVP monetization
 - [x] Simplified provider operational workflow approved
 - [x] Narrow/configurable launch scope approved
+- [x] Canonical atoll/island IDs approved
+- [x] Registered location separated from operational base/service areas
+- [x] Same-island operational-base priority approved
+- [x] Controlled same-atoll fallback approved
+- [x] Explicit/audited cross-atoll dispatch approved
+- [x] Matching-attempt audit approved
 - [x] Advanced operations deferred to Phase 2
 - [x] AI/intelligent features deferred to Phase 3
 
-**Decision:** This document is now the working MVP business-model source of truth for iFixIt.
+**Decision:** This document is now the working MVP business-model source of truth for iFixIt, together with `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md` for geographic matching.
