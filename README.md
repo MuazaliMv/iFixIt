@@ -59,6 +59,9 @@ The repository is currently in the **pre-coding specification and validation pha
 13. [`STEP_11_UML_SYSTEM_DESIGN.md`](STEP_11_UML_SYSTEM_DESIGN.md)  
     UML implementation blueprint covering system use cases, domain classes, customer repair activity, Maldives local-island matching activity, Smart Matching and Direct Provider Booking sequences, repair-job state lifecycle, component architecture, and cross-document traceability.
 
+14. [`STEP_12_BUSINESS_SPECIFICATION_RECONCILIATION.md`](STEP_12_BUSINESS_SPECIFICATION_RECONCILIATION.md)  
+    Reconciles the comprehensive Maldives Handyman & Local Services business specification with the existing iFixIt blueprint. Adds previously missing/partial requirements such as direct Call/WhatsApp contact, favourites, richer availability, expanded pricing models, subscription entitlements, service catalogue seed scope, provider KPIs, broader reporting, launch/marketing guidance, and long-term expansion while preserving approved MVP and island-matching rules.
+
 ## Approved MVP Business Decisions
 
 - Two booking models: **Direct Provider Booking** and **Smart Matching**.
@@ -73,9 +76,32 @@ The repository is currently in the **pre-coding specification and validation pha
 - Provider legal registration location is kept separate from operational base and approved service areas.
 - Same-atoll and cross-atoll expansion must be explicit, auditable and policy-controlled.
 
+## Newly Reconciled Business Requirements
+
+Step 12 now accounts for additional business requirements that were not fully represented before, including:
+- public Call/WhatsApp provider contact where permitted
+- favourites and saved/default customer locations
+- richer provider profile and verification data
+- pricing presentation models: Fixed, Starting From, Hourly, Inspection Required, Quote Required
+- Available Now / Available Today / By Appointment / Unavailable plus working schedules and overrides
+- urgent vs scheduled geographic/availability rules
+- richer search filters and provider-card content
+- lead inbox/status/timeout architecture
+- configurable subscription entitlements and plan limits
+- detailed local-service catalogue seed candidates
+- provider dashboard KPIs
+- expanded admin/business analytics and churn/retention reporting
+- broader complaint categories and notification preferences
+- mobile-first onboarding and UX refinements
+- featured listings/additional monetization as deferred/configurable capability
+- launch, provider acquisition and customer acquisition guidance
+- enterprise, marine, hospitality, integrated-payment and AI future expansion
+
+Items marked **NEEDS DECISION** in Step 12 are not production-frozen until explicitly approved.
+
 ## Development Gate
 
-Do not treat the documentation as production-approved merely because the files exist. The MVP business decisions above are approved, but customer/provider market validation should still be completed before committing to a full production build. Each step contains an approval checklist. Before production coding begins, any remaining open business decisions should be resolved or explicitly deferred and Steps 5–11 should be reviewed against `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md` and `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`.
+Do not treat the documentation as production-approved merely because the files exist. The MVP business decisions above are approved, but customer/provider market validation should still be completed before committing to a full production build. Each step contains an approval checklist. Before production coding begins, any remaining open business decisions should be resolved or explicitly deferred and Steps 5–12 should be reviewed against `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md`, `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`, and `STEP_12_BUSINESS_SPECIFICATION_RECONCILIATION.md`.
 
 Recommended implementation order after approval:
 
