@@ -1,40 +1,38 @@
-# iFixIt — Step 13: Customer Complaint & Rating System Gap Specification
+# iFixIt — Step 13: Customer Complaint & Rating System
 
-**Document Type:** Gap / Detailed Functional Specification  
-**Status:** Implementation Baseline Input  
-**Version:** 1.0  
+**Document Type:** Detailed Functional Specification  
+**Status:** Synchronized Implementation Baseline Input  
+**Version:** 2.0  
 **Date:** 2026-08-19
 
 ---
 
 ## 1. Purpose
 
-This document records only the complaint, rating, review-response, and moderation requirements that were not already fully represented in the existing iFixIt specification set.
+This document defines the synchronized complaint, rating, review-response and moderation requirements for iFixIt.
 
-Existing complaint/review state machines, permissions, audit rules, customer ownership rules, notification architecture, and MVP payment scope remain authoritative. This document supplements them rather than replacing them.
-
----
-
-## 2. Additional Complaint Entry Points
-
-The following customer complaint entry points must be explicitly supported in the UI:
-
-1. **Job History** — `File Complaint` on an eligible completed/historical job.
-2. **Active Job Detail** — `File Complaint` while a job is still active where policy permits.
-3. **Provider Profile** — `Report an Issue / File Complaint`. If the complaint is job-related, the customer should select the relevant platform job.
-4. **My Complaints / Support** — customer can view complaint history and start a new eligible complaint.
-
-Complaint creation requires authentication.
-
-A job-linked complaint must derive the customer/provider relationship from the selected job; a customer must not be able to fabricate an unrelated provider-job association.
+It supplements the approved MVP, security, authorization, payment and workflow baselines. For implemented structures, committed migrations remain authoritative.
 
 ---
 
-## 3. Complaint Form Additions
+## 2. Complaint Entry Points
 
-### 3.1 Complaint Categories
+Authenticated customers shall be able to start an eligible complaint from:
 
-Explicit customer complaint categories:
+1. Job History
+2. Active Job Detail where policy permits
+3. Provider Profile / Report Issue, with job selection when complaint is job-related
+4. My Complaints / Support
+
+A job-linked complaint must derive the customer/provider relationship from the actual job. Users cannot fabricate unrelated provider/job associations.
+
+Providers may also file supported provider-side complaints where policy permits.
+
+---
+
+## 3. Complaint Categories
+
+Customer complaint categories shall support at least:
 
 - `PROVIDER_NO_SHOW`
 - `POOR_WORKMANSHIP`
@@ -43,161 +41,183 @@ Explicit customer complaint categories:
 - `INCORRECT_INFORMATION`
 - `PROPERTY_DAMAGE`
 - `UNPROFESSIONAL_CONDUCT`
+- `REPEAT_OR_INCOMPLETE_ISSUE`
 - `OTHER`
 
-`UNSAFE_BEHAVIOUR` should support elevated priority/escalation.
+Provider-side categories may include:
 
-### 3.2 Complaint Evidence
+- `ABUSIVE_CUSTOMER`
+- `FRAUDULENT_REQUEST`
+- `UNREASONABLE_DEMAND`
+- `NON_PAYMENT`
+- `OTHER`
 
-Customer may attach complaint evidence:
+Safety-related complaints must support elevated priority/escalation.
 
-- photos — configurable maximum; initial UX recommendation up to 5
-- short video — configurable maximum; initial UX recommendation up to 30 seconds
-- other permitted evidence/document types where enabled
+---
 
-Complaint evidence must be private, authorization-controlled, and linked to the complaint case.
+## 4. Complaint Evidence
 
-### 3.3 Requested Outcome
+Authorized participants may attach controlled private evidence including:
 
-Allow the customer to record a preferred resolution:
+- photos
+- short video where enabled
+- documents/payment evidence where permitted
+- other approved evidence types
 
-- provider redo/remediation
+Limits are configuration/policy values, not hard-coded business constants.
+
+Complaint evidence must remain private and authorization-controlled.
+
+---
+
+## 5. Requested Outcome
+
+A complainant may record a preferred resolution such as:
+
+- redo/remediation
 - mutual agreement
 - refund requested from provider
 - compensation requested from provider
+- clarification/investigation
 - other
 
-**MVP payment rule:** refund/compensation selections are customer-requested outcomes only. iFixIt does not claim to issue repair refunds or compensation while customer-to-provider repair settlement remains outside the platform.
+**MVP financial rule:** refund/compensation are requested outcomes only. iFixIt does not automatically refund or compensate customer repair payments because customer-to-provider repair settlement remains off-platform.
 
 ---
 
-## 4. Complaint Reference & Confirmation UX
+## 6. Complaint Reference & Confirmation
 
-Each submitted complaint must have a human-readable reference such as:
+Each complaint must receive a unique human-readable reference, e.g. `CMP-2026-000042`.
 
-`CMP-2026-000042`
-
-The confirmation screen should show:
+Confirmation should show:
 
 - complaint reference
-- provider/job context
-- submission timestamp
-- current status
-- short explanation of what happens next
-- link to `My Complaints`
+- related job/provider/service context
+- submission time
+- status
+- next-step explanation
+- My Complaints link
 
-Do not promise a fixed 24–48 hour resolution unless an operational SLA is separately approved. The UI may show a configurable service target.
+No fixed resolution SLA may be promised unless separately configured/approved.
 
 ---
 
-## 5. Customer Complaint Tracking
+## 7. Complaint Tracking
 
-Add a customer-facing **My Complaints** screen showing:
+My Complaints should display:
 
-- complaint reference
-- related provider
-- related job/service
+- reference
+- related provider/job/service
 - complaint type
 - filed date
-- current status
+- status
 - latest customer-visible update
-- `View Details`
+- View Details
 
-Complaint detail should provide a chronological customer-visible case timeline.
+Complaint detail should provide a chronological customer-visible timeline while preserving private/admin-only notes separately.
 
 ---
 
-## 6. Expanded Complaint Status Presentation
+## 8. Complaint Status & Priority
 
-The existing complaint state machine remains authoritative, but the UI should support these operational/customer-facing labels where mapped to canonical states:
+Canonical database status names will be finalized in Migration 0009 and formal state matrices. UI labels may map to canonical states without creating duplicate database states.
 
-- New
+Operational presentation should support equivalents of:
+
+- New/Open
 - Under Review
-- Waiting for / Contacted Customer
-- Waiting for / Contacted Provider
+- Waiting for Customer
+- Waiting for Provider
 - Evidence Gathering
 - Resolution Offered
 - Resolved
+- Rejected
 - Closed
 - Escalated
 
-Do not create duplicate database states merely for presentation if an existing canonical state can represent the condition. Use status reason/substate/history where appropriate.
-
----
-
-## 7. Complaint Priority & Escalation
-
-Complaint processing should support priority classification such as:
+Priority should support:
 
 - Critical
 - High
 - Medium
 - Normal
 
-Safety-related complaints, credible property-damage incidents, threats, fraud indicators, or repeated serious provider complaints may be escalated according to admin policy.
-
 Escalation must be auditable.
 
 ---
 
-## 8. Rating Dimensions — Reconciliation
+## 9. Rating Dimensions — RESOLVED
 
-The previously defined iFixIt review model included five detailed dimensions. The newly supplied business guide specifies four dimensions plus overall rating.
+The synchronized MVP review model uses **four customer-visible rating dimensions**:
 
-For consistency and simpler MVP UX, Step 13 recommends the following customer-visible rating dimensions:
+1. **Quality**
+2. **Punctuality**
+3. **Communication**
+4. **Value for Money**
 
-1. **Quality** — workmanship quality
-2. **Punctuality** — timeliness
-3. **Communication** — responsiveness/clarity
-4. **Value for Money** — value relative to price/service
+`overall_rating` is calculated from these four dimensions unless a later explicit approved product change replaces this rule.
 
-`overall_rating` should be calculated from the four dimensions unless a separately approved design allows the customer to submit an independent overall score.
-
-Recommended calculation:
+Default calculation:
 
 `overall_rating = (quality + punctuality + communication + value_for_money) / 4`
 
-If the existing database retains `professionalism`, it may be deprecated, retained for backward compatibility, or folded into Quality/Communication during schema synchronization. This is a reconciliation item that must be resolved before implementation.
+### Professionalism reconciliation
+
+The legacy fifth dimension `professionalism` is **superseded for new MVP review records**. Professional conduct remains covered by Quality/Communication and by complaint categories such as `UNPROFESSIONAL_CONDUCT` where relevant.
+
+Migration 0009 must therefore use the four-dimension model and must not introduce `professionalism` as a required new review field.
+
+If legacy data ever exists from an earlier implementation, it may be retained historically but excluded from the canonical new-review calculation unless an explicit migration rule says otherwise.
 
 ---
 
-## 9. Rating Eligibility & Prompting
+## 10. Rating Eligibility
 
-Only an eligible completed/finalized platform job may generate a verified service review.
+Only an eligible completed/finalized platform job may generate a verified review.
 
-Add explicit rating entry points:
+Rules:
 
-- automatic prompt after eligible job completion/finalization
-- `Rate Now` from Job History
-- optional `Remind Me Later`
+- authenticated customer
+- customer owns/participated in job
+- job reached eligible completion/finalization state
+- one logical verified review per eligible job
+- moderation may affect public visibility
 
-One verified review per eligible job remains the default rule.
+Entry points:
 
-The UI must not show `Rate Again` as a second review. If edits are allowed, the action should be `Edit Review`.
+- automatic prompt after eligible completion/finalization
+- Rate Now from Job History
+- optional Remind Me Later
+
+UI must not offer a second independent `Rate Again` action for the same job.
 
 ---
 
-## 10. Review Form Additions
+## 11. Review Form
 
-Review form should support:
+The review form shall support:
 
-- four rating dimensions
+- Quality 1–5
+- Punctuality 1–5
+- Communication 1–5
+- Value for Money 1–5
 - calculated overall rating
-- written review text
+- written feedback
 - optional completed-work photos
-- optional `Would recommend this provider` boolean
+- optional `would_recommend`
 - submit
 - skip/remind later
 
-Review photos must use the existing media security/visibility model.
+Review media follows the platform media security/visibility model.
 
 ---
 
-## 11. Provider Rating Aggregation
+## 12. Provider Rating Aggregation
 
-Provider public rating should be derived from eligible published/visible verified reviews.
+Public provider rating is derived from eligible published verified reviews.
 
-Recommended aggregates:
+Required aggregates:
 
 - overall average
 - Quality average
@@ -206,316 +226,285 @@ Recommended aggregates:
 - Value for Money average
 - review count
 
-Aggregation rules must exclude removed/invalidated reviews and must avoid double-counting edited versions.
+Removed/invalidated reviews are excluded. Edited versions must not be double counted.
 
-Do not store a manually editable provider rating as the source of truth. Cached aggregates are permitted if recalculable from review records.
+Cached aggregates are allowed when fully recalculable from authoritative review records. Admins/providers cannot manually edit aggregate ratings as source of truth.
 
 ---
 
-## 12. Rating Display Rules
+## 13. Rating Display & Accessibility
 
-Customer-facing profiles/search cards may display:
+Provider profiles/search cards may show:
 
 - average overall rating
 - review count
-- star representation
-- verification badge on reviews where eligible
-- dimension breakdown on provider profile
+- stars
+- verified-service indicator
+- dimension breakdown on profile
 
-Colours may supplement the rating but must never be the only signal; numeric/text values remain visible for accessibility.
+Colour may supplement ratings but cannot be the only signal.
 
 ---
 
-## 13. Verified Review Badge
+## 14. Verified Service Review
 
-A review receives `Verified Service` status only when:
+A review receives Verified Service status only when:
 
-- customer is authenticated
-- review is linked to an eligible iFixIt job
-- customer owns/participated in that job
-- job reached the required completion/finalization state
+- linked to an eligible iFixIt job
+- reviewer is the job customer
+- job reached eligible completion/finalization
 - review has not been invalidated by moderation
 
-No manual/free-standing public review should receive a verified-service badge.
+Free-standing/manual reviews do not receive a Verified Service badge.
 
 ---
 
-## 14. Provider Response to Reviews
-
-Add provider review-response functionality.
+## 15. Provider Response
 
 Provider may:
 
-- view reviews about their own completed jobs/profile
-- submit one public response per review, subject to policy
-- edit their response if policy permits
-- flag a review for moderation
-- request admin review/removal
+- view reviews about their own jobs/profile
+- submit one public response per review subject to policy
+- edit response where policy permits
+- flag review for moderation
 
-Provider response fields should include:
+Provider cannot alter customer rating or review text.
 
-- review_id
-- provider_id
-- response_text
-- created_at
-- updated_at
-- moderation_status if required
+Logical `review_responses` data includes:
 
-Provider cannot alter the customer's rating or review text.
+- review ID
+- provider ID
+- response text
+- moderation state where required
+- created/updated timestamps
 
 ---
 
-## 15. Customer Review Management
+## 16. Customer Review Management
 
-Support architecture for:
+Support:
 
-- `View My Reviews`
-- edit own review within a configurable policy window
-- delete/request deletion within a configurable policy window
-- show edited indicator after material update
+- View My Reviews
+- edit own review within configurable policy
+- delete/request deletion within configurable policy
+- edited indicator
+- history where required for moderation/audit
 
-The supplied guide proposes 30 days to edit and 7 days to delete. These values are **not frozen** and should be configuration/policy decisions rather than hard-coded constants until approved.
-
-Review edit history should be retained where required for moderation/audit integrity.
+Exact edit/delete windows remain configurable and are not frozen in code.
 
 ---
 
-## 16. Review Flagging
-
-Both customer and provider may flag inappropriate review content where relevant.
+## 17. Review Flagging
 
 Flag reasons may include:
 
 - abusive/offensive content
-- personal/private information
+- private/personal information
 - spam
 - fraud/fabrication
 - unrelated content
 - harassment
 - other policy violation
 
-Flagging creates a moderation case/event; it does not automatically remove the review.
+Flagging creates a moderation case/event. It does not automatically remove the review.
 
 ---
 
-## 17. Review Moderation
+## 18. Review Moderation
 
-Admin moderation actions should support:
+Admin actions should support:
 
 - keep/publish
 - hide pending review
 - remove from public display
 - restore
-- warn user
-- suspend/restrict account under separate account policy
+- warn/restrict account under separate policy
 
-Avoid silently editing the substantive meaning of a customer's review. If redaction of prohibited personal data is supported, retain original content privately, record the redaction, actor, reason, and timestamp.
+Substantive customer content should not be silently rewritten. Any permitted personal-data redaction must retain private original content and record actor/reason/timestamp.
 
 Every moderation action must be auditable.
 
 ---
 
-## 18. Review Guidelines / Content Policy
+## 19. Review Content Guidelines
 
-Customer review guidance should explicitly encourage:
+Encourage:
 
-- honest factual description
-- comments about actual work performed
+- factual experience
+- comments about actual work
 - punctuality
 - communication
 - value/price experience
-- optional relevant work photos
+- relevant work photos
 
-Disallow or moderate:
+Moderate/disallow:
 
-- abusive/threatening language
-- unnecessary personal information
-- knowingly false/fabricated claims
-- spam/unrelated advertising
+- threats/abuse
+- unnecessary personal data
+- knowingly fabricated claims
+- spam/advertising
 - harassment/discrimination
 - illegal content
 
 ---
 
-## 19. Notifications Additions
+## 20. Notifications
 
-Add explicit notification events for:
+Customer events include:
 
-### Customer
-- complaint submitted
-- complaint status changed
-- admin requests more information
+- complaint submitted/status changed
+- more information requested
 - resolution offered
 - complaint resolved/closed
 - review reminder
-- provider responds to review
-- review moderation outcome where relevant
+- provider response
+- moderation outcome
 
-### Provider
-- complaint opened against provider when disclosure is permitted
-- admin requests provider evidence/information
-- complaint status/resolution update
+Provider events include:
+
+- complaint opened where disclosure permitted
+- evidence/information requested
+- complaint resolution/status update
 - new review
-- review flag/moderation outcome
+- review moderation/flag outcome
 
-### Admin
+Admin events include:
+
 - new complaint
 - critical/safety complaint
 - escalation
 - flagged review
 
-Channels remain governed by the existing notification adapter/preferences architecture.
+Channels remain controlled by notification preferences/policy. Mandatory safety/security notices may have separate rules.
 
 ---
 
-## 20. Suggested Data Model Additions
+## 21. Planned Data Model — Migration 0009
 
-These are additive requirements to be synchronized into Step 6 rather than a replacement schema.
+### Complaints
 
-### Complaint additions
+Planned fields/entities include:
 
-Recommended fields/entities:
+- `complaint_number`
+- opened-by user
+- related job/request/provider references
+- category
+- description
+- priority
+- requested resolution
+- status
+- assigned admin
+- escalation metadata
+- resolution
+- customer-visible summary
+- evidence links
+- complaint status/timeline history
 
-- `complaint_no`
-- `priority`
-- `requested_resolution`
-- `escalated_at`
-- `escalated_by`
-- `customer_visible_status_summary`
-- complaint evidence links through existing media tables
-- complaint timeline/history events
+### Reviews
 
-### Review additions
+Canonical fields include:
 
-Recommended fields:
-
+- `job_id`
+- `customer_id`
+- `provider_id`
 - `quality`
 - `punctuality`
 - `communication`
 - `value_for_money`
 - `overall_rating`
 - `would_recommend`
-- `edited_at`
-- `moderation_status`
+- feedback
+- moderation status
+- edited timestamps/history as required
 
 ### Review responses
 
-New logical entity `review_responses`:
-
-- `id`
-- `review_id`
-- `provider_id`
-- `response_text`
-- `moderation_status`
-- `created_at`
-- `updated_at`
+Logical entity `review_responses`.
 
 ### Review flags
 
-New logical entity `review_flags`:
-
-- `id`
-- `review_id`
-- `reported_by_user_id`
-- `reason_code`
-- `details`
-- `status`
-- `created_at`
-- `resolved_at`
-- `resolved_by`
+Logical entity `review_flags`.
 
 ---
 
-## 21. Suggested API Additions
+## 22. API Requirements
 
-To synchronize into Step 7:
+Synchronized API surface is maintained in `STEP_7_API_CONTRACTS.md` and `docs/api/API_CATALOGUE.md`.
+
+Required operations include:
 
 ```text
 POST   /complaints
 GET    /me/complaints
-GET    /complaints/{complaint_id}
-POST   /complaints/{complaint_id}/evidence
-POST   /complaints/{complaint_id}/messages-or-updates   [if supported]
+GET    /complaints/{id}
+POST   /complaints/{id}/evidence
+POST   /complaints/{id}/updates
 
 POST   /jobs/{job_id}/review
-PATCH  /reviews/{review_id}
-DELETE /reviews/{review_id}                             [policy-controlled]
 GET    /me/reviews
-POST   /reviews/{review_id}/response
-PATCH  /reviews/{review_id}/response
-POST   /reviews/{review_id}/flag
+PATCH  /reviews/{id}
+DELETE /reviews/{id}                    [policy controlled]
+POST   /reviews/{id}/response
+PATCH  /reviews/{id}/response           [policy controlled]
+POST   /reviews/{id}/flag
 
 GET    /admin/complaints
-PATCH  /admin/complaints/{complaint_id}
-POST   /admin/complaints/{complaint_id}/escalate
-POST   /admin/reviews/{review_id}/moderate
+POST   /admin/complaints/{id}/assign
+POST   /admin/complaints/{id}/escalate
+POST   /admin/complaints/{id}/resolve
+POST   /admin/reviews/{id}/moderate
 ```
 
-All endpoints require existing ownership/relationship/permission rules.
+All endpoints require ownership/relationship/permission/state validation.
 
 ---
 
-## 22. Acceptance Criteria Additions
+## 23. Acceptance Criteria
 
-Add to Step 10 testing:
-
-1. Customer can file a complaint from an eligible active/completed job.
-2. Customer cannot file a job-linked complaint against an unrelated provider.
-3. Complaint receives unique human-readable reference.
-4. Complaint evidence remains private to authorized participants/admins.
-5. Customer can track complaint status/history.
-6. Safety complaint can be elevated/flagged for priority handling.
-7. Requested refund/compensation does not trigger platform payment/refund logic in MVP.
-8. Only eligible completed jobs can create verified reviews.
+1. Customer can file complaint from eligible active/completed job.
+2. Job-linked complaint cannot target unrelated provider/job.
+3. Complaint receives unique reference.
+4. Complaint evidence remains private.
+5. Customer can track complaint history.
+6. Safety complaint can be escalated and audited.
+7. Refund/compensation request does not trigger platform repair-payment refund logic.
+8. Only eligible completed/finalized jobs create verified reviews.
 9. Duplicate verified review for same job is rejected.
-10. Overall rating is calculated consistently from approved dimensions.
-11. Removed reviews are excluded from provider aggregate rating.
-12. Provider can respond only to reviews related to that provider.
-13. Provider cannot alter customer rating/review.
-14. Review flag creates moderation workflow rather than automatic deletion.
-15. Admin moderation action requires permission and audit record.
-16. Review edit/delete windows are enforced from configuration once policy is approved.
-17. Rating colour is not the sole accessibility signal.
-18. Complaint/review notifications respect notification preferences except mandatory safety/security notices where policy allows.
+10. New reviews use exactly four canonical dimensions.
+11. Overall rating is calculated consistently from those four dimensions.
+12. Removed/invalidated reviews are excluded from provider aggregate.
+13. Provider can respond only to its own related reviews.
+14. Provider cannot alter customer review/rating.
+15. Flagging creates moderation workflow rather than automatic removal.
+16. Admin moderation requires permission and audit.
+17. Edit/delete windows are configuration-driven.
+18. Rating colour is not the sole accessibility signal.
+19. Notifications respect applicable preferences/policy.
 
 ---
 
-## 23. Items Already Covered Elsewhere — Not Duplicated as New Rules
+## 24. Remaining Configurable Decisions
 
-The following already exist in the iFixIt blueprint and remain authoritative:
+Still configurable rather than hard-coded:
 
-- customer and provider complaint capability
-- complaint investigation/admin resolution
-- complaint state/history architecture
-- customer dispute on repair completion
-- verified job review principle
-- review moderation permission
-- one review per eligible job
-- review ownership/security
-- provider/customer/admin access controls
-- audit logging for complaint resolution/review moderation
-- notifications framework
-- media/object storage security
-- customer repair payments outside MVP
+- review edit window
+- review deletion/request-deletion window
+- provider response edit policy/window
+- complaint media limits
+- complaint service target/SLA
+- provider-profile complaints without a job
+- exact complaint messaging/update UX
 
----
+### Resolved during synchronization
 
-## 24. Decisions Still Required
+The following is **no longer open**:
 
-The following should remain configurable or undecided until explicitly approved:
-
-- exact customer review edit window
-- exact customer review deletion policy/window
-- whether provider responses can be edited and for how long
-- exact complaint media limits
-- exact complaint service-level target
-- whether public provider profile complaints are allowed without a related job
-- whether an independent overall rating is entered or always calculated
-- final treatment of the legacy `professionalism` rating dimension
-- whether customer/provider complaint messaging is in-platform or handled through support updates only
+- rating dimension count: **four dimensions**
+- `professionalism` as canonical new-review field: **not used for new MVP reviews**
+- overall rating source: **calculated from four dimensions by default**
 
 ---
 
 ## 25. Implementation Rule
 
-When Steps 4, 5, 6, 7, 8, 9, and 10 are synchronized, this document should be used as the detailed source for complaint/rating UX additions while preserving all previously approved security, authorization, geographic, payment, and workflow rules.
+Migration 0009 and related APIs/UI must implement this synchronized four-dimension review model while preserving all approved security, authorization, geographic, payment and job-workflow rules.
