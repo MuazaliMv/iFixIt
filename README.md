@@ -11,6 +11,9 @@ The repository is currently in the **pre-coding specification and validation pha
 0. [`MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md`](MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md)  
    Approved MVP business-model baseline. Defines Direct Provider Booking + Smart Matching, FIXED_PRICE + DIAGNOSIS_REQUIRED service workflows, provider-subscription monetization, simplified provider workflow, narrow/configurable launch scope, and features deferred to later phases. If an older document conflicts with these approved MVP decisions, this file takes precedence until synchronization.
 
+0A. [`LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`](LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md)  
+   Approved Maldives geographic matching baseline. Defines canonical atoll/island master data, provider registered vs operational locations, same-island priority, target-island service areas, controlled same-atoll/cross-atoll fallback, GPS validation, matching audit records, API requirements and acceptance criteria. For geographic matching, this file takes precedence over older generic `location match` statements until synchronization.
+
 ### Foundation
 
 1. [`SYSTEM_REQUIREMENTS_AND_USE_CASES.md`](SYSTEM_REQUIREMENTS_AND_USE_CASES.md)  
@@ -62,14 +65,18 @@ The repository is currently in the **pre-coding specification and validation pha
 - Provider workflow is intentionally simplified for MVP.
 - Launch scope should be narrow operationally but configurable through admin/master data.
 - Advanced operations belong to Phase 2; AI/intelligent capabilities belong to Phase 3.
+- Geographic matching uses canonical **atoll/island IDs**, never free-text island equality.
+- Matching prioritizes providers physically based on the exact service island before controlled fallback.
+- Provider legal registration location is kept separate from operational base and approved service areas.
+- Same-atoll and cross-atoll expansion must be explicit, auditable and policy-controlled.
 
 ## Development Gate
 
-Do not treat the documentation as production-approved merely because the files exist. The MVP business decisions above are approved, but customer/provider market validation should still be completed before committing to a full production build. Each step contains an approval checklist. Before production coding begins, any remaining open business decisions should be resolved or explicitly deferred and Steps 5–10 should be reviewed against `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md`.
+Do not treat the documentation as production-approved merely because the files exist. The MVP business decisions above are approved, but customer/provider market validation should still be completed before committing to a full production build. Each step contains an approval checklist. Before production coding begins, any remaining open business decisions should be resolved or explicitly deferred and Steps 5–10 should be reviewed against `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md` and `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`.
 
 Recommended implementation order after approval:
 
-`Project scaffold → Authentication → Catalogue/Locations → Provider onboarding → Provider search → Direct Booking/Smart Matching → Repair requests → Jobs/Inspections → Fixed-price/Quotation workflows → Repair progress → Reviews/Complaints/Warranty → Subscriptions/Payments → Admin/Reporting → Security/Performance hardening`
+`Project scaffold → Authentication → Canonical Atoll/Island Master → Catalogue/Locations → Provider onboarding → Provider operational bases/service areas → Provider search → Direct Booking/Smart Matching → Local-first matching/fallback → Repair requests → Jobs/Inspections → Fixed-price/Quotation workflows → Repair progress → Reviews/Complaints/Warranty → Subscriptions/Payments → Admin/Reporting → Security/Performance hardening`
 
 ## Core Lifecycles
 
@@ -80,3 +87,7 @@ Recommended implementation order after approval:
 ### DIAGNOSIS_REQUIRED
 
 `Request → Provider/Matching → Acceptance → Inspection → Diagnosis → Quotation → Customer Approval → Repair → Completion → Review / Warranty`
+
+### LOCAL-FIRST MATCHING
+
+`Canonical Service Island → Exact Local Operational-Base Providers → Target-Island Service-Area Providers → Same-Atoll Fallback if Allowed → Cross-Atoll/Special Dispatch if Explicitly Allowed → Manual Review/No Provider`
