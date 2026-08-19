@@ -2,97 +2,84 @@
 
 **Base path:** `/api/v1`  
 **Style:** REST/JSON over HTTPS  
-**Status:** Implementation-facing API catalogue  
+**Status:** Synchronized implementation-facing catalogue  
+**Version:** 2.0  
 **Date:** 2026-08-19
 
-This document consolidates the API surface currently defined across the iFixIt specification set. `STEP_7_API_CONTRACTS.md` remains the detailed contract baseline; this file is the easier implementation/index view and should be updated as migrations `0006`–`0012` are completed.
+This is the compact implementation index for the API. `STEP_7_API_CONTRACTS.md` Version 2.0 is the detailed contract. The database implementation boundary is migrations `0001`–`0006`.
 
-## Core API Rules
+## Core Rules
 
-- Server-side authorization is authoritative; UI visibility is never a permission boundary.
-- UUIDs are the canonical resource identifiers; public ticket/job numbers are display/search references only.
-- Critical write operations use idempotency where appropriate.
-- Unbounded collections are paginated.
-- Private verification, security, complaint, payment-instruction and customer-location data must not leak through public projections.
-- State-changing endpoints validate current entity state, actor relationship and required permissions.
-- Provider actions that create new marketplace work must revalidate provider eligibility.
-- Concurrency conflicts return a conflict response rather than creating duplicate exclusive assignments.
-- Customer repair payments are off-platform; subscription-payment APIs are separate from repair-payment acknowledgement APIs.
-
-## Standard Response Shapes
-
-### Success
-
-```json
-{
-  "data": {},
-  "meta": {}
-}
-```
-
-### Error
-
-```json
-{
-  "error": {
-    "code": "INVALID_STATE_TRANSITION",
-    "message": "This action is not allowed in the current state.",
-    "details": {},
-    "correlation_id": "..."
-  }
-}
-```
-
-### List
-
-```json
-{
-  "data": [],
-  "meta": {
-    "page": 1,
-    "page_size": 25,
-    "total": 0
-  }
-}
-```
+- Server-side authorization is authoritative.
+- UUIDs identify resources; public ticket/job numbers are display/search references.
+- Critical writes use idempotency.
+- Lists are paginated where unbounded.
+- Canonical `atoll_id`/`island_id` are required for geographic operations.
+- Free-text island equality never determines provider eligibility.
+- Direct Booking cannot silently broaden to Smart Matching or another provider.
+- Lead acceptance must use concurrency-safe atomic assignment.
+- `DIAGNOSIS_REQUIRED` work cannot bypass inspection/diagnosis and approval of the current quotation version.
+- Customer repair-payment acknowledgement is separate from provider subscription payments.
+- Private verification, complaint, payment-instruction and customer-location data must not leak through public projections.
 
 ---
 
-## 1. Authentication
+## 1. Authentication — Foundation Implemented
 
 - `POST /auth/otp/request`
 - `POST /auth/otp/verify`
 - `POST /auth/logout`
+- `POST /auth/refresh`
 - `POST /auth/phone-change/request`
 - `POST /auth/phone-change/verify`
 
-Authentication requirements include normalized phone numbers, OTP expiry, attempt/rate limits, replay protection, session creation/revocation and security-event logging.
+Security: normalized phone, OTP expiry/attempt/rate limits, replay protection, secure session rotation/revocation and security-event logging.
 
 ---
 
-## 2. Customer Profile
+## 2. Current User — Foundation Implemented
 
-- `GET /me/customer-profile`
-- `PUT /me/customer-profile`
+- `GET /me`
+- `PATCH /me`
+- `GET /me/roles`
 
-Protected phone-number changes must use the dedicated phone-change OTP flow.
+A separate customer-profile identity resource is not authoritative in the current data model.
 
 ---
 
-## 3. Public Catalogue, Locations & Provider Search
+## 3. Canonical Maldives Geography — Foundation Implemented
+
+- `GET /atolls`
+- `GET /atolls/{atoll_id}`
+- `GET /islands?atoll_id=&serviceable=true&q=`
+- `GET /islands/{island_id}`
+
+The previous generic `/locations` marketplace contract is superseded by canonical atoll/island APIs.
+
+---
+
+## 4. Service Catalogue — Foundation Implemented
 
 - `GET /service-categories`
 - `GET /service-subcategories?category_id=`
 - `GET /repair-services?subcategory_id=&q=`
-- `GET /locations?parent_id=&marketplace_enabled=true`
-- `GET /providers/search?service_id=&location_id=&availability=&rating=&provider_type=&page=`
-- `GET /providers/{provider_id}`
-
-Provider search must use canonical service/location identifiers. Free-text island equality must never determine eligibility.
+- `GET /repair-services/{service_id}`
 
 ---
 
-## 4. Repair Requests
+## 5. Provider Search & Public Profile — Foundation Implemented
+
+- `GET /providers/search?service_id=&island_id=&availability=&rating=&provider_type=&page=`
+- `GET /providers/{provider_id}`
+- `GET /providers/{provider_id}/reviews` `[0009]`
+- `POST /providers/{provider_id}/favourite` `[planned]`
+- `DELETE /providers/{provider_id}/favourite` `[planned]`
+
+Search uses exact service + canonical island and performs hard eligibility before ranking.
+
+---
+
+## 6. Repair Requests — Foundation Implemented
 
 - `POST /repair-requests`
 - `GET /repair-requests/{id}`
@@ -103,57 +90,36 @@ Provider search must use canonical service/location identifiers. Free-text islan
 - `POST /repair-requests/{id}/media`
 - `GET /repair-requests/{id}/timeline`
 
-Final submission should be idempotent. Request creation must preserve exact service, workflow type, canonical service island/atoll and booking mode.
+Request payload preserves booking model, requested provider when Direct Booking, exact service, canonical service atoll/island, urgency, workflow and authorized matching scope.
 
 ---
 
-## 5. Direct Booking & Smart Matching
+## 7. Direct Booking Fallback — Foundation Data Implemented
 
-### Provider Leads
+- `GET /repair-requests/{id}/fallback-options`
+- `POST /repair-requests/{id}/fallback-decision`
 
-- `GET /provider/leads`
-- `GET /provider/leads/{id}`
-- `POST /provider/leads/{id}/accept`
-- `POST /provider/leads/{id}/decline`
-
-### Admin Matching / Assignment
-
-- `GET /admin/repair-requests/unassigned`
-- `GET /admin/repair-requests/{id}/eligible-providers`
-- `POST /admin/repair-requests/{id}/assign`
-- `POST /admin/repair-requests/{id}/reassign`
-
-### Direct Booking Fallback
-
-Implementation should expose customer-authorized fallback actions equivalent to:
-
-- choose another provider
-- convert Direct Booking to Smart Matching
-- cancel request
-
-A Direct Booking request must never silently broaden or silently assign another provider.
-
-Lead acceptance must call the concurrency-safe/atomic assignment path created by Migration `0005` and revalidate lead, request, provider, service, geography, suspension, availability and entitlement state.
+Allowed customer choices: choose another provider, convert to Smart Matching, or cancel.
 
 ---
 
-## 6. Provider Onboarding & Profile
+## 8. Provider Onboarding — Foundation Implemented
 
 - `POST /provider/profile`
 - `GET /provider/profile`
 - `PUT /provider/profile`
 - `PUT /provider/services`
+- `PUT /provider/services/{provider_service_id}/pricing`
 - `PUT /provider/service-areas`
 - `PUT /provider/availability`
+- `PUT /provider/availability/overrides`
 - `POST /provider/application/submit`
 
-Provider APIs must preserve the distinction between legal/registered location, operational base and approved additional service islands.
-
-Provider-service configuration operates on exact service IDs, not broad category membership.
+Legal registration, operational base and approved service islands remain separate.
 
 ---
 
-## 7. Provider Verification
+## 9. Provider Verification — Foundation Implemented
 
 Provider:
 
@@ -169,11 +135,9 @@ Admin:
 - `POST /admin/verifications/{id}/request-information`
 - `POST /admin/verifications/{id}/reject`
 
-Verification documents are private. Approval/rejection requires appropriate permission and audit history.
-
 ---
 
-## 8. Provider Administration
+## 10. Provider Administration — Foundation Implemented
 
 - `GET /admin/providers`
 - `GET /admin/providers/{id}`
@@ -182,90 +146,184 @@ Verification documents are private. Approval/rejection requires appropriate perm
 - `POST /admin/providers/{id}/suspend`
 - `POST /admin/providers/{id}/reactivate`
 
-Reactivation does not automatically bypass verification, subscription, service or geographic eligibility.
+Reactivation never bypasses verification, service, geography or future subscription eligibility.
 
 ---
 
-## 9. Jobs
+## 11. Matching, Leads & Atomic Assignment — Foundation Implemented
 
-Planned for Migration `0006` and subsequent application-service implementation:
+Provider:
+
+- `GET /provider/leads`
+- `GET /provider/leads/{id}`
+- `POST /provider/leads/{id}/view`
+- `POST /provider/leads/{id}/accept`
+- `POST /provider/leads/{id}/decline`
+
+Admin:
+
+- `GET /admin/repair-requests/unassigned`
+- `GET /admin/repair-requests/{id}/eligible-providers`
+- `POST /admin/repair-requests/{id}/assign`
+- `POST /admin/repair-requests/{id}/reassign`
+
+Acceptance must call the atomic path and revalidate lead expiry/ownership, provider hard eligibility, service, geography and active assignment state.
+
+---
+
+## 12. Jobs & Timeline — Database Foundation Implemented in 0006
 
 - `GET /provider/jobs`
 - `GET /me/jobs`
 - `GET /jobs/{id}`
-- `POST /jobs/{id}/start`
+- `GET /jobs/{id}/timeline`
+- `POST /jobs/{id}/schedule`
+- `POST /jobs/{id}/reschedule`
 - `POST /jobs/{id}/progress`
+- `POST /jobs/{id}/start`
 - `POST /jobs/{id}/waiting-for-parts`
+- `POST /jobs/{id}/hold`
 - `POST /jobs/{id}/resume`
-- `POST /jobs/{id}/complete`
-- `POST /jobs/{id}/confirm-completion`
-- `POST /jobs/{id}/dispute-completion`
 
-Each transition validates current state and actor relationship and appends timeline/audit history.
+Application handlers must use the canonical job state machine and relationship checks.
 
 ---
 
-## 10. Inspections
-
-Planned for Migration `0007`:
+## 13. Inspections — Planned 0007
 
 - `POST /jobs/{id}/inspection/schedule`
 - `POST /jobs/{id}/inspection/start`
 - `PUT /jobs/{id}/inspection/diagnosis`
 - `POST /jobs/{id}/inspection/complete`
 
-DIAGNOSIS_REQUIRED services must use the inspection/quotation path before materially charge-changing work proceeds.
-
 ---
 
-## 11. Quotations
-
-Planned for Migration `0007`:
+## 14. Versioned Quotations — Planned 0007
 
 - `POST /jobs/{id}/quotations`
 - `GET /jobs/{id}/quotation`
+- `GET /quotations/{id}/versions`
 - `PUT /quotations/{id}/draft`
 - `POST /quotations/{id}/submit`
 - `POST /quotations/{id}/approve`
 - `POST /quotations/{id}/reject`
 - `POST /quotations/{id}/revise`
 
-Server recalculates totals. Revision creates a new version and preserves history. Customer approval applies only to the current eligible quotation version.
+Server recalculates totals. Approval applies only to the current eligible version. Revision preserves prior versions.
 
 ---
 
-## 12. Parts & Labour
-
-Planned with the job lifecycle:
+## 15. Parts, Labour & Completion — Planned/Extended 0007
 
 - `POST /jobs/{id}/parts`
 - `PATCH /jobs/{id}/parts/{part_id}`
 - `DELETE /jobs/{id}/parts/{part_id}`
 - `POST /jobs/{id}/labour`
 - `PATCH /jobs/{id}/labour/{labour_id}`
-
-Finalized historical records must not be destructively rewritten through ordinary CRUD behavior.
-
----
-
-## 13. Off-Platform Repair Payment Acknowledgement
-
-Planned for Migration `0008`.
-
-Implementation should provide APIs equivalent to:
-
-- get provider accepted payment methods/instructions for an authorized job
-- customer `I Have Paid` declaration
-- provider `Payment Received` acknowledgement
-- view off-platform payment acknowledgement status/history
-- report payment issue
-- upload controlled payment evidence
-
-These endpoints record declarations only. They must never represent the repair payment as processed, escrowed, held, refunded or paid out by iFixIt.
+- `POST /jobs/{id}/complete`
+- `POST /jobs/{id}/confirm-completion`
+- `POST /jobs/{id}/dispute-completion`
 
 ---
 
-## 14. Warranty
+## 16. Off-Platform Repair Payment Acknowledgement — Planned 0008
+
+- `GET /jobs/{id}/payment-methods`
+- `POST /jobs/{id}/payment-acknowledgements/customer-paid`
+- `POST /jobs/{id}/payment-acknowledgements/provider-received`
+- `GET /jobs/{id}/payment-acknowledgement`
+- `POST /jobs/{id}/payment-evidence`
+- `POST /jobs/{id}/payment-issue`
+
+These endpoints record declarations/evidence only. iFixIt does not hold, escrow, split, pay out or automatically refund customer repair money in MVP.
+
+---
+
+## 17. Reviews & Ratings — Planned 0009
+
+Canonical new-review dimensions: Quality, Punctuality, Communication, Value for Money.
+
+- `POST /jobs/{id}/review`
+- `GET /me/reviews`
+- `PATCH /reviews/{id}`
+- `DELETE /reviews/{id}` `[policy controlled]`
+- `GET /providers/{id}/reviews`
+- `POST /reviews/{id}/response`
+- `PATCH /reviews/{id}/response`
+- `POST /reviews/{id}/flag`
+- `POST /admin/reviews/{id}/moderate`
+- `POST /admin/reviews/{id}/hide`
+- `POST /admin/reviews/{id}/restore`
+
+---
+
+## 18. Complaints — Planned 0009
+
+- `POST /complaints`
+- `GET /me/complaints`
+- `GET /complaints/{id}`
+- `POST /complaints/{id}/evidence`
+- `POST /complaints/{id}/updates`
+- `GET /admin/complaints`
+- `POST /admin/complaints/{id}/assign`
+- `POST /admin/complaints/{id}/request-customer-info`
+- `POST /admin/complaints/{id}/request-provider-info`
+- `POST /admin/complaints/{id}/escalate`
+- `POST /admin/complaints/{id}/resolve`
+- `POST /admin/complaints/{id}/reject`
+
+---
+
+## 19. Notifications — Planned 0009
+
+- `GET /me/notifications`
+- `POST /me/notifications/{id}/read`
+- `PUT /me/notification-preferences`
+
+Generation is domain-event driven; delivery failure does not roll back the source business transaction.
+
+---
+
+## 20. Provider Subscriptions & Platform Payments — Planned 0010
+
+Subscriptions:
+
+- `GET /subscription-plans`
+- `GET /provider/subscription`
+- `POST /provider/subscription/select-plan`
+- `POST /provider/subscription/renew`
+- `POST /provider/subscription/cancel`
+
+Platform subscription payments:
+
+- `POST /payments/subscription/initiate`
+- `GET /payments/subscription/{id}`
+- `GET /payments/subscription/{id}/status`
+- `POST /webhooks/payments/{gateway}`
+
+Admin:
+
+- `GET /admin/subscriptions`
+- `POST /admin/subscriptions/{id}/extend`
+- `GET /admin/subscription-payments`
+- `POST /admin/subscription-payments/{id}/reconcile`
+
+Gateway webhooks require signature validation and event idempotency. Browser return pages are not payment authority.
+
+---
+
+## 21. Promotions — Planned 0010
+
+- `GET /provider/promotion`
+- `POST /provider/promotion/acknowledge`
+- admin campaign/stage/eligibility configuration endpoints
+- campaign conversion/retention reporting
+
+Promotional values are configuration-driven and auditable.
+
+---
+
+## 22. Warranty — Planned
 
 - `GET /me/warranties`
 - `GET /warranties/{id}`
@@ -275,114 +333,11 @@ These endpoints record declarations only. They must never represent the repair p
 - `GET /admin/warranty-claims`
 - `POST /admin/warranty-claims/{id}/resolve`
 
-Warranty remains later-phase implementation unless explicitly pulled into MVP sequencing.
-
 ---
 
-## 15. Reviews & Ratings
+## 23. Admin Master Data
 
-Planned for Migration `0009`:
-
-- `POST /jobs/{id}/review`
-- `PATCH /reviews/{id}`
-- `GET /providers/{id}/reviews`
-- provider response endpoint where enabled
-- review flag/report endpoint
-- `POST /admin/reviews/{id}/hide`
-- `POST /admin/reviews/{id}/restore`
-
-Only eligible completed/finalized platform jobs may create verified reviews. Admins must not impersonate customers by authoring customer ratings.
-
----
-
-## 16. Complaints
-
-Planned for Migration `0009`:
-
-- `POST /complaints`
-- `GET /me/complaints`
-- `GET /complaints/{id}`
-- `POST /complaints/{id}/evidence`
-- `GET /admin/complaints`
-- `POST /admin/complaints/{id}/assign`
-- `POST /admin/complaints/{id}/request-customer-info`
-- `POST /admin/complaints/{id}/request-provider-info`
-- `POST /admin/complaints/{id}/resolve`
-- `POST /admin/complaints/{id}/reject`
-
-Complaint evidence and internal notes are private. Any refund/compensation result must be represented as an agreed/reported off-platform outcome unless iFixIt later implements customer-payment processing.
-
----
-
-## 17. Notifications
-
-Planned for Migration `0009`:
-
-- `GET /me/notifications`
-- `POST /me/notifications/{id}/read`
-- `PUT /me/notification-preferences`
-
-Notification generation should be internal/domain-event driven rather than exposed as a general public write endpoint.
-
-Potential delivery adapters include in-app, push, SMS, email and WhatsApp, subject to configuration, consent and provider integration.
-
-Notification failure must not roll back a successful authoritative business transaction such as assignment acceptance.
-
----
-
-## 18. Provider Subscriptions
-
-Planned for Migration `0010`:
-
-- `GET /subscription-plans`
-- `GET /provider/subscription`
-- `POST /provider/subscription/select-plan`
-- `POST /provider/subscription/renew`
-- `GET /admin/subscriptions`
-- `POST /admin/subscriptions/{id}/extend`
-
-Plans such as Starter, Professional and Business must be data/configuration driven.
-
-Migration `0010` must bind authoritative subscription state into the provider matching eligibility gate introduced in Migration `0005`.
-
----
-
-## 19. Promotional Campaigns
-
-Planned for Migration `0010` and based on Steps 14–14A.
-
-API capabilities should include:
-
-- retrieve active launch campaign/stage
-- show provider-specific campaign eligibility and upcoming billing timeline
-- acknowledge promotional pricing terms
-- view Founding Provider designation/benefits
-- admin create/update/activate/deactivate campaign
-- admin configure campaign stages and entitlements
-- campaign conversion/retention reporting
-
-Promotional pricing must remain configuration-driven and historically auditable.
-
----
-
-## 20. Provider Subscription Payments
-
-These are platform payments, not customer repair payments.
-
-- `POST /payments/subscription/initiate`
-- `GET /payments/{id}`
-- `GET /payments/{id}/status`
-- `POST /webhooks/payments/{gateway}`
-- `GET /admin/payments`
-- `POST /admin/payments/{id}/reconcile`
-
-Payment webhooks require signature validation and event idempotency. Browser return URLs must never be treated as authoritative payment success.
-
----
-
-## 21. Admin Master Data
-
-### Services
+Services:
 
 - `POST /admin/service-categories`
 - `PATCH /admin/service-categories/{id}`
@@ -392,25 +347,20 @@ Payment webhooks require signature validation and event idempotency. Browser ret
 - `PATCH /admin/repair-services/{id}`
 - `POST /admin/repair-services/{id}/archive`
 
-### Locations
+Canonical geography:
 
-- `POST /admin/locations`
-- `PATCH /admin/locations/{id}`
-- `POST /admin/locations/{id}/archive`
+- `POST /admin/atolls`
+- `PATCH /admin/atolls/{id}`
+- `POST /admin/islands`
+- `PATCH /admin/islands/{id}`
+- `POST /admin/islands/{id}/disable`
+- `POST /admin/island-aliases`
 
-### Subscription Plans
-
-- `POST /admin/subscription-plans`
-- `PATCH /admin/subscription-plans/{id}`
-- `POST /admin/subscription-plans/{id}/archive`
-
-Normal catalogue expansion should be data-driven and not require code changes.
+Primary canonical IDs remain immutable.
 
 ---
 
-## 22. Admin Operations & Reporting
-
-Planned for Migration `0011`:
+## 24. Admin Reporting & Audit — Planned 0011
 
 - `GET /admin/dashboard`
 - `GET /admin/jobs`
@@ -421,105 +371,50 @@ Planned for Migration `0011`:
 - `GET /admin/reports/quotations`
 - `GET /admin/reports/subscriptions`
 - `GET /admin/reports/supply-demand`
+- `GET /admin/reports/geography`
 - `GET /admin/audit-events`
-
-High-impact administrative corrections require explicit permissions, reason and audit history.
 
 ---
 
-## 23. Authorization Requirements for Every Protected Endpoint
+## 25. Protected Endpoint Authorization
 
 Validate all applicable dimensions:
 
 1. authenticated identity
 2. active account state
 3. role
-4. explicit permission where required
-5. resource ownership/relationship
+4. explicit permission
+5. ownership/relationship
 6. current entity state
-7. provider hard eligibility for actions that create new marketplace work
-8. canonical geography and matching scope when dispatch is involved
+7. provider hard eligibility
+8. canonical geography/matching scope
+9. subscription entitlement where applicable
 
-Changing a UUID in a URL must never permit horizontal privilege escalation.
+Changing a URL UUID must never allow horizontal privilege escalation.
 
 ---
 
-## 24. Idempotency Requirements
+## 26. Idempotent Operations
 
-Require or strongly recommend idempotency for:
+Require/recommend idempotency for:
 
-- submit repair request
-- accept exclusive lead
-- create assignment
-- submit quotation
-- approve quotation
-- complete job
-- customer payment acknowledgement
-- provider receipt acknowledgement
-- initiate subscription payment
+- final repair request submission
+- lead acceptance
+- assignment/reassignment
+- quotation submit/approve
+- job completion/finalization
+- repair-payment declarations
+- subscription payment initiation
 - payment webhook processing
-- submit review
-- complaint resolution where retries are possible
-
-Duplicate retries should return the original logical result where safe.
+- review submission
+- retryable high-impact admin actions
 
 ---
 
-## 25. HTTP Status Guidance
+## 27. Implementation Boundary
 
-- `200` successful read/update
-- `201` created
-- `202` accepted for asynchronous processing
-- `204` success with no response body
-- `400` invalid input
-- `401` unauthenticated
-- `403` authenticated but unauthorized
-- `404` resource not found or deliberately not visible
-- `409` state/concurrency/idempotency conflict
-- `422` business validation failure
-- `429` rate limited
-- `500` unexpected server error
-- `503` temporary dependency unavailable
+**Database foundations implemented:** `0001`–`0006`.
 
----
+**Next required integrity/build step:** Migration `0007`, including the workflow-specific guard that prevents `DIAGNOSIS_REQUIRED` repair from starting before inspection/diagnosis and customer approval of the current quotation version.
 
-## 26. Current Implementation Alignment
-
-Database foundation currently implemented:
-
-- `0001_core_domain.sql`
-- `0002_auth_rbac.sql`
-- `0003_location_catalogue.sql`
-- `0004_provider_onboarding_service_areas_availability.sql`
-- `0005_search_tier_matching_engine.sql`
-
-The API groups most ready for application implementation now are:
-
-- Authentication
-- Customer profile
-- Public catalogue / locations
-- Provider search
-- Provider onboarding
-- Provider services / service areas / availability
-- Verification metadata workflow
-- Repair requests
-- Direct Booking / Smart Matching
-- Provider leads
-- Atomic acceptance / assignment
-
-Later API groups become implementation-ready as migrations `0006`–`0012` are added.
-
-## Source Documents
-
-This catalogue should remain synchronized with:
-
-- `STEP_7_API_CONTRACTS.md`
-- `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md`
-- `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`
-- `STEP_12_BUSINESS_SPECIFICATION_RECONCILIATION.md`
-- `STEP_13_CUSTOMER_COMPLAINT_AND_RATING_SYSTEM.md`
-- `STEP_14_PROVIDER_SUBSCRIPTION_LAUNCH_PROMOTION.md`
-- `STEP_14A_PROVIDER_PROMOTION_UI_MESSAGING_AND_FORECAST.md`
-- `STEP_15_JOB_ACCEPTANCE_AND_CUSTOMER_NOTIFICATION_SYSTEM.md`
-- `STEP_16_OFF_PLATFORM_CUSTOMER_PROVIDER_PAYMENT_CONFIRMATION.md`
-- `docs/architecture/IMPLEMENTED_VS_TARGET_ARCHITECTURE.md`
+Source-of-truth reconciliation: `docs/architecture/SPECIFICATION_SYNCHRONIZATION_BASELINE.md`.
