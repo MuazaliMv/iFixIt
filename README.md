@@ -56,6 +56,9 @@ The repository is currently in the **pre-coding specification and validation pha
 12. [`STEP_10_TEST_CASES_AND_ACCEPTANCE_CRITERIA.md`](STEP_10_TEST_CASES_AND_ACCEPTANCE_CRITERIA.md)  
     Positive, failure, authorization, security, concurrency, performance and end-to-end acceptance criteria.
 
+13. [`STEP_11_UML_SYSTEM_DESIGN.md`](STEP_11_UML_SYSTEM_DESIGN.md)  
+    UML implementation blueprint covering system use cases, domain classes, customer repair activity, Maldives local-island matching activity, Smart Matching and Direct Provider Booking sequences, repair-job state lifecycle, component architecture, and cross-document traceability.
+
 ## Approved MVP Business Decisions
 
 - Two booking models: **Direct Provider Booking** and **Smart Matching**.
@@ -72,7 +75,7 @@ The repository is currently in the **pre-coding specification and validation pha
 
 ## Development Gate
 
-Do not treat the documentation as production-approved merely because the files exist. The MVP business decisions above are approved, but customer/provider market validation should still be completed before committing to a full production build. Each step contains an approval checklist. Before production coding begins, any remaining open business decisions should be resolved or explicitly deferred and Steps 5–10 should be reviewed against `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md` and `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`.
+Do not treat the documentation as production-approved merely because the files exist. The MVP business decisions above are approved, but customer/provider market validation should still be completed before committing to a full production build. Each step contains an approval checklist. Before production coding begins, any remaining open business decisions should be resolved or explicitly deferred and Steps 5–11 should be reviewed against `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md` and `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`.
 
 Recommended implementation order after approval:
 
