@@ -69,7 +69,13 @@ The repository is currently in the **pre-coding specification and validation pha
     Records the provider launch-promotion model: Professional plan MVR 299 standard price, staged Day 1–90 promotional charges, founding-provider designation, lifetime early-adopter discount candidates, billing-timeline UI, promotion notifications, campaign data model, billing controls, reporting, acceptance criteria, and unresolved billing-period/discount-stacking rules.
 
 17. [`STEP_14A_PROVIDER_PROMOTION_UI_MESSAGING_AND_FORECAST.md`](STEP_14A_PROVIDER_PROMOTION_UI_MESSAGING_AND_FORECAST.md)  
-    Captures the remaining provider-promotion details not explicit in Step 14: stage-specific CTAs, pricing acknowledgement flow, billing-schedule/payment actions, annual-plan upsell, Founding Provider badge sharing, editable example campaign messages, truthful scarcity display, and source financial forecast figures as planning assumptions only.
+    Captures the remaining provider-promotion details not explicit in Step 14: stage-specific CTAs, pricing acknowledgement flow, billing-schedule/payment actions, annual-plan upsell, Founding Provider badge sharing, editable example campaign messages, truthful scarcity display, source financial forecast figures as planning assumptions only, and stage-specific commercial objectives/goal tracking.
+
+18. [`STEP_15_JOB_ACCEPTANCE_AND_CUSTOMER_NOTIFICATION_SYSTEM.md`](STEP_15_JOB_ACCEPTANCE_AND_CUSTOMER_NOTIFICATION_SYSTEM.md)  
+    Defines provider acceptance through app/web plus optional WhatsApp/SMS channels, atomic eligibility/concurrency checks, provider message-on-accept, customer confirmation UX, multi-channel notification delivery, timeline updates, delivery-state integrity, and acceptance-race handling.
+
+19. [`STEP_16_OFF_PLATFORM_CUSTOMER_PROVIDER_PAYMENT_CONFIRMATION.md`](STEP_16_OFF_PLATFORM_CUSTOMER_PROVIDER_PAYMENT_CONFIRMATION.md)  
+    Defines the customer-to-provider direct repair-payment bridge: provider payment-method settings, customer payment acknowledgement, provider receipt confirmation, off-platform payment records, disagreement/evidence handling, privacy/security, reporting, and explicit non-goals that keep repair funds outside iFixIt.
 
 ## Approved MVP Business Decisions
 
@@ -87,83 +93,51 @@ The repository is currently in the **pre-coding specification and validation pha
 
 ## Newly Reconciled Business Requirements
 
-Step 12 now accounts for additional business requirements that were not fully represented before, including:
-- public Call/WhatsApp provider contact where permitted
-- favourites and saved/default customer locations
-- richer provider profile and verification data
-- pricing presentation models: Fixed, Starting From, Hourly, Inspection Required, Quote Required
-- Available Now / Available Today / By Appointment / Unavailable plus working schedules and overrides
-- urgent vs scheduled geographic/availability rules
-- richer search filters and provider-card content
-- lead inbox/status/timeout architecture
-- configurable subscription entitlements and plan limits
-- detailed local-service catalogue seed candidates
-- provider dashboard KPIs
-- expanded admin/business analytics and churn/retention reporting
-- broader complaint categories and notification preferences
-- mobile-first onboarding and UX refinements
-- featured listings/additional monetization as deferred/configurable capability
-- launch, provider acquisition and customer acquisition guidance
-- enterprise, marine, hospitality, integrated-payment and AI future expansion
+Step 12 now accounts for additional business requirements that were not fully represented before, including public Call/WhatsApp contact, favourites/saved locations, richer provider/verification data, expanded pricing/availability/search, configurable subscription entitlements, detailed service seed scope, provider KPIs, broader reporting, mobile-first onboarding, launch/marketing guidance and long-term expansion.
 
-Step 13 additionally captures complaint/rating details that were not already explicit, including:
-- complaint entry from Job History, Active Job, Provider Profile and My Complaints
-- complaint reference/tracking timeline and customer-visible status
-- complaint evidence, requested outcomes, priority and escalation
-- review prompt/remind-later flow and `Rate Now` from Job History
-- four customer-visible rating dimensions plus calculated overall rating
-- provider aggregate rating rules
-- provider public responses to reviews
-- customer review edit/delete architecture with configurable windows
-- review flagging and moderation workflow
-- review/complaint API, data and test additions
+Step 13 additionally captures detailed complaint/rating entry points, evidence/tracking, rating calculations, provider responses, review moderation, API/data additions and acceptance criteria.
 
-Step 14 additionally captures the provider launch-pricing strategy that was not previously recorded, including:
-- Professional plan standard price of MVR 299 for the launch campaign baseline
-- Day 1–15 MVR 0 promotional stage
-- Day 16–30 MVR 30 promotional stage
-- Day 31–60 MVR 150 promotional stage
-- Day 61–90 MVR 225 promotional stage
-- Day 91+ / Month 4+ MVR 299 standard stage
-- Founding Provider designation
-- lifetime early-adopter discount candidates of 20% / 15% / 10% / 5% by qualification period
-- provider-facing current/next/future billing schedule
-- launch-promotion notifications and truthful scarcity controls
-- subscription campaign/stage/enrollment/price-schedule data requirements
-- cohort-based campaign analytics and conversion reporting
-- server-authoritative promotion qualification and auditable pricing history
+Steps 14–14A capture staged launch subscription pricing, Founding Provider/lifetime-discount candidates, campaign billing schedule, provider-facing promotion UI, campaign messaging, truthful scarcity controls, annual-plan upsell, campaign objectives, planning forecasts and conversion reporting. The source strategy's stated `MVR 791` first-three-month savings is not treated as a billing constant; final billing-period interpretation remains a commercial decision.
 
-Step 14A additionally records the remaining source details not explicit in Step 14:
-- stage-specific provider CTAs and pricing acknowledgement
-- `View Full Billing Schedule`, payment-method, renew, upgrade and cancel actions
-- optional 12-month-plan upsell driven by configured annual pricing
-- shareable Founding Provider badge/profile asset
-- source campaign notification-copy examples as editable templates
-- remaining-spots UI only when backed by real campaign-capacity data
-- source acquisition/revenue forecast figures preserved as planning assumptions, not billing truth
-- campaign target-vs-actual KPI comparison
+Step 15 additionally captures detailed provider job-acceptance behavior that was not previously explicit:
+- app/web acceptance plus optional verified WhatsApp and SMS acceptance
+- short-lived/signed/replay-resistant external acceptance actions
+- atomic eligibility recheck and assignment-race protection
+- provider acceptance confirmation and optional message to customer
+- customer `Provider Accepted / Job Confirmed` experience
+- push/in-app/SMS/email/WhatsApp notification architecture subject to preferences/policy
+- notification delivery/read state must not be falsely claimed
+- authoritative active-job timeline and provider acceptance metrics
 
-The source strategy's stated `MVR 791` first-three-month savings is not treated as a billing constant. Step 14 records that if Month 1 totals MVR 30, Month 2 MVR 150, and Month 3 MVR 225, the comparison against three standard MVR 299 months yields MVR 492 savings. Final billing-period interpretation remains a commercial decision.
+Step 16 additionally captures the off-platform repair-payment bridge that was not previously explicit:
+- provider-configured accepted payment methods and protected payment instructions
+- customer `I Have Paid` declaration
+- independent provider `Payment Received` confirmation
+- repair-payment record separate from iFixIt subscription-payment transactions
+- mismatched declarations, payment evidence and payment-issue/dispute handling
+- off-platform payment status/history and reporting
+- explicit separation between job completion and payment acknowledgement
+- no escrow, wallet, repair checkout, provider payout, split payment or automatic repair refund in MVP
 
-Items marked **NEEDS DECISION** in Steps 12–14A are not production-frozen until explicitly approved.
+Items marked **NEEDS DECISION** in supporting steps are not production-frozen until explicitly approved.
 
 ## Development Gate
 
-Do not treat the documentation as production-approved merely because the files exist. The MVP business decisions above are approved, but customer/provider market validation should still be completed before committing to a full production build. Each step contains an approval checklist. Before production coding begins, any remaining open business decisions should be resolved or explicitly deferred and Steps 5–14A should be reviewed against `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md`, `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`, `STEP_12_BUSINESS_SPECIFICATION_RECONCILIATION.md`, `STEP_13_CUSTOMER_COMPLAINT_AND_RATING_SYSTEM.md`, `STEP_14_PROVIDER_SUBSCRIPTION_LAUNCH_PROMOTION.md`, and `STEP_14A_PROVIDER_PROMOTION_UI_MESSAGING_AND_FORECAST.md`.
+Do not treat the documentation as production-approved merely because the files exist. The MVP business decisions above are approved, but customer/provider market validation should still be completed before committing to a full production build. Each step contains an approval checklist. Before production coding begins, any remaining open business decisions should be resolved or explicitly deferred and Steps 5–16 should be reviewed against the approved MVP baseline, local-island architecture and supplemental Steps 12–16.
 
 Recommended implementation order after approval:
 
-`Project scaffold → Authentication → Canonical Atoll/Island Master → Catalogue/Locations → Provider onboarding → Provider operational bases/service areas → Provider search → Direct Booking/Smart Matching → Local-first matching/fallback → Repair requests → Jobs/Inspections → Fixed-price/Quotation workflows → Repair progress → Reviews/Complaints/Warranty → Subscriptions/Promotion/Payments → Admin/Reporting → Security/Performance hardening`
+`Project scaffold → Authentication → Canonical Atoll/Island Master → Catalogue/Locations → Provider onboarding → Provider operational bases/service areas → Provider search → Direct Booking/Smart Matching → Local-first matching/fallback → Repair requests → Provider acceptance/customer confirmation → Jobs/Inspections → Fixed-price/Quotation workflows → Repair progress → Off-platform payment acknowledgement → Reviews/Complaints/Warranty → Subscriptions/Promotion/Payments → Admin/Reporting → Security/Performance hardening`
 
 ## Core Lifecycles
 
 ### FIXED_PRICE
 
-`Select Service → Provider/Matching → Booking → Acceptance → Schedule → Service → Completion → Review`
+`Select Service → Provider/Matching → Booking → Acceptance → Schedule → Service → Completion → Off-platform payment acknowledgement where used → Review`
 
 ### DIAGNOSIS_REQUIRED
 
-`Request → Provider/Matching → Acceptance → Inspection → Diagnosis → Quotation → Customer Approval → Repair → Completion → Review / Warranty`
+`Request → Provider/Matching → Acceptance → Inspection → Diagnosis → Quotation → Customer Approval → Repair → Completion → Off-platform payment acknowledgement where used → Review / Warranty`
 
 ### LOCAL-FIRST MATCHING
 
