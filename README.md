@@ -68,6 +68,9 @@ The repository is currently in the **pre-coding specification and validation pha
 16. [`STEP_14_PROVIDER_SUBSCRIPTION_LAUNCH_PROMOTION.md`](STEP_14_PROVIDER_SUBSCRIPTION_LAUNCH_PROMOTION.md)  
     Records the provider launch-promotion model: Professional plan MVR 299 standard price, staged Day 1–90 promotional charges, founding-provider designation, lifetime early-adopter discount candidates, billing-timeline UI, promotion notifications, campaign data model, billing controls, reporting, acceptance criteria, and unresolved billing-period/discount-stacking rules.
 
+17. [`STEP_14A_PROVIDER_PROMOTION_UI_MESSAGING_AND_FORECAST.md`](STEP_14A_PROVIDER_PROMOTION_UI_MESSAGING_AND_FORECAST.md)  
+    Captures the remaining provider-promotion details not explicit in Step 14: stage-specific CTAs, pricing acknowledgement flow, billing-schedule/payment actions, annual-plan upsell, Founding Provider badge sharing, editable example campaign messages, truthful scarcity display, and source financial forecast figures as planning assumptions only.
+
 ## Approved MVP Business Decisions
 
 - Two booking models: **Direct Provider Booking** and **Smart Matching**.
@@ -130,13 +133,23 @@ Step 14 additionally captures the provider launch-pricing strategy that was not 
 - cohort-based campaign analytics and conversion reporting
 - server-authoritative promotion qualification and auditable pricing history
 
+Step 14A additionally records the remaining source details not explicit in Step 14:
+- stage-specific provider CTAs and pricing acknowledgement
+- `View Full Billing Schedule`, payment-method, renew, upgrade and cancel actions
+- optional 12-month-plan upsell driven by configured annual pricing
+- shareable Founding Provider badge/profile asset
+- source campaign notification-copy examples as editable templates
+- remaining-spots UI only when backed by real campaign-capacity data
+- source acquisition/revenue forecast figures preserved as planning assumptions, not billing truth
+- campaign target-vs-actual KPI comparison
+
 The source strategy's stated `MVR 791` first-three-month savings is not treated as a billing constant. Step 14 records that if Month 1 totals MVR 30, Month 2 MVR 150, and Month 3 MVR 225, the comparison against three standard MVR 299 months yields MVR 492 savings. Final billing-period interpretation remains a commercial decision.
 
-Items marked **NEEDS DECISION** in Steps 12–14 are not production-frozen until explicitly approved.
+Items marked **NEEDS DECISION** in Steps 12–14A are not production-frozen until explicitly approved.
 
 ## Development Gate
 
-Do not treat the documentation as production-approved merely because the files exist. The MVP business decisions above are approved, but customer/provider market validation should still be completed before committing to a full production build. Each step contains an approval checklist. Before production coding begins, any remaining open business decisions should be resolved or explicitly deferred and Steps 5–14 should be reviewed against `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md`, `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`, `STEP_12_BUSINESS_SPECIFICATION_RECONCILIATION.md`, `STEP_13_CUSTOMER_COMPLAINT_AND_RATING_SYSTEM.md`, and `STEP_14_PROVIDER_SUBSCRIPTION_LAUNCH_PROMOTION.md`.
+Do not treat the documentation as production-approved merely because the files exist. The MVP business decisions above are approved, but customer/provider market validation should still be completed before committing to a full production build. Each step contains an approval checklist. Before production coding begins, any remaining open business decisions should be resolved or explicitly deferred and Steps 5–14A should be reviewed against `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md`, `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`, `STEP_12_BUSINESS_SPECIFICATION_RECONCILIATION.md`, `STEP_13_CUSTOMER_COMPLAINT_AND_RATING_SYSTEM.md`, `STEP_14_PROVIDER_SUBSCRIPTION_LAUNCH_PROMOTION.md`, and `STEP_14A_PROVIDER_PROMOTION_UI_MESSAGING_AND_FORECAST.md`.
 
 Recommended implementation order after approval:
 
