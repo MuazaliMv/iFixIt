@@ -2,7 +2,7 @@
 
 **Document Type:** Supplemental Commercial UX / Messaging / Planning Specification  
 **Status:** Supplemental Business Input  
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** 2026-08-19
 
 ---
@@ -20,6 +20,8 @@ This appendix adds:
 - Founding Provider badge sharing
 - annual-plan upsell presentation
 - illustrative acquisition/revenue forecast values from the source strategy
+- explicit commercial objective for each launch-pricing stage
+- campaign-goal tracking rules
 
 It does not change any existing approved subscription or MVP rule.
 
@@ -219,7 +221,50 @@ A missed target must never affect provider subscription rights or billing state.
 
 ---
 
-## 11. Acceptance Criteria Additions
+## 11. Launch Stage Business Objectives
+
+The source strategy assigns a commercial objective to each promotional stage. These objectives are now preserved as campaign-planning metadata rather than billing logic.
+
+| Stage | Commercial Objective |
+|---|---|
+| Days 1–15 / MVR 0 | Build the initial provider base as quickly as possible and reduce signup friction. |
+| Days 16–30 / MVR 30 | Maintain provider-acquisition momentum while introducing the first paid conversion. |
+| Days 31–60 / MVR 150 | Transition the provider base toward a normal paid-subscription habit while retaining a strong incentive. |
+| Days 61–90 / MVR 225 | Provide the final discounted transition before standard pricing. |
+| Day 91+ / MVR 299 | Operate the Professional plan at sustainable recurring standard pricing. |
+
+Requirements:
+- objectives may be stored with campaign/stage planning configuration or analytics metadata
+- objectives do not alter eligibility, billing, verification or provider rights
+- the admin reporting layer may compare stage outcomes with these objectives
+- commercial objectives may be edited for future campaigns without altering historical billing records
+
+---
+
+## 12. Campaign Goal Framework
+
+The launch strategy is intended to achieve four primary business outcomes:
+
+1. rapid provider acquisition during launch
+2. gradual transition from free/heavily discounted access to paid subscription
+3. early-adopter retention through Founding Provider recognition and configured lifetime discounts
+4. sustainable recurring provider-subscription revenue after the promotional period
+
+The platform should therefore be able to report, where data is available:
+- registrations and verified activations by campaign stage
+- conversion from free to first paid stage
+- conversion between each paid promotional stage
+- conversion into standard-price subscription
+- retention of Founding Providers versus non-founding providers
+- campaign churn by stage
+- subscription revenue by campaign cohort
+- effect of lifetime discounts on recurring revenue
+
+These are management/reporting requirements only and must not change transactional subscription truth.
+
+---
+
+## 13. Acceptance Criteria Additions
 
 1. A qualifying provider sees a campaign pricing acknowledgement screen before activation where required.
 2. The screen shows current and future charges from campaign price-schedule data.
@@ -233,12 +278,14 @@ A missed target must never affect provider subscription rights or billing state.
 10. Remaining-spots messaging cannot appear unless backed by real campaign capacity data.
 11. Financial forecasts remain separate from transactional subscription data.
 12. Actual campaign metrics can be compared with planning targets without changing billing behavior.
+13. Each launch stage can carry a configurable commercial objective for reporting/planning purposes.
+14. Campaign reports can measure free-to-paid, stage-to-stage and standard-price conversion without changing subscription state.
 
 ---
 
-## 12. Cross-Document Rule
+## 14. Cross-Document Rule
 
-This appendix supplements Step 14 only for UX, messaging and planning details that were not previously explicit.
+This appendix supplements Step 14 only for UX, messaging, campaign objectives and planning details that were not previously explicit.
 
 Authoritative commercial/billing behavior remains in:
 - `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md`
