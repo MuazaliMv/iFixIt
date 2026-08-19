@@ -4,12 +4,13 @@ Repair-service marketplace and workflow platform.
 
 ## Project Status
 
-The project has moved from specification-only work into **early implementation**. The approved business and geographic baselines remain authoritative, and PostgreSQL migrations `0001` through `0005` now implement the initial identity, geography, catalogue, provider, search/matching, lead and assignment foundations.
+The project has moved from specification-only work into **early implementation**. The approved business and geographic baselines remain authoritative, and PostgreSQL migrations `0001` through `0006` now implement the initial identity, geography, catalogue, provider, search/matching, lead/assignment and repair-job lifecycle foundations.
 
 Architecture diagrams describe the **target MVP architecture**. Use the implementation-status matrix to distinguish committed foundations from planned modules and optional integrations.
 
 ## Architecture
 
+- [`docs/architecture/DATA_MODEL_STANDARD.md`](docs/architecture/DATA_MODEL_STANDARD.md) — authoritative PostgreSQL data-model standard: domain-driven normalized relational modeling, canonical master data, explicit state machines, append-oriented history and strict financial-domain separation.
 - [`docs/architecture/CONTEXT_DIAGRAM_OVERVIEW.md`](docs/architecture/CONTEXT_DIAGRAM_OVERVIEW.md) — architecture package index and migration traceability.
 - [`docs/architecture/CONTEXT_DIAGRAM_LEVEL_0.md`](docs/architecture/CONTEXT_DIAGRAM_LEVEL_0.md) — business/system context.
 - [`docs/architecture/CONTEXT_DIAGRAM_LEVEL_1.md`](docs/architecture/CONTEXT_DIAGRAM_LEVEL_1.md) — major platform capabilities.
@@ -31,8 +32,9 @@ The Markdown context diagrams use repo-native Mermaid so they remain reviewable 
 3. [`migrations/0003_location_catalogue.sql`](migrations/0003_location_catalogue.sql) — Island aliases and Category → Subcategory → Exact Service catalogue.
 4. [`migrations/0004_provider_onboarding_service_areas_availability.sql`](migrations/0004_provider_onboarding_service_areas_availability.sql) — Provider exact services, pricing, service areas, availability and verification metadata.
 5. [`migrations/0005_search_tier_matching_engine.sql`](migrations/0005_search_tier_matching_engine.sql) — Tier 0–3 search/matching, matching audit, leads, assignments and atomic acceptance.
+6. [`migrations/0006_repair_jobs_lifecycle.sql`](migrations/0006_repair_jobs_lifecycle.sql) — Repair jobs, job state machine, schedule/status history, progress timeline, request/job synchronization and safe reassignment linkage.
 
-Planned sequence: `0006 Repair Requests & Full Job Lifecycle → 0007 Inspection / Versioned Quotation / Completion → 0008 Off-Platform Payment Acknowledgement → 0009 Reviews / Complaints / Notifications → 0010 Subscriptions / Promotions → 0011 Admin / Reporting → 0012 Security / Performance Hardening`.
+Planned sequence: `0007 Inspection / Versioned Quotation / Completion → 0008 Off-Platform Payment Acknowledgement → 0009 Reviews / Complaints / Notifications → 0010 Subscriptions / Promotions → 0011 Admin / Reporting → 0012 Security / Performance Hardening`.
 
 ## Documentation Roadmap
 
@@ -108,6 +110,7 @@ Before each new migration/application module is considered complete, reconcile i
 
 - `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md`
 - `LOCAL_ISLAND_MATCHING_AND_LOCATION_ARCHITECTURE.md`
+- `docs/architecture/DATA_MODEL_STANDARD.md`
 - `docs/architecture/IMPLEMENTED_VS_TARGET_ARCHITECTURE.md`
 - the applicable detailed Step documents
 - all prior committed migrations
