@@ -4,7 +4,12 @@ Repair-service marketplace and workflow platform.
 
 ## Documentation Roadmap
 
-The repository is currently in the **pre-coding specification phase**. Development should follow the documents below in order.
+The repository is currently in the **pre-coding specification and validation phase**. Development should follow the documents below in order.
+
+### MVP Business Model Baseline
+
+0. [`MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md`](MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md)  
+   Approved MVP business-model baseline. Defines Direct Provider Booking + Smart Matching, FIXED_PRICE + DIAGNOSIS_REQUIRED service workflows, provider-subscription monetization, simplified provider workflow, narrow/configurable launch scope, and features deferred to later phases. If an older document conflicts with these approved MVP decisions, this file takes precedence until synchronization.
 
 ### Foundation
 
@@ -48,14 +53,30 @@ The repository is currently in the **pre-coding specification phase**. Developme
 12. [`STEP_10_TEST_CASES_AND_ACCEPTANCE_CRITERIA.md`](STEP_10_TEST_CASES_AND_ACCEPTANCE_CRITERIA.md)  
     Positive, failure, authorization, security, concurrency, performance and end-to-end acceptance criteria.
 
+## Approved MVP Business Decisions
+
+- Two booking models: **Direct Provider Booking** and **Smart Matching**.
+- Two service workflows: **FIXED_PRICE** and **DIAGNOSIS_REQUIRED**.
+- Customer repair settlement remains outside MVP; customers pay providers directly/off-platform.
+- Provider subscription payments remain in scope and are the initial monetization model.
+- Provider workflow is intentionally simplified for MVP.
+- Launch scope should be narrow operationally but configurable through admin/master data.
+- Advanced operations belong to Phase 2; AI/intelligent capabilities belong to Phase 3.
+
 ## Development Gate
 
-Do not treat the documentation as production-approved merely because the files exist. Each step contains an approval checklist. Before production coding begins, the open business decisions should be resolved or explicitly deferred and Steps 5–10 should be reviewed as the implementation baseline.
+Do not treat the documentation as production-approved merely because the files exist. The MVP business decisions above are approved, but customer/provider market validation should still be completed before committing to a full production build. Each step contains an approval checklist. Before production coding begins, any remaining open business decisions should be resolved or explicitly deferred and Steps 5–10 should be reviewed against `MVP_BUSINESS_MODEL_AND_SCOPE_FREEZE.md`.
 
 Recommended implementation order after approval:
 
-`Project scaffold → Authentication → Catalogue/Locations → Provider onboarding → Repair requests → Matching/Assignment → Jobs/Inspections → Quotations → Repair progress → Warranty/Reviews/Complaints → Subscriptions/Payments → Admin/Reporting → Security/Performance hardening`
+`Project scaffold → Authentication → Catalogue/Locations → Provider onboarding → Provider search → Direct Booking/Smart Matching → Repair requests → Jobs/Inspections → Fixed-price/Quotation workflows → Repair progress → Reviews/Complaints/Warranty → Subscriptions/Payments → Admin/Reporting → Security/Performance hardening`
 
-## Core Lifecycle
+## Core Lifecycles
 
-`Request → Assignment → Inspection → Quotation → Approval → Repair → Completion → Review → Warranty / Closure`
+### FIXED_PRICE
+
+`Select Service → Provider/Matching → Booking → Acceptance → Schedule → Service → Completion → Review`
+
+### DIAGNOSIS_REQUIRED
+
+`Request → Provider/Matching → Acceptance → Inspection → Diagnosis → Quotation → Customer Approval → Repair → Completion → Review / Warranty`
