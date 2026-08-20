@@ -1,23 +1,23 @@
 # iFixIt — Provider Geographic Service Coverage Baseline
 
-**Status:** Approved architecture baseline  
+**Status:** FROZEN / APPROVED BASELINE  
 **Date:** 2026-08-20
 
-## 1. Geographic Hierarchy
+## 1. Canonical Geographic Hierarchy
 
-The provider geographic mapping model shall use the following canonical hierarchy:
+The platform shall use the following canonical Maldives hierarchy for provider coverage and service routing:
 
 ```text
-Atoll
-↓
-City OR Island
-↓
-Island / District / Ward / Phase
-↓
-FixIt Service Area
+Maldives
+→ Atoll
+→ City OR Island
+→ Island / District / Ward / Phase
+→ FixIt Service Area
 ```
 
 The FixIt Service Area is the lowest applicable canonical serviceable node used for provider coverage and matching.
+
+All provider geographic references must resolve through canonical `locations.location_id` values. Geographic names are display/reference data and must not replace canonical IDs.
 
 ## 2. Provider Types
 
@@ -28,60 +28,74 @@ COMPANY
 FREELANCER
 ```
 
+A provider must follow the coverage rules of its provider type.
+
 ## 3. Provider Company Coverage
 
-A provider company may operate in zero, one, or many FixIt Service Areas.
-
-Recommended relationship:
+Approved rule:
 
 ```text
-Provider Company
-1 → many Provider Service Areas
+COMPANY
+→ 0..many FixIt Service Areas
 ```
+
+A Provider Company may operate in zero, one, or many FixIt Service Areas.
 
 A company may be created without service areas. In that state it remains registered but hidden from location-specific customer search/matching.
 
-Once service areas are configured, the company appears only in the areas explicitly assigned and permitted by its active provider/service rules.
+Once service areas are configured, the company appears only in the service areas explicitly assigned and permitted by its active provider/service rules.
 
-Recommended junction table concept:
+Recommended junction concept:
 
 ```text
 provider_service_areas
 - provider_service_area_id
-- provider_id
+- provider_company_id
 - service_area_location_id
 - is_active
 - effective_from
 - effective_to
 ```
 
-## 4. Individual Provider Coverage
+## 4. Freelancer Coverage
 
-For the current MVP business rule, an individual/freelancer provider is restricted to exactly one FixIt Service Area.
+Approved rule:
+
+```text
+FREELANCER
+→ exactly 1 FixIt Service Area
+→ many approved service categories
+→ many services within approved categories
+```
+
+A Freelancer is an independent marketplace provider and must be assigned to exactly one canonical FixIt Service Area.
 
 Recommended direct relationship:
 
 ```text
-individual_provider.service_area_location_id
+freelancers.service_area_location_id
 → locations.location_id
 ```
 
-This must reference a canonical serviceable location node.
+The service-area foreign key must point to the canonical FixIt Service Area and must not be hard-coded to a specific subtype such as Ward.
 
-The one-region restriction is a business rule for the current architecture. The canonical location system itself must remain flexible enough to support future policy changes without redesigning location master data.
+A FixIt Service Area may correspond to a Ward, Phase, District, Island, or another approved serviceable node depending on the actual location structure.
+
+Freelancers may hold multiple service-category approvals. Only approved categories may participate in customer search/matching. A freelancer may offer multiple services, but each publicly offered service must belong to a category that is approved for that freelancer.
 
 ## 5. Visibility Rules
 
 ```text
-Company with 0 service areas
+Company with 0 active service areas
 → registered but hidden from location-specific search
 
 Company with active service areas
 → visible only in assigned/eligible service areas
 
-Individual provider
-→ must have exactly 1 service area
+Freelancer
+→ must have exactly 1 FixIt Service Area
 → visible only in that service area
+→ visible only for approved categories and active offered services
 ```
 
 ## 6. Hierarchical Search
@@ -134,25 +148,31 @@ Customer selected location
 → return matching providers
 ```
 
+For freelancers, matching must also validate that the requested service belongs to an approved freelancer category and is an active offered service.
+
 ## 9. Service-Area Target
 
-Company coverage and individual provider location must point to the canonical FixIt Service Area record rather than hard-coding the database to a specific geographic subtype such as Ward or Phase.
+Company coverage and freelancer location must point to the canonical FixIt Service Area record rather than hard-coding the database to a specific geographic subtype such as Ward or Phase.
 
-A FixIt Service Area may correspond to an approved Ward, Phase, District, Island, or other canonical lowest serviceable node depending on the actual location structure.
-
-## 10. Approved Core Model
+## 10. Frozen Core Model
 
 ```text
-Provider
-├── Company
+Maldives
+→ Atoll
+→ City OR Island
+→ Island / District / Ward / Phase
+→ FixIt Service Area
+
+PROVIDER
+├── COMPANY
 │   └── 0..many FixIt Service Areas
 │
-└── Individual / Freelancer
-    └── exactly 1 FixIt Service Area
-
-FixIt Service Area
-└── canonical location hierarchy
-    └── Atoll → City OR Island → Island / District / Ward / Phase
+└── FREELANCER
+    ├── exactly 1 FixIt Service Area
+    ├── many approved service categories
+    └── many services within approved categories
 ```
 
-This document is the approved implementation baseline for provider geographic mapping and location-specific visibility/search in iFixIt.
+## 11. Final Frozen Principle
+
+Geographic matching is controlled by canonical FixIt Service Areas. Companies may cover zero or many service areas. Freelancers are restricted to exactly one service area but may qualify for multiple approved service categories and multiple active services within those approved categories.
