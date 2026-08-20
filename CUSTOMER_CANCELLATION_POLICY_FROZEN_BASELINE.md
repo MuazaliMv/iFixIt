@@ -2,119 +2,201 @@
 
 **Status:** FROZEN / APPROVED BASELINE  
 **Date:** 2026-08-20  
-**Scope:** Customer cancellation behavior for PENDING, ACCEPTED, and IN_PROGRESS service requests.
+**Scope:** Customer cancellation behavior across PENDING, RESPONDED, ACCEPTED, INSPECTION_SCHEDULED, IN_PROGRESS, CANCELLED, and COMPLETED service-request states.
 
 ## 1. Request Lifecycle States
 
-High-level request lifecycle states:
+Approved high-level request lifecycle states:
 
 ```text
 PENDING
+RESPONDED
 ACCEPTED
+INSPECTION_SCHEDULED
 IN_PROGRESS
 CANCELLED
 COMPLETED
 ```
 
-Provider-offer response states are governed separately and must not be mixed into the service-request lifecycle.
+Provider-response records are governed separately. The service request may move to RESPONDED when one or more eligible providers have responded and the customer has not yet selected a provider.
 
-## 2. PENDING Cancellation
+## 2. Zero-Fee Principle Before Work Starts
+
+The approved MVP policy is zero-fee customer cancellation for every pre-IN_PROGRESS lifecycle state.
 
 ```text
 PENDING
-→ free cancellation
+RESPONDED
+ACCEPTED
+INSPECTION_SCHEDULED
+→ customer may cancel
+→ ZERO FEE
+```
+
+No automatic cancellation penalty is charged in these states.
+
+## 3. PENDING Cancellation
+
+```text
+PENDING
+→ customer can cancel
+→ ZERO FEE
 ```
 
 Rules:
 - Customer may cancel immediately.
 - No cancellation fee or penalty applies.
-- Any active provider offer must be closed/cancelled as part of the cancellation transaction.
-- Cancellation event must be timestamped and audit logged.
+- Any open provider-response/matching activity must be closed as part of cancellation.
+- Cancellation must be timestamped and audit logged.
 
-## 3. ACCEPTED Cancellation — Grace Period
+## 4. RESPONDED Cancellation
 
 ```text
-ACCEPTED within grace
-→ free cancellation
+RESPONDED
+→ customer can cancel
+→ ZERO FEE
 ```
 
 Rules:
-- A configurable cancellation grace period begins when the provider accepts the job.
-- Default configuration:
+- Customer may cancel while provider responses are available but before a provider is selected.
+- All active response-selection activity for the request must be closed.
+- Responding providers must no longer be able to become selected for the cancelled request.
+- No cancellation fee or penalty applies.
+
+## 5. ACCEPTED Cancellation
+
+```text
+ACCEPTED
+→ customer can cancel
+→ selected provider released
+→ ZERO FEE
+```
+
+Rules:
+- ACCEPTED means the customer has selected a provider.
+- Customer may cancel the request before work begins.
+- Selected provider is released immediately.
+- Cancellation reason is recorded according to platform policy.
+- Provider is notified.
+- No cancellation fee or penalty applies.
+
+A configurable grace period may still be retained for messaging, analytics, or operational reporting:
 
 ```text
 accepted_cancellation_grace_minutes = 5
 ```
 
-- Customer may cancel freely during the grace period.
-- Provider is released immediately.
-- Cancellation must be recorded and the provider notified.
+The grace period does not change the zero-fee financial outcome.
 
-## 4. ACCEPTED Cancellation — After Grace Period
+## 6. INSPECTION_SCHEDULED Cancellation
 
 ```text
-ACCEPTED after grace
-→ cancellation allowed
+INSPECTION_SCHEDULED
+→ customer can cancel
+→ inspection cancelled
 → provider released
-→ reason recorded
-→ fee only if separately approved
+→ ZERO FEE
 ```
 
 Rules:
-- Customer may still request/perform cancellation after the grace period subject to the platform workflow.
-- Provider is released immediately once cancellation is confirmed.
-- Cancellation reason must be recorded.
-- No automatic cancellation fee is part of this baseline.
-- A fee may apply only if a separate commercial/payment policy is explicitly approved and enabled.
-- Any future fee policy must define amount/calculation, eligibility, exceptions, provider compensation, collection, refunds, and provider-fault scenarios separately.
+- Customer may cancel after an inspection date/time has been agreed but before physical work begins.
+- The scheduled inspection must be cancelled.
+- Selected provider is released immediately.
+- Customer/provider notifications must be issued.
+- No cancellation fee or penalty applies.
 
-## 5. IN_PROGRESS Cancellation
+The canonical request-status value is:
+
+```text
+INSPECTION_SCHEDULED
+```
+
+Backend transitions must use:
+
+```text
+update_request_status(request_id, 'INSPECTION_SCHEDULED')
+```
+
+and not `IN_SPECTION_SCHEDULED`.
+
+## 7. IN_PROGRESS Cancellation
 
 ```text
 IN_PROGRESS
-→ no simple self-cancellation
-→ provider confirmation or admin intervention
+→ no direct self-cancellation
+→ provider/admin review required
 ```
 
 Rules:
-- Customer must not have a simple one-click self-cancellation path once work is IN_PROGRESS.
-- Cancellation requires either provider confirmation or authorized administrative intervention.
-- The exact advanced onsite/shift-active cancellation workflow is outside this freeze and will be designed separately.
+- Customer must not have a simple one-click direct cancellation once physical work has begun.
+- Customer may request cancellation/review.
+- Provider confirmation or authorized administrative intervention is required.
+- The exact active-job cancellation review workflow remains a separate implementation module.
 
-## 6. Audit and History
+## 8. COMPLETED and CANCELLED
+
+- COMPLETED requests are not eligible for customer cancellation.
+- CANCELLED requests cannot be cancelled again.
+- Any dispute, support, or completion challenge must use the applicable post-work workflow rather than cancellation.
+
+## 9. Audit and History
 
 All cancellations must preserve service-request history.
 
-At minimum, the system must retain:
+At minimum, retain:
 - service_request_id
 - previous_status
-- cancellation_stage
 - cancelled_at
 - cancelled_by
-- cancellation_reason where required
-- whether the cancellation occurred within the accepted grace period
-- provider release timestamp where applicable
+- cancellation_reason where applicable
+- selected provider release timestamp where applicable
+- inspection cancellation timestamp where applicable
+- relevant provider-response history
 
-Cancellation must not delete the service request or erase prior provider-offer/job history.
+Cancellation must not delete the service request or erase prior provider-response, provider-selection, scheduling, or job history.
 
-## 7. Frozen Principle
+## 10. Frozen State Transition Principle
 
 ```text
 PENDING
-→ free cancellation
+→ customer can cancel
+→ ZERO FEE
 
-ACCEPTED within grace
-→ free cancellation
+RESPONDED
+→ customer can cancel
+→ ZERO FEE
 
-ACCEPTED after grace
-→ cancellation allowed
+ACCEPTED
+→ customer can cancel
+→ selected provider released
+→ ZERO FEE
+
+INSPECTION_SCHEDULED
+→ customer can cancel
+→ inspection cancelled
 → provider released
-→ reason recorded
-→ fee only if separately approved
+→ ZERO FEE
 
 IN_PROGRESS
-→ no simple self-cancellation
-→ provider confirmation or admin intervention
+→ no direct self-cancellation
+→ provider/admin review required
 ```
 
-The grace period is configurable, with a default of 5 minutes from provider acceptance. Cancellation workflow and cancellation-fee policy remain separate concerns.
+## 11. Approved Lifecycle Context
+
+```text
+PENDING
+→ RESPONDED
+→ ACCEPTED
+→ INSPECTION_SCHEDULED
+→ IN_PROGRESS
+→ COMPLETED
+```
+
+Alternative terminal state before completion:
+
+```text
+CANCELLED
+```
+
+This document supersedes the earlier fee-contingent accepted-stage cancellation wording. The approved MVP baseline is now zero-fee cancellation in all pre-IN_PROGRESS states.
