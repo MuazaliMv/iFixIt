@@ -180,8 +180,12 @@ service_request_contacts
 contact_id
 service_request_id
 
-contact_name
-contact_phone
+contact_source
+customer_id
+saved_contact_id
+contact_name_snapshot
+contact_phone_snapshot
+
 contact_role
 contact_notes
 
@@ -196,11 +200,55 @@ created_at
 updated_at
 ```
 
+Recommended `contact_source` values:
+
+```text
+CUSTOMER
+SAVED_CONTACT
+MANUAL
+```
+
+When `contact_source = CUSTOMER`, `customer_id` references the booking customer. Snapshot fields preserve the contact details that were in effect for that request.
+
 ---
 
-## 6. Primary and Secondary Contacts
+## 6. Default Booking-Customer Contact Rule
 
-A request may have any number of active on-site contacts, but normally only one should be marked as the primary contact.
+Every service request must have at least one on-site contact.
+
+By default, the person who books the service is automatically the primary on-site contact.
+
+```text
+Booking Customer
+= Default Primary On-Site Contact
+```
+
+Recommended customer UI:
+
+```text
+Who should the provider contact on arrival?
+
+(•) Me — Booking Customer
+( ) Someone else
+
+[ + Add another contact ]
+```
+
+The customer may:
+
+- keep themselves as the primary contact;
+- add one or many additional contacts;
+- make another active contact the primary contact;
+- keep themselves as a secondary contact after assigning another primary contact;
+- remove themselves from on-site contact duties where at least one other valid active contact remains.
+
+Changing the on-site contact does not change ownership of the service request.
+
+---
+
+## 7. Primary and Secondary Contacts
+
+A request may have any number of active on-site contacts, but only one active contact should be marked as the primary contact.
 
 Example:
 
@@ -208,23 +256,23 @@ Example:
 Request #1234
 
 On-Site Contacts
-1. Ahmed — Primary Contact
-2. Fathimath — Secondary Contact
+1. Booking Customer — Primary Contact
+2. Ahmed — Secondary Contact
 3. Building Security — Access Contact
 ```
 
 Recommended constraint:
 
 ```text
-At most one active contact per service_request_id
-may have is_primary_contact = true
+Exactly one active contact per active service request
+must have is_primary_contact = true
 ```
 
-If the primary contact becomes inactive, the customer may promote another active contact.
+If the primary contact becomes inactive, another active contact must be promoted before the change is completed.
 
 ---
 
-## 7. Contact Authority Levels
+## 8. Contact Authority Levels
 
 Recommended values:
 
@@ -253,7 +301,7 @@ unless the request owner explicitly grants a higher level.
 
 ---
 
-## 8. Request-Owner Authority
+## 9. Request-Owner Authority
 
 The request owner remains responsible for protected actions unless specific delegation is added later.
 
@@ -273,34 +321,36 @@ These rights must remain with the request owner or be governed by a separate exp
 
 ---
 
-## 9. Customer UI
+## 10. Customer UI
 
 Recommended contact selector:
 
 ```text
 Who should the provider contact on arrival?
 
-(•) Me
+(•) Me — Booking Customer
 ( ) Someone else
+
+[ + Add another contact ]
 ```
 
-If the customer selects someone else:
+If the customer adds more people:
 
 ```text
 On-Site Contacts
 
-Primary Contact
-Name
-[____________]
+PRIMARY
+Booking Customer
+[ Phone ]
 
-Phone
-[____________]
+SECONDARY
+Ahmed
+Brother
+[ Phone ]
 
-Role / Relationship
-[____________]
-
-Instructions
-[____________]
+ACCESS CONTACT
+Building Security
+[ Phone ]
 
 [ + Add Another Contact ]
 ```
@@ -319,7 +369,7 @@ Share with Provider toggle
 
 ---
 
-## 10. Provider UI
+## 11. Provider UI
 
 Once the provider is authorized to see job details:
 
@@ -327,16 +377,12 @@ Once the provider is authorized to see job details:
 On-Site Contacts
 
 PRIMARY
-Ahmed
-Brother
+Booking Customer
 [ Call ] [ Message ]
 
-Arrival note:
-Call Ahmed when you reach the lobby.
-
 SECONDARY
-Fathimath
-Tenant
+Ahmed
+Brother
 [ Call ] [ Message ]
 
 ACCESS CONTACT
@@ -347,13 +393,14 @@ Building Security
 The provider UI should clearly distinguish:
 
 - request owner
+- booking customer
 - primary on-site contact
 - secondary contacts
 - access-only contacts
 
 ---
 
-## 11. Provider Visibility Rule
+## 12. Provider Visibility Rule
 
 Before provider acceptance / assignment:
 
@@ -384,22 +431,25 @@ Visible:
 
 ---
 
-## 12. Contact Validation Rules
+## 13. Contact Validation Rules
 
 Recommended validation:
 
-- `service_request_id` must reference an existing request.
-- `contact_name` is required for a non-owner contact.
-- `contact_phone` is required when the provider is expected to call or message that contact.
-- only active contacts may be displayed to providers.
-- only one active primary contact should exist per request.
-- a contact marked `share_with_provider = false` must not be exposed in provider-facing APIs.
-- changing the primary contact must be auditable.
+- every active service request must have at least one active on-site contact;
+- exactly one active on-site contact must be primary;
+- the booking customer is created as the default primary contact when the request is created;
+- `service_request_id` must reference an existing request;
+- `contact_name_snapshot` is required for a non-customer contact;
+- `contact_phone_snapshot` is required when the provider is expected to call or message that contact;
+- only active contacts may be displayed to providers;
+- a contact marked `share_with_provider = false` must not be exposed in provider-facing APIs;
+- changing the primary contact must be auditable;
+- removing the booking customer as the on-site contact must not transfer request ownership;
 - deleting a contact already used in an active job should normally be soft-delete / deactivate rather than destructive deletion.
 
 ---
 
-## 13. Audit Events
+## 14. Audit Events
 
 Audit at minimum:
 
@@ -420,7 +470,7 @@ Each event should include actor, timestamp, request ID, previous value where app
 
 ---
 
-## 14. Recommended API Shape
+## 15. Recommended API Shape
 
 Conceptual resources:
 
@@ -438,7 +488,7 @@ Provider-facing responses must filter contact/address fields according to author
 
 ---
 
-## 15. Example Request
+## 16. Example Request
 
 ```text
 Service: AC Repair
@@ -462,8 +512,8 @@ Request Owner:
 Customer A
 
 On-Site Contacts:
-1. Ahmed — Primary — CONTACT_ONLY
-2. Fathimath — Secondary — ACCESS_COORDINATION
+1. Customer A — Booking Customer — Primary — CONTACT_ONLY
+2. Ahmed — Secondary — CONTACT_ONLY
 3. Building Security — Access Contact — ACCESS_COORDINATION
 ```
 
@@ -475,7 +525,7 @@ Provider arrival coordination uses the one-to-many on-site contacts.
 
 ---
 
-## 16. Final Rule
+## 17. Final Rule
 
 The implementation must preserve the following separation:
 
@@ -483,11 +533,14 @@ The implementation must preserve the following separation:
 WHO OWNS THE REQUEST?
 = Customer / Request Owner
 
+WHO IS CONTACTED BY DEFAULT?
+= Booking Customer as Primary On-Site Contact
+
 WHERE IS THE JOB?
 = Canonical Location + Service Address + Optional Geo Coordinates
 
-WHO CAN HELP THE PROVIDER ON SITE?
-= One or Many On-Site Contacts
+WHO ELSE CAN HELP THE PROVIDER ON SITE?
+= Zero or Many Additional On-Site Contacts
 
 WHO MAY MAKE PROTECTED JOB DECISIONS?
 = Request Owner unless explicitly delegated by a separate authorization model
