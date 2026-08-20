@@ -1,0 +1,496 @@
+# iFixIt — Service Address & On-Site Contact Model
+
+**Status:** Approved implementation reference  
+**Date:** 2026-08-20  
+**Scope:** Customer service addresses, precise geo coordinates, location sharing, and one-to-many on-site contacts for service requests.
+
+---
+
+## 1. Core Principle
+
+A service request must separate three concepts:
+
+```text
+Request Owner
+    ↓
+Service Address / Service Location
+    ↓
+One or More On-Site Contacts
+```
+
+The customer who creates the request remains the request owner unless a separate authorization model explicitly grants additional rights.
+
+On-site contacts exist to help the provider reach, access, and coordinate work at the service location. They do not automatically become owners of the request.
+
+---
+
+## 2. Service Address Model
+
+Recommended service-address fields:
+
+```text
+service_address_id
+customer_id
+
+location_id
+atoll_id
+city_id
+island_id
+ward_or_district_id
+
+house_name
+building_name
+apartment_unit
+street_name
+road_name
+block_or_zone
+
+landmark
+address_notes
+postal_code
+
+latitude
+longitude
+
+address_type
+is_default
+is_verified
+created_at
+updated_at
+```
+
+`location_id` is the canonical FixIt location reference and remains authoritative for geographic matching.
+
+Latitude and longitude are supplementary precision data used for map display, directions, validation, and navigation.
+
+---
+
+## 3. Customer Address Entry Options
+
+The customer may provide an address through any combination of:
+
+- canonical location selection
+- house or building name
+- street / road
+- apartment / unit
+- landmark
+- written directions
+- current device location
+- dropped map pin
+
+Recommended UI:
+
+```text
+Where should the provider come?
+
+Atoll
+[ Kaafu Atoll ]
+
+City / Island
+[ Malé City ]
+
+Area
+[ Hulhumalé ]
+
+House / Building
+[ __________________ ]
+
+Street / Road
+[ __________________ ]
+
+Apartment / Unit
+[ __________________ ]
+
+Landmark
+[ __________________ ]
+
+Additional directions
+[ ______________________________ ]
+
+[ Use Current Location ]
+[ Drop Pin on Map ]
+```
+
+---
+
+## 4. Geo Coordinate Sharing
+
+A service request may store:
+
+```text
+service_location_id
+service_latitude
+service_longitude
+service_address
+service_landmark
+location_notes
+```
+
+The canonical location controls provider matching.
+
+Exact coordinates help the authorized provider physically reach the job.
+
+Recommended privacy flow:
+
+```text
+Request created
+    ↓
+Potential providers see service area only
+    ↓
+Customer selects provider / provider is assigned and accepts
+    ↓
+Authorized provider receives exact address + map pin + coordinates + access notes
+```
+
+Exact GPS coordinates must not be exposed publicly or to all providers who merely appear in search results.
+
+Recommended sharing-state field:
+
+```text
+location_share_status =
+AREA_ONLY
+EXACT_AFTER_ACCEPTANCE
+EXACT_SHARED
+WITHHELD_BY_CUSTOMER
+```
+
+---
+
+## 5. On-Site Contact Relationship
+
+One service request may have one or many on-site contacts.
+
+```text
+Service Request
+    1
+    ↓
+    many
+On-Site Contacts
+```
+
+Do not model contacts as fixed fields such as `contact_1`, `contact_2`, or `contact_3`.
+
+Use a normalized child table.
+
+Recommended table:
+
+```text
+service_request_contacts
+
+contact_id
+service_request_id
+
+contact_name
+contact_phone
+contact_role
+contact_notes
+
+authority_level
+is_primary_contact
+contact_priority
+
+share_with_provider
+is_active
+
+created_at
+updated_at
+```
+
+---
+
+## 6. Primary and Secondary Contacts
+
+A request may have any number of active on-site contacts, but normally only one should be marked as the primary contact.
+
+Example:
+
+```text
+Request #1234
+
+On-Site Contacts
+1. Ahmed — Primary Contact
+2. Fathimath — Secondary Contact
+3. Building Security — Access Contact
+```
+
+Recommended constraint:
+
+```text
+At most one active contact per service_request_id
+may have is_primary_contact = true
+```
+
+If the primary contact becomes inactive, the customer may promote another active contact.
+
+---
+
+## 7. Contact Authority Levels
+
+Recommended values:
+
+```text
+CONTACT_ONLY
+ACCESS_COORDINATION
+JOB_COORDINATION
+```
+
+### CONTACT_ONLY
+May receive calls/messages and help the provider locate the property.
+
+### ACCESS_COORDINATION
+May additionally coordinate access such as gate, lobby, key, security desk, or entry arrangements.
+
+### JOB_COORDINATION
+May coordinate operational details of the visit where permitted by policy.
+
+For MVP, alternate contacts should default to:
+
+```text
+CONTACT_ONLY
+```
+
+unless the request owner explicitly grants a higher level.
+
+---
+
+## 8. Request-Owner Authority
+
+The request owner remains responsible for protected actions unless specific delegation is added later.
+
+An on-site contact does **not automatically** gain permission to:
+
+- change the service request
+- approve pricing
+- approve additional charges
+- cancel the request
+- change provider
+- confirm final completion
+- issue refunds
+- submit formal complaints on behalf of the owner
+- modify payment instructions
+
+These rights must remain with the request owner or be governed by a separate explicit authorization model.
+
+---
+
+## 9. Customer UI
+
+Recommended contact selector:
+
+```text
+Who should the provider contact on arrival?
+
+(•) Me
+( ) Someone else
+```
+
+If the customer selects someone else:
+
+```text
+On-Site Contacts
+
+Primary Contact
+Name
+[____________]
+
+Phone
+[____________]
+
+Role / Relationship
+[____________]
+
+Instructions
+[____________]
+
+[ + Add Another Contact ]
+```
+
+Each added contact may have:
+
+```text
+Name
+Phone
+Role / Relationship
+Authority Level
+Contact Notes
+Primary Contact toggle
+Share with Provider toggle
+```
+
+---
+
+## 10. Provider UI
+
+Once the provider is authorized to see job details:
+
+```text
+On-Site Contacts
+
+PRIMARY
+Ahmed
+Brother
+[ Call ] [ Message ]
+
+Arrival note:
+Call Ahmed when you reach the lobby.
+
+SECONDARY
+Fathimath
+Tenant
+[ Call ] [ Message ]
+
+ACCESS CONTACT
+Building Security
+[ Call ]
+```
+
+The provider UI should clearly distinguish:
+
+- request owner
+- primary on-site contact
+- secondary contacts
+- access-only contacts
+
+---
+
+## 11. Provider Visibility Rule
+
+Before provider acceptance / assignment:
+
+```text
+Visible:
+- service area
+- approximate location context
+- service details permitted by marketplace rules
+
+Hidden:
+- exact house/building address
+- precise GPS coordinates
+- private access instructions
+- on-site contact phone numbers unless policy explicitly allows otherwise
+```
+
+After provider acceptance / authorization:
+
+```text
+Visible:
+- exact address
+- landmark
+- map pin
+- latitude/longitude
+- access instructions
+- authorized on-site contacts
+```
+
+---
+
+## 12. Contact Validation Rules
+
+Recommended validation:
+
+- `service_request_id` must reference an existing request.
+- `contact_name` is required for a non-owner contact.
+- `contact_phone` is required when the provider is expected to call or message that contact.
+- only active contacts may be displayed to providers.
+- only one active primary contact should exist per request.
+- a contact marked `share_with_provider = false` must not be exposed in provider-facing APIs.
+- changing the primary contact must be auditable.
+- deleting a contact already used in an active job should normally be soft-delete / deactivate rather than destructive deletion.
+
+---
+
+## 13. Audit Events
+
+Audit at minimum:
+
+```text
+SERVICE_ADDRESS_CREATED
+SERVICE_ADDRESS_UPDATED
+SERVICE_PIN_UPDATED
+LOCATION_SHARE_STATUS_CHANGED
+ONSITE_CONTACT_ADDED
+ONSITE_CONTACT_UPDATED
+ONSITE_CONTACT_DEACTIVATED
+PRIMARY_CONTACT_CHANGED
+CONTACT_AUTHORITY_CHANGED
+CONTACT_SHARE_STATUS_CHANGED
+```
+
+Each event should include actor, timestamp, request ID, previous value where applicable, and new value.
+
+---
+
+## 14. Recommended API Shape
+
+Conceptual resources:
+
+```text
+POST   /service-requests/{request_id}/contacts
+GET    /service-requests/{request_id}/contacts
+PATCH  /service-requests/{request_id}/contacts/{contact_id}
+DELETE /service-requests/{request_id}/contacts/{contact_id}   [soft deactivate]
+
+PATCH  /service-requests/{request_id}/service-address
+PATCH  /service-requests/{request_id}/location-share-status
+```
+
+Provider-facing responses must filter contact/address fields according to authorization and job state.
+
+---
+
+## 15. Example Request
+
+```text
+Service: AC Repair
+
+Canonical Location:
+Kaafu Atoll
+→ Malé City
+→ Hulhumalé
+
+Address:
+Example Tower
+Unit 5A
+Nirolhu Magu
+Near Central Park
+
+Geo:
+latitude = <customer supplied/verified>
+longitude = <customer supplied/verified>
+
+Request Owner:
+Customer A
+
+On-Site Contacts:
+1. Ahmed — Primary — CONTACT_ONLY
+2. Fathimath — Secondary — ACCESS_COORDINATION
+3. Building Security — Access Contact — ACCESS_COORDINATION
+```
+
+Provider matching uses the canonical service location.
+
+Provider navigation uses the exact address and coordinates once sharing is authorized.
+
+Provider arrival coordination uses the one-to-many on-site contacts.
+
+---
+
+## 16. Final Rule
+
+The implementation must preserve the following separation:
+
+```text
+WHO OWNS THE REQUEST?
+= Customer / Request Owner
+
+WHERE IS THE JOB?
+= Canonical Location + Service Address + Optional Geo Coordinates
+
+WHO CAN HELP THE PROVIDER ON SITE?
+= One or Many On-Site Contacts
+
+WHO MAY MAKE PROTECTED JOB DECISIONS?
+= Request Owner unless explicitly delegated by a separate authorization model
+```
+
+This model is the approved basis for iFixIt service-address and on-site-contact implementation.
