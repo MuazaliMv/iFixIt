@@ -1,0 +1,649 @@
+iFixIt / FixIt — DATABASE NORMALIZATION & DUPLICATION AUDIT
+================================================================
+Scope reviewed:
+- ifixit_full_schema_postgresql.sql: 67 tables
+- ifixit_additional_use_case_tables.sql: 54 tables
+- Total: 121 tables
+
+Audit objective:
+Verify 1NF/2NF/3NF structure, identify duplicated sources of truth, distinguish
+intentional historical denormalization from accidental duplication, and recommend
+changes BEFORE additional tables are introduced.
+
+OVERALL VERDICT
+---------------
+1NF: PASS
+2NF: PASS
+3NF: MOSTLY PASS
+BCNF: PARTIAL / NOT A REQUIRED TARGET FOR ALL OPERATIONAL TABLES
+
+The schema is broadly a practical 3NF design, but it contains several duplicated
+attributes and overlapping structures that should be corrected before further expansion.
+
+Do NOT reduce table count merely for the sake of reducing it. Many tables represent
+valid independent business entities or history/event streams.
+
+===============================================================================
+A. HIGH-PRIORITY NORMALIZATION CORRECTIONS
+===============================================================================
+
+NORM-001 — Remove duplicated location ancestry from CURRENT customer addresses
+Severity: HIGH
+Tables:
+- customer_addresses
+- locations
+
+Current duplication:
+customer_addresses stores:
+- location_id
+- atoll_id
+- city_id
+- island_id
+- ward_or_district_id
+
+But the canonical locations hierarchy already provides ancestry through:
+locations.parent_location_id
+
+Recommendation:
+For current/live saved addresses, retain only the canonical terminal location_id
+plus physical address fields.
+
+Remove from customer_addresses:
+- atoll_id
+- city_id
+- island_id
+- ward_or_district_id
+
+Derive ancestry from locations.
+
+EXCEPTION:
+service_request_address_snapshots MAY retain historical ancestry fields intentionally
+if the business wants the exact historical hierarchy frozen at submission time.
+That is valid snapshot denormalization.
+
+Verdict:
+- customer_addresses ancestry = accidental/redundant denormalization
+- service_request_address_snapshots ancestry = acceptable historical snapshot
+
+
+NORM-002 — Remove provider status/availability duplication from freelancers
+Severity: HIGH
+Tables:
+- providers
+- freelancers
+
+Duplicated values:
+providers.status
+providers.is_available
+
+freelancers.status
+freelancers.is_available
+
+Recommendation:
+Make providers the single source of truth for lifecycle status and availability.
+Keep freelancers only for freelancer-specific data:
+- freelancer_id
+- provider_id
+- user_id
+- service_area_location_id
+- created_at
+- updated_at
+
+This removes the possibility of:
+providers.status = ACTIVE
+freelancers.status = SUSPENDED
+
+or:
+providers.is_available = true
+freelancers.is_available = false
+
+unless such separate semantics are explicitly needed. Current use cases do not require
+two independent status concepts.
+
+
+NORM-003 — Fix multi-location group relationship duplication
+Severity: HIGH
+Tables:
+- service_requests
+- multi_location_request_groups
+- multi_location_request_items
+
+Current relationship is stored twice:
+service_requests.multi_location_request_id
+AND
+multi_location_request_items(multi_location_request_id, service_request_id)
+
+Recommendation:
+Choose ONE authoritative relationship.
+
+Preferred:
+Keep multi_location_request_items because it supports:
+- sequence_no
+- future group-item metadata
+- independent grouping history
+
+Remove:
+service_requests.multi_location_request_id
+
+Then:
+multi_location_request_items becomes the canonical group-membership relation.
+
+Alternative:
+If no item metadata is required, remove multi_location_request_items and add sequence_no
+to service_requests. Do not keep both.
+
+
+NORM-004 — Organization address ownership is semantically incorrect
+Severity: HIGH
+Tables:
+- customer_organizations
+- organization_locations
+- customer_addresses
+
+Problem:
+organization_locations.address_id references customer_addresses.
+
+A business/organization property should not be structurally owned by an individual
+customer address record. If the user who originally created the address leaves the
+organization, ownership semantics become ambiguous.
+
+Recommendation:
+Create one of these designs:
+
+Preferred:
+addresses
+- address_id
+- location_id
+- physical address fields
+
+customer_addresses
+- customer_id
+- address_id
+- label/default flags
+
+organization_addresses
+- organization_id
+- address_id
+- label/default/billing flags
+
+OR, if keeping actor-specific address tables:
+create organization_addresses as a fully owned organization address table.
+
+Then organization_locations references organization_addresses.
+
+Do not make organization-owned property depend on customer_addresses.
+
+
+NORM-005 — Consolidate policy acceptance / consent overlap
+Severity: HIGH
+Tables:
+- customer_consents
+- policy_documents
+- policy_acceptances
+
+Problem:
+customer_consents stores terms/privacy acceptance:
+customer_id + consent_type + policy_version + accepted_at
+
+policy_acceptances stores effectively the same concept but supports both customers/providers.
+
+Recommendation:
+Use policy acceptance as the source of truth for versioned legal documents.
+
+Normalize policy model further:
+
+policies
+- policy_id
+- policy_type
+
+policy_versions
+- policy_version_id
+- policy_id
+- version
+- effective_at
+- requires_reconsent
+- status
+
+policy_localizations
+- policy_version_id
+- language_code
+- title
+- content_path
+- content_hash
+
+policy_acceptances
+- policy_version_id
+- customer_id/provider_id
+- accepted
+- accepted_at
+
+Then:
+- remove legal Terms/Privacy duplication from customer_consents
+- keep customer_consents only if it is used for non-policy consents such as marketing
+  or other revocable consent categories
+
+This also avoids treating English and Dhivehi versions as different legal versions.
+
+
+NORM-006 — Centralize file metadata
+Severity: HIGH
+Tables/fields affected:
+- managed_files
+- service_request_attachments
+- incident_attachments
+- message_attachments
+- request_documents
+- provider_verification_documents
+- direct_payment_records.customer_proof_attachment_path
+- other storage_path/file metadata fields
+
+Problem:
+The expanded schema introduces managed_files as a generic file registry, while many
+older tables independently store:
+- storage_path
+- mime_type
+- original_filename
+- size_bytes
+
+This creates multiple file-metadata sources of truth.
+
+Recommendation:
+managed_files should become the canonical physical-file registry.
+
+Domain tables should reference:
+managed_file_id
+
+Examples:
+service_request_attachments.managed_file_id
+message_attachments.managed_file_id
+incident_attachments.managed_file_id
+request_documents.managed_file_id
+provider_verification_documents.managed_file_id
+
+Direct-payment proof should reference a managed file ID rather than a raw path.
+
+Keep domain attachment/link tables where they carry business meaning.
+Do NOT duplicate physical storage metadata in every domain table.
+
+
+NORM-007 — Decide source of truth for request revisions vs generic audit
+Severity: HIGH
+Tables:
+- service_request_revisions
+- audit_events
+
+Problem:
+Both can store changed fields, before-values, after-values, actor and timestamp.
+
+Recommendation:
+Use audit_events as the immutable universal audit source.
+
+Option A — preferred:
+Replace service_request_revisions physical table with a VIEW over audit_events for
+service_request changes.
+
+Option B:
+Keep service_request_revisions as domain history, but explicitly define it as the
+business-readable revision history and audit_events as compliance/audit history.
+If both are written, they must be written in the SAME transaction.
+
+Never allow the two histories to diverge.
+
+
+NORM-008 — Normalize provider rating aggregates
+Severity: MEDIUM-HIGH
+Tables:
+- providers
+- provider_reviews
+
+Duplicated/derived values:
+providers.average_rating
+providers.review_count
+
+These can be derived from provider_reviews.
+
+Recommendation:
+Source of truth = provider_reviews.
+
+Preferred implementations:
+1. provider_rating_stats materialized view
+OR
+2. provider_stats cache table maintained transactionally/background job
+
+Do not treat providers.average_rating/review_count as independent authoritative data.
+
+If fields remain on providers for performance, document them as cached aggregates and
+recompute/reconcile periodically.
+
+
+NORM-009 — Make cost total derived / protected
+Severity: MEDIUM-HIGH
+Table:
+- service_costs
+
+total_amount is mathematically dependent on:
+labour_amount
++ materials_amount
++ transport_amount
++ other_amount
++ tax_amount
+- discount_amount
+
+Recommendation:
+Use a generated stored column where PostgreSQL version/design permits, or enforce a
+CHECK/trigger that total_amount exactly matches the component calculation.
+
+Otherwise line items and total can disagree.
+
+
+NORM-010 — Define source of truth for current request timestamps vs job events
+Severity: MEDIUM
+Tables:
+- service_requests
+- job_events
+
+Duplicated facts include:
+provider_arrived_at
+inspection_started_at
+inspection_completed_at
+work_started_at
+work_completed_at
+and corresponding job_events.
+
+This is INTENTIONAL and useful for performance.
+
+Recommendation:
+Keep both, but define:
+- job_events = immutable event/history source
+- service_requests.*_at = current-state projection/cache
+
+All lifecycle updates should atomically:
+1. append job_event
+2. update current service_requests timestamp/status
+
+Do not manually update one without the other.
+
+
+===============================================================================
+B. OVERLAPPING TABLES THAT SHOULD REMAIN SEPARATE
+===============================================================================
+
+The following similarity is VALID and should NOT be merged simply because columns overlap:
+
+1. customer_addresses vs service_request_address_snapshots
+Reason:
+Snapshot must remain immutable even if saved address changes.
+
+2. service_categories vs services
+Reason:
+Category and service are different levels of the catalogue.
+
+3. service_category_localizations / service_localizations / location_localizations
+Reason:
+Separate FK-backed localization tables provide stronger referential integrity than one
+polymorphic translation table.
+
+4. provider_incidents vs job_disputes
+Reason:
+Operational/safety incident and customer-provider service dispute are different processes.
+
+5. customer_availability_preferences vs personnel_availability
+Reason:
+Different actors, rules and ownership.
+
+6. notifications vs notification_delivery_attempts
+Reason:
+Notification is the logical message; delivery attempts are transport history.
+
+7. inspection_schedules vs inspection_schedule_history
+Reason:
+Current appointment and historical revisions are distinct.
+
+8. provider_job_offers vs provider_selection_history
+Reason:
+Provider willingness and customer assignment are deliberately separate business events.
+
+9. service_costs vs direct_payment_records
+Reason:
+Cost information and optional direct payment acknowledgement are separate.
+FixIt does not process customer-to-provider payment.
+
+10. customer_identity_verifications vs provider_verification_cases
+Reason:
+Optional customer KYC and mandatory/operational provider verification have different rules.
+
+11. support_cases vs job_disputes vs provider_incidents
+Reason:
+Support request, formal job dispute and safety/provider incident should not be collapsed.
+
+
+===============================================================================
+C. POSSIBLE CONSOLIDATIONS — REVIEW BEFORE IMPLEMENTATION
+===============================================================================
+
+CON-001 — Provider subscription and promotion payment tables
+Tables:
+- provider_subscription_payments
+- provider_promotion_payments
+
+They are structurally very similar.
+
+Current shared fields include:
+provider_id, amount, currency, payment_method, payment_reference,
+payment_status, paid_at, verified_at, created_at.
+
+Recommendation:
+If FixIt wants one provider billing ledger, introduce:
+
+provider_billing_transactions
+- provider_billing_transaction_id
+- provider_id
+- billing_type (SUBSCRIPTION / PROMOTION / OTHER)
+- subscription_id nullable
+- promotion_id nullable
+- amount
+- currency
+- payment_method
+- payment_reference
+- payment_status
+- paid_at
+- verified_at
+- created_at
+
+Use CHECK constraint to enforce exactly one valid business source.
+
+This gives FixIt one platform-revenue payment ledger.
+
+Keep subscription/promotions themselves separate.
+
+
+CON-002 — Generic user/actor identity references
+Many admin/support/audit tables contain unconstrained:
+- staff_user_id
+- admin_user_id
+- actor_user_id
+- created_by_user_id
+
+Recommendation:
+When the authentication/user model is frozen, all such IDs should FK to a canonical
+application users/profile table or auth.users where appropriate.
+
+Do this before production migration.
+
+RLS is intentionally deferred, but referential integrity should still be planned.
+
+
+CON-003 — Status fields implemented as free VARCHAR
+The additional migration uses many varchar status fields.
+
+Recommendation:
+Before production:
+- either define PostgreSQL ENUMs for stable statuses
+- or create lookup/state tables for configurable statuses
+- or use CHECK constraints
+
+Do not allow arbitrary status strings in production.
+
+Examples requiring controlled values:
+provider verification cases
+subscription status
+promotion status
+maintenance status
+bulk import status
+risk status
+background job status
+operational alert status
+
+
+===============================================================================
+D. POLYMORPHIC RELATIONSHIPS — ACCEPTABLE BUT NEED GOVERNANCE
+===============================================================================
+
+Tables using entity_type + entity_id patterns:
+- managed_files
+- audit_events
+- admin_operational_notes
+- moderation_cases
+- idempotency_keys (resource_type/resource_id)
+
+These are practical for infrastructure/audit tables but do not have normal FK enforcement
+for every target entity.
+
+Recommendation:
+Keep polymorphism only for cross-cutting infrastructure.
+
+Do NOT use polymorphic IDs for core transactional relationships such as:
+customer → request
+request → provider
+request → inspection
+provider → service area
+
+Those core relationships correctly use real foreign keys.
+
+
+===============================================================================
+E. INDEX / CONSTRAINT OBSERVATIONS
+===============================================================================
+
+1. All parsed FOREIGN KEY references point to tables that exist.
+Result: PASS
+
+2. No duplicate table names exist between the 67-table baseline and 54-table migration.
+Result: PASS
+
+3. Add/verify indexes on high-volume FK/query columns before production:
+- service_request_contacts.service_request_id
+- service_request_attachments.service_request_id
+- request_clarifications.service_request_id
+- inspection_schedules.service_request_id
+- job_scope_changes.service_request_id
+- cancellation_reviews.service_request_id
+- provider_incidents.provider_id/service_request_id
+- job_disputes.service_request_id
+- support_cases.service_request_id/status
+- conversations.provider_id/customer_id
+- messages.conversation_id/sent_at
+- provider_verification_cases.provider_id/status
+- provider_credentials.provider_id/status/expiry_date
+- provider_promotions.provider_id/status
+- provider_subscriptions.provider_id/status
+- bulk_import_rows.bulk_import_job_id
+- background_job_attempts.background_job_id
+- operational_alerts.status/detected_at
+
+4. Add explicit DB enforcement for:
+- exactly one active primary onsite contact per submitted request
+- exactly one freelancer service area
+- active company matching requires >=1 active service area
+- provider service must belong to an approved category
+- customer provider selection must be atomic
+- only one current service_cost revision
+- valid lifecycle state transitions
+- provider capacity not below zero
+- subscription/promotion date ranges
+
+
+===============================================================================
+F. NORMALIZATION SCORE BY DOMAIN
+===============================================================================
+
+Customer/account:                  GOOD, policy consent overlap needs cleanup
+Location/address:                 GOOD, remove live ancestry duplication
+Service catalogue:                GOOD
+Provider core:                    GOOD, freelancer status duplication needs cleanup
+Provider matching/offers:         GOOD
+Request snapshots/history:        GOOD; intentional denormalization
+Inspection/job execution:         GOOD; projection/event dual-write must be controlled
+Messaging:                        GOOD
+Support/disputes/incidents:       GOOD
+Optional direct-payment records:  GOOD and correctly separated from payment processing
+Organizations:                    NEEDS address-ownership correction
+KYC:                              GOOD; optional by design
+Company personnel:                GOOD
+Subscriptions/promotions:         GOOD; billing tables can potentially consolidate
+Files/storage:                    NEEDS canonical managed_files integration
+Audit/system:                     GOOD; revision overlap needs source-of-truth policy
+Analytics:                        ACCEPTABLE denormalized reporting model
+Configuration:                    GOOD; validate JSON/status values
+
+
+===============================================================================
+G. RECOMMENDED ACTION PLAN BEFORE ANY MORE TABLES
+===============================================================================
+
+Phase 1 — Correct structural duplication
+1. Fix organization address ownership.
+2. Remove freelancer duplicate status/is_available.
+3. Choose one multi-location membership relationship.
+4. Remove live address ancestry duplication.
+5. Normalize policy/version/localization/acceptance.
+6. Make managed_files canonical.
+
+Phase 2 — Define sources of truth
+7. Define audit_events vs service_request_revisions.
+8. Define job_events vs lifecycle timestamp projections.
+9. Define provider_reviews vs provider rating aggregate cache.
+10. Enforce service_cost total calculation.
+
+Phase 3 — Standardize infrastructure
+11. Standardize status values.
+12. Add missing FK/query indexes.
+13. Standardize actor/admin user references.
+14. Review provider billing consolidation.
+
+Phase 4 — Database integrity
+15. Add state transition guards.
+16. Add assignment/concurrency constraints.
+17. Add contact/service/category/matching integrity checks.
+18. Run schema tests.
+
+RLS / authorization matrix:
+DEFERRED by explicit project decision.
+
+
+===============================================================================
+FINAL AUDIT CONCLUSION
+===============================================================================
+
+The 121-table schema is NOT excessively fragmented simply because it has 121 tables.
+Most tables represent legitimate independent entities, relationship tables, history,
+events, operational infrastructure or analytics.
+
+However, the schema should NOT be treated as the final production schema yet.
+
+High-priority corrections:
+- Address ancestry duplication
+- Freelancer status duplication
+- Multi-location relationship duplication
+- Organization address ownership
+- Policy/consent duplication
+- File metadata duplication
+- Request revision/audit overlap
+- Provider rating cached aggregates
+- Cost total derivation
+
+After these corrections, the schema will be substantially cleaner and safer to freeze.
+
+Recommendation:
+DO NOT ADD MORE TABLES until the above structural corrections have been reconciled with
+the use-case catalogue and applied to a revised master DDL.
