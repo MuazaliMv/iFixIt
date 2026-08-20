@@ -1,0 +1,526 @@
+iFixIt / FixIt — PROVIDER FUNCTIONAL USE CASES
+
+Scope: Provider functional catalogue
+Total Main Provider Use Cases: 35
+Applies to: FREELANCER and COMPANY providers, with company-only functions marked where applicable.
+
+UC-P01 — Register Provider Account
+P01.1 Open Provider Registration
+P01.2 Enter Provider Account Information
+P01.3 Enter Phone / Email
+P01.4 Create Authentication Credentials
+P01.5 Verify Phone / Email
+P01.6 Accept Provider Terms
+P01.7 Accept Privacy Policy
+P01.8 Create Provider Account
+P01.9 Set Provider Registration Status
+P01.10 Confirm Registration
+
+UC-P02 — Select Provider Type
+P02.1 View Provider Types
+P02.2 Select FREELANCER
+P02.3 Select COMPANY
+P02.4 Confirm Provider Type
+P02.5 Prevent Invalid Provider-Type Change
+P02.6 Request Provider-Type Change Through Support Where Allowed
+
+UC-P03 — Manage Provider Profile
+P03.1 View Provider Profile
+P03.2 Update Display Name
+P03.3 Update Description
+P03.4 Update Profile Photo / Logo
+P03.5 Update Phone
+P03.6 Update Email
+P03.7 Update Business Information
+P03.8 Update Communication Preferences
+P03.9 Save Provider Profile
+P03.10 View Public Provider Profile
+
+UC-P04 — Complete Provider Verification
+P04.1 View Verification Requirements
+P04.2 Start Provider Verification
+P04.3 Submit Identity / Business Documents
+P04.4 Submit Professional Credentials
+P04.5 Submit Company Registration Documents
+P04.6 Submit Supporting Evidence
+P04.7 View Verification Status
+P04.8 Respond to Verification Clarification
+P04.9 Receive Verification Approval
+P04.10 Receive Verification Rejection
+P04.11 Resubmit Corrected Information
+P04.12 Handle Verification Expiry
+P04.13 Complete Re-verification
+
+UC-P05 — Manage Geographic Service Coverage
+P05.1 Open Service Area Settings
+P05.2 View Maldives Location Hierarchy
+P05.3 Search Service Area
+P05.4 Select Atoll
+P05.5 Select City / Island
+P05.6 Select District / Ward / Phase
+P05.7 Resolve Canonical FixIt Service Area
+P05.8 Add Company Service Area
+P05.9 Add Multiple Company Service Areas
+P05.10 Remove Company Service Area
+P05.11 Select Freelancer Service Area
+P05.12 Replace Freelancer Service Area
+P05.13 Prevent Multiple Freelancer Service Areas
+P05.14 Validate Active Service Area
+P05.15 Save Geographic Coverage
+
+RULE: FREELANCER → exactly 1 FixIt Service Area.
+RULE: COMPANY → 0..many FixIt Service Areas.
+RULE: Company with zero active service areas is hidden from matching.
+
+UC-P06 — Manage Service Categories
+P06.1 View Available Categories
+P06.2 Search Categories
+P06.3 Select Category
+P06.4 Request Category Approval
+P06.5 Submit Category Qualification Evidence
+P06.6 View Category Approval Status
+P06.7 Respond to Category Clarification
+P06.8 Receive Category Approval
+P06.9 Receive Category Rejection
+P06.10 Handle Category Suspension
+P06.11 Remove Category
+P06.12 Request Additional Category
+
+UC-P07 — Manage Services
+P07.1 View Services Within Approved Category
+P07.2 Search Services
+P07.3 Select Service
+P07.4 Add Service to Provider Profile
+P07.5 Remove Service
+P07.6 Enable Service
+P07.7 Disable Service
+P07.8 View Active Services
+P07.9 Validate Parent Category Approval
+P07.10 Prevent Service Without Approved Category
+
+UC-P08 — Manage Provider Availability
+P08.1 View Availability Status
+P08.2 Set Available
+P08.3 Set Unavailable
+P08.4 Set Temporary Unavailability
+P08.5 Set Available Days
+P08.6 Set Available Hours
+P08.7 Add Unavailable Period
+P08.8 Remove Unavailable Period
+P08.9 Set Same-Day Availability
+P08.10 Set Urgent Availability
+P08.11 Save Availability
+P08.12 Automatically Restore Availability Where Configured
+
+UC-P09 — Receive Service Request Offers
+P09.1 Receive Matching Request
+P09.2 Validate Provider Is ACTIVE
+P09.3 Validate Service Area
+P09.4 Validate Service
+P09.5 Validate Category Approval
+P09.6 Validate Provider Availability
+P09.7 Create Provider Job Offer
+P09.8 Record Offer Time
+P09.9 Record Response Deadline
+P09.10 Notify Provider
+P09.11 View New Offer
+P09.12 Track Offer Expiry
+
+UC-P10 — Review Customer Service Request
+P10.1 Open Request Offer
+P10.2 View Service Category
+P10.3 View Exact Service
+P10.4 View Approximate Service Area
+P10.5 View Problem Title
+P10.6 View Problem Description
+P10.7 View Customer Photos
+P10.8 View Customer Attachments
+P10.9 View Preferred Timing
+P10.10 View NORMAL / URGENT Priority
+P10.11 View Permitted Onsite Contact Information
+P10.12 Protect Exact Address Before Authorization
+P10.13 Return to Offer List
+
+UC-P11 — Respond to Service Request
+P11.1 Open Response Actions
+P11.2 Select ACCEPT
+P11.3 Confirm Availability
+P11.4 Record ACCEPT Response
+P11.5 Select DECLINE
+P11.6 Select Decline Reason
+P11.7 Record DECLINE
+P11.8 Select REQUEST_CLARIFICATION
+P11.9 Enter Clarification Question
+P11.10 Submit Clarification Request
+P11.11 Handle Response Deadline
+P11.12 Record NO_RESPONSE_TIMEOUT
+P11.13 Withdraw Response Before Selection Where Allowed
+P11.14 Preserve Response History
+
+CRITICAL RULE: Provider ACCEPT does not equal provider assignment.
+CRITICAL RULE: Multiple providers may ACCEPT.
+CRITICAL RULE: Customer makes the final provider selection.
+
+UC-P12 — Manage Clarification with Customer
+P12.1 View Open Clarification
+P12.2 View Customer Clarification Response
+P12.3 View Clarification Photo
+P12.4 View Clarification Attachment
+P12.5 Ask Additional Clarification
+P12.6 ACCEPT After Clarification
+P12.7 DECLINE After Clarification
+P12.8 Close Clarification
+P12.9 Preserve Clarification History
+
+UC-P13 — Track Open Provider Offers
+P13.1 Open Offers Dashboard
+P13.2 View Pending Offers
+P13.3 View Accepted Offers
+P13.4 View Clarification-Pending Offers
+P13.5 View Declined Offers
+P13.6 View Expired Offers
+P13.7 View Withdrawn Offers
+P13.8 Filter Offers
+P13.9 Search Offers
+P13.10 View Response Deadline
+P13.11 View Selection Outcome
+
+UC-P14 — Receive Customer Provider Selection
+P14.1 Receive Selection Notification
+P14.2 Validate Offer Is Still Active
+P14.3 Validate Provider Still Eligible
+P14.4 Confirm Assignment
+P14.5 View Request Status ACCEPTED
+P14.6 Receive Exact Address According to Sharing Policy
+P14.7 View Onsite Contact
+P14.8 View Access Instructions
+P14.9 View Customer Preferred Timing
+P14.10 Close Provider's Offer as Selected
+P14.11 View Assignment in Active Jobs
+
+UC-P15 — Handle Not-Selected Outcome
+P15.1 Receive Not-Selected Notification
+P15.2 Mark Offer NOT_SELECTED
+P15.3 Remove Request from Active Offer Queue
+P15.4 Preserve Response History
+P15.5 Return Provider Capacity to Available Pool
+
+UC-P16 — Schedule Inspection
+P16.1 Open Inspection Scheduling
+P16.2 View Customer Proposed Time
+P16.3 Accept Customer Proposal
+P16.4 Reject Customer Proposal
+P16.5 Propose Alternative Date
+P16.6 Propose Alternative Time
+P16.7 Add Scheduling Note
+P16.8 Receive Customer Acceptance
+P16.9 Confirm Inspection
+P16.10 View INSPECTION_SCHEDULED Status
+P16.11 Receive Inspection Reminder
+
+UC-P17 — Reschedule Inspection
+P17.1 Open Reschedule
+P17.2 Enter Reschedule Reason
+P17.3 Propose New Date
+P17.4 Propose New Time
+P17.5 Notify Customer
+P17.6 Receive Customer Acceptance
+P17.7 Receive Customer Rejection
+P17.8 Review Customer Alternative
+P17.9 Confirm Replacement Appointment
+P17.10 Preserve Previous Schedule
+P17.11 Update Inspection Reminder
+
+UC-P18 — Coordinate Arrival
+P18.1 View Inspection Address
+P18.2 View Exact Location Where Shared
+P18.3 View Map Coordinates
+P18.4 View Building / House
+P18.5 View Floor / Unit
+P18.6 View Landmark
+P18.7 View Access Instructions
+P18.8 View Primary Onsite Contact
+P18.9 Mark ON_THE_WAY
+P18.10 Notify Customer of Departure
+P18.11 Mark DELAYED
+P18.12 Enter Delay Information
+P18.13 Mark ARRIVED
+P18.14 Report Access Problem
+P18.15 Contact Customer / Onsite Contact
+
+UC-P19 — Perform & Record Inspection
+P19.1 Start Inspection
+P19.2 Record Inspection Start Time
+P19.3 Review Reported Problem
+P19.4 Record Inspection Notes
+P19.5 Add Inspection Photos
+P19.6 Add Inspection Attachments
+P19.7 Identify Required Work
+P19.8 Identify Parts / Materials Where Applicable
+P19.9 Record Inspection Outcome
+P19.10 Complete Inspection
+P19.11 Record Inspection Completion Time
+P19.12 Generate Inspection Report Where Used
+P19.13 Share Customer-Safe Inspection Information
+
+RULE: Inspection completion is an event/timestamp and does not necessarily create a separate service-request status.
+
+UC-P20 — Record Optional Cost Information
+STATUS: OPTIONAL
+P20.1 Open Cost Information
+P20.2 Enter Labour Cost
+P20.3 Enter Materials Cost
+P20.4 Enter Transport Cost
+P20.5 Enter Other Cost
+P20.6 Add Discount Where Applicable
+P20.7 Add Tax Where Applicable
+P20.8 Calculate Total
+P20.9 Add Cost Notes
+P20.10 Submit Cost Breakdown
+P20.11 Revise Cost Breakdown
+P20.12 Preserve Previous Cost Revision
+P20.13 Respond to Customer Cost Clarification
+P20.14 Upload Provider Invoice Where Used
+P20.15 Upload Provider Receipt Where Used
+
+RULE: FixIt does not require providers to record costs in the platform.
+
+UC-P21 — Handle Direct Payment Information
+STATUS: OPTIONAL
+P21.1 View Customer Payment Declaration
+P21.2 View Customer Payment Reference
+P21.3 View Customer Proof Where Shared
+P21.4 Confirm Direct Payment Received
+P21.5 Enter Amount Received
+P21.6 Enter Payment Method
+P21.7 Add Provider Receipt Reference
+P21.8 Dispute Customer Payment Declaration
+P21.9 Add Payment Dispute Reason
+P21.10 Upload Provider Receipt
+P21.11 View Direct-Payment History
+
+RULE: Customer pays provider directly.
+RULE: FixIt does not collect, hold, route, settle, pay out, or refund customer-to-provider money.
+
+UC-P22 — Start Work
+P22.1 Confirm Provider Assignment
+P22.2 Confirm Site Access
+P22.3 Confirm Work Can Start
+P22.4 Record Work Start
+P22.5 Set work_started_at
+P22.6 Change Request to IN_PROGRESS
+P22.7 Notify Customer
+P22.8 Create Job Start Event
+
+UC-P23 — Manage Work Progress
+P23.1 Open Active Job
+P23.2 View Job Scope
+P23.3 View Customer Notes
+P23.4 Add Progress Update
+P23.5 Add Work Photo
+P23.6 Add Work Attachment
+P23.7 Record Work Notes
+P23.8 Communicate with Customer
+P23.9 Record Pause
+P23.10 Record Resume
+P23.11 Report Delay
+P23.12 Record Job Event Timeline
+P23.13 View Assigned Company Personnel
+
+UC-P24 — Request Additional Work / Scope Change
+P24.1 Identify Additional Work
+P24.2 Enter Scope Change Description
+P24.3 Enter Reason
+P24.4 Add Supporting Photo
+P24.5 Add Supporting Attachment
+P24.6 Add Optional Additional Cost
+P24.7 Submit Scope Change
+P24.8 Notify Customer
+P24.9 Receive Customer Clarification Request
+P24.10 Respond to Clarification
+P24.11 Receive Customer Approval
+P24.12 Receive Customer Rejection
+P24.13 Update Authorized Work Scope
+P24.14 Preserve Scope Change History
+
+RULE: Provider must not perform non-authorized additional work where customer approval is required.
+
+UC-P25 — Complete Work
+P25.1 Open Completion Action
+P25.2 Confirm Work Finished
+P25.3 Enter Completion Summary
+P25.4 Upload Completion Photos
+P25.5 Upload Completion Documents
+P25.6 Record Work Completion Time
+P25.7 Notify Customer
+P25.8 Wait for Customer Confirmation / Dispute
+P25.9 View Customer Completion Confirmation
+P25.10 View Customer Dispute
+P25.11 Preserve Completion Evidence
+
+UC-P26 — Respond to Job Dispute
+P26.1 Receive Dispute Notification
+P26.2 Open Dispute
+P26.3 View Customer Complaint
+P26.4 View Customer Evidence
+P26.5 Submit Provider Response
+P26.6 Add Provider Evidence
+P26.7 Respond to Admin / Support Clarification
+P26.8 View Dispute Status
+P26.9 View Resolution
+P26.10 Preserve Dispute History
+
+UC-P27 — Handle Customer Cancellation
+P27.1 Receive PENDING Cancellation Notice Where Applicable
+P27.2 Receive RESPONDED Cancellation Notice
+P27.3 Receive ACCEPTED Cancellation Notice
+P27.4 Receive INSPECTION_SCHEDULED Cancellation Notice
+P27.5 Release Provider Assignment
+P27.6 Cancel Inspection
+P27.7 Restore Provider Availability
+P27.8 Receive IN_PROGRESS Cancellation Review
+P27.9 Submit Provider Response to Cancellation Review
+P27.10 View Cancellation Decision
+P27.11 Preserve Cancellation History
+
+UC-P28 — Withdraw / Report Provider Unable to Continue
+P28.1 Open Withdrawal Action
+P28.2 Select Withdrawal Reason
+P28.3 Enter Explanation
+P28.4 Confirm Withdrawal
+P28.5 Notify Customer
+P28.6 Release Provider Where Allowed
+P28.7 Cancel Provider Appointment Where Needed
+P28.8 Return Request to Rematching
+P28.9 Record Provider Incident
+P28.10 Preserve Withdrawal History
+
+UC-P29 — Manage Company Personnel for Job
+COMPANY ONLY
+P29.1 View Available Company Personnel
+P29.2 Assign Personnel to Job
+P29.3 Assign Multiple Personnel
+P29.4 Set Job Supervisor
+P29.5 Change Assigned Personnel
+P29.6 Remove Personnel from Job
+P29.7 View Personnel Assignment History
+P29.8 Prevent Inactive Personnel Assignment
+P29.9 Notify Assigned Personnel
+P29.10 Share Customer-Safe Staff Information
+P29.11 Preserve Staff Assignment History
+
+UC-P30 — Manage Urgent Requests
+P30.1 Receive URGENT Offer
+P30.2 View Urgency Reason
+P30.3 View Supporting Urgency Evidence
+P30.4 Validate Service Eligibility
+P30.5 Validate Service Area
+P30.6 Validate Provider Availability
+P30.7 Receive Priority Notification
+P30.8 ACCEPT Urgent Request
+P30.9 DECLINE Urgent Request
+P30.10 Request Clarification
+P30.11 Track Urgent Selection
+P30.12 Receive Customer Selection
+P30.13 Schedule Priority Inspection
+P30.14 Send Arrival Updates
+P30.15 Start Urgent Work
+P30.16 Record Urgent Timeline Events
+
+RULE: URGENT never means automatic assignment.
+
+UC-P31 — Manage Provider Notifications
+P31.1 Open Notification Settings
+P31.2 Enable Push
+P31.3 Enable SMS
+P31.4 Set Preferred Channel
+P31.5 Set Fallback Channel
+P31.6 Configure New-Request Alerts
+P31.7 Configure Selection Alerts
+P31.8 Configure Clarification Alerts
+P31.9 Configure Inspection Alerts
+P31.10 Configure Cancellation Alerts
+P31.11 Configure Support / Dispute Alerts
+P31.12 Set Quiet Hours
+P31.13 Configure Urgent Override
+P31.14 View Notification History
+P31.15 Mark Notification Read
+
+UC-P32 — Manage Customer–Provider Messaging
+P32.1 Open Job Conversation
+P32.2 Send Message
+P32.3 Send Photo
+P32.4 Send Attachment
+P32.5 Receive Customer Message
+P32.6 Mark Message Read
+P32.7 View Conversation History
+P32.8 Report Inappropriate Message
+P32.9 Close Conversation After Job Closure
+
+UC-P33 — View Provider Job History
+P33.1 Open Job History
+P33.2 View Active Jobs
+P33.3 View ACCEPTED Jobs
+P33.4 View INSPECTION_SCHEDULED Jobs
+P33.5 View IN_PROGRESS Jobs
+P33.6 View COMPLETED Jobs
+P33.7 View CANCELLED Jobs
+P33.8 View Provider Withdrawals
+P33.9 Filter Jobs
+P33.10 Search Jobs
+P33.11 Open Historical Job
+P33.12 View Job Timeline
+P33.13 View Inspection History
+P33.14 View Scope Changes
+P33.15 View Optional Cost History
+P33.16 View Optional Direct-Payment Information
+P33.17 View Dispute History
+
+UC-P34 — View Ratings & Reviews
+P34.1 View Average Rating
+P34.2 View Review Count
+P34.3 View Customer Reviews
+P34.4 Open Review Details
+P34.5 View Verified-Job Indicator
+P34.6 Report Review Issue
+P34.7 Respond to Review Where Future Policy Allows
+P34.8 View Rating History / Trends
+
+UC-P35 — Manage Provider Support & Account Status
+P35.1 Open Provider Support
+P35.2 Create Support Case
+P35.3 Attach Evidence
+P35.4 View Support Status
+P35.5 Reply to Support
+P35.6 Report Technical Issue
+P35.7 Appeal Verification Decision Where Allowed
+P35.8 Appeal Category Suspension Where Allowed
+P35.9 View Provider Account Status
+P35.10 Receive Suspension Notice
+P35.11 Receive Reactivation Notice
+P35.12 Request Account Deactivation
+
+CORE PROVIDER LIFECYCLE
+REGISTER
+→ SELECT PROVIDER TYPE
+→ COMPLETE PROFILE
+→ VERIFICATION
+→ CONFIGURE SERVICE AREA
+→ CONFIGURE CATEGORIES / SERVICES
+→ SET AVAILABLE
+→ RECEIVE SERVICE REQUEST
+→ REVIEW
+→ ACCEPT / DECLINE / REQUEST CLARIFICATION
+→ IF ACCEPT: WAIT FOR CUSTOMER SELECTION
+→ IF SELECTED: ACCEPTED
+→ SCHEDULE INSPECTION
+→ ARRIVE
+→ INSPECT
+→ OPTIONAL COST INFORMATION
+→ START WORK
+→ IN_PROGRESS
+→ SCOPE CHANGE IF REQUIRED
+→ COMPLETE WORK
+→ CUSTOMER CONFIRMS / DISPUTES
+→ COMPLETED
+→ REVIEW / HISTORY / WARRANTY / SUPPORT
