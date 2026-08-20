@@ -1,0 +1,58 @@
+iFixIt / FixIt — GENERAL CUSTOMER USE CASES
+================================================
+
+Scope: UC-C01 to UC-C44
+
+Important architecture rules:
+- UC-C29 is OPTIONAL. FixIt does not collect, hold, route, settle, or refund customer-to-provider payments.
+- Customer pays provider directly outside FixIt.
+- UC-C41 KYC is OPTIONAL BY DEFAULT and is required only by separately approved risk/service/organization/legal rules.
+- Provider ACCEPT does not equal assignment. Customer selects the final provider.
+- Core request lifecycle: PENDING -> RESPONDED -> ACCEPTED -> INSPECTION_SCHEDULED -> IN_PROGRESS -> COMPLETED; alternative terminal status CANCELLED.
+
+MAIN USE CASES
+--------------
+UC-C01 — Register Customer Account
+UC-C02 — Login & Account Access
+UC-C03 — Manage Customer Profile
+UC-C04 — Manage Saved Addresses
+UC-C05 — Select Service Location
+UC-C06 — Browse & Select Service
+UC-C07 — Create Service Request
+UC-C08 — Manage Onsite Contacts
+UC-C09 — Submit Service Request
+UC-C10 — Edit Request Before Provider Selection
+UC-C11 — Track Provider Responses
+UC-C12 — Respond to Provider Clarification
+UC-C13 — View Responding Providers
+UC-C14 — Compare Responding Providers
+UC-C15 — Select Provider
+UC-C16 — Schedule Inspection
+UC-C17 — Reschedule Inspection
+UC-C18 — Coordinate Provider Arrival & Access
+UC-C19 — Start & Track Active Work
+UC-C20 — Handle Additional Work / Scope Change
+UC-C21 — Cancel Request Before Work Starts
+UC-C22 — Request Cancellation During IN_PROGRESS
+UC-C23 — Handle Provider Withdrawal / Delay / No-Show
+UC-C24 — Handle No Provider Available
+UC-C25 — Complete or Dispute Job
+UC-C26 — Rate & Review Provider
+UC-C27 — View Request History & Rebook
+UC-C28 — Manage Notifications & Communication Channels
+UC-C29 — Optional Post-Inspection Cost & Direct Payment Information
+UC-C30 — Flag & Handle URGENT Request
+UC-C31 — Password & Account Security
+UC-C32 — Customer–Provider Messaging
+UC-C33 — Customer Support Cases
+UC-C34 — Provider / Safety Incident Reporting
+UC-C35 — Saved Providers
+UC-C36 — Documents, Invoices & Service Reports
+UC-C37 — Warranty / Post-Service Rework
+UC-C38 — Privacy & Data Rights
+UC-C39 — Delegated Job Access
+UC-C40 — Customer Availability & Scheduling Preferences
+UC-C41 — Optional Customer Identity Verification / KYC
+UC-C42 — Multi-Location Customer Requests
+UC-C43 — Business / Organization Customer Account
+UC-C44 — Localization & Language Preferences
