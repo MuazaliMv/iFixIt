@@ -1,0 +1,736 @@
+iFixIt / FixIt — CUSTOMER SUB-USE CASES
+=============================================
+
+Scope: UC-C01 to UC-C44
+
+Important architecture rules:
+- UC-C29 is OPTIONAL and records only direct/off-platform payment information. FixIt never processes customer-to-provider payments.
+- UC-C41 KYC is OPTIONAL BY DEFAULT.
+- Provider ACCEPT does not equal assignment; customer selects the final provider.
+
+UC-C01 — Register Customer Account
+UC-C01.1 — Open Registration
+UC-C01.2 — Enter Full Name
+UC-C01.3 — Enter Phone / Email Identifier
+UC-C01.4 — Enter Authentication Credential
+UC-C01.5 — Validate Mandatory Registration Fields
+UC-C01.6 — Check Duplicate Account
+UC-C01.7 — Send Verification Code
+UC-C01.8 — Verify Registration Code
+UC-C01.9 — Accept Terms
+UC-C01.10 — Accept Privacy Consent
+UC-C01.11 — Create Customer Account
+UC-C01.12 — Assign Customer Role
+UC-C01.13 — Activate Customer Account
+UC-C01.14 — Confirm Registration
+
+UC-C02 — Login & Account Access
+UC-C02.1 — Open Login
+UC-C02.2 — Enter Login Identifier
+UC-C02.3 — Enter Password / OTP
+UC-C02.4 — Authenticate Customer
+UC-C02.5 — Check Account Status
+UC-C02.6 — Handle Failed Login
+UC-C02.7 — Create Session
+UC-C02.8 — Load Customer Role
+UC-C02.9 — Load Customer Permissions
+UC-C02.10 — Redirect to Customer Home
+UC-C02.11 — Recover Forgotten Credentials
+UC-C02.12 — Reset Authentication Credential
+UC-C02.13 — Logout
+UC-C02.14 — Expire Session
+
+UC-C03 — Manage Customer Profile
+UC-C03.1 — View Profile
+UC-C03.2 — Update Preferred Name
+UC-C03.3 — Update Phone
+UC-C03.4 — Update Email
+UC-C03.5 — Update Profile Photo
+UC-C03.6 — Manage Preferred Language
+UC-C03.7 — Manage General Preferences
+UC-C03.8 — Request Account Deactivation
+UC-C03.9 — Save Profile Changes
+
+UC-C04 — Manage Saved Addresses
+UC-C04.1 — View Saved Addresses
+UC-C04.2 — Add Saved Address
+UC-C04.3 — Select Canonical Address Location
+UC-C04.4 — Set Address Label
+UC-C04.5 — Select Address Type
+UC-C04.6 — Enter House Name
+UC-C04.7 — Enter Building Name
+UC-C04.8 — Enter Floor
+UC-C04.9 — Enter Unit Number
+UC-C04.10 — Enter Street Name
+UC-C04.11 — Enter Road Name
+UC-C04.12 — Add Landmark
+UC-C04.13 — Add Postal Code
+UC-C04.14 — Add Access Notes
+UC-C04.15 — Add GPS Coordinates
+UC-C04.16 — Set Default Address
+UC-C04.17 — Edit Address
+UC-C04.18 — Deactivate Address
+UC-C04.19 — Select Saved Address for Request
+
+UC-C05 — Select Service Location
+UC-C05.1 — Select Atoll
+UC-C05.2 — Select City
+UC-C05.3 — Select Island
+UC-C05.4 — Select District
+UC-C05.5 — Select Ward
+UC-C05.6 — Select Phase
+UC-C05.7 — Search Location
+UC-C05.8 — Use GPS
+UC-C05.9 — Select from Map
+UC-C05.10 — Resolve Canonical Location
+UC-C05.11 — Resolve FixIt Service Area
+UC-C05.12 — Confirm Location
+
+UC-C06 — Browse & Select Service
+UC-C06.1 — View Service Categories
+UC-C06.2 — Search Service Categories
+UC-C06.3 — Open Service Category
+UC-C06.4 — View Category Description
+UC-C06.5 — View Services Within Category
+UC-C06.6 — Search Exact Service
+UC-C06.7 — View Service Details
+UC-C06.8 — Check Service Availability
+UC-C06.9 — Detect Unavailable Service
+UC-C06.10 — Select Service
+UC-C06.11 — Store Category Selection
+UC-C06.12 — Store Service Selection
+UC-C06.13 — Change Service Before Submission
+
+UC-C07 — Create Service Request
+UC-C07.1 — Start New Service Request
+UC-C07.2 — Create Draft Request Identifier
+UC-C07.3 — Attach Selected Service
+UC-C07.4 — Attach Service Location
+UC-C07.5 — Select Saved Address
+UC-C07.6 — Enter One-Time Service Address
+UC-C07.7 — Enter Problem Title
+UC-C07.8 — Enter Problem Description
+UC-C07.9 — Add Customer Notes
+UC-C07.10 — Add Access Instructions
+UC-C07.11 — Add Preferred Service Timing
+UC-C07.12 — Upload Photo
+UC-C07.13 — Upload Multiple Photos
+UC-C07.14 — Remove Uploaded Photo
+UC-C07.15 — Upload Supporting Attachment
+UC-C07.16 — Remove Attachment
+UC-C07.17 — Set Request Priority
+UC-C07.18 — Save Draft
+UC-C07.19 — Resume Draft
+UC-C07.20 — Review Request Before Submission
+
+UC-C08 — Manage Onsite Contacts
+UC-C08.1 — Use Booking Customer as Default Primary Contact
+UC-C08.2 — Add Onsite Contact
+UC-C08.3 — Select Saved Contact
+UC-C08.4 — Enter Contact Name
+UC-C08.5 — Enter Contact Phone
+UC-C08.6 — Set Contact Role
+UC-C08.7 — Set Authority Level
+UC-C08.8 — Add Contact Notes
+UC-C08.9 — Set Share-With-Provider Preference
+UC-C08.10 — Set Contact Priority
+UC-C08.11 — Set Primary Onsite Contact
+UC-C08.12 — Change Primary Contact
+UC-C08.13 — Add Secondary Contact
+UC-C08.14 — Add Multiple Additional Contacts
+UC-C08.15 — Disable Contact
+UC-C08.16 — Replace Contact
+UC-C08.17 — Validate Active Contact Requirement
+UC-C08.18 — Preserve Customer Ownership
+
+UC-C09 — Submit Service Request
+UC-C09.1 — Review Final Request Summary
+UC-C09.2 — Confirm Service
+UC-C09.3 — Confirm Service Location
+UC-C09.4 — Confirm Service Address
+UC-C09.5 — Confirm Onsite Contact
+UC-C09.6 — Validate Required Request Fields
+UC-C09.7 — Validate Customer Account
+UC-C09.8 — Create Immutable Address Snapshot
+UC-C09.9 — Create Contact Snapshots
+UC-C09.10 — Finalize Submitted Request
+UC-C09.11 — Set Operational Status to PENDING
+UC-C09.12 — Determine Eligible Providers
+UC-C09.13 — Match Eligible Companies
+UC-C09.14 — Match Eligible Freelancers
+UC-C09.15 — Exclude Location-Ineligible Providers
+UC-C09.16 — Exclude Service-Ineligible Providers
+UC-C09.17 — Apply Priority Routing
+UC-C09.18 — Broadcast Request
+UC-C09.19 — Start Provider Response Tracking
+UC-C09.20 — Confirm Submission to Customer
+
+UC-C10 — Edit Request Before Provider Selection
+UC-C10.1 — Open Editable Request
+UC-C10.2 — Edit Problem Description
+UC-C10.3 — Edit Customer Notes
+UC-C10.4 — Add Photo
+UC-C10.5 — Remove Photo
+UC-C10.6 — Update Attachments
+UC-C10.7 — Edit Access Instructions
+UC-C10.8 — Update Onsite Contact
+UC-C10.9 — Change Primary Onsite Contact
+UC-C10.10 — Change Preferred Timing
+UC-C10.11 — Change Service Before Provider Selection
+UC-C10.12 — Change Service Location
+UC-C10.13 — Change Service Address
+UC-C10.14 — Validate Request Changes
+UC-C10.15 — Detect Material Matching Change
+UC-C10.16 — Recalculate Provider Eligibility
+UC-C10.17 — Close Invalid Previous Responses
+UC-C10.18 — Save Request Revision
+UC-C10.19 — Notify Affected Providers
+UC-C10.20 — Confirm Changes to Customer
+
+UC-C11 — Track Provider Responses
+UC-C11.1 — View Provider Search Status
+UC-C11.2 — Receive Provider Response
+UC-C11.3 — Record Provider ACCEPT Response
+UC-C11.4 — Receive Multiple ACCEPT Responses
+UC-C11.5 — Count Valid Responders
+UC-C11.6 — Change Request Status to RESPONDED
+UC-C11.7 — Notify Customer of First Response
+UC-C11.8 — Notify Customer of Additional Responses
+UC-C11.9 — View Response Count
+UC-C11.10 — View Responding Provider List
+UC-C11.11 — Handle Provider DECLINE
+UC-C11.12 — Handle REQUEST_CLARIFICATION
+UC-C11.13 — Handle Provider Response Timeout
+UC-C11.14 — Handle Provider Withdrawal
+UC-C11.15 — Preserve Provider Response History
+
+UC-C12 — Respond to Provider Clarification
+UC-C12.1 — Receive Clarification Request
+UC-C12.2 — Open Clarification
+UC-C12.3 — View Provider Question
+UC-C12.4 — Enter Text Response
+UC-C12.5 — Add Clarification Photo
+UC-C12.6 — Add Clarification Attachment
+UC-C12.7 — Review Clarification Response
+UC-C12.8 — Submit Clarification Response
+UC-C12.9 — Record Clarification Timestamp
+UC-C12.10 — Link Clarification to Provider Response
+UC-C12.11 — Notify Provider
+UC-C12.12 — Provider Updates Response After Clarification
+UC-C12.13 — View Clarification History
+
+UC-C13 — View Responding Providers
+UC-C13.1 — Open Responding Providers
+UC-C13.2 — View Provider Display Name
+UC-C13.3 — View Provider Type
+UC-C13.4 — View Verification Status
+UC-C13.5 — View Relevant Service Category
+UC-C13.6 — View Relevant Service Eligibility
+UC-C13.7 — View Provider Rating
+UC-C13.8 — View Review Count
+UC-C13.9 — View Reviews
+UC-C13.10 — Open Provider Profile
+UC-C13.11 — View Company Profile
+UC-C13.12 — View Freelancer Profile
+UC-C13.13 — View Response Timestamp
+UC-C13.14 — View Availability Indicator
+UC-C13.15 — Return to Responder List
+
+UC-C14 — Compare Responding Providers
+UC-C14.1 — Select Provider for Comparison
+UC-C14.2 — Add Second Provider
+UC-C14.3 — Add Additional Providers
+UC-C14.4 — Compare Provider Type
+UC-C14.5 — Compare Verification
+UC-C14.6 — Compare Approved Service Category
+UC-C14.7 — Compare Exact Service Eligibility
+UC-C14.8 — Compare Ratings
+UC-C14.9 — Compare Review Counts and Reviews
+UC-C14.10 — Compare Response Information
+UC-C14.11 — Open Provider Details from Comparison
+UC-C14.12 — Remove Provider from Comparison
+UC-C14.13 — Change Comparison Selection
+UC-C14.14 — Mark Preferred Provider
+UC-C14.15 — Proceed to Provider Selection
+
+UC-C15 — Select Provider
+UC-C15.1 — Choose Responding Provider
+UC-C15.2 — View Selection Confirmation
+UC-C15.3 — Confirm Provider Selection
+UC-C15.4 — Validate Customer Ownership
+UC-C15.5 — Validate Request Status
+UC-C15.6 — Validate Provider Response Is Active
+UC-C15.7 — Revalidate Provider Account
+UC-C15.8 — Revalidate Location Eligibility
+UC-C15.9 — Revalidate Service Eligibility
+UC-C15.10 — Assign Selected Provider
+UC-C15.11 — Mark Selected Offer
+UC-C15.12 — Close Non-Selected Responses
+UC-C15.13 — Set Request Status to ACCEPTED
+UC-C15.14 — Notify Selected Provider
+UC-C15.15 — Notify Non-Selected Providers
+UC-C15.16 — Confirm Assignment to Customer
+UC-C15.17 — Preserve Provider Selection History
+
+UC-C16 — Schedule Inspection
+UC-C16.1 — Open Inspection Scheduling
+UC-C16.2 — Customer Proposes Inspection Date
+UC-C16.3 — Customer Proposes Inspection Time
+UC-C16.4 — Provider Proposes Inspection Time
+UC-C16.5 — View Proposed Inspection Slot
+UC-C16.6 — Accept Inspection Proposal
+UC-C16.7 — Reject Inspection Proposal
+UC-C16.8 — Suggest Alternative Inspection Time
+UC-C16.9 — Exchange Scheduling Proposals
+UC-C16.10 — Confirm Final Inspection Time
+UC-C16.11 — Validate Request Is ACCEPTED
+UC-C16.12 — Save Inspection Appointment
+UC-C16.13 — Set Status to INSPECTION_SCHEDULED
+UC-C16.14 — Notify Customer
+UC-C16.15 — Notify Provider
+UC-C16.16 — Create Inspection Reminder
+UC-C16.17 — View Confirmed Appointment
+
+UC-C17 — Reschedule Inspection
+UC-C17.1 — Open Reschedule Action
+UC-C17.2 — Validate Rescheduling Is Allowed
+UC-C17.3 — Enter Reschedule Reason
+UC-C17.4 — Propose Replacement Date
+UC-C17.5 — Propose Replacement Time
+UC-C17.6 — Notify Provider of Reschedule Request
+UC-C17.7 — Provider Accepts Replacement Time
+UC-C17.8 — Provider Rejects Replacement Time
+UC-C17.9 — Provider Suggests Alternative
+UC-C17.10 — Customer Confirms Replacement
+UC-C17.11 — Preserve Previous Schedule
+UC-C17.12 — Update Current Appointment
+UC-C17.13 — Keep Request Status INSPECTION_SCHEDULED
+UC-C17.14 — Update Reminders
+UC-C17.15 — Notify Both Parties
+
+UC-C18 — Coordinate Provider Arrival & Access
+UC-C18.1 — View Arrival Details
+UC-C18.2 — Confirm Service Address
+UC-C18.3 — Share Exact Location
+UC-C18.4 — Share Map Coordinates
+UC-C18.5 — Share House / Building Details
+UC-C18.6 — Share Floor / Unit
+UC-C18.7 — Share Landmark
+UC-C18.8 — Share Access Instructions
+UC-C18.9 — Confirm Primary Onsite Contact
+UC-C18.10 — Change Onsite Contact Before Arrival
+UC-C18.11 — Add Alternate Arrival Contact
+UC-C18.12 — Provider Sends Arrival Update
+UC-C18.13 — Customer Views Provider Arrival Status
+UC-C18.14 — Customer Communicates with Provider
+UC-C18.15 — Report Access Problem
+UC-C18.16 — Update Access Details Before Arrival
+UC-C18.17 — Preserve Privacy Before Authorization
+
+UC-C19 — Start & Track Active Work
+UC-C19.1 — Provider Records Arrival
+UC-C19.2 — Record Inspection Start
+UC-C19.3 — Record Inspection Completion
+UC-C19.4 — Provider Starts Physical Work
+UC-C19.5 — Validate Provider Authorization
+UC-C19.6 — Set Work Start Timestamp
+UC-C19.7 — Set Request Status to IN_PROGRESS
+UC-C19.8 — Notify Customer Work Started
+UC-C19.9 — Open Active Job
+UC-C19.10 — View Current Job Status
+UC-C19.11 — View Assigned Provider
+UC-C19.12 — View Assigned Company Personnel Where Permitted
+UC-C19.13 — View Work Start Time
+UC-C19.14 — View Job Timeline
+UC-C19.15 — Receive Progress Update
+UC-C19.16 — Communicate During Work
+UC-C19.17 — Provide Additional Customer Information
+UC-C19.18 — Report Job Concern
+
+UC-C20 — Handle Additional Work / Scope Change
+UC-C20.1 — Provider Identifies Additional Work
+UC-C20.2 — Describe Additional Work
+UC-C20.3 — Add Reason
+UC-C20.4 — Add Supporting Evidence
+UC-C20.5 — Record Proposed Additional Cost
+UC-C20.6 — Notify Customer
+UC-C20.7 — Customer Opens Scope Change
+UC-C20.8 — Customer Requests Clarification
+UC-C20.9 — Provider Clarifies Scope Change
+UC-C20.10 — Customer Approves Scope Change
+UC-C20.11 — Customer Rejects Scope Change
+UC-C20.12 — Record Decision Actor
+UC-C20.13 — Update Authorized Job Scope
+UC-C20.14 — Update Cost Revision
+UC-C20.15 — Notify Provider of Customer Decision
+UC-C20.16 — Preserve Scope Change History
+
+UC-C21 — Cancel Request Before Work Starts
+UC-C21.1 — Open Cancel Request
+UC-C21.2 — View Cancellation Consequences
+UC-C21.3 — Enter Cancellation Reason
+UC-C21.4 — Confirm Cancellation
+UC-C21.5 — Validate Customer Ownership
+UC-C21.6 — Validate Work Has Not Started
+UC-C21.7 — Cancel PENDING Request
+UC-C21.8 — Cancel RESPONDED Request
+UC-C21.9 — Close Active Provider Responses
+UC-C21.10 — Cancel ACCEPTED Request
+UC-C21.11 — Release Selected Provider
+UC-C21.12 — Cancel INSPECTION_SCHEDULED Request
+UC-C21.13 — Cancel Inspection Appointment
+UC-C21.14 — Set Request Status to CANCELLED
+UC-C21.15 — Apply Zero-Fee Rule
+UC-C21.16 — Cancel Future Notifications / Reminders
+UC-C21.17 — Notify Selected Provider
+UC-C21.18 — Notify Other Responding Providers
+UC-C21.19 — Record Cancellation Event
+UC-C21.20 — Show Cancellation Confirmation
+UC-C21.21 — Move Request to Customer History
+UC-C21.22 — Preserve Complete Historical Record
+
+UC-C22 — Request Cancellation During IN_PROGRESS
+UC-C22.1 — Open Cancellation Request During Active Work
+UC-C22.2 — Show Active-Work Warning
+UC-C22.3 — Enter Cancellation Reason
+UC-C22.4 — Add Supporting Evidence
+UC-C22.5 — Submit Cancellation Review Request
+UC-C22.6 — Block Direct CANCELLED Transition
+UC-C22.7 — Notify Assigned Provider
+UC-C22.8 — Notify Admin / Support
+UC-C22.9 — View Cancellation Review Status
+UC-C22.10 — Provider Records Response
+UC-C22.11 — Admin Reviews Cancellation
+UC-C22.12 — Approve Cancellation
+UC-C22.13 — Reject Cancellation
+UC-C22.14 — Record Resolution
+UC-C22.15 — Handle Financial Consequences Separately
+UC-C22.16 — Notify Customer of Decision
+UC-C22.17 — Preserve Review History
+
+UC-C23 — Handle Provider Withdrawal / Delay / No-Show
+UC-C23.1 — Provider Withdraws Before Work Starts
+UC-C23.2 — Notify Customer of Provider Withdrawal
+UC-C23.3 — Customer Reports Provider Delay
+UC-C23.4 — Customer Reports Provider No-Show
+UC-C23.5 — Customer Reports Provider Unreachable
+UC-C23.6 — Record Incident
+UC-C23.7 — Determine Whether Provider Should Be Released
+UC-C23.8 — Release Provider
+UC-C23.9 — Cancel Existing Inspection
+UC-C23.10 — Preserve Original Service Request
+UC-C23.11 — Return Request to Matching
+UC-C23.12 — Reidentify Eligible Providers
+UC-C23.13 — Generate Replacement Provider Offers
+UC-C23.14 — Receive Replacement Responses
+UC-C23.15 — Customer Compares Replacement Providers
+UC-C23.16 — Customer Selects Replacement Provider
+UC-C23.17 — Record Provider Replacement History
+UC-C23.18 — Escalate Repeated Provider Failure
+
+UC-C24 — Handle No Provider Available
+UC-C24.1 — Detect No Active Eligible Provider
+UC-C24.2 — Notify Customer
+UC-C24.3 — Preserve Service Request
+UC-C24.4 — Keep Request Open
+UC-C24.5 — Retry Matching Now
+UC-C24.6 — Retry Matching Later
+UC-C24.7 — Change Preferred Timing
+UC-C24.8 — Edit Problem Information
+UC-C24.9 — Change Service Where Permitted
+UC-C24.10 — Change Location Only by Customer Choice
+UC-C24.11 — Cancel Request
+UC-C24.12 — Contact Support
+UC-C24.13 — Track Matching Attempts
+UC-C24.14 — Prevent Geographic Expansion
+
+UC-C25 — Complete or Dispute Job
+UC-C25.1 — Provider Marks Work Finished
+UC-C25.2 — Record Completion Evidence
+UC-C25.3 — Notify Customer
+UC-C25.4 — Customer Opens Completion Summary
+UC-C25.5 — Customer Confirms Completion
+UC-C25.6 — Finalize Request as COMPLETED
+UC-C25.7 — Customer Reports Work Incomplete
+UC-C25.8 — Customer Opens Dispute
+UC-C25.9 — Add Dispute Evidence
+UC-C25.10 — Submit Dispute
+UC-C25.11 — Notify Provider
+UC-C25.12 — Notify Admin / Support
+UC-C25.13 — Provider Responds to Dispute
+UC-C25.14 — Review Dispute
+UC-C25.15 — Record Dispute Resolution
+UC-C25.16 — Apply Final Request Status
+UC-C25.17 — Preserve Completion and Dispute History
+
+UC-C26 — Rate & Review Provider
+UC-C26.1 — Check Review Eligibility
+UC-C26.2 — Open Review Form
+UC-C26.3 — Select Rating
+UC-C26.4 — Enter Review Text
+UC-C26.5 — Validate Review
+UC-C26.6 — Submit Review
+UC-C26.7 — Mark Review as Verified Job
+UC-C26.8 — Update Provider Aggregate Rating
+UC-C26.9 — Display Review
+UC-C26.10 — View Own Review
+UC-C26.11 — Edit Review Where Policy Allows
+UC-C26.12 — Preserve Review Revision History
+UC-C26.13 — Report Review Issue
+UC-C26.14 — Prevent Non-Customer Reviews
+
+UC-C27 — View Request History & Rebook
+UC-C27.1 — Open My Requests
+UC-C27.2 — View Active Requests
+UC-C27.3 — View PENDING Requests
+UC-C27.4 — View RESPONDED Requests
+UC-C27.5 — View ACCEPTED Requests
+UC-C27.6 — View INSPECTION_SCHEDULED Requests
+UC-C27.7 — View IN_PROGRESS Requests
+UC-C27.8 — View COMPLETED Requests
+UC-C27.9 — View CANCELLED Requests
+UC-C27.10 — Filter Request History
+UC-C27.11 — Search Request History
+UC-C27.12 — Open Historical Request
+UC-C27.13 — View Original Service Snapshot
+UC-C27.14 — View Address Snapshot
+UC-C27.15 — View Historical Onsite Contacts
+UC-C27.16 — View Provider Response History
+UC-C27.17 — View Assigned Provider History
+UC-C27.18 — View Inspection History
+UC-C27.19 — View Job Timeline
+UC-C27.20 — View Optional Payment / Receipt Information
+UC-C27.21 — Select Book Again
+UC-C27.22 — Copy Permitted Previous Details
+UC-C27.23 — Revalidate Current Service
+UC-C27.24 — Revalidate Current Location / Address
+UC-C27.25 — Create New Service Request
+UC-C27.26 — Record Rebook Relationship
+
+UC-C28 — Manage Notifications & Communication Channels
+UC-C28.1 — Open Notification Settings
+UC-C28.2 — View Available Channels
+UC-C28.3 — Enable Push Notifications
+UC-C28.4 — Disable Non-Critical Push Notifications
+UC-C28.5 — Enable SMS Notifications
+UC-C28.6 — Disable Non-Critical SMS
+UC-C28.7 — Configure Future Viber Preference
+UC-C28.8 — Select Preferred Notification Channel
+UC-C28.9 — Select Fallback Channel
+UC-C28.10 — Configure Provider Response Alerts
+UC-C28.11 — Configure Clarification Alerts
+UC-C28.12 — Configure Inspection Alerts
+UC-C28.13 — Configure Arrival Alerts
+UC-C28.14 — Configure Work Status Alerts
+UC-C28.15 — Configure Optional Cost / Payment Information Alerts
+UC-C28.16 — Configure Support / Dispute Alerts
+UC-C28.17 — Enable Quiet Hours
+UC-C28.18 — Change Quiet Hours
+UC-C28.19 — Disable Quiet Hours
+UC-C28.20 — Apply Quiet Hours to Routine Alerts
+UC-C28.21 — Override Quiet Hours for URGENT Operational Alert
+UC-C28.22 — Receive In-App Notification
+UC-C28.23 — Send Push Notification
+UC-C28.24 — Send SMS Notification
+UC-C28.25 — Attempt Fallback Delivery
+UC-C28.26 — Record Delivery Status
+UC-C28.27 — View Notification History
+UC-C28.28 — Open Notification
+UC-C28.29 — Mark Notification as Read
+UC-C28.30 — Mark All Notifications as Read
+UC-C28.31 — Preserve Notification Audit History
+UC-C28.32 — Separate Marketing from Operational Messaging
+
+UC-C29 — Optional Post-Inspection Cost & Direct Payment Information
+UC-C29.1 — Provider Records Cost Breakdown
+UC-C29.2 — Customer Views Cost Breakdown
+UC-C29.3 — Request Cost Clarification
+UC-C29.4 — Provider Revises Cost
+UC-C29.5 — Customer Records Intended Direct Payment Method
+UC-C29.6 — View Provider Payment Instructions
+UC-C29.7 — Record Customer Payment Declaration
+UC-C29.8 — Provider Confirms Direct Payment Received
+UC-C29.9 — Provider Disputes Payment Declaration
+UC-C29.10 — View Provider Receipt / Invoice Document
+UC-C29.11 — View Direct-Payment Record
+UC-C29.12 — Raise Payment-Related Support Case
+
+UC-C30 — Flag & Handle URGENT Request
+UC-C30.1 — View Priority Choice During Request Creation
+UC-C30.2 — Select NORMAL Priority
+UC-C30.3 — Select URGENT Priority
+UC-C30.4 — Display Urgent-Use Explanation
+UC-C30.5 — Enter Urgency Reason
+UC-C30.6 — Add Supporting Photo
+UC-C30.7 — Validate Service Supports URGENT Classification
+UC-C30.8 — Validate FixIt Service Area
+UC-C30.9 — Record Urgent Flag
+UC-C30.10 — Create Urgent Broadcast Record
+UC-C30.11 — Identify Eligible Providers
+UC-C30.12 — Prioritize Active / Available Providers
+UC-C30.13 — Do Not Expand Geographic Coverage
+UC-C30.14 — Send Priority Provider Alert
+UC-C30.15 — Allow Provider Quiet-Hours Override Where Policy Permits
+UC-C30.16 — Track First Provider Response
+UC-C30.17 — Receive Multiple Urgent Responses
+UC-C30.18 — Set Request RESPONDED
+UC-C30.19 — Notify Customer of Urgent Responses
+UC-C30.20 — View Urgent Responders
+UC-C30.21 — Compare Urgent Responders
+UC-C30.22 — Select Urgent Provider
+UC-C30.23 — Schedule Priority Inspection
+UC-C30.24 — Track Urgent Provider Arrival
+UC-C30.25 — Track Urgent Work Start
+UC-C30.26 — Handle No Urgent Provider Response
+UC-C30.27 — Retry Urgent Broadcast
+UC-C30.28 — Offer Customer Fallback Actions
+UC-C30.29 — Cancel Urgent Request Before Work Starts
+UC-C30.30 — Request Cancellation After Urgent Work Starts
+UC-C30.31 — Preserve Urgent Event Timeline
+UC-C30.32 — Record Urgent Operational Metrics
+UC-C30.33 — Prevent Urgency from Bypassing Verification
+UC-C30.34 — Prevent Automatic Provider Assignment
+UC-C30.35 — Distinguish Marketplace Urgency from Official Emergency Services
+
+UC-C31 — Manage Password & Account Security
+UC-C31.1 — Forgot Password
+UC-C31.2 — Send Password Reset Verification
+UC-C31.3 — Verify Reset Code / Link
+UC-C31.4 — Set New Password
+UC-C31.5 — Confirm Password Reset
+UC-C31.6 — Change Password While Logged In
+UC-C31.7 — Validate Current Password / Re-authentication
+UC-C31.8 — Change Registered Phone
+UC-C31.9 — Change Registered Email
+UC-C31.10 — View Active Sessions / Devices
+UC-C31.11 — Revoke Individual Session
+UC-C31.12 — Logout Other Sessions
+UC-C31.13 — View Security Event History
+
+UC-C32 — Manage Customer–Provider Messaging
+UC-C32.1 — Open Job Conversation
+UC-C32.2 — Send Text Message
+UC-C32.3 — Send Photo / Attachment
+UC-C32.4 — Receive Provider Message
+UC-C32.5 — Mark Message Read
+UC-C32.6 — View Conversation History
+UC-C32.7 — Report Inappropriate Message
+UC-C32.8 — Close Conversation After Job Closure
+
+UC-C33 — Manage Customer Support Cases
+UC-C33.1 — Open Support Centre
+UC-C33.2 — Create Support Case
+UC-C33.3 — Attach Evidence
+UC-C33.4 — View Support Case Status
+UC-C33.5 — Reply to Support
+UC-C33.6 — Escalate Unresolved Case
+UC-C33.7 — Close Resolved Support Case
+
+UC-C34 — Report Provider / Safety Incident
+UC-C34.1 — Open Provider Report
+UC-C34.2 — Select Incident Type
+UC-C34.3 — Enter Incident Details
+UC-C34.4 — Add Incident Evidence
+UC-C34.5 — Submit Incident Report
+UC-C34.6 — View Incident Status
+
+UC-C35 — Manage Saved Providers
+UC-C35.1 — Save Provider
+UC-C35.2 — View Saved Providers
+UC-C35.3 — Remove Saved Provider
+UC-C35.4 — Start New Request from Saved Provider
+
+UC-C36 — View Documents, Invoices & Service Reports
+UC-C36.1 — Open Request Documents
+UC-C36.2 — View Invoice / Cost Document
+UC-C36.3 — View Receipt
+UC-C36.4 — View Inspection Report
+UC-C36.5 — View Completion / Service Report
+UC-C36.6 — Download Customer Document
+
+UC-C37 — Handle Warranty / Post-Service Rework
+UC-C37.1 — Report Post-Service Problem
+UC-C37.2 — Check Warranty / Rework Eligibility
+UC-C37.3 — Request Provider Callback / Rework
+UC-C37.4 — Track Rework Status
+UC-C37.5 — Confirm Rework Resolution
+
+UC-C38 — Manage Privacy & Data Rights
+UC-C38.1 — View Privacy Settings
+UC-C38.2 — View Data Shared with Provider
+UC-C38.3 — Revoke Exact Location Sharing Where Allowed
+UC-C38.4 — Request Personal Data Export
+UC-C38.5 — Request Account / Data Deletion
+UC-C38.6 — View Privacy Request Status
+
+UC-C39 — Manage Delegated Job Access
+UC-C39.1 — Open Delegation Settings
+UC-C39.2 — Select Person to Delegate
+UC-C39.3 — Assign Delegated Authority
+UC-C39.4 — Set Delegation Expiry
+UC-C39.5 — Revoke Delegated Access
+UC-C39.6 — View Delegation Audit History
+
+UC-C40 — Manage Customer Availability & Scheduling Preferences
+UC-C40.1 — View Availability Preferences
+UC-C40.2 — Set Preferred Days
+UC-C40.3 — Set Preferred Time Window
+UC-C40.4 — Mark Unavailable Period
+UC-C40.5 — Allow / Disallow Same-Day Requests
+UC-C40.6 — Apply Preferences to New Request
+UC-C40.7 — Report Provider Delay
+UC-C40.8 — Report Customer Unavailable / No Access
+UC-C40.9 — Propose New Time After Delay / No Access
+
+UC-C41 — Optional Customer Identity Verification / KYC
+UC-C41.1 — View Identity Verification Status
+UC-C41.2 — Determine Whether Verification Is Required
+UC-C41.3 — Start Optional Identity Verification
+UC-C41.4 — Select Identity Document Type
+UC-C41.5 — Submit Identity Evidence
+UC-C41.6 — Complete Verification Check
+UC-C41.7 — Handle Manual Verification Review
+UC-C41.8 — Display Customer Verification Indicator
+UC-C41.9 — Handle Verification Expiry / Re-verification
+UC-C41.10 — View Verification History
+
+UC-C42 — Multi-Location Customer Requests
+UC-C42.1 — Start Multi-Location Request
+UC-C42.2 — Add Existing Saved Location / Address
+UC-C42.3 — Add New One-Time Location
+UC-C42.4 — Apply Common Service Details
+UC-C42.5 — Customize Details Per Location
+UC-C42.6 — Submit Multi-Location Request Group
+UC-C42.7 — Track Multi-Location Group
+UC-C42.8 — Compare Providers Per Location
+UC-C42.9 — Select Different Providers Per Location
+UC-C42.10 — Schedule Visits Per Location
+UC-C42.11 — Cancel One Location
+UC-C42.12 — Cancel Entire Multi-Location Group
+UC-C42.13 — View Group Optional Cost / Direct-Payment Summary
+
+UC-C43 — Business / Organization Customer Account
+UC-C43.1 — Create Organization Customer Account
+UC-C43.2 — Manage Organization Profile
+UC-C43.3 — Add Organization Locations / Properties
+UC-C43.4 — Invite Organization Member
+UC-C43.5 — Accept Organization Invitation
+UC-C43.6 — Assign Organization Role / Permissions
+UC-C43.7 — Create Organization Service Request
+UC-C43.8 — Approve Organization Request
+UC-C43.9 — Approve Organization Cost / Direct Payment Arrangement
+UC-C43.10 — View Organization Requests
+UC-C43.11 — Manage Organization Billing Details
+UC-C43.12 — Remove / Disable Organization Member
+
+UC-C44 — Localization & Language Preferences
+UC-C44.1 — Select Preferred Language
+UC-C44.2 — Use English Interface
+UC-C44.3 — Use Dhivehi Interface
+UC-C44.4 — Set Fallback Language
+UC-C44.5 — Localize Service Categories / Services
+UC-C44.6 — Localize Notifications
+UC-C44.7 — Localize Dates and Times
+UC-C44.8 — Localize Currency / Number Display
+UC-C44.9 — Set Communication Language Preference
+UC-C44.10 — Translate Provider / Customer Message Where Supported
