@@ -7,6 +7,7 @@ const items=[
  {href:'/admin/users',label:'Users'},
  {href:'/admin/providers',label:'Providers'},
  {href:'/admin/requests',label:'Requests'},
+ {href:'/admin/locations',label:'Locations'},
  {href:'/admin/audit-logs',label:'Audit Logs'},
 ];
 
