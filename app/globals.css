@@ -88,6 +88,17 @@ input:focus, textarea:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px #dbea
 .statCard { padding: 20px; display: grid; gap: 8px; }
 .statCard span { color: var(--muted); font-size: 13px; font-weight: 700; }
 .statCard strong { font-size: 32px; letter-spacing: -1px; }
+.userTableWrap { margin-top: 20px; overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; }
+.userTable { width: 100%; border-collapse: collapse; min-width: 720px; background: white; }
+.userTable th, .userTable td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.userTable th { background: var(--soft); color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.userTable td:first-child { min-width: 210px; }
+.userTable td strong, .userTable td small { display: block; }
+.userTable td small { margin-top: 4px; color: var(--muted); }
+.userTable tr:last-child td { border-bottom: 0; }
+.tableActions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.compactButton { padding: 8px 11px; border-radius: 10px; font-size: 12px; }
+.selfTag { display: inline-flex; margin-top: 7px; padding: 4px 7px; border-radius: 999px; background: #ecfdf5; color: #047857; font-size: 11px; font-weight: 800; }
 
 .threeCol { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 22px; }
 .infoCard { padding: 24px; }
@@ -108,4 +119,10 @@ input:focus, textarea:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px #dbea
   .jobTop { align-items: center; }
   .topbar { align-items: flex-start; }
   .topbar .actions { justify-content: flex-end; }
+  .userTableWrap { border: 0; overflow: visible; }
+  .userTable, .userTable thead, .userTable tbody, .userTable tr, .userTable td { display: block; min-width: 0; width: 100%; }
+  .userTable thead { display: none; }
+  .userTable tr { border: 1px solid var(--line); border-radius: 15px; margin-bottom: 12px; padding: 12px; background: white; }
+  .userTable td { border: 0; padding: 7px 4px; }
+  .tableActions { margin-top: 4px; }
 }
