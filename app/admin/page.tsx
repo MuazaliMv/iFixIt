@@ -1,104 +1,31 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '../../lib/supabaseClient';
 
-const ADMIN_URL = 'https://yzlhlilxiszefneshatm.supabase.co/functions/v1/admin-operations';
+const ADMIN_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/admin-operations';
+type RequestRow={ticket_number:string;service_name:string;service_location_text:string;preferred_date:string;problem_description:string;status:'NEW'|'ACCEPTED'|'PROCESSING'|'COMPLETED';assigned_provider_label?:string|null;created_at:string;updated_at:string};
+type Counts={total:number;new:number;accepted:number;processing:number;completed:number};
+type ProviderRow={user_id:string;email?:string|null;full_name?:string|null;provider_approved:boolean;created_at:string};
+type Profile={role:string;full_name?:string|null};
+const labels:Record<RequestRow['status'],string>={NEW:'New',ACCEPTED:'Accepted',PROCESSING:'Processing',COMPLETED:'Completed'};
 
-type RequestRow = {
-  ticket_number: string;
-  service_name: string;
-  service_location_text: string;
-  preferred_date: string;
-  problem_description: string;
-  status: 'NEW' | 'ACCEPTED' | 'PROCESSING' | 'COMPLETED';
-  assigned_provider_label?: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-type Counts = { total: number; new: number; accepted: number; processing: number; completed: number };
-
-const labels: Record<RequestRow['status'], string> = {
-  NEW: 'New', ACCEPTED: 'Accepted', PROCESSING: 'Processing', COMPLETED: 'Completed',
-};
-
-export default function AdminPage() {
-  const [accessToken, setAccessToken] = useState('');
-  const [adminLabel, setAdminLabel] = useState('');
-  const [requests, setRequests] = useState<RequestRow[]>([]);
-  const [counts, setCounts] = useState<Counts>({ total: 0, new: 0, accepted: 0, processing: 0, completed: 0 });
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<'ALL' | RequestRow['status']>('ALL');
-
-  const visible = useMemo(() => filter === 'ALL' ? requests : requests.filter(r => r.status === filter), [filter, requests]);
-
-  async function loadDashboard() {
-    if (!accessToken.trim()) return setMessage('Enter the admin access code.');
-    setLoading(true); setMessage('');
-    try {
-      const response = await fetch(ADMIN_URL, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken: accessToken.trim(), action: 'dashboard' }),
-      });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload?.error || 'Unable to load admin dashboard');
-      setAdminLabel(payload.admin?.label || 'Admin');
-      setCounts(payload.counts || counts);
-      setRequests(payload.requests || []);
-      window.localStorage.setItem('fixit:admin-access-token', accessToken.trim());
-      setMessage('Admin dashboard refreshed.');
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Unable to load dashboard.');
-    } finally { setLoading(false); }
-  }
-
-  return (
-    <main className="shell">
-      <header className="topbar">
-        <div><a className="brand" href="/">FixIt</a><p className="tagline">Admin Operations</p></div>
-        <div className="actions"><a className="secondary" href="/provider">Provider</a><a className="secondary" href="/">Customer</a></div>
-      </header>
-
-      <section className="panel">
-        <div className="panelHeader">
-          <div><p className="eyebrow">ADMIN</p><h2>Operations Dashboard</h2></div>
-          <span className="pill">{adminLabel || 'Secure MVP'}</span>
-        </div>
-        <div className="providerAccessRow">
-          <input type="password" placeholder="Admin access code" value={accessToken} onChange={e => setAccessToken(e.target.value)} />
-          <button className="primary" type="button" disabled={loading} onClick={loadDashboard}>{loading ? 'Loading…' : 'Open Dashboard'}</button>
-        </div>
-        {message ? <p className="formMessage" role="status">{message}</p> : null}
-        <p className="localNotice">Temporary MVP admin access. Full authenticated RBAC remains the next security upgrade.</p>
-      </section>
-
-      <section className="adminStats">
-        <article className="statCard"><span>Total</span><strong>{counts.total}</strong></article>
-        <article className="statCard"><span>New</span><strong>{counts.new}</strong></article>
-        <article className="statCard"><span>Accepted</span><strong>{counts.accepted}</strong></article>
-        <article className="statCard"><span>Processing</span><strong>{counts.processing}</strong></article>
-        <article className="statCard"><span>Completed</span><strong>{counts.completed}</strong></article>
-      </section>
-
-      <section className="panel">
-        <div className="panelHeader"><div><p className="eyebrow">REQUEST OVERSIGHT</p><h2>All Service Requests</h2></div><button className="secondary" onClick={loadDashboard} disabled={!accessToken || loading}>Refresh</button></div>
-        <div className="filterRow">
-          {(['ALL','NEW','ACCEPTED','PROCESSING','COMPLETED'] as const).map(item => <button key={item} className={filter===item?'filterChip active':'filterChip'} onClick={()=>setFilter(item)}>{item==='ALL'?'All':labels[item]}</button>)}
-        </div>
-        <div className="jobList">
-          {visible.map(r => (
-            <article className="jobCard" key={r.ticket_number}>
-              <div className="jobTop"><div><strong className="ticket">{r.ticket_number}</strong><span className="muted">{r.service_name}</span></div><span className="pill">{labels[r.status]}</span></div>
-              <div className="jobMeta"><span><b>Location:</b> {r.service_location_text}</span><span><b>Preferred:</b> {r.preferred_date}</span>{r.assigned_provider_label?<span><b>Provider:</b> {r.assigned_provider_label}</span>:null}</div>
-              <p className="jobDescription">{r.problem_description}</p>
-            </article>
-          ))}
-          {!visible.length ? <div className="emptyQueue">No requests to show.</div> : null}
-        </div>
-      </section>
-
-      <footer className="footer"><span>FixIt Maldives</span><span>Admin Operations MVP</span></footer>
-    </main>
-  );
+export default function AdminPage(){
+ const[profile,setProfile]=useState<Profile|null>(null);const[legacyCode,setLegacyCode]=useState('');const[requests,setRequests]=useState<RequestRow[]>([]);const[providers,setProviders]=useState<ProviderRow[]>([]);const[counts,setCounts]=useState<Counts>({total:0,new:0,accepted:0,processing:0,completed:0});const[message,setMessage]=useState('Checking administrator account…');const[loading,setLoading]=useState(false);const[filter,setFilter]=useState<'ALL'|RequestRow['status']>('ALL');
+ const visible=useMemo(()=>filter==='ALL'?requests:requests.filter(r=>r.status===filter),[filter,requests]);
+ useEffect(()=>{(async()=>{const{data}=await supabase.auth.getSession();if(!data.session){window.location.href='/login';return;}const{data:p}=await supabase.from('auth_profiles').select('role,full_name').eq('user_id',data.session.user.id).maybeSingle();setProfile(p as Profile|null);if(p?.role==='ADMIN'){setMessage('Administrator authenticated.');setTimeout(()=>loadDashboard(),0);}else setMessage('This signed-in account is not yet an Administrator. Use the one-time admin bridge below to promote it.');})();},[]);
+ async function jwt(){const{data}=await supabase.auth.getSession();return data.session?.access_token||'';}
+ async function callAdmin(body:Record<string,unknown>){const t=await jwt();const response=await fetch(ADMIN_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify(body)});const payload=await response.json();if(!response.ok)throw new Error(payload?.error||'Admin request failed');return payload;}
+ async function bootstrapAdmin(){if(!legacyCode.trim())return setMessage('Enter the temporary admin bridge code.');setLoading(true);try{await callAdmin({action:'bootstrap_admin',accessToken:legacyCode.trim()});const{data}=await supabase.auth.getSession();if(data.session){const{data:p}=await supabase.from('auth_profiles').select('role,full_name').eq('user_id',data.session.user.id).maybeSingle();setProfile(p as Profile|null);}setLegacyCode('');setMessage('This account is now an authenticated Administrator.');await loadDashboard();}catch(error){setMessage(error instanceof Error?error.message:'Unable to promote admin account.');}finally{setLoading(false);}}
+ async function loadDashboard(){setLoading(true);try{const payload=await callAdmin({action:'dashboard'});setCounts(payload.counts||counts);setRequests(payload.requests||[]);setProviders(payload.providers||[]);setMessage('Admin dashboard refreshed.');}catch(error){setMessage(error instanceof Error?error.message:'Unable to load dashboard.');}finally{setLoading(false);}}
+ async function setProviderApproval(row:ProviderRow,approved:boolean){try{await callAdmin({action:'approve_provider',providerUserId:row.user_id,approved});await loadDashboard();setMessage(`${row.full_name||row.email||'Provider'} ${approved?'approved':'disabled'}.`);}catch(error){setMessage(error instanceof Error?error.message:'Unable to update provider.');}}
+ async function signOut(){await supabase.auth.signOut();window.location.href='/login';}
+ return <main className="shell">
+  <header className="topbar"><div><a className="brand" href="/">FixIt</a><p className="tagline">Admin Operations</p></div><div className="actions"><a className="secondary" href="/provider">Provider</a><a className="secondary" href="/">Customer</a><button className="secondary" onClick={signOut}>Sign Out</button></div></header>
+  <section className="panel"><div className="panelHeader"><div><p className="eyebrow">ADMIN</p><h2>Operations Dashboard</h2></div><span className="pill">{profile?.role==='ADMIN'?(profile.full_name||'Administrator'):'Admin setup'}</span></div>{profile?.role!=='ADMIN'?<div className="providerAccessRow"><input type="password" placeholder="Temporary admin bridge code" value={legacyCode} onChange={e=>setLegacyCode(e.target.value)}/><button className="primary" type="button" disabled={loading} onClick={bootstrapAdmin}>Promote This Account</button></div>:<div className="actions"><button className="primary" onClick={loadDashboard} disabled={loading}>{loading?'Loading…':'Refresh Dashboard'}</button></div>}{message?<p className="formMessage" role="status">{message}</p>:null}<p className="localNotice">After promotion, day-to-day Admin access uses the signed-in Supabase account and server-side Admin role. The bridge code is no longer needed for that account.</p></section>
+  <section className="adminStats"><article className="statCard"><span>Total</span><strong>{counts.total}</strong></article><article className="statCard"><span>New</span><strong>{counts.new}</strong></article><article className="statCard"><span>Accepted</span><strong>{counts.accepted}</strong></article><article className="statCard"><span>Processing</span><strong>{counts.processing}</strong></article><article className="statCard"><span>Completed</span><strong>{counts.completed}</strong></article></section>
+  <section className="panel"><div className="panelHeader"><div><p className="eyebrow">PROVIDER APPROVAL</p><h2>Provider Accounts</h2></div><span className="pill">{providers.filter(p=>!p.provider_approved).length} pending</span></div><div className="jobList">{providers.map(p=><article className="jobCard" key={p.user_id}><div className="jobTop"><div><strong>{p.full_name||'Unnamed provider'}</strong><div className="muted">{p.email||'No email'}</div></div><span className="pill">{p.provider_approved?'Approved':'Pending'}</span></div><div className="actions">{p.provider_approved?<button className="secondary" onClick={()=>setProviderApproval(p,false)}>Disable Provider</button>:<button className="primary" onClick={()=>setProviderApproval(p,true)}>Approve Provider</button>}</div></article>)}{!providers.length?<div className="emptyQueue">No provider accounts yet.</div>:null}</div></section>
+  <section className="panel"><div className="panelHeader"><div><p className="eyebrow">REQUEST OVERSIGHT</p><h2>All Service Requests</h2></div><button className="secondary" onClick={loadDashboard} disabled={profile?.role!=='ADMIN'||loading}>Refresh</button></div><div className="filterRow">{(['ALL','NEW','ACCEPTED','PROCESSING','COMPLETED'] as const).map(item=><button key={item} className={filter===item?'filterChip active':'filterChip'} onClick={()=>setFilter(item)}>{item==='ALL'?'All':labels[item]}</button>)}</div><div className="jobList">{visible.map(r=><article className="jobCard" key={r.ticket_number}><div className="jobTop"><div><strong className="ticket">{r.ticket_number}</strong><span className="muted">{r.service_name}</span></div><span className="pill">{labels[r.status]}</span></div><div className="jobMeta"><span><b>Location:</b> {r.service_location_text}</span><span><b>Preferred:</b> {r.preferred_date}</span>{r.assigned_provider_label?<span><b>Provider:</b> {r.assigned_provider_label}</span>:null}</div><p className="jobDescription">{r.problem_description}</p></article>)}{!visible.length?<div className="emptyQueue">No requests to show.</div>:null}</div></section>
+  <footer className="footer"><span>FixIt Maldives</span><span>Authenticated Admin RBAC</span></footer>
+ </main>;
 }
