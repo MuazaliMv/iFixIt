@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - ".github/workflows/expand-fixit-app.yml"
+      - ".bootstrap/trigger-expand.txt"
 
 permissions:
   contents: write
