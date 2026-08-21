@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import ThemeRuntime from './ThemeRuntime';
+import RouteMobileNav from './RouteMobileNav';
 
 export const metadata: Metadata = {
   title: 'FixIt Maldives',
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/>{children}</body>
+      <body><ThemeRuntime/>{children}<RouteMobileNav/></body>
     </html>
   );
 }
