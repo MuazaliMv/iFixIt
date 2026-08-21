@@ -1,8 +1,8 @@
 [build]
-builder = "railpack"
-buildCommand = "npm run test && npm run build"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "npx next start --port $PORT"
+startCommand = "npm start"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
