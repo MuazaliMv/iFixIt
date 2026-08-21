@@ -46,7 +46,19 @@ Deno.serve(async(req:Request)=>{
    const ids=(links??[]).map((x:any)=>x.category_id); let categoryNames:any[]=[]; if(ids.length){const {data}=await supabase.from("service_categories").select("id,name").in("id",ids);categoryNames=data??[];}
    const categories=(links??[]).map((x:any)=>({category_id:x.category_id,is_active:x.is_active,name:categoryNames.find((c:any)=>c.id===x.category_id)?.name||"Service category"}));
    const {data:hours}=await supabase.from("provider_weekly_hours").select("day_of_week,is_working,start_time,end_time,timezone_name").eq("provider_user_id",providerUserId).order("day_of_week",{ascending:true});
-   return json({ok:true,account,onboarding:onboarding??null,categories,hours:hours??[]});
+   const {data:docs,error:docsError}=await supabase.from("provider_verification_documents").select("id,document_type,document_label,storage_bucket,storage_path,review_status,review_note,reviewed_at,submitted_at,updated_at").eq("provider_user_id",providerUserId).order("submitted_at",{ascending:false}); if(docsError)throw docsError;
+   const documents=[] as any[];
+   for(const d of docs??[]){const {data:signed}=await supabase.storage.from(d.storage_bucket).createSignedUrl(d.storage_path,600);documents.push({...d,signed_url:signed?.signedUrl??null});}
+   return json({ok:true,account,onboarding:onboarding??null,categories,hours:hours??[],documents});
+  }
+
+  if(action==="review_provider_document"){
+   const providerUserId=String(body.providerUserId??"").trim(); const documentId=String(body.documentId??"").trim(); const status=String(body.status??"").trim().toUpperCase(); const note=String(body.note??"").trim();
+   if(!providerUserId||!documentId)return json({error:"Provider and document are required"},400);
+   if(!["APPROVED","REQUEST_INFO","REJECTED"].includes(status))return json({error:"Invalid document review status"},400);
+   const {data,error}=await supabase.from("provider_verification_documents").update({review_status:status,review_note:note||null,reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq("id",documentId).eq("provider_user_id",providerUserId).select("id,document_type,review_status,review_note,reviewed_at").maybeSingle(); if(error)throw error; if(!data)return json({error:"Provider document not found"},404);
+   await supabase.from("security_events").insert({event_type:"ADMIN_PROVIDER_DOCUMENT_REVIEWED",severity:"INFO",entity_type:"provider_verification_document",entity_id:documentId,metadata:{target_user_id:providerUserId,document_type:data.document_type,review_status:status,admin_auth_user_id:user.id,admin_label:adminLabel}});
+   return json({ok:true,document:data});
   }
 
   if(action==="approve_provider"){
@@ -70,7 +82,7 @@ Deno.serve(async(req:Request)=>{
    const targetUserId=String(body.targetUserId??"").trim(); const role=String(body.role??"").trim().toUpperCase(); if(!targetUserId)return json({error:"Target user is required"},400);
    if(!["CUSTOMER","PROVIDER"].includes(role))return json({error:"Only Customer or Provider can be assigned here"},400); if(targetUserId===user.id)return json({error:"You cannot change your own Admin role from this screen"},409);
    const providerApproved=role==="PROVIDER"?Boolean(body.providerApproved):false;
-   const {data,error}=await supabase.from("auth_profiles").update({role,provider_approved:providerApproved}).eq("user_id",targetUserId).select("user_id,email,full_name,role,provider_approved,updated_at").maybeSingle(); if(error)throw error; if(!data)return json({error:"User not found"},404);
+   const {data,error}=await supabase.from("auth_profiles").update({role,provider_approved:providerApproved}).eq("user_id",targetUserId).select("user_id,email,full_name,role,provider_approved,updated_at").maybeSingle(); if(error)throw error; if(!data)return json({error:"User not found"},404;
    if(role!=="PROVIDER")await supabase.from("provider_onboarding_profiles").update({onboarding_status:"SUSPENDED",accepting_leads:false}).eq("user_id",targetUserId);
    await supabase.from("security_events").insert({event_type:"ADMIN_USER_ROLE_CHANGED",severity:"INFO",entity_type:"auth_profile",entity_id:targetUserId,metadata:{target_user_id:targetUserId,new_role:role,provider_approved:providerApproved,admin_auth_user_id:user.id,admin_label:adminLabel}});
    return json({ok:true,user:data});
