@@ -1,0 +1,8 @@
+/* End-to-end workflow hardening: keep busy/disabled actions visibly safe across the verified customer/provider journey. */
+button:disabled,.primary:disabled,.secondary:disabled,.blueButton:disabled,.dangerButton:disabled,.dangerOutline:disabled{opacity:.52;cursor:not-allowed;filter:saturate(.55);box-shadow:none!important}
+button[aria-busy="true"],.isBusy{pointer-events:none}
+.statusMessage,.formMessage{overflow-wrap:anywhere}
+.choiceActions,.providerJobActions,.footerActionRow,.utilityRow{align-items:stretch}
+.choiceActions>*{min-width:0}
+.progressStep small,.inspectionStep strong,.providerMetaItem strong{overflow-wrap:anywhere}
+@media(max-width:560px){.choiceActions{display:grid!important;grid-template-columns:1fr!important}.choiceActions>*{width:100%!important}.footerActionRow{display:grid!important;grid-template-columns:1fr!important}.utilityRow{grid-template-columns:1fr!important}.confirmSubmit{padding-bottom:max(8px,env(safe-area-inset-bottom))}}
