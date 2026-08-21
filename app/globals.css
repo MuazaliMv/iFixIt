@@ -49,6 +49,7 @@ h2 { margin: 6px 0 0; font-size: 30px; letter-spacing: -.8px; }
 .serviceGrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin: 24px 0; }
 .serviceCard { border: 1px solid var(--line); background: var(--soft); border-radius: 16px; padding: 18px 12px; font-weight: 700; color: #334155; }
 .serviceCard:hover { border-color: #93c5fd; background: #eff6ff; }
+.serviceCard.selected { border-color: var(--blue); background: #dbeafe; color: #1d4ed8; box-shadow: 0 0 0 2px rgba(37,99,235,.12); }
 .serviceIcon { display: block; color: var(--blue); font-size: 28px; line-height: .4; margin-bottom: 14px; }
 .formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 label { display: grid; gap: 8px; font-size: 14px; font-weight: 700; color: #334155; }
@@ -56,6 +57,11 @@ input, textarea { width: 100%; border: 1px solid var(--line); border-radius: 13p
 input:focus, textarea:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px #dbeafe; }
 .full { grid-column: 1 / -1; }
 .button { margin-top: 16px; }
+.formMessage { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: #ecfdf5; color: #047857; font-weight: 700; }
+.localNotice { margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.requestSummary { margin-top: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--soft); }
+.requestSummary .pill { display: inline-block; margin-left: 8px; }
+.requestSummary p { margin: 8px 0 0; }
 
 .threeCol { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 22px; }
 .infoCard { padding: 24px; }
