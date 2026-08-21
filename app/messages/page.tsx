@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import './account-polish.css';
 
 const REQUESTS_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/customer-requests';
 const MESSAGE_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/request-messages';
@@ -10,15 +9,25 @@ type RequestRow={id:string;ticket_number:string;service_name:string;service_loca
 type MessageRow={id:string;sender_role:string;sender_label?:string|null;message_text:string;created_at:string};
 type Conversation={request:RequestRow;latest:MessageRow|null;unread:number};
 
-function timeLabel(value?:string){if(!value)return'';const d=new Date(value);if(Number.isNaN(d.getTime()))return'';const now=new Date();const sameDay=d.toDateString()===now.toDateString();return sameDay?d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString([],{month:'short',day:'numeric'});}
+function timeLabel(value?:string){if(!value)return'';const d=new Date(value);if(Number.isNaN(d.getTime()))return'';const now=new Date();return d.toDateString()===now.toDateString()?d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString([],{month:'short',day:'numeric'});}
+function lastReadKey(ticket:string){return`fixit:messages:last-read:${ticket}`;}
 
 export default function MessagesPage(){
- const[requests,setRequests]=useState<RequestRow[]>([]);const[details,setDetails]=useState<Record<string,MessageRow[]>>({});const[busy,setBusy]=useState(false);const[message,setMessage]=useState('Loading conversations…');
+ const[conversations,setConversations]=useState<Conversation[]>([]);const[busy,setBusy]=useState(false);const[message,setMessage]=useState('Loading conversations…');
  useEffect(()=>{void load();},[]);
  async function token(){const{data}=await supabase.auth.getSession();if(!data.session){window.location.href='/login';return'';}return data.session.access_token;}
- function lastReadKey(ticket:string){return`fixit:messages:last-read:${ticket}`;}
- async function load(){setBusy(true);try{const t=await token();if(!t)return;const r=await fetch(REQUESTS_API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify({action:'list'})});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to load requests');const rows:(RequestRow[])=(p.requests||[]).filter((x:RequestRow)=>x.status!=='NEW'&&x.assigned_provider_label);setRequests(rows);const entries=await Promise.all(rows.map(async row=>{try{const mr=await fetch(MESSAGE_API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify({action:'list',ticketNumber:row.ticket_number})});const mp=await mr.json();return[row.ticket_number,(mr.ok?mp.messages:[])||[]] as const;}catch{return[row.ticket_number,[]] as const;}}));setDetails(Object.fromEntries(entries));setMessage(rows.length?'Your conversations are up to date.':'No conversations yet.');}catch(e){setMessage(e instanceof Error?e.message:'Unable to load conversations.');}finally{setBusy(false);}}
- const conversations=useMemo<Conversation[]>(()=>requests.map(request=>{const messages=details[request.ticket_number]||[];const latest=messages.length?messages[messages.length-1]:null;const readAt=Number(typeof window!=='undefined'?window.localStorage.getItem(lastReadKey(request.ticket_number))||0:0);const unread=messages.filter(m=>m.sender_role!=='CUSTOMER'&&new Date(m.created_at).getTime()>readAt).length;return{request,latest,unread};}).sort((a,b)=>new Date(b.latest?.created_at||b.request.updated_at).getTime()-new Date(a.latest?.created_at||a.request.updated_at).getTime()),[requests,details]);
+ async function load(){
+  setBusy(true);
+  try{
+   const t=await token();if(!t)return;
+   const r=await fetch(REQUESTS_API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify({action:'list'})});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to load requests');
+   const rows:RequestRow[]=(p.requests||[]).filter((x:RequestRow)=>x.status!=='NEW'&&Boolean(x.assigned_provider_label));const next:Conversation[]=[];
+   for(const request of rows){let messages:MessageRow[]=[];try{const mr=await fetch(MESSAGE_API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify({action:'list',ticketNumber:request.ticket_number})});const mp=await mr.json();if(mr.ok)messages=mp.messages||[];}catch{}
+    const latest=messages.length?messages[messages.length-1]:null;const readAt=Number(window.localStorage.getItem(lastReadKey(request.ticket_number))||0);const unread=messages.filter(m=>m.sender_role!=='CUSTOMER'&&new Date(m.created_at).getTime()>readAt).length;next.push({request,latest,unread});
+   }
+   next.sort((a,b)=>new Date(b.latest?.created_at||b.request.updated_at).getTime()-new Date(a.latest?.created_at||a.request.updated_at).getTime());setConversations(next);setMessage(next.length?'Your conversations are up to date.':'No conversations yet.');
+  }catch(e){setMessage(e instanceof Error?e.message:'Unable to load conversations.');}finally{setBusy(false);}
+ }
  const unreadTotal=conversations.reduce((sum,c)=>sum+c.unread,0);
  function openConversation(ticket:string){window.localStorage.setItem(lastReadKey(ticket),String(Date.now()));window.location.href=`/requests/${encodeURIComponent(ticket)}#messages`;}
  return <main className="shell accountApp">
