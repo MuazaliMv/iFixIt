@@ -1,3 +1,7 @@
+'use client';
+
+import { FormEvent, useEffect, useState } from 'react';
+
 const statusItems = [
   { label: 'New', active: true },
   { label: 'Accepted', active: false },
@@ -7,7 +11,76 @@ const statusItems = [
 
 const services = ['AC Repair', 'Plumbing', 'Electrical', 'Appliance Repair', 'Cleaning', 'Handyman'];
 
+type LocalRequest = {
+  id: string;
+  service: string;
+  location: string;
+  preferredDate: string;
+  description: string;
+  status: 'New';
+  createdAt: string;
+};
+
 export default function HomePage() {
+  const [service, setService] = useState('');
+  const [location, setLocation] = useState('');
+  const [preferredDate, setPreferredDate] = useState('');
+  const [description, setDescription] = useState('');
+  const [message, setMessage] = useState('');
+  const [lastRequest, setLastRequest] = useState<LocalRequest | null>(null);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem('fixit:last-request');
+    if (saved) {
+      try {
+        setLastRequest(JSON.parse(saved));
+      } catch {
+        window.localStorage.removeItem('fixit:last-request');
+      }
+    }
+  }, []);
+
+  function submitRequest(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage('');
+
+    if (!service) {
+      setMessage('Please select a service.');
+      return;
+    }
+    if (!location.trim()) {
+      setMessage('Please enter the service location.');
+      return;
+    }
+    if (!preferredDate) {
+      setMessage('Please choose a preferred date.');
+      return;
+    }
+    if (!description.trim()) {
+      setMessage('Please describe the issue.');
+      return;
+    }
+
+    const request: LocalRequest = {
+      id: `FX-${Date.now().toString().slice(-8)}`,
+      service,
+      location: location.trim(),
+      preferredDate,
+      description: description.trim(),
+      status: 'New',
+      createdAt: new Date().toISOString(),
+    };
+
+    window.localStorage.setItem('fixit:last-request', JSON.stringify(request));
+    setLastRequest(request);
+    setMessage(`Request ${request.id} submitted successfully.`);
+
+    setService('');
+    setLocation('');
+    setPreferredDate('');
+    setDescription('');
+  }
+
   return (
     <main className="shell">
       <header className="topbar">
@@ -53,37 +126,69 @@ export default function HomePage() {
           <span className="pill">New</span>
         </div>
 
-        <div className="serviceGrid">
-          {services.map((service) => (
-            <button className="serviceCard" key={service} type="button">
-              <span className="serviceIcon">•</span>
-              {service}
-            </button>
-          ))}
-        </div>
+        <form onSubmit={submitRequest}>
+          <div className="serviceGrid">
+            {services.map((item) => (
+              <button
+                className={service === item ? 'serviceCard selected' : 'serviceCard'}
+                key={item}
+                type="button"
+                aria-pressed={service === item}
+                onClick={() => setService(item)}
+              >
+                <span className="serviceIcon">•</span>
+                {item}
+              </button>
+            ))}
+          </div>
 
-        <div className="formGrid">
-          <label>
-            Service location
-            <input placeholder="Select island / city" />
-          </label>
-          <label>
-            Preferred date
-            <input type="date" />
-          </label>
-          <label className="full">
-            Describe the issue
-            <textarea placeholder="Tell the provider what needs to be fixed..." rows={4} />
-          </label>
-        </div>
-        <button className="primary button" type="button">Submit Request</button>
+          <div className="formGrid">
+            <label>
+              Service location
+              <input
+                placeholder="Select island / city"
+                value={location}
+                onChange={(event) => setLocation(event.target.value)}
+              />
+            </label>
+            <label>
+              Preferred date
+              <input
+                type="date"
+                value={preferredDate}
+                onChange={(event) => setPreferredDate(event.target.value)}
+              />
+            </label>
+            <label className="full">
+              Describe the issue
+              <textarea
+                placeholder="Tell the provider what needs to be fixed..."
+                rows={4}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+              />
+            </label>
+          </div>
+          <button className="primary button" type="submit">Submit Request</button>
+          {message ? <p className="formMessage" role="status">{message}</p> : null}
+          <p className="localNotice">Temporary MVP mode: requests are saved on this device until the FixIt Supabase backend is connected.</p>
+        </form>
       </section>
 
       <section className="threeCol">
         <article className="infoCard">
           <p className="eyebrow">CUSTOMER</p>
           <h3>Track your request</h3>
-          <p>See the same four statuses: New, Accepted, Processing and Completed.</p>
+          {lastRequest ? (
+            <div className="requestSummary">
+              <strong>{lastRequest.id}</strong>
+              <span className="pill">{lastRequest.status}</span>
+              <p>{lastRequest.service} • {lastRequest.location}</p>
+              <p>Preferred date: {lastRequest.preferredDate}</p>
+            </div>
+          ) : (
+            <p>See the same four statuses: New, Accepted, Processing and Completed.</p>
+          )}
         </article>
         <article className="infoCard">
           <p className="eyebrow">PROVIDER</p>
