@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendWhatsAppTemplate } from '@/lib/integrations/whatsapp';
+import { sendWhatsAppTemplate } from '../../../../lib/integrations/whatsapp';
 
 const EVENTS = new Set([
   'REQUEST_RECEIVED',
