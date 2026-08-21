@@ -1,16 +1,13 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
-
-const statusItems = [
-  { label: 'New', active: true },
-  { label: 'Accepted', active: false },
-  { label: 'Processing', active: false },
-  { label: 'Completed', active: false },
-];
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 
 const services = ['AC Repair', 'Plumbing', 'Electrical', 'Appliance Repair', 'Cleaning', 'Handyman'];
 const SUBMIT_REQUEST_URL = 'https://yzlhlilxiszefneshatm.supabase.co/functions/v1/submit-request';
+const TRACK_REQUEST_URL = 'https://yzlhlilxiszefneshatm.supabase.co/functions/v1/track-request';
+const workflow = ['New', 'Accepted', 'Processing', 'Completed'] as const;
+
+type RequestStatus = (typeof workflow)[number];
 
 type RequestSummary = {
   id: string;
@@ -18,9 +15,18 @@ type RequestSummary = {
   location: string;
   preferredDate: string;
   description: string;
-  status: 'New' | 'Accepted' | 'Processing' | 'Completed';
+  status: RequestStatus;
   createdAt: string;
+  trackingToken?: string;
+  updatedAt?: string;
 };
+
+function normalizeStatus(value: string): RequestStatus {
+  if (value === 'ACCEPTED') return 'Accepted';
+  if (value === 'PROCESSING') return 'Processing';
+  if (value === 'COMPLETED') return 'Completed';
+  return 'New';
+}
 
 export default function HomePage() {
   const [service, setService] = useState('');
@@ -30,6 +36,7 @@ export default function HomePage() {
   const [message, setMessage] = useState('');
   const [lastRequest, setLastRequest] = useState<RequestSummary | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const saved = window.localStorage.getItem('fixit:last-request');
@@ -41,6 +48,11 @@ export default function HomePage() {
       }
     }
   }, []);
+
+  const activeStep = useMemo(() => {
+    if (!lastRequest) return 0;
+    return Math.max(0, workflow.indexOf(lastRequest.status));
+  }, [lastRequest]);
 
   async function submitRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,28 +70,21 @@ export default function HomePage() {
       const response = await fetch(SUBMIT_REQUEST_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          serviceName: service,
-          location: location.trim(),
-          preferredDate,
-          description: description.trim(),
-          clientRequestId,
-        }),
+        body: JSON.stringify({ serviceName: service, location: location.trim(), preferredDate, description: description.trim(), clientRequestId }),
       });
 
       const payload = await response.json();
-      if (!response.ok || !payload?.request?.ticket_number) {
-        throw new Error(payload?.error || 'Unable to submit request');
-      }
+      if (!response.ok || !payload?.request?.ticket_number) throw new Error(payload?.error || 'Unable to submit request');
 
       const request: RequestSummary = {
         id: payload.request.ticket_number,
-        service,
-        location: location.trim(),
-        preferredDate,
-        description: description.trim(),
-        status: 'New',
+        service: payload.request.service_name || service,
+        location: payload.request.service_location_text || location.trim(),
+        preferredDate: payload.request.preferred_date || preferredDate,
+        description: payload.request.problem_description || description.trim(),
+        status: normalizeStatus(payload.request.status),
         createdAt: payload.request.created_at || new Date().toISOString(),
+        trackingToken: payload.trackingToken,
       };
 
       window.localStorage.setItem('fixit:last-request', JSON.stringify(request));
@@ -93,6 +98,42 @@ export default function HomePage() {
       setMessage(error instanceof Error ? error.message : 'Unable to submit request. Please try again.');
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function refreshRequest() {
+    if (!lastRequest?.trackingToken) {
+      setMessage('This older request cannot be refreshed securely. Submit a new request to enable live tracking.');
+      return;
+    }
+
+    setRefreshing(true);
+    setMessage('');
+    try {
+      const response = await fetch(TRACK_REQUEST_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketNumber: lastRequest.id, trackingToken: lastRequest.trackingToken }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload?.request) throw new Error(payload?.error || 'Unable to refresh request');
+
+      const updated: RequestSummary = {
+        ...lastRequest,
+        service: payload.request.service_name,
+        location: payload.request.service_location_text,
+        preferredDate: payload.request.preferred_date,
+        description: payload.request.problem_description,
+        status: normalizeStatus(payload.request.status),
+        updatedAt: payload.request.updated_at,
+      };
+      window.localStorage.setItem('fixit:last-request', JSON.stringify(updated));
+      setLastRequest(updated);
+      setMessage(`Request ${updated.id} is currently ${updated.status}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to refresh request.');
+    } finally {
+      setRefreshing(false);
     }
   }
 
@@ -113,20 +154,20 @@ export default function HomePage() {
           <p className="lead">Create a request, let a provider accept it, follow the work, and close it when completed.</p>
           <div className="actions">
             <a className="primary" href="#request">Request a Service</a>
-            <a className="secondary" href="#workflow">View Workflow</a>
+            <a className="secondary" href="#tracking">Track Request</a>
           </div>
         </div>
         <div className="statusCard" id="workflow">
-          <p className="smallLabel">FROZEN MVP WORKFLOW</p>
+          <p className="smallLabel">LIVE REQUEST WORKFLOW</p>
           <div className="statusRow">
-            {statusItems.map((item, index) => (
-              <div className="statusStep" key={item.label}>
-                <span className={item.active ? 'dot active' : 'dot'}>{index + 1}</span>
-                <strong>{item.label}</strong>
+            {workflow.map((item, index) => (
+              <div className="statusStep" key={item}>
+                <span className={index <= activeStep ? 'dot active' : 'dot'}>{index + 1}</span>
+                <strong>{item}</strong>
               </div>
             ))}
           </div>
-          <p className="muted">Payment processing is outside the MVP scope.</p>
+          <p className="muted">Payment processing remains outside the MVP scope.</p>
         </div>
       </section>
 
@@ -142,70 +183,60 @@ export default function HomePage() {
         <form onSubmit={submitRequest}>
           <div className="serviceGrid">
             {services.map((item) => (
-              <button
-                className={service === item ? 'serviceCard selected' : 'serviceCard'}
-                key={item}
-                type="button"
-                aria-pressed={service === item}
-                onClick={() => setService(item)}
-              >
-                <span className="serviceIcon">•</span>
-                {item}
+              <button className={service === item ? 'serviceCard selected' : 'serviceCard'} key={item} type="button" aria-pressed={service === item} onClick={() => setService(item)}>
+                <span className="serviceIcon">•</span>{item}
               </button>
             ))}
           </div>
 
           <div className="formGrid">
-            <label>
-              Service location
-              <input placeholder="Select island / city" value={location} onChange={(event) => setLocation(event.target.value)} />
-            </label>
-            <label>
-              Preferred date
-              <input type="date" value={preferredDate} onChange={(event) => setPreferredDate(event.target.value)} />
-            </label>
-            <label className="full">
-              Describe the issue
-              <textarea placeholder="Tell the provider what needs to be fixed..." rows={4} value={description} onChange={(event) => setDescription(event.target.value)} />
-            </label>
+            <label>Service location<input placeholder="Select island / city" value={location} onChange={(event) => setLocation(event.target.value)} /></label>
+            <label>Preferred date<input type="date" value={preferredDate} onChange={(event) => setPreferredDate(event.target.value)} /></label>
+            <label className="full">Describe the issue<textarea placeholder="Tell the provider what needs to be fixed..." rows={4} value={description} onChange={(event) => setDescription(event.target.value)} /></label>
           </div>
           <button className="primary button" type="submit" disabled={submitting}>{submitting ? 'Submitting…' : 'Submit Request'}</button>
           {message ? <p className="formMessage" role="status">{message}</p> : null}
-          <p className="localNotice">Connected to the FixIt backend. New requests are stored centrally in Supabase.</p>
+          <p className="localNotice">Connected to the FixIt backend. New requests are stored centrally in Supabase and receive a private tracking credential.</p>
         </form>
       </section>
 
-      <section className="threeCol">
-        <article className="infoCard">
-          <p className="eyebrow">CUSTOMER</p>
-          <h3>Track your request</h3>
-          {lastRequest ? (
+      <section className="panel" id="tracking">
+        <div className="panelHeader">
+          <div>
+            <p className="eyebrow">CUSTOMER TRACKING</p>
+            <h2>Your latest request</h2>
+          </div>
+          {lastRequest ? <span className="pill">{lastRequest.status}</span> : null}
+        </div>
+
+        {lastRequest ? (
+          <div className="trackingGrid">
             <div className="requestSummary">
-              <strong>{lastRequest.id}</strong>
-              <span className="pill">{lastRequest.status}</span>
-              <p>{lastRequest.service} • {lastRequest.location}</p>
-              <p>Preferred date: {lastRequest.preferredDate}</p>
+              <strong className="ticket">{lastRequest.id}</strong>
+              <p><b>Service:</b> {lastRequest.service}</p>
+              <p><b>Location:</b> {lastRequest.location}</p>
+              <p><b>Preferred date:</b> {lastRequest.preferredDate}</p>
+              <p><b>Status:</b> {lastRequest.status}</p>
+              <button className="secondary refreshButton" type="button" onClick={refreshRequest} disabled={refreshing}>{refreshing ? 'Refreshing…' : 'Refresh Live Status'}</button>
             </div>
-          ) : (
-            <p>See the same four statuses: New, Accepted, Processing and Completed.</p>
-          )}
-        </article>
-        <article className="infoCard">
-          <p className="eyebrow">PROVIDER</p>
-          <h3>Accept and complete jobs</h3>
-          <p>Providers see eligible requests, accept work, start processing and mark it completed.</p>
-        </article>
-        <article className="infoCard">
-          <p className="eyebrow">SYSTEM</p>
-          <h3>Keep a clear audit trail</h3>
-          <p>Status history, notifications and communication remain linked to the service request.</p>
-        </article>
+            <div className="miniTimeline">
+              {workflow.map((item, index) => (
+                <div className={index <= activeStep ? 'timelineItem done' : 'timelineItem'} key={item}>
+                  <span>{index + 1}</span><div><strong>{item}</strong><small>{index < activeStep ? 'Completed stage' : index === activeStep ? 'Current stage' : 'Pending'}</small></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : <p className="muted emptyTrack">Submit a service request and it will appear here for live tracking.</p>}
       </section>
 
-      <footer className="footer">
-        <span>FixIt Maldives</span>
-        <span>Railway + Supabase</span>
-      </footer>
+      <section className="threeCol">
+        <article className="infoCard"><p className="eyebrow">CUSTOMER</p><h3>Track centrally</h3><p>Your latest request can now securely refresh its real Supabase status.</p></article>
+        <article className="infoCard"><p className="eyebrow">PROVIDER</p><h3>Provider workflow next</h3><p>Provider acceptance, job start and completion are the next live operational screens.</p></article>
+        <article className="infoCard"><p className="eyebrow">SYSTEM</p><h3>Audit trail active</h3><p>Status changes are now recorded in a dedicated history table.</p></article>
+      </section>
+
+      <footer className="footer"><span>FixIt Maldives</span><span>Railway + Supabase</span></footer>
     </main>
   );
 }
