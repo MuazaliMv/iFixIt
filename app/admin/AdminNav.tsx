@@ -10,6 +10,7 @@ const items=[
  {href:'/admin/services',label:'Services'},
  {href:'/admin/locations',label:'Locations'},
  {href:'/admin/reports',label:'Reports'},
+ {href:'/admin/required-fields',label:'Profile Fields'},
  {href:'/admin/settings',label:'Settings'},
  {href:'/admin/audit-logs',label:'Audit Logs'},
 ];
