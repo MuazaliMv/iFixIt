@@ -7,6 +7,7 @@ import './account-polish.css';
 import './e2e-hardening.css';
 import './final-ui-polish.css';
 import './premium-customer.css';
+import './customer-v2.css';
 import ThemeRuntime from './ThemeRuntime';
 import RouteMobileNav from './RouteMobileNav';
 
