@@ -1,0 +1,1 @@
+Expand the FixIt Next.js application source now.
