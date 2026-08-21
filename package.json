@@ -3,8 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "bash scripts/bootstrap-fixit.sh && next dev",
-    "prebuild": "bash scripts/bootstrap-fixit.sh",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint ."
