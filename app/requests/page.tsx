@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabaseClient';
 import CustomerHeader from '../components/customer/CustomerHeader';
 import ServiceIcon from '../components/customer/ServiceIcon';
 import '../customer-v3.css';
+import './requests-redesign.css';
 
 const API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/customer-requests';
 const DISPATCH_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/dispatch-control';
