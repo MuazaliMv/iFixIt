@@ -12,16 +12,16 @@ export default function MobileNav({role}:Props){
   {href:'/',label:'Home',icon:'⌂',match:p=>p==='/'},
   {href:'/requests',label:'My Requests',icon:'▣',match:p=>p==='/requests'||p.startsWith('/requests/')},
   {href:'/#request',label:'New Request',icon:'＋',primary:true,match:()=>false},
-  {href:'/messages',label:'Messages',icon:'✉',match:p=>p==='/messages'},
-  {href:'/profile',label:'Profile',icon:'●',match:p=>p==='/profile'}
+  {href:'/messages',label:'Messages',icon:'◌',match:p=>p==='/messages'},
+  {href:'/profile',label:'Profile',icon:'♙',match:p=>p==='/profile'}
  ];
  const provider:Item[]=[
   {href:'/provider',label:'Dashboard',icon:'⌂',match:p=>p==='/provider'},
   {href:'/provider#provider-jobs',label:'Requests',icon:'▣',match:()=>false},
-  {href:'/provider#provider-jobs',label:'Bookings',icon:'◫',primary:true,match:()=>false},
-  {href:'/provider/earnings',label:'Earnings',icon:'MVR',match:p=>p==='/provider/earnings'},
-  {href:'/profile',label:'Profile',icon:'●',match:p=>p==='/profile'}
+  {href:'/provider#provider-jobs',label:'Bookings',icon:'◫',match:()=>false},
+  {href:'/provider/earnings',label:'Earnings',icon:'▱',match:p=>p==='/provider/earnings'},
+  {href:'/profile',label:'Profile',icon:'♙',match:p=>p==='/profile'}
  ];
  const items=role==='provider'?provider:customer;
- return <><div className="mobileNavSpacer" aria-hidden="true"/><nav className="mobileNav" aria-label={`${role} navigation`}>{items.map(item=><a key={item.label} href={item.href} className={`${item.match(pathname)?'active ':''}${item.primary?'primaryNav':''}`.trim()}><span className="navIcon">{item.icon}</span><span>{item.label}</span></a>)}</nav></>;
+ return <><div className="mobileNavSpacer" aria-hidden="true"/><nav className={`mobileNav ${role==='provider'?'providerMobileNav':''}`} aria-label={`${role} navigation`}>{items.map(item=><a key={item.label} href={item.href} className={`${item.match(pathname)?'active ':''}${item.primary?'primaryNav':''}`.trim()}><span className="navIcon">{item.icon}</span><span>{item.label}</span></a>)}</nav></>;
 }
