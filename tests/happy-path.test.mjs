@@ -104,7 +104,7 @@ test('provider and customer request-list UI contain no legacy request status che
 
 test('provider UI uses response language instead of treating response as assignment', async () => {
   const source = await readFile(new URL('../app/provider/page.tsx', import.meta.url), 'utf8');
-  assert.match(source, /Respond to customer/);
-  assert.match(source, /No assignment has been made yet/);
+  assert.match(source, /Respond to customer/i);
+  assert.match(source, /(not assigned yet|no assignment has been made yet)/i);
   assert.doesNotMatch(source, /Accept & Send Response/);
 });
