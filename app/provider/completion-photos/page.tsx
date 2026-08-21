@@ -1,0 +1,19 @@
+'use client';
+
+import { useState } from 'react';
+import { supabase } from '../../../lib/supabaseClient';
+import './completion-photos.css';
+
+const MEDIA_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/completion-media';
+type Media={id:string;media_type:'BEFORE'|'AFTER';url?:string|null;created_at:string};
+
+export default function CompletionPhotosPage(){
+ const[ticket,setTicket]=useState('');const[media,setMedia]=useState<Media[]>([]);const[busy,setBusy]=useState(false);const[message,setMessage]=useState('Enter an assigned request ticket to manage completion photos.');
+ async function token(){const{data}=await supabase.auth.getSession();if(!data.session){window.location.href='/login';return'';}return data.session.access_token;}
+ async function load(){const value=ticket.trim().toUpperCase();if(!value){setMessage('Enter a request ticket first.');return;}setBusy(true);try{const t=await token();const r=await fetch(MEDIA_API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify({action:'list',ticketNumber:value})});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to load photos');setTicket(value);setMedia(p.media||[]);setMessage('Completion photos are up to date.');}catch(e){setMessage(e instanceof Error?e.message:'Unable to load photos.');}finally{setBusy(false);}}
+ async function upload(type:'BEFORE'|'AFTER',file:File){if(!ticket.trim())return;setBusy(true);try{const t=await token();const form=new FormData();form.append('ticketNumber',ticket.trim().toUpperCase());form.append('mediaType',type);form.append('file',file);const r=await fetch(MEDIA_API,{method:'POST',headers:{'Authorization':`Bearer ${t}`},body:form});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to upload photo');setMessage(`${type==='BEFORE'?'Before':'After'} photo uploaded.`);await load();}catch(e){setMessage(e instanceof Error?e.message:'Unable to upload photo.');}finally{setBusy(false);}}
+ const before=media.filter(x=>x.media_type==='BEFORE'),after=media.filter(x=>x.media_type==='AFTER');
+ return <main className="shell completionPhotoApp"><header className="accountHeader"><div className="accountTitle"><a className="accountBack" href="/provider">‹</a><div><h1>Completion Photos</h1><p>Before and after proof for completed work</p></div></div></header><section className="completionPhotoCard"><label>Request ticket<input value={ticket} onChange={e=>setTicket(e.target.value)} placeholder="FX-..." autoCapitalize="characters"/></label><button className="primary" onClick={()=>void load()} disabled={busy}>{busy?'Working…':'Load Request'}</button></section><section className="completionPhotoGrid"><PhotoGroup title="Before work" help="Upload up to 3 photos before or during the repair." items={before} busy={busy} onPick={file=>void upload('BEFORE',file)}/><PhotoGroup title="After work" help="Upload up to 3 photos showing the finished work." items={after} busy={busy} onPick={file=>void upload('AFTER',file)}/></section><p className="muted accountStatusText" role="status">{message}</p></main>;
+}
+
+function PhotoGroup({title,help,items,busy,onPick}:{title:string;help:string;items:Media[];busy:boolean;onPick:(file:File)=>void}){return <section className="completionPhotoCard"><div><h2>{title}</h2><p>{help}</p></div><div className="completionPhotoList">{items.map(item=>item.url?<img key={item.id} src={item.url} alt={title}/>:null)}{!items.length?<div className="completionPhotoEmpty">No photos yet</div>:null}</div><label className="completionPhotoPicker">＋ Add Photo<input type="file" accept="image/*" disabled={busy||items.length>=3} onChange={e=>{const f=e.target.files?.[0];if(f)onPick(f);e.currentTarget.value='';}}/></label><small>{items.length}/3 uploaded · 5 MB maximum each</small></section>;}
