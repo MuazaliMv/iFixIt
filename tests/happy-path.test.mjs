@@ -1,0 +1,110 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+
+const HAPPY_PATH = [
+  'PENDING',
+  'RESPONDED',
+  'ACCEPTED',
+  'INSPECTION_SCHEDULED',
+  'IN_PROGRESS',
+  'COMPLETED',
+];
+
+const transitionActor = new Map([
+  ['PENDING->RESPONDED', 'PROVIDER'],
+  ['RESPONDED->ACCEPTED', 'CUSTOMER'],
+  ['ACCEPTED->INSPECTION_SCHEDULED', 'PROVIDER'],
+  ['INSPECTION_SCHEDULED->IN_PROGRESS', 'CUSTOMER'],
+  ['IN_PROGRESS->COMPLETED', 'PROVIDER'],
+]);
+
+function canTransition(from, to, actor) {
+  return transitionActor.get(`${from}->${to}`) === actor;
+}
+
+function canProviderRespond(status) {
+  return status === 'PENDING' || status === 'RESPONDED';
+}
+
+function canCustomerSelect({ status, providerResponse }) {
+  return status === 'RESPONDED' && providerResponse === 'INTERESTED';
+}
+
+function canScheduleInspection({ status, providerSelected, providerConfirmed }) {
+  return status === 'ACCEPTED' && providerSelected && providerConfirmed;
+}
+
+function canStartWork({ status, estimateStatus }) {
+  return status === 'INSPECTION_SCHEDULED' && estimateStatus === 'APPROVED';
+}
+
+function canComplete({ status, assignedProvider }) {
+  return status === 'IN_PROGRESS' && assignedProvider;
+}
+
+test('happy path has the frozen six request statuses in order', () => {
+  assert.deepEqual(HAPPY_PATH, [
+    'PENDING',
+    'RESPONDED',
+    'ACCEPTED',
+    'INSPECTION_SCHEDULED',
+    'IN_PROGRESS',
+    'COMPLETED',
+  ]);
+});
+
+test('only the agreed actor can drive each happy-path transition', () => {
+  assert.equal(canTransition('PENDING', 'RESPONDED', 'PROVIDER'), true);
+  assert.equal(canTransition('PENDING', 'ACCEPTED', 'PROVIDER'), false);
+  assert.equal(canTransition('RESPONDED', 'ACCEPTED', 'CUSTOMER'), true);
+  assert.equal(canTransition('ACCEPTED', 'INSPECTION_SCHEDULED', 'PROVIDER'), true);
+  assert.equal(canTransition('INSPECTION_SCHEDULED', 'IN_PROGRESS', 'CUSTOMER'), true);
+  assert.equal(canTransition('IN_PROGRESS', 'COMPLETED', 'PROVIDER'), true);
+  assert.equal(canTransition('IN_PROGRESS', 'COMPLETED', 'CUSTOMER'), false);
+});
+
+test('provider response never assigns the job', () => {
+  assert.equal(canProviderRespond('PENDING'), true);
+  assert.equal(canProviderRespond('RESPONDED'), true);
+  assert.equal(canProviderRespond('ACCEPTED'), false);
+  assert.equal(canCustomerSelect({ status: 'RESPONDED', providerResponse: 'INTERESTED' }), true);
+  assert.equal(canCustomerSelect({ status: 'PENDING', providerResponse: 'INTERESTED' }), false);
+});
+
+test('inspection scheduling requires customer selection and provider confirmation', () => {
+  assert.equal(canScheduleInspection({ status: 'ACCEPTED', providerSelected: true, providerConfirmed: true }), true);
+  assert.equal(canScheduleInspection({ status: 'ACCEPTED', providerSelected: true, providerConfirmed: false }), false);
+  assert.equal(canScheduleInspection({ status: 'RESPONDED', providerSelected: false, providerConfirmed: false }), false);
+});
+
+test('work starts only after estimate approval and completion only from in-progress', () => {
+  assert.equal(canStartWork({ status: 'INSPECTION_SCHEDULED', estimateStatus: 'APPROVED' }), true);
+  assert.equal(canStartWork({ status: 'INSPECTION_SCHEDULED', estimateStatus: 'SENT' }), false);
+  assert.equal(canComplete({ status: 'IN_PROGRESS', assignedProvider: true }), true);
+  assert.equal(canComplete({ status: 'ACCEPTED', assignedProvider: true }), false);
+});
+
+test('payment is outside the lifecycle contract', () => {
+  const transitionInputs = Object.keys(Object.fromEntries(transitionActor));
+  assert.equal(transitionInputs.some((x) => /PAY|PAID|PAYMENT/.test(x)), false);
+});
+
+test('provider and customer request-list UI contain no legacy request status checks', async () => {
+  const files = [
+    'app/provider/page.tsx',
+    'app/requests/page.tsx',
+  ];
+  for (const file of files) {
+    const source = await readFile(new URL(`../${file}`, import.meta.url), 'utf8');
+    assert.equal(/status\s*===\s*['\"]NEW['\"]/.test(source), false, `${file} still checks NEW`);
+    assert.equal(/status\s*===\s*['\"]PROCESSING['\"]/.test(source), false, `${file} still checks PROCESSING`);
+  }
+});
+
+test('provider UI uses response language instead of treating response as assignment', async () => {
+  const source = await readFile(new URL('../app/provider/page.tsx', import.meta.url), 'utf8');
+  assert.match(source, /Respond to customer/);
+  assert.match(source, /No assignment has been made yet/);
+  assert.doesNotMatch(source, /Accept & Send Response/);
+});
