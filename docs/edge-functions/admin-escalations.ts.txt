@@ -1,0 +1,27 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"content-type, authorization, apikey, x-client-info","Access-Control-Allow-Methods":"POST, OPTIONS"};
+const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,"Content-Type":"application/json"}});
+const clean=(v:unknown,max=80)=>String(v??"").trim().slice(0,max);
+Deno.serve(async(req:Request)=>{
+ if(req.method==="OPTIONS")return new Response("ok",{headers:cors}); if(req.method!=="POST")return json({error:"Method not allowed"},405);
+ try{
+  const jwt=(req.headers.get("Authorization")||"").replace(/^Bearer\s+/i,"").trim(); if(!jwt)return json({error:"Sign in required"},401);
+  const sb=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,{auth:{persistSession:false}});
+  const {data:{user},error:ue}=await sb.auth.getUser(jwt); if(ue||!user)return json({error:"Invalid session"},401);
+  const {data:profile}=await sb.from("auth_profiles").select("role").eq("user_id",user.id).maybeSingle(); if(profile?.role!=="ADMIN")return json({error:"Administrator role required"},403);
+  const body=await req.json().catch(()=>({})); const action=clean(body.action||"list",40).toLowerCase();
+  if(action==="list"){
+   const status=clean(body.status||"ACTIVE",20).toUpperCase(); let q=sb.from("request_sla_escalations").select("id,request_id,ticket_number,escalation_type,severity,status,summary,details,first_detected_at,last_detected_at,acknowledged_at,resolved_at").order("severity",{ascending:true}).order("first_detected_at",{ascending:true}).limit(300);
+   if(status==="ACTIVE")q=q.in("status",["OPEN","ACKNOWLEDGED"]); else if(["OPEN","ACKNOWLEDGED","RESOLVED"].includes(status))q=q.eq("status",status);
+   const {data,error}=await q; if(error)throw error;
+   const counts={critical:0,high:0,warning:0,open:0,acknowledged:0}; for(const e of data??[]){if(e.severity==="CRITICAL")counts.critical++;if(e.severity==="HIGH")counts.high++;if(e.severity==="WARNING")counts.warning++;if(e.status==="OPEN")counts.open++;if(e.status==="ACKNOWLEDGED")counts.acknowledged++;}
+   return json({ok:true,counts,escalations:data??[]});
+  }
+  if(action==="run"){const {data,error}=await sb.rpc("process_request_sla_escalations");if(error)throw error;return json({ok:true,result:data});}
+  const id=clean(body.escalationId,80); if(!id)return json({error:"Escalation ID required"},400);
+  if(action==="acknowledge"){const {data,error}=await sb.rpc("admin_acknowledge_sla_escalation",{p_escalation_id:id,p_admin_user_id:user.id});if(error)return json({error:error.message},409);return json({ok:true,escalation:data});}
+  if(action==="resolve"){const {data,error}=await sb.rpc("admin_resolve_sla_escalation",{p_escalation_id:id,p_admin_user_id:user.id});if(error)return json({error:error.message},409);return json({ok:true,escalation:data});}
+  return json({error:"Unknown action"},400);
+ }catch(e){console.error(e);return json({error:e instanceof Error?e.message:"Unable to process escalations"},500);}
+});
