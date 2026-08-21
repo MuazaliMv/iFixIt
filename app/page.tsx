@@ -10,14 +10,15 @@ const statusItems = [
 ];
 
 const services = ['AC Repair', 'Plumbing', 'Electrical', 'Appliance Repair', 'Cleaning', 'Handyman'];
+const SUBMIT_REQUEST_URL = 'https://yzlhlilxiszefneshatm.supabase.co/functions/v1/submit-request';
 
-type LocalRequest = {
+type RequestSummary = {
   id: string;
   service: string;
   location: string;
   preferredDate: string;
   description: string;
-  status: 'New';
+  status: 'New' | 'Accepted' | 'Processing' | 'Completed';
   createdAt: string;
 };
 
@@ -27,7 +28,8 @@ export default function HomePage() {
   const [preferredDate, setPreferredDate] = useState('');
   const [description, setDescription] = useState('');
   const [message, setMessage] = useState('');
-  const [lastRequest, setLastRequest] = useState<LocalRequest | null>(null);
+  const [lastRequest, setLastRequest] = useState<RequestSummary | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const saved = window.localStorage.getItem('fixit:last-request');
@@ -40,45 +42,58 @@ export default function HomePage() {
     }
   }, []);
 
-  function submitRequest(event: FormEvent<HTMLFormElement>) {
+  async function submitRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage('');
 
-    if (!service) {
-      setMessage('Please select a service.');
-      return;
-    }
-    if (!location.trim()) {
-      setMessage('Please enter the service location.');
-      return;
-    }
-    if (!preferredDate) {
-      setMessage('Please choose a preferred date.');
-      return;
-    }
-    if (!description.trim()) {
-      setMessage('Please describe the issue.');
-      return;
-    }
+    if (!service) return setMessage('Please select a service.');
+    if (!location.trim()) return setMessage('Please enter the service location.');
+    if (!preferredDate) return setMessage('Please choose a preferred date.');
+    if (description.trim().length < 10) return setMessage('Please describe the issue in at least 10 characters.');
 
-    const request: LocalRequest = {
-      id: `FX-${Date.now().toString().slice(-8)}`,
-      service,
-      location: location.trim(),
-      preferredDate,
-      description: description.trim(),
-      status: 'New',
-      createdAt: new Date().toISOString(),
-    };
+    setSubmitting(true);
+    const clientRequestId = crypto.randomUUID();
 
-    window.localStorage.setItem('fixit:last-request', JSON.stringify(request));
-    setLastRequest(request);
-    setMessage(`Request ${request.id} submitted successfully.`);
+    try {
+      const response = await fetch(SUBMIT_REQUEST_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serviceName: service,
+          location: location.trim(),
+          preferredDate,
+          description: description.trim(),
+          clientRequestId,
+        }),
+      });
 
-    setService('');
-    setLocation('');
-    setPreferredDate('');
-    setDescription('');
+      const payload = await response.json();
+      if (!response.ok || !payload?.request?.ticket_number) {
+        throw new Error(payload?.error || 'Unable to submit request');
+      }
+
+      const request: RequestSummary = {
+        id: payload.request.ticket_number,
+        service,
+        location: location.trim(),
+        preferredDate,
+        description: description.trim(),
+        status: 'New',
+        createdAt: payload.request.created_at || new Date().toISOString(),
+      };
+
+      window.localStorage.setItem('fixit:last-request', JSON.stringify(request));
+      setLastRequest(request);
+      setMessage(`Request ${request.id} submitted successfully to FixIt.`);
+      setService('');
+      setLocation('');
+      setPreferredDate('');
+      setDescription('');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to submit request. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -95,9 +110,7 @@ export default function HomePage() {
         <div>
           <p className="eyebrow">CUSTOMER</p>
           <h1>Request a service in a few simple steps.</h1>
-          <p className="lead">
-            Create a request, let a provider accept it, follow the work, and close it when completed.
-          </p>
+          <p className="lead">Create a request, let a provider accept it, follow the work, and close it when completed.</p>
           <div className="actions">
             <a className="primary" href="#request">Request a Service</a>
             <a className="secondary" href="#workflow">View Workflow</a>
@@ -145,33 +158,20 @@ export default function HomePage() {
           <div className="formGrid">
             <label>
               Service location
-              <input
-                placeholder="Select island / city"
-                value={location}
-                onChange={(event) => setLocation(event.target.value)}
-              />
+              <input placeholder="Select island / city" value={location} onChange={(event) => setLocation(event.target.value)} />
             </label>
             <label>
               Preferred date
-              <input
-                type="date"
-                value={preferredDate}
-                onChange={(event) => setPreferredDate(event.target.value)}
-              />
+              <input type="date" value={preferredDate} onChange={(event) => setPreferredDate(event.target.value)} />
             </label>
             <label className="full">
               Describe the issue
-              <textarea
-                placeholder="Tell the provider what needs to be fixed..."
-                rows={4}
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-              />
+              <textarea placeholder="Tell the provider what needs to be fixed..." rows={4} value={description} onChange={(event) => setDescription(event.target.value)} />
             </label>
           </div>
-          <button className="primary button" type="submit">Submit Request</button>
+          <button className="primary button" type="submit" disabled={submitting}>{submitting ? 'Submitting…' : 'Submit Request'}</button>
           {message ? <p className="formMessage" role="status">{message}</p> : null}
-          <p className="localNotice">Temporary MVP mode: requests are saved on this device until the FixIt Supabase backend is connected.</p>
+          <p className="localNotice">Connected to the FixIt backend. New requests are stored centrally in Supabase.</p>
         </form>
       </section>
 
@@ -204,7 +204,7 @@ export default function HomePage() {
 
       <footer className="footer">
         <span>FixIt Maldives</span>
-        <span>Deployment baseline • Next.js</span>
+        <span>Railway + Supabase</span>
       </footer>
     </main>
   );
