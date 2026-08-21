@@ -16,22 +16,52 @@ if [ ! -d "$BOOTSTRAP_DIR" ]; then
   exit 1
 fi
 
-PART_COUNT=$(find "$BOOTSTRAP_DIR" -maxdepth 1 -type f -name 'fixit-code.part*' | wc -l | tr -d ' ')
-if [ "$PART_COUNT" -lt 10 ]; then
-  echo "ERROR: Expected 10 FixIt archive parts but found $PART_COUNT."
+# Parts 01-09 contain the main archive body. The final tail was re-uploaded
+# as part10a + part10b because the earlier part10 was truncated. Never append
+# both the legacy part10 and the replacement tail or the ZIP becomes corrupt.
+PARTS=(
+  "$BOOTSTRAP_DIR/fixit-code.part01"
+  "$BOOTSTRAP_DIR/fixit-code.part02"
+  "$BOOTSTRAP_DIR/fixit-code.part03"
+  "$BOOTSTRAP_DIR/fixit-code.part04"
+  "$BOOTSTRAP_DIR/fixit-code.part05"
+  "$BOOTSTRAP_DIR/fixit-code.part06"
+  "$BOOTSTRAP_DIR/fixit-code.part07"
+  "$BOOTSTRAP_DIR/fixit-code.part08"
+  "$BOOTSTRAP_DIR/fixit-code.part09"
+)
+
+for part in "${PARTS[@]}"; do
+  if [ ! -f "$part" ]; then
+    echo "ERROR: Missing archive part: $part"
+    exit 1
+  fi
+done
+
+if [ -f "$BOOTSTRAP_DIR/fixit-code.part10a" ] && [ -f "$BOOTSTRAP_DIR/fixit-code.part10b" ]; then
+  PARTS+=("$BOOTSTRAP_DIR/fixit-code.part10a" "$BOOTSTRAP_DIR/fixit-code.part10b")
+elif [ -f "$BOOTSTRAP_DIR/fixit-code.part10" ]; then
+  PARTS+=("$BOOTSTRAP_DIR/fixit-code.part10")
+else
+  echo "ERROR: Missing final FixIt archive tail."
   exit 1
 fi
 
-echo "Reconstructing FixIt application from $PART_COUNT archive parts..."
-cat "$BOOTSTRAP_DIR"/fixit-code.part* | base64 -d > "$ARCHIVE"
+echo "Reconstructing FixIt application from ${#PARTS[@]} ordered archive parts..."
+cat "${PARTS[@]}" | base64 -d > "$ARCHIVE"
 
+# Validate the ZIP before extraction so Railway reports a useful error.
 if command -v unzip >/dev/null 2>&1; then
+  unzip -tq "$ARCHIVE" >/dev/null
   unzip -q -o "$ARCHIVE" -d "$TMP_DIR/unpacked"
 elif command -v python3 >/dev/null 2>&1; then
   python3 - "$ARCHIVE" "$TMP_DIR/unpacked" <<'PY'
 import sys, zipfile
 archive, target = sys.argv[1], sys.argv[2]
 with zipfile.ZipFile(archive) as z:
+    bad = z.testzip()
+    if bad:
+        raise SystemExit(f"Corrupt ZIP entry: {bad}")
     z.extractall(target)
 PY
 else
@@ -45,11 +75,7 @@ if [ ! -f "$SOURCE/app/page.tsx" ]; then
   exit 1
 fi
 
-# Copy the runnable application into the repository root while leaving the
-# existing specification/documentation files in place.
 cp -a "$SOURCE"/. "$ROOT"/
-
-# Build artifacts from the development environment should never be deployed.
 rm -f "$ROOT/tsconfig.tsbuildinfo"
 
 if [ ! -f "$ROOT/app/page.tsx" ] || [ ! -d "$ROOT/lib" ] || [ ! -d "$ROOT/components" ]; then
