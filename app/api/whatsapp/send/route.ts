@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendWhatsAppTemplate, sendWhatsAppText, testWhatsAppConnection } from '@/lib/integrations/whatsapp';
+import { sendWhatsAppTemplate, sendWhatsAppText, testWhatsAppConnection } from '../../../../lib/integrations/whatsapp';
 
 function authorized(request: NextRequest) {
   const expected = process.env.WHATSAPP_INTERNAL_TOKEN?.trim();
