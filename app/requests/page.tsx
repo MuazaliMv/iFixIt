@@ -11,7 +11,7 @@ type RequestRow={id:string;ticket_number:string;service_name:string;service_cate
 type Filter='ACTIVE'|'COMPLETED'|'ALL';
 function pretty(v:string){return v.replaceAll('_',' ').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());}
 function when(v:string){const d=new Date(v);return Number.isNaN(d.getTime())?v:d.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});}
-function actionFor(r:RequestRow){if(r.status==='NEW')return'View provider responses';if(r.status==='ACCEPTED')return r.assigned_provider_label?'Continue with provider':'Choose provider';if(r.status==='PROCESSING')return'Track work';if(r.status==='COMPLETED')return'View completion';return'Open request';}
+function actionFor(r:RequestRow){if(r.status==='PENDING')return'Waiting for provider responses';if(r.status==='RESPONDED')return'Compare provider responses';if(r.status==='ACCEPTED')return r.assigned_provider_label?'Continue with selected provider':'Provider selected';if(r.status==='INSPECTION_SCHEDULED')return'View inspection schedule';if(r.status==='IN_PROGRESS')return'Track work in progress';if(r.status==='COMPLETED')return'View completion';return'Open request';}
 
 export default function MyRequestsPage(){
  const[requests,setRequests]=useState<RequestRow[]>([]);const[filter,setFilter]=useState<Filter>('ACTIVE');const[busy,setBusy]=useState(false);const[message,setMessage]=useState('Loading…');
