@@ -1,3 +1,3 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-21T10:25:00+05:00
-Expected source includes root package.json and scripts/bootstrap-fixit.sh.
+Created: 2026-08-21T18:29:00+05:00
+Expected source includes current production UI, customer/provider marketplace flows, create-request upgrade, messages/profile polish, root package.json and scripts/bootstrap-fixit.sh.
