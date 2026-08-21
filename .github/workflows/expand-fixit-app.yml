@@ -1,0 +1,68 @@
+name: Expand FixIt App
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/expand-fixit-app.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  expand:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct application archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .bootstrap/fixit-code.part* | base64 -d > /tmp/fixit.zip
+          unzip -t /tmp/fixit.zip
+          rm -rf /tmp/fixit-extract
+          mkdir -p /tmp/fixit-extract
+          unzip -q /tmp/fixit.zip -d /tmp/fixit-extract
+
+      - name: Expand Next.js application into repository root
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f /tmp/fixit-extract/fixit-app/package.json
+          rsync -av \
+            --exclude 'README.md' \
+            --exclude 'tsconfig.tsbuildinfo' \
+            --exclude 'BUILD_VALIDATION.md' \
+            /tmp/fixit-extract/fixit-app/ ./
+          rm -rf .bootstrap
+
+      - name: Verify runnable application files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f package.json
+          test -f app/page.tsx
+          test -f app/layout.tsx
+          test -f proxy.ts
+          test -f lib/supabase/server.ts
+          echo 'FixIt application source expanded successfully.'
+
+      - name: Commit expanded application
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No application changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Add runnable FixIt Next.js application'
+          git push origin main
