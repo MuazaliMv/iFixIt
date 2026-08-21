@@ -1,0 +1,8 @@
+[build]
+builder = "railpack"
+buildCommand = "npm run build"
+
+[deploy]
+startCommand = "npx next start --port $PORT"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
