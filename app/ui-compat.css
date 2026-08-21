@@ -1,0 +1,14 @@
+:root{
+ --primary:var(--brand);
+ --primary-soft:var(--brand-soft);
+ --surface-muted:var(--surface-alt);
+ --shadow-sm:var(--shadow-card);
+ --success-soft:color-mix(in srgb,var(--success) 11%,var(--surface));
+ --warning-soft:color-mix(in srgb,var(--warning) 11%,var(--surface));
+ --danger-soft:color-mix(in srgb,var(--danger) 10%,var(--surface));
+ --info:#0f6ea8;
+ --info-soft:color-mix(in srgb,var(--info) 10%,var(--surface));
+}
+.danger{display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);padding:12px 16px;font-weight:800;border:1px solid color-mix(in srgb,var(--danger) 45%,var(--line));background:var(--danger-soft);color:var(--danger);transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease,background .14s ease}.danger:hover:not(:disabled){transform:translateY(-1px);border-color:var(--danger);box-shadow:0 8px 18px color-mix(in srgb,var(--danger) 15%,transparent)}
+button,a.primary,a.secondary,a.danger{touch-action:manipulation}.marketplacePage .panel,.providerDashboard .panel,.providerDetailDrawer{scroll-margin-top:12px}.formMessage:empty{display:none}
+@media(max-width:760px){body{padding-bottom:max(4px,env(safe-area-inset-bottom))}.shell{padding-bottom:92px}.topbar{flex-wrap:wrap}.topbar>.actions{width:100%;justify-content:flex-start}.topbar>.actions .primary,.topbar>.actions .secondary,.topbar>button.secondary{min-height:42px}.actions>.danger{min-height:44px}.panel h2{font-size:clamp(24px,7vw,30px)}input,textarea,select{font-size:16px}.providerJobActions>.primary,.providerJobActions>.secondary,.providerJobActions>.danger{min-height:44px}.footer{padding-bottom:12px}}
