@@ -1,0 +1,136 @@
+/* P1 detail-screen hierarchy cleanup.
+ * Loaded after the universal/regression layers.
+ * Scope: Customer Request Detail + Provider Job Detail only.
+ */
+
+/* ---------------- Customer Request Detail ---------------- */
+.ifixPage{background:var(--fx-color-page)!important;color:var(--fx-color-text)!important;font-family:var(--fx-font-family)!important}
+.ifixHeader{height:72px!important;background:rgba(255,255,255,.96)!important;border-bottom:1px solid var(--fx-color-border)!important;box-shadow:none!important;backdrop-filter:blur(16px)!important}
+.ifixLogo{font-family:var(--fx-font-family)!important;font-size:28px!important;letter-spacing:-1.5px!important}
+.ifixLogo span,.ifixLogo b{color:var(--fx-color-primary)!important}
+.backButton,.headerIcons button{width:44px!important;min-width:44px!important;height:44px!important;min-height:44px!important;border-radius:999px!important;color:var(--fx-color-text)!important;background:#fff!important;border:1px solid var(--fx-color-border)!important;display:grid!important;place-items:center!important;text-decoration:none!important}
+.backButton{font-size:30px!important}
+.backButton:hover,.headerIcons button:hover{border-color:var(--fx-color-primary)!important;background:var(--fx-color-surface-alt)!important;text-decoration:none!important}
+.headerIcons i{background:var(--fx-color-provider)!important;border:2px solid #fff!important}
+
+.requestAppPanel{width:min(var(--fx-content-max),calc(100% - 32px))!important;margin:0 auto!important;padding:24px 0 40px!important}
+.requestAppHeading{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:20px!important;margin:0 0 20px!important}
+.requestAppHeading .eyebrow{margin:0 0 6px!important;color:var(--fx-color-primary)!important;font-size:12px!important;font-weight:700!important;letter-spacing:.04em!important;text-transform:uppercase!important}
+.requestAppHeading h1{margin:0!important;font-size:var(--fx-font-h1)!important;line-height:1.2!important}
+.requestAppHeading>div>p:last-child{margin:8px 0 0!important;color:var(--fx-color-text-secondary)!important}
+
+.requestTabs{display:flex!important;gap:4px!important;margin:0 0 20px!important;padding:4px!important;border:1px solid var(--fx-color-border)!important;border-radius:16px!important;background:#fff!important;overflow:auto!important}
+.requestTabs button{min-height:40px!important;padding:8px 16px!important;border:0!important;border-radius:12px!important;background:transparent!important;color:var(--fx-color-text-secondary)!important;font-size:14px!important;font-weight:700!important;white-space:nowrap!important}
+.requestTabs button:hover{background:var(--fx-color-surface-alt)!important;color:var(--fx-color-text)!important}
+.requestTabs button.active{background:var(--fx-color-primary-soft)!important;color:var(--fx-color-primary-hover)!important}
+
+.statusNotice{margin:0 0 16px!important;padding:12px 14px!important;border:1px solid var(--fx-color-primary-strong)!important;border-radius:12px!important;background:var(--fx-color-primary-soft)!important;color:var(--fx-color-text)!important;font-size:14px!important;font-weight:600!important}
+
+/* Remove oversized legacy visual weight and make cards consistent. */
+.providerSummaryCard,.requestSummaryCard,.workDoneCard,.costBox,.reportBox,.nextActions,.progressCard,.screenCard,.feedbackCard,.helpRebook,.workVisualCard,.satisfactionCard{border:1px solid var(--fx-color-border)!important;border-radius:16px!important;background:#fff!important;box-shadow:var(--fx-shadow-card)!important}
+.providerSummaryCard,.screenCard,.nextActions,.progressCard,.feedbackCard,.satisfactionCard{padding:20px!important}
+.providerSummaryCard{display:block!important}
+.providerProfileMain{gap:16px!important;align-items:center!important}
+.providerPhoto{width:72px!important;height:72px!important;flex-basis:72px!important;background:var(--fx-color-primary-soft)!important}
+.providerPhoto span{font-size:22px!important;color:var(--fx-color-primary)!important}
+.providerDetails h2{font-size:18px!important;letter-spacing:0!important}
+.providerSpecialty{font-size:14px!important;color:var(--fx-color-text-secondary)!important}
+.ratingLine,.completedJobsLine{margin-top:6px!important;font-size:14px!important;color:var(--fx-color-text-secondary)!important}
+.star{color:var(--fx-color-provider)!important}
+
+.sectionHeading{align-items:center!important}
+.sectionHeading h2{font-size:18px!important;font-weight:700!important}
+.sectionHeading p{font-size:14px!important;color:var(--fx-color-text-secondary)!important}
+
+/* Universalize remaining legacy request-detail buttons. */
+.blueButton,.outlineBlue,.dangerButton,.dangerOutline{min-height:48px!important;padding:12px 24px!important;border-radius:12px!important;font-family:var(--fx-font-family)!important;font-size:16px!important;font-weight:700!important;line-height:1.2!important;transition:.2s ease!important}
+.blueButton{border:0!important;background:var(--fx-color-primary)!important;color:#fff!important}
+.blueButton:hover:not(:disabled){background:var(--fx-color-primary-hover)!important}
+.outlineBlue{border:1px solid var(--fx-color-border)!important;background:#fff!important;color:var(--fx-color-text)!important}
+.outlineBlue:hover:not(:disabled){border-color:var(--fx-color-primary)!important;background:var(--fx-color-surface-alt)!important}
+.dangerButton{border:0!important;background:var(--fx-color-danger)!important;color:#fff!important}
+.dangerButton:hover:not(:disabled){background:var(--fx-color-danger-hover)!important}
+.dangerOutline{border:1px solid rgba(180,35,24,.35)!important;background:#fff!important;color:var(--fx-color-danger)!important}
+.dangerOutline:hover:not(:disabled){background:rgba(180,35,24,.06)!important;border-color:var(--fx-color-danger)!important}
+.blueButton:focus-visible,.outlineBlue:focus-visible{outline:none!important;box-shadow:0 0 0 3px rgba(37,99,235,.30)!important}
+.dangerButton:focus-visible,.dangerOutline:focus-visible{outline:none!important;box-shadow:0 0 0 3px rgba(180,35,24,.30)!important}
+
+/* Make the current customer action visually dominant. */
+.nextActions,.satisfactionCard{border-color:var(--fx-color-primary-strong)!important;background:linear-gradient(180deg,var(--fx-color-primary-soft),#fff 68%)!important}
+.nextActions h3,.satisfactionCard h2{font-size:18px!important}
+.actionTiles{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+.actionTile{min-height:96px!important;border-radius:12px!important;padding:16px!important;background:#fff!important;border-color:var(--fx-color-border)!important;color:var(--fx-color-text)!important}
+.actionTile:hover{border-color:var(--fx-color-primary)!important;box-shadow:var(--fx-shadow-card)!important}
+.actionTile.blue,.actionTile.green,.actionTile.amber,.actionTile.red{background:#fff!important}
+.footerActionRow{display:flex!important;justify-content:flex-end!important;gap:12px!important;flex-wrap:wrap!important}
+.footerActionRow button{width:auto!important;min-width:160px!important}
+
+/* Progress is supporting context, not the hero. */
+.progressCard{box-shadow:none!important}
+.progressTrack{margin-top:12px!important}
+.progressDot{width:32px!important;height:32px!important;border-color:var(--fx-color-border)!important}
+.progressTrack:before{top:15px!important;background:var(--fx-color-border)!important}
+.progressStep strong{font-size:10px!important;color:var(--fx-color-text)!important}
+.progressStep small{display:none!important}
+.progressStep.done .progressDot{border-color:var(--fx-color-success)!important;color:var(--fx-color-success)!important;background:rgba(22,132,81,.08)!important}
+
+/* Messaging inside request detail. */
+.chatList{display:grid!important;gap:10px!important}
+.chatBubble{max-width:min(76%,640px)!important;border:1px solid var(--fx-color-border)!important;border-radius:16px 16px 16px 6px!important;background:#fff!important;padding:12px 14px!important}
+.chatBubble.customer{justify-self:end!important;border-color:var(--fx-color-primary-strong)!important;border-radius:16px 16px 6px 16px!important;background:var(--fx-color-primary-soft)!important}
+.chatBubble p{margin:4px 0!important}
+.chatBubble time{font-size:12px!important;color:var(--fx-color-text-secondary)!important}
+.messageComposer{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:12px!important;margin-top:16px!important}
+
+/* ---------------- Provider Job Detail ---------------- */
+.providerJobHero{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:20px!important}
+.providerJobHero h2{margin:8px 0 4px!important;font-size:22px!important}
+.providerJobHero p{margin:0!important;color:var(--fx-color-text-secondary)!important}
+
+/* The next action must dominate this screen. */
+.providerNextAction{padding:24px!important;border:1px solid var(--fx-color-primary-strong)!important;background:linear-gradient(180deg,var(--fx-color-primary-soft),#fff 78%)!important;box-shadow:var(--fx-shadow-card)!important}
+.providerNextAction .providerSectionHead h2{font-size:22px!important}
+.providerNextAction .providerSectionHead p{font-size:15px!important;max-width:700px!important}
+.providerPrimaryAction{min-width:220px!important}
+.providerActionRow{display:grid!important;grid-template-columns:minmax(220px,1fr) auto!important;gap:12px!important;align-items:end!important}
+
+/* Workflow is compact supporting context. */
+.providerProgressCompact{gap:6px!important}
+.providerProgressCompact>div{min-width:0!important}
+.providerProgressCompact>div span{width:30px!important;height:30px!important}
+.providerProgressCompact>div small{font-size:10px!important;line-height:1.25!important;text-align:center!important}
+
+/* Contact / visit / job hierarchy. */
+.providerJobColumns{gap:16px!important}
+.providerJobColumns .providerModeCard{padding:20px!important}
+.providerContactIdentity{padding:4px 0 12px!important}
+.providerContactIdentity strong{font-size:18px!important;color:var(--fx-color-text)!important}
+.providerContactIdentity span{font-size:14px!important;color:var(--fx-color-text-secondary)!important}
+.providerContactActions{display:flex!important;gap:10px!important;flex-wrap:wrap!important}
+.providerContactActions .secondary{flex:1 1 150px!important}
+.providerReadableData{gap:0!important}
+.providerReadableData>div{padding:10px 0!important;border-bottom:1px solid var(--fx-color-surface-hover)!important}
+.providerReadableData>div:last-child{border-bottom:0!important}
+.providerReadableData dt{font-size:12px!important;font-weight:700!important;text-transform:uppercase!important;letter-spacing:.03em!important}
+.providerReadableData dd{margin-top:3px!important;font-size:15px!important;font-weight:600!important}
+.providerJobProblem{margin-top:12px!important;padding:14px!important;background:var(--fx-color-surface-alt)!important;box-shadow:none!important}
+.providerJobProblem p{margin:6px 0 0!important}
+
+@media(max-width:760px){
+  .requestAppPanel{width:calc(100% - 24px)!important;padding-top:16px!important}
+  .requestAppHeading{display:block!important}
+  .requestAppHeading>.secondary{margin-top:12px!important;width:100%!important}
+  .requestAppHeading h1{font-size:28px!important}
+  .requestTabs{margin-inline:-2px!important}
+  .providerProfileMain{align-items:flex-start!important}
+  .actionTiles{grid-template-columns:1fr!important}
+  .footerActionRow{display:grid!important;grid-template-columns:1fr!important}
+  .footerActionRow button{width:100%!important;min-width:0!important}
+  .messageComposer{grid-template-columns:1fr!important}
+  .messageComposer .blueButton{width:100%!important}
+  .providerJobHero{display:block!important}
+  .providerJobHero>.secondary{width:100%!important;margin-top:16px!important}
+  .providerActionRow{grid-template-columns:1fr!important}
+  .providerActionRow .primary,.providerPrimaryAction{width:100%!important;min-width:0!important}
+  .providerProgressCompact>div small{font-size:8px!important}
+}
