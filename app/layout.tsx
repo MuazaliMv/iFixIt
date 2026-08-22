@@ -11,6 +11,7 @@ import './airbnb-theme.css';
 import './global-buttons.css';
 import './blue-accent.css';
 import './dual-mode.css';
+import './dual-mode-extras.css';
 import ThemeRuntime from './ThemeRuntime';
 import RouteMobileNav from './RouteMobileNav';
 import ModeToast from './ModeToast';
