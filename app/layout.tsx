@@ -19,10 +19,11 @@ import './p1-detail-screens.css';
 import './p1-customer-home-wizard.css';
 import './p1-provider-work.css';
 import './p1-remaining-consistency.css';
+import './responsive-v2.css';
 import ThemeRuntime from './ThemeRuntime';
 import RouteMobileNav from './RouteMobileNav';
 import ModeToast from './ModeToast';
-import GlobalModeSwitch from './GlobalModeSwitch';
+import ResponsiveRuntime from './ResponsiveRuntime';
 
 export const metadata: Metadata = {
   title: 'FixIt Maldives',
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/>{children}<RouteMobileNav/><GlobalModeSwitch/><ModeToast/></body>
+      <body><ThemeRuntime/><ResponsiveRuntime/>{children}<RouteMobileNav/><ModeToast/></body>
     </html>
   );
 }
