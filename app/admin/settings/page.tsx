@@ -19,7 +19,6 @@ export default function AdminSettingsPage(){
  const otherRows=useMemo(()=>rows.filter(r=>!['ui.theme','geolocation.provider'].includes(r.key)),[rows]);
  function themeField(key:keyof Theme,label:string,type:'color'|'number'|'text'='text'){if(!theme)return null;return <label>{label}<input type={type} value={String(theme[key]??'')} onChange={e=>setTheme({...theme,[key]:type==='number'?Number(e.target.value):e.target.value})}/></label>}
  return <main className="shell">
-  <header className="topbar"><div><a className="brand" href="/admin">FixIt</a><p className="tagline">Admin • Settings</p></div></header>
   <AdminNav/>
   <section className="panel"><div className="panelHeader"><div><p className="eyebrow">ADMIN SETTINGS</p><h2>System configuration</h2><p className="muted">Manage runtime configuration, profile field rules and system audit history from one settings area.</p></div><span className="pill">Server controlled</span></div>{message?<p className="formMessage" role="status">{message}</p>:null}</section>
 
