@@ -33,7 +33,7 @@ function normalizedCity(value: string) {
 
 function fallbackWards(city: string) {
   const key = normalizedCity(city);
-  if (key === 'male') return ['Galolhu', 'Henveiru', 'Maafannu', 'Machangolhi', 'Hulhumalé', 'Villimalé'];
+  if (key === 'male') return ['Galolhu', 'Henveiru', 'Maafannu', 'Machangolhi', 'Hulhumalé Phase 1', 'Hulhumalé Phase 2', 'Villimalé'];
   if (key === 'hulhumale') return ['Hulhumalé Phase 1', 'Hulhumalé Phase 2'];
   if (key === 'villimale') return ['Villimalé'];
   return [] as string[];
@@ -41,6 +41,14 @@ function fallbackWards(city: string) {
 
 function unique(values: string[]) {
   return Array.from(new Set(values.map((item) => item.trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+}
+
+function normalizeWardList(city: string, values: string[]) {
+  const key = normalizedCity(city);
+  const filtered = key === 'male'
+    ? values.filter((item) => normalizedCity(item) !== 'hulhumale')
+    : values;
+  return unique(filtered);
 }
 
 export default function PostalCodeSelect({ atoll, city, road, value, onChange, disabled }: Props) {
@@ -59,7 +67,7 @@ export default function PostalCodeSelect({ atoll, city, road, value, onChange, d
   useEffect(() => {
     setWard('');
     const localWards = fallbackWards(city);
-    setWards(localWards);
+    setWards(normalizeWardList(city, localWards));
     if (!wardReady) return;
 
     const controller = new AbortController();
@@ -73,9 +81,9 @@ export default function PostalCodeSelect({ atoll, city, road, value, onChange, d
         const payload = (await response.json()) as WardLookupResponse;
         if (!response.ok) throw new Error(payload.error || 'Unable to load wards.');
         const remoteWards = Array.isArray(payload.wards) ? payload.wards : [];
-        setWards(unique([...localWards, ...remoteWards]));
+        setWards(normalizeWardList(city, [...localWards, ...remoteWards]));
       } catch {
-        if (!controller.signal.aborted) setWards(localWards);
+        if (!controller.signal.aborted) setWards(normalizeWardList(city, localWards));
       } finally {
         if (!controller.signal.aborted) setWardLoading(false);
       }
