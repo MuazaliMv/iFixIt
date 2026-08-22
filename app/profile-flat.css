@@ -1,0 +1,18 @@
+/* Profile should use the same flat page treatment as the other account screens. */
+.profileHeroCard,
+.profileSection {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.profileHeroCard {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.profileSection {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
