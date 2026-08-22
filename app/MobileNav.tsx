@@ -17,13 +17,13 @@ export default function MobileNav({role}:Props){
   {href:'/profile',label:'Profile',icon:'♙',match:p=>p==='/profile'}
  ];
  const provider:Item[]=[
-  {href:'/provider',label:'Dashboard',icon:'⌂',match:p=>p==='/provider'},
-  {href:'/provider#provider-jobs',label:'Requests',icon:'▣',match:()=>false},
-  {href:'/provider#provider-jobs',label:'Bookings',icon:'◫',match:()=>false},
-  {href:'/provider/earnings',label:'Earnings',icon:'▱',match:p=>p==='/provider/earnings'},
-  {href:'/profile',label:'Profile',icon:'♙',match:p=>p==='/profile'}
+  {href:'/provider',label:'Today',icon:'⌂',match:p=>p==='/provider'},
+  {href:'/provider/calendar',label:'Calendar',icon:'□',match:p=>p==='/provider/calendar'},
+  {href:'/provider/listings',label:'Listings',icon:'▤',match:p=>p==='/provider/listings'||p==='/provider/onboarding'},
+  {href:'/messages',label:'Messages',icon:'◌',match:p=>p==='/messages'},
+  {href:'/provider/menu',label:'Menu',icon:'☰',match:p=>p==='/provider/menu'||p.startsWith('/provider/earnings')}
  ];
  const items=role==='provider'?provider:customer;
- function rememberShell(){try{localStorage.setItem('fixit:mobile-nav-role',role);}catch{}}
+ function rememberShell(){try{localStorage.setItem('fixit:mobile-nav-role',role);localStorage.setItem('fixit:app-mode',role);}catch{}}
  return <><div className="mobileNavSpacer" aria-hidden="true"/><nav className={`mobileNav ${role==='provider'?'providerMobileNav':''}`} aria-label={`${role} navigation`}>{items.map(item=><Link key={item.label} href={item.href} onClick={rememberShell} className={`${item.match(pathname)?'active ':''}${item.primary?'primaryNav':''}`.trim()}><span className="navIcon">{item.icon}</span><span>{item.label}</span></Link>)}</nav></>;
 }
