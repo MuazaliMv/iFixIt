@@ -3,16 +3,31 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
-function getServerClient() {
-  const url = process.env.SUPABASE_URL?.trim() || process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+const FALLBACK_SUPABASE_URL = 'https://yzlhlilxiszefneshatm.supabase.co';
+const FALLBACK_PUBLISHABLE_KEY = 'sb_publishable_1sZEZgz9k2JACE_WzHtbCw_reiQEik6';
+
+function getServerClient(token: string) {
+  const url =
+    process.env.SUPABASE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ||
+    FALLBACK_SUPABASE_URL;
+
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  const publishableKey =
+    process.env.SUPABASE_ANON_KEY?.trim() ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim() ||
+    FALLBACK_PUBLISHABLE_KEY;
 
-  if (!url || !serviceKey) {
-    throw new Error('Audit log service is not configured.');
-  }
+  // Prefer the service role when Railway has it configured. If it is absent,
+  // use the public key together with the signed-in admin's JWT so Supabase RLS
+  // remains the source of truth for access to security_events.
+  const key = serviceKey || publishableKey;
+  const headers = serviceKey ? undefined : { Authorization: `Bearer ${token}` };
 
-  return createClient(url, serviceKey, {
+  return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: headers ? { headers } : undefined,
   });
 }
 
@@ -25,7 +40,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
     }
 
-    const supabase = getServerClient();
+    const supabase = getServerClient(token);
     const { data: userData, error: userError } = await supabase.auth.getUser(token);
 
     if (userError || !userData.user) {
@@ -60,7 +75,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       { events: data ?? [] },
-      { headers: { 'Cache-Control': 'no-store' } },
+      { headers: { 'Cache-Control': 'no-store, max-age=0' } },
     );
   } catch (error) {
     console.error('Audit log API failed', error);
