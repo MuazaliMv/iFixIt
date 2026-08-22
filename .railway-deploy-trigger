@@ -1,5 +1,9 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-22T15:26:00+05:00
-Baseline branch: baseline/pre-ui-audit-2026-08-22
-Baseline commit: 42774a9e78f4036b2bb0c275c7bff5e62dac201a
-Purpose: redeploy the current working FixIt application before the UI/UX audit and refactor. No application logic changes are included in this trigger commit.
+Created: 2026-08-22T21:43:00+05:00
+Reason: force production redeploy after profile Atoll/Island dropdown fix.
+Required production behavior:
+- Profile label is Atoll.
+- Atoll is a select control populated from the atolls table.
+- City / Island is a dependent select control populated from the islands table.
+- Country remains fixed to Maldives.
+Target application commit includes: 85c17b3390aac1a5b9d33308bd686af4cd9f41ed
