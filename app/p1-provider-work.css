@@ -35,6 +35,38 @@
 .providerEmptyState p{margin:0;color:var(--fx-color-text-secondary)}
 .providerOperationalTitle .modeBadge.provider{background:var(--fx-color-primary-soft)!important;color:var(--fx-color-primary)!important}
 .providerOfferTop .modeBadge.provider{background:var(--fx-color-provider-soft)!important;color:var(--fx-color-warning)!important}
+
+/* Provider services redesign */
+.providerServicesPage{min-height:100vh;background:#f7f9fc;color:#13203a;padding:0 0 calc(112px + env(safe-area-inset-bottom))}
+.providerServicesShell{width:min(100% - 32px,860px);margin:0 auto;padding:28px 0 24px}
+.providerServicesLoading{padding:28px;border:1px solid #e3e8f0;border-radius:20px;background:#fff;box-shadow:0 12px 30px rgba(15,23,42,.06);font-weight:700}
+.providerServicesHeader{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:start;gap:16px;margin-bottom:30px}
+.providerServicesBack{width:56px;height:56px;display:grid;place-items:center;border-radius:18px;background:#fff;color:#15213a!important;text-decoration:none;font-size:28px;line-height:1;border:1px solid #edf0f5;box-shadow:0 8px 24px rgba(15,23,42,.05)}
+.providerServicesHeading h1{margin:2px 0 4px;font-size:34px;line-height:1.08;letter-spacing:-.02em;color:#14213a}
+.providerServicesHeading p{margin:0;color:#6f7b91;font-size:16px;line-height:1.45}
+.providerServicesCount{min-width:92px;min-height:82px;padding:13px 18px;border-radius:22px;background:#edf4ff;color:#2563eb;display:grid;place-items:center;align-content:center;line-height:1;gap:7px}
+.providerServicesCount strong{font-size:27px}
+.providerServicesCount span{font-size:15px;font-weight:800}
+.providerServicesSectionHead{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
+.providerServicesSectionHead h2{margin:0;font-size:19px;line-height:1.2;color:#14213a}
+.providerServicesSectionHead span{font-size:15px;font-weight:800;color:#2563eb;white-space:nowrap}
+.providerServicesGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.providerServiceTile{position:relative;min-height:94px;padding:16px 46px 16px 18px;border:1px solid #e3e8f0;border-radius:18px;background:#fff;box-shadow:0 5px 14px rgba(15,23,42,.035);display:grid;grid-template-columns:64px minmax(0,1fr);align-items:center;gap:16px;text-align:left;color:#16213a;cursor:pointer;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease}
+.providerServiceTile:hover{transform:translateY(-1px);box-shadow:0 9px 22px rgba(15,23,42,.07)}
+.providerServiceTile.selected{border-color:#d9e6ff;background:#fff}
+.providerServiceIcon{width:64px;height:64px;border-radius:16px;background:#edf4ff;color:#2563eb;display:grid;place-items:center;font-size:27px;font-weight:900}
+.providerServiceName{font-size:17px;font-weight:800;line-height:1.28;overflow-wrap:anywhere}
+.providerServiceCheck{position:absolute;right:16px;top:14px;width:28px;height:28px;border-radius:999px;background:#2f6de8;color:#fff;display:grid;place-items:center;font-size:17px;font-weight:900;box-shadow:0 3px 8px rgba(47,109,232,.2)}
+.providerServiceTile:not(.selected) .providerServiceCheck{background:#edf0f5;box-shadow:none}
+.providerServicesMessage{margin:16px 0 0;padding:12px 14px;border-radius:12px;background:#fff1f2;color:#b42318;font-weight:700;font-size:14px;border:1px solid #fecdd3}
+.providerServicesMessage.success{background:#ecfdf3;color:#067647;border-color:#abefc6}
+.providerServicesBottomBar{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:14px 16px calc(14px + env(safe-area-inset-bottom));background:rgba(255,255,255,.94);backdrop-filter:blur(18px);border-top:1px solid rgba(226,232,240,.9)}
+.providerServicesBottomInner{width:min(100%,860px);margin:0 auto;display:grid;grid-template-columns:1fr 1.08fr;gap:12px}
+.providerServicesMenuButton,.providerServicesSaveButton{min-height:58px;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:17px;font-weight:800;text-decoration:none}
+.providerServicesMenuButton{background:#fff;color:#1c2740!important;border:1px solid #dfe5ee}
+.providerServicesSaveButton{border:0;background:#3465df;color:#fff;box-shadow:0 8px 22px rgba(52,101,223,.22);cursor:pointer}
+.providerServicesSaveButton:disabled{opacity:.65;cursor:wait}
+
 @media(max-width:760px){
  .providerModePage .providerModeShell{width:min(100% - 24px,620px)!important;padding-top:14px}
  .providerModeTop{margin-bottom:14px}
@@ -53,6 +85,28 @@
  .providerOperationalTitle{align-items:flex-start}
  .providerSegmented{top:6px;margin-left:-2px;margin-right:-2px}
  .providerSegmented button{font-size:14px;padding:8px 6px}
+ .providerServicesShell{width:min(100% - 24px,640px);padding-top:18px}
+ .providerServicesHeader{grid-template-columns:50px minmax(0,1fr) auto;gap:12px;margin-bottom:24px}
+ .providerServicesBack{width:50px;height:50px;border-radius:16px}
+ .providerServicesHeading h1{font-size:28px}
+ .providerServicesHeading p{font-size:15px}
+ .providerServicesCount{min-width:76px;min-height:72px;padding:10px 13px;border-radius:19px}
+ .providerServicesCount strong{font-size:24px}
+ .providerServicesCount span{font-size:14px}
+ .providerServiceTile{min-height:88px;grid-template-columns:58px minmax(0,1fr);gap:14px;padding:14px 42px 14px 14px;border-radius:17px}
+ .providerServiceIcon{width:58px;height:58px;border-radius:15px;font-size:24px}
+ .providerServiceName{font-size:16px}
+ .providerServiceCheck{right:13px;top:12px;width:25px;height:25px;font-size:15px}
+ .providerServicesBottomBar{padding-left:12px;padding-right:12px}
+ .providerServicesMenuButton,.providerServicesSaveButton{min-height:56px;font-size:16px}
+}
+@media(max-width:560px){
+ .providerServicesGrid{grid-template-columns:1fr}
+ .providerServicesHeader{grid-template-columns:48px minmax(0,1fr) auto}
+ .providerServicesBack{width:48px;height:48px}
+ .providerServicesHeading h1{font-size:27px}
+ .providerServicesCount{min-width:70px}
+ .providerServicesBottomInner{grid-template-columns:1fr 1.08fr}
 }
 @media(max-width:420px){
  .providerCompactStats{grid-template-columns:repeat(3,1fr)}
@@ -61,4 +115,16 @@
  .providerSetupActions{grid-template-columns:1fr 1fr}
  .providerOperationalTitle{display:grid;grid-template-columns:1fr;gap:8px}
  .providerOperationalTitle .modeBadge{justify-self:start}
+ .providerServicesShell{width:calc(100% - 20px)}
+ .providerServicesHeader{grid-template-columns:44px minmax(0,1fr) 66px;gap:9px}
+ .providerServicesBack{width:44px;height:44px;border-radius:14px;font-size:24px}
+ .providerServicesHeading h1{font-size:24px;margin-top:1px}
+ .providerServicesHeading p{font-size:14px}
+ .providerServicesCount{min-width:66px;min-height:64px;padding:8px 10px;border-radius:17px}
+ .providerServicesCount strong{font-size:22px}
+ .providerServicesCount span{font-size:12px}
+ .providerServicesSectionHead h2{font-size:18px}
+ .providerServicesSectionHead span{font-size:14px}
+ .providerServicesBottomInner{gap:8px}
+ .providerServicesMenuButton,.providerServicesSaveButton{min-height:54px;font-size:15px;border-radius:15px}
 }
