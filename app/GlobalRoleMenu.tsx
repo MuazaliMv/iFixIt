@@ -148,7 +148,7 @@ export default function GlobalRoleMenu(){
         <div className="globalMenuDivider"/>
         <div className="globalMenuRoleLabel">{menu.label}</div>
         <nav className="globalMenuFlatList" aria-label={`${menu.label} sections`}>
-          {menu.items.map((item,index)=><Link key={item.href+item.label} href={item.href} onClick={()=>setOpen(false)} className={`${index===0?'profileItem ':''}${itemIsActive(path,item.href)?'active':''}`.trim()}>{item.label}<span>→</span></Link>)}
+          {menu.items.map(item=><Link key={item.href+item.label} href={item.href} onClick={()=>setOpen(false)} className={itemIsActive(path,item.href)?'active':undefined}>{item.label}<span>→</span></Link>)}
         </nav>
         <div className="globalMenuFooter">
           <button className="globalMenuSignOut" type="button" onClick={()=>void signOut()}>Sign Out</button>
