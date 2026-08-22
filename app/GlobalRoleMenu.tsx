@@ -40,7 +40,6 @@ const menus:Record<Role,RoleMenu>={
       {href:'/provider/calendar',label:'Calendar'},
       {href:'/provider/messages',label:'Messages'},
       {href:'/provider/setup',label:'Provider Setup'},
-      {href:'/provider/earnings',label:'Earnings'},
     ],
   },
   admin:{
