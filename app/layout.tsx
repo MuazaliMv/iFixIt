@@ -27,6 +27,7 @@ import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
 import RoleAccessGuard from './RoleAccessGuard';
 import GlobalRoleMenu from './GlobalRoleMenu';
+import GlobalCardPagination from './GlobalCardPagination';
 
 export const metadata: Metadata = {
   title: 'FixIt Maldives',
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/><ResponsiveRuntime/><RoleAccessGuard/><GlobalRoleMenu/>{children}<ModeToast/></body>
+      <body><ThemeRuntime/><ResponsiveRuntime/><RoleAccessGuard/><GlobalRoleMenu/><GlobalCardPagination/>{children}<ModeToast/></body>
     </html>
   );
 }
