@@ -7,6 +7,7 @@ import './account-polish.css';
 import './e2e-hardening.css';
 import './final-ui-polish.css';
 import './request-detail-v3.css';
+import './airbnb-theme.css';
 import ThemeRuntime from './ThemeRuntime';
 import RouteMobileNav from './RouteMobileNav';
 
