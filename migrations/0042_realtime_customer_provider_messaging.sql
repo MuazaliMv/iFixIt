@@ -24,8 +24,6 @@ where r.id=m.request_id
   and r.customer_auth_user_id is not null
   and (m.sender_auth_user_id is null or m.recipient_auth_user_id is null or m.sender_mode is null);
 
-create index if not exists idx_request_messages_request_created
-  on public.request_messages(request_id, created_at);
 create index if not exists idx_request_messages_recipient_unread
   on public.request_messages(recipient_auth_user_id, request_id, read_at, created_at);
 
