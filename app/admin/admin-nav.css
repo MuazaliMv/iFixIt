@@ -1,12 +1,8 @@
-.adminCommandNav{background:var(--surface,#fff);border:1px solid var(--border,#e5e7eb);border-radius:24px;padding:14px;margin:14px 0;box-shadow:0 8px 30px rgba(15,23,42,.06)}
-.adminCommandGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.adminCommand{display:flex;min-height:76px;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:10px;border:1px solid #e5e7eb;border-radius:18px;text-decoration:none;color:#172033;background:#fff;font-weight:700;text-align:center}
-.adminCommand.active{background:#3563e9;color:#fff;border-color:#3563e9}
-.adminCommandIcon{font-size:22px;line-height:1}
-.adminMore{margin-top:10px}
-.adminMore summary{cursor:pointer;list-style:none;min-height:48px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:16px;font-weight:700;color:#475569;background:#f8fafc}
-.adminMore summary::-webkit-details-marker{display:none}
-.adminMoreGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
-.adminMoreLink{display:flex;align-items:center;justify-content:center;min-height:46px;padding:8px 10px;border-radius:14px;border:1px solid #e5e7eb;text-decoration:none;color:#172033;background:#fff;font-weight:650;text-align:center}
-.adminMoreLink.active{background:#eef3ff;border-color:#3563e9;color:#2452d6}
-@media(max-width:700px){.adminCommandNav{margin:10px 0;padding:10px;border-radius:20px}.adminCommandGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.adminCommand{min-height:68px;padding:7px 4px;border-radius:15px;font-size:12px}.adminCommandIcon{font-size:20px}.adminMoreGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.adminCommandNav{background:var(--surface,#fff);border:1px solid var(--border,#e5e7eb);border-radius:22px;padding:12px;margin:14px 0;box-shadow:0 8px 30px rgba(15,23,42,.05)}
+.adminCommandGrid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px}
+.adminCommand{display:flex;min-height:68px;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:9px 7px;border:1px solid #e5e7eb;border-radius:16px;text-decoration:none;color:#172033;background:#fff;font-weight:700;text-align:center;font-size:13px;transition:background .15s ease,border-color .15s ease,color .15s ease,transform .15s ease}
+.adminCommand:hover{border-color:#cbd5e1;background:#f8fafc;transform:translateY(-1px)}
+.adminCommand.active{background:#3563e9;color:#fff;border-color:#3563e9;box-shadow:0 6px 18px rgba(53,99,233,.18)}
+.adminCommandIcon{font-size:20px;line-height:1}
+@media(max-width:1050px){.adminCommandGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:700px){.adminCommandNav{margin:10px 0;padding:9px;border-radius:18px}.adminCommandGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.adminCommand{min-height:64px;padding:7px 4px;border-radius:14px;font-size:11px}.adminCommandIcon{font-size:18px}}
