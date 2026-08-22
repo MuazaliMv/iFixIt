@@ -23,6 +23,7 @@ const menus:Record<Role,RoleMenu>={
     primary:{href:'/#request',label:'New Request'},
     items:[
       {href:'/profile',label:'Profile'},
+      {href:'/privacy',label:'Data & Privacy'},
       {href:'/',label:'Home'},
       {href:'/requests',label:'My Requests'},
       {href:'/#request',label:'New Request'},
@@ -35,6 +36,7 @@ const menus:Record<Role,RoleMenu>={
     primary:{href:'/provider/jobs',label:'View Jobs'},
     items:[
       {href:'/profile',label:'Profile'},
+      {href:'/privacy',label:'Data & Privacy'},
       {href:'/provider/today',label:'Today'},
       {href:'/provider/jobs',label:'Jobs'},
       {href:'/provider/calendar',label:'Calendar'},
@@ -49,6 +51,7 @@ const menus:Record<Role,RoleMenu>={
     primary:{href:'/admin',label:'Dashboard'},
     items:[
       {href:'/profile',label:'Profile'},
+      {href:'/privacy',label:'Data & Privacy'},
       {href:'/admin',label:'Dashboard'},
       {href:'/admin/requests',label:'Request Management'},
       {href:'/admin/escalations',label:'Attention / Escalations'},
@@ -66,7 +69,7 @@ const menus:Record<Role,RoleMenu>={
 function routeRole(path:string):Role|null{
   if(path.startsWith('/admin'))return 'admin';
   if(path.startsWith('/provider'))return 'provider';
-  if(path==='/'||path==='/requests'||path.startsWith('/requests/')||path==='/messages'||path.startsWith('/messages/')||path==='/profile')return null;
+  if(path==='/'||path==='/requests'||path.startsWith('/requests/')||path==='/messages'||path.startsWith('/messages/')||path==='/profile'||path==='/privacy')return null;
   return null;
 }
 
