@@ -14,6 +14,7 @@ import './blue-accent.css';
 import './dual-mode.css';
 import './dual-mode-extras.css';
 import './unified-ui.css';
+import './regression-ui-fixes.css';
 import ThemeRuntime from './ThemeRuntime';
 import RouteMobileNav from './RouteMobileNav';
 import ModeToast from './ModeToast';

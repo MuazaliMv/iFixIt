@@ -1,0 +1,36 @@
+/* Final P0 visual-regression cleanup. Loaded after unified-ui.css. */
+
+.providerHeaderActions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:var(--fx-space-md);
+  flex-wrap:wrap;
+}
+
+.providerPlanPrice{
+  font-size:var(--fx-font-xl);
+  font-weight:800;
+  line-height:1.2;
+  color:var(--fx-color-text);
+}
+
+.providerPlanPrice small{
+  font-size:var(--fx-font-caption);
+  font-weight:600;
+  color:var(--fx-color-text-secondary);
+}
+
+.uiSpaceTopBase{margin-top:var(--fx-space-base)!important}
+.uiSpaceTopLg{margin-top:var(--fx-space-lg)!important}
+
+/* Keep subscription states semantic without introducing a second palette. */
+.providerSubscriptionExpired .modeBadge{
+  background:rgba(180,35,24,.08)!important;
+  color:var(--fx-color-danger)!important;
+}
+
+@media(max-width:760px){
+  .providerHeaderActions{width:100%;justify-content:flex-start}
+  .providerPlanPrice{font-size:var(--fx-font-lg)}
+}
