@@ -1,9 +1,9 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-22T22:48:00+05:00
-Reason: deploy registration backend fix after removing WhatsApp OTP requirement.
+Created: 2026-08-23T00:57:00+05:00
+Reason: deploy provider profile subscription visibility fix.
 Required production behavior:
-- Registration works with name, email and password only.
-- Phone number is optional.
-- WhatsApp OTP is not required.
-- Registration API proxies to the Supabase register-account Edge Function.
-Target application commit includes: d86791dca2d4d763972356ca976da449daf91d24
+- Manage Subscription is shown inside the provider profile.
+- Manage Subscription is not shown as a separate provider menu item.
+- Customer and admin profiles do not receive provider subscription controls.
+- Provider profile remains visible even while subscription status is loading.
+Target application commit includes: 4f2a2773c577f1961f339e419ebd85b76a284e9c
