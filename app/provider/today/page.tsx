@@ -1,36 +1,5 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { useEffect, useMemo, useState } from 'react';
-import AppModeSwitch from '../../AppModeSwitch';
-import { supabase } from '../../../lib/supabaseClient';
-import { useProviderMode } from '../useProviderMode';
-
-const MARKET_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-marketplace';
-const OFFERS_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-offers';
-const CONFIRMATIONS_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-confirmations';
-
-type Job={ticket_number:string;service_name:string;service_location_text:string;preferred_date:string;status:string;customer?:{name?:string|null}|null;inspection?:{scheduled_start?:string|null}|null;completion?:{status?:string|null}|null};
-type Offer={id:string;response_deadline_at:string;request:{ticket_number:string;service_name:string;service_location_text:string;preferred_date:string;problem_description:string;urgency?:string|null}|null};
-
-function deadlineLabel(value:string){const d=new Date(value);if(Number.isNaN(d.getTime()))return'Response time pending';const mins=Math.max(0,Math.ceil((d.getTime()-Date.now())/60000));return mins>60?`${Math.floor(mins/60)}h ${mins%60}m left`:`${mins}m left`;}
-function stage(j:Job,confirmed:Set<string>){if(j.status==='COMPLETED'&&j.completion?.status==='CONFIRMED')return'CUSTOMER CONFIRMED';if(j.status==='COMPLETED')return'COMPLETED';if(j.status==='IN_PROGRESS'||j.status==='INSPECTION_SCHEDULED')return'IN PROGRESS';if(j.status==='ACCEPTED'&&confirmed.has(j.ticket_number))return'CONFIRMED';return'ACCEPTED';}
-function visitLabel(value?:string|null){if(!value)return null;const d=new Date(value);if(Number.isNaN(d.getTime()))return null;return d.toLocaleString([],{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});}
-
-export default function ProviderTodayPage(){
- const mode=useProviderMode(true);const[jobs,setJobs]=useState<Job[]>([]);const[offers,setOffers]=useState<Offer[]>([]);const[confirmed,setConfirmed]=useState<Set<string>>(new Set());const[busy,setBusy]=useState(true);const[message,setMessage]=useState('Loading today…');
- useEffect(()=>{if(mode.ready)void load();},[mode.ready]);
- async function session(){const{data}=await supabase.auth.getSession();if(!data.session){window.location.href='/login';return null;}return data.session;}
- async function load(){setBusy(true);try{const s=await session();if(!s)return;const headers={'Content-Type':'application/json','Authorization':`Bearer ${s.access_token}`};const[mr,or,cr]=await Promise.all([fetch(MARKET_URL,{method:'POST',headers,body:JSON.stringify({action:'dashboard'})}),fetch(OFFERS_URL,{method:'POST',headers,body:JSON.stringify({action:'list'})}),fetch(CONFIRMATIONS_URL,{method:'POST',headers,body:'{}'})]);const mp=await mr.json(),op=await or.json(),cp=await cr.json();if(!mr.ok)throw new Error(mp?.error||'Unable to load provider dashboard');if(!or.ok)throw new Error(op?.error||'Unable to load customer requests');setJobs(mp.requests||[]);setOffers(op.offers||[]);if(cr.ok)setConfirmed(new Set(cp.confirmedTickets||[]));setMessage('Up to date.');}catch(e){setMessage(e instanceof Error?e.message:'Unable to load provider dashboard.');}finally{setBusy(false);}}
- async function respond(offerId:string,action:'accept'|'decline'){setBusy(true);try{const s=await session();if(!s)return;const r=await fetch(OFFERS_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${s.access_token}`},body:JSON.stringify({action,offerId})});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to respond to request');await load();}catch(e){setMessage(e instanceof Error?e.message:'Unable to respond to request.');setBusy(false);}}
- const active=useMemo(()=>jobs.filter(j=>['ACCEPTED','INSPECTION_SCHEDULED','IN_PROGRESS'].includes(j.status)),[jobs]);
- const attention=useMemo(()=>active.filter(j=>stage(j,confirmed)!=='ACCEPTED'||Boolean(j.inspection?.scheduled_start)),[active,confirmed]);
- const todaysVisits=useMemo(()=>{const now=new Date();return active.filter(j=>{if(!j.inspection?.scheduled_start)return false;const d=new Date(j.inspection.scheduled_start);return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()&&d.getDate()===now.getDate();});},[active]);
- if(mode.loading)return <main className="providerModePage"><div className="providerModeShell"><div className="providerModeCard">Checking provider setup…</div></div></main>;
- return <main className="providerModePage"><div className="providerModeShell">
-  <header className="providerModeTop"><div><span className="modeBadge provider"><span className="modeDot provider"/>Provider</span><h1>Today</h1><p>What needs your attention right now.</p></div><AppModeSwitch mode="provider" compact/></header>
-  <section className="providerCompactStats"><div><span>New requests</span><strong>{offers.length}</strong></div><div><span>Active jobs</span><strong>{active.length}</strong></div><div><span>Today&apos;s visits</span><strong>{todaysVisits.length}</strong></div></section>
-  <section className="providerModeCard"><div className="providerSectionHead"><div><h2>Needs your attention</h2><p>Confirmed and active jobs that are ready for your next action.</p></div><a className="secondary" href="/provider/jobs?tab=active">View all</a></div>{attention.length?<div className="providerOperationalList">{attention.slice(0,5).map(j=><a className="providerOperationalCard" href={`/provider/jobs/${encodeURIComponent(j.ticket_number)}`} key={j.ticket_number}><div className="providerOperationalMain"><div className="providerOperationalTitle"><strong>{j.service_name}</strong><span className="modeBadge provider">{stage(j,confirmed)}</span></div><p>{j.service_location_text}</p>{j.inspection?.scheduled_start?<small>Visit · {visitLabel(j.inspection.scheduled_start)}</small>:<small>{stage(j,confirmed)==='CONFIRMED'?'Ready to schedule':'Open job for next action'}</small>}</div><b>Open →</b></a>)}</div>:<div className="providerEmptyState"><h3>You&apos;re caught up</h3><p>No active job needs attention right now.</p></div>}</section>
-  <section className="providerModeCard"><div className="providerSectionHead"><div><h2>New requests</h2><p>Review the job and respond before the offer expires.</p></div><a className="secondary" href="/provider/jobs?tab=new">View all</a></div>{offers.length?<div className="providerOfferGrid providerOfferGridClean">{offers.slice(0,4).map(o=><article className="providerOfferCard" key={o.id}><div className="providerOfferTop"><strong>{o.request?.service_name||'Service request'}</strong><span className="modeBadge provider">{o.request?.urgency||'STANDARD'}</span></div><p><b>{o.request?.service_location_text||'Location not specified'}</b> · {o.request?.preferred_date?new Date(o.request.preferred_date+'T00:00:00').toLocaleDateString():'Date flexible'}</p><p className="providerOfferProblem">{o.request?.problem_description||'No problem description supplied.'}</p><div className="providerOfferDeadline">⏱ {deadlineLabel(o.response_deadline_at)}</div><div className="providerSetupActions"><button className="danger" disabled={busy} onClick={()=>void respond(o.id,'decline')}>Decline</button><button className="success" disabled={busy} onClick={()=>void respond(o.id,'accept')}>Accept</button></div></article>)}</div>:<div className="providerEmptyState"><h3>No new requests</h3><p>Matched customer requests will appear here automatically.</p></div>}</section>
-  <p className="muted" role="status">{busy?'Refreshing…':message}</p>
- </div></main>;
+export default function ProviderTodayRedirect() {
+  redirect('/provider/jobs');
 }
