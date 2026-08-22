@@ -35,7 +35,6 @@ const menus:Record<Role,RoleMenu>={
     primary:{href:'/provider/jobs',label:'View Jobs'},
     items:[
       {href:'/profile',label:'Profile'},
-      {href:'/provider/today',label:'Today'},
       {href:'/provider/jobs',label:'Jobs'},
       {href:'/provider/calendar',label:'Calendar'},
       {href:'/provider/messages',label:'Messages'},
@@ -127,7 +126,7 @@ export default function GlobalRoleMenu(){
     {role==='customer'&&path.startsWith('/requests/')?<DispatchLivePanel/>:null}
     <div className="globalMenuHeaderWrap">
       <header className="globalMenuHeader" aria-label={`${menu.label} navigation`}>
-        <Link href={role==='admin'?'/admin':role==='provider'?'/provider/today':'/'} className="globalMenuBrand" onClick={()=>setOpen(false)}>
+        <Link href={role==='admin'?'/admin':role==='provider'?'/provider/jobs':'/'} className="globalMenuBrand" onClick={()=>setOpen(false)}>
           <span className="globalMenuBrandMark">F</span><span>FixIt</span>
         </Link>
         <div className="globalMenuHeaderActions">
@@ -143,7 +142,7 @@ export default function GlobalRoleMenu(){
     {open?<div className="globalMenuBackdrop" role="presentation" onMouseDown={e=>{if(e.currentTarget===e.target)setOpen(false);}}>
       <section className="globalMenuSheet" role="dialog" aria-modal="true" aria-label={`${menu.label} menu`}>
         <div className="globalMenuSheetTop">
-          <Link href={role==='admin'?'/admin':role==='provider'?'/provider/today':'/'} className="globalMenuBrand" onClick={()=>setOpen(false)}><span className="globalMenuBrandMark">F</span><span>FixIt</span></Link>
+          <Link href={role==='admin'?'/admin':role==='provider'?'/provider/jobs':'/'} className="globalMenuBrand" onClick={()=>setOpen(false)}><span className="globalMenuBrandMark">F</span><span>FixIt</span></Link>
           <button className="globalMenuToggle" type="button" aria-label="Close menu" onClick={()=>setOpen(false)}><span className="globalMenuClose">×</span></button>
         </div>
         <div className="globalMenuDivider"/>
