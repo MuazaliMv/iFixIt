@@ -23,7 +23,6 @@ const menus:Record<Role,RoleMenu>={
     primary:{href:'/#request',label:'New Request'},
     items:[
       {href:'/profile',label:'My Profile'},
-      {href:'/',label:'Home'},
       {href:'/requests',label:'Service Requests'},
       {href:'/messages',label:'Messages'},
     ],
