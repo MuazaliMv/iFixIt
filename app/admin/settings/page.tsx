@@ -17,11 +17,10 @@ export default function AdminSettingsPage(){
  async function save(key:string,value:Record<string,unknown>){setBusy(true);try{await call({action:'update',key,value,isActive:true});setMessage(`${key} updated. Changes are live without code edits.`);await load();}catch(e){setMessage(e instanceof Error?e.message:'Unable to save configuration.');}finally{setBusy(false);}}
  return <main className="shell">
   <AdminNav/>
-  <section className="panel"><div className="panelHeader"><div><p className="eyebrow">ADMIN SETTINGS</p><h2>System configuration</h2><p className="muted">Manage runtime configuration, profile field rules and system audit history from one settings area.</p></div><span className="pill">Server controlled</span></div>{message?<p className="formMessage" role="status">{message}</p>:null}</section>
+  <section className="panel"><div className="panelHeader"><div><p className="eyebrow">ADMIN SETTINGS</p><h2>System configuration</h2><p className="muted">Manage runtime configuration and system audit history from one settings area.</p></div><span className="pill">Server controlled</span></div>{message?<p className="formMessage" role="status">{message}</p>:null}</section>
 
   <section className="panel"><div className="panelHeader"><div><p className="eyebrow">SETTINGS SECTIONS</p><h2>Administration controls</h2></div></div><div className="profileQuickGrid">
    <a className="profileQuickCard" href="#location"><span className="profileQuickIcon">⌖</span><span><strong>Location Configuration</strong><small>Geolocation provider settings</small></span></a>
-   <a className="profileQuickCard" href="/admin/required-fields"><span className="profileQuickIcon">✓</span><span><strong>Profile Fields</strong><small>Required fields, completeness and prompts</small></span></a>
    <a className="profileQuickCard" href="/admin/audit-logs"><span className="profileQuickIcon">≡</span><span><strong>System Audit</strong><small>Administrative and security event history</small></span></a>
   </div></section>
 
