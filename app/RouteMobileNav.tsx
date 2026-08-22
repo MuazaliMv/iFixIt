@@ -8,25 +8,31 @@ import DispatchLivePanel from './DispatchLivePanel';
 
 type NavRole='customer'|'provider';
 
+function rememberedRole():NavRole|null{
+ if(typeof window==='undefined')return null;
+ try{const value=localStorage.getItem('fixit:mobile-nav-role');return value==='customer'||value==='provider'?value:null;}catch{return null;}
+}
+
 export default function RouteMobileNav(){
  const path=usePathname();
- const[sharedRole,setSharedRole]=useState<NavRole|null>(null);
+ const[sharedRole,setSharedRole]=useState<NavRole|null>(rememberedRole);
  const customerRoute=path==='/'||path==='/requests'||path.startsWith('/requests/');
  const providerRoute=path.startsWith('/provider');
  const sharedRoute=path==='/messages'||path==='/profile';
 
  useEffect(()=>{
-  if(customerRoute){setSharedRole('customer');return;}
-  if(providerRoute){setSharedRole('provider');return;}
+  if(customerRoute){setSharedRole('customer');try{localStorage.setItem('fixit:mobile-nav-role','customer');}catch{}return;}
+  if(providerRoute){setSharedRole('provider');try{localStorage.setItem('fixit:mobile-nav-role','provider');}catch{}return;}
   if(!sharedRoute)return;
+  const cached=rememberedRole();
+  if(cached)setSharedRole(cached);
   let cancelled=false;
   void supabase.auth.getSession().then(async({data})=>{
    if(cancelled||!data.session)return;
    const{data:profile}=await supabase.from('auth_profiles').select('role').eq('user_id',data.session.user.id).maybeSingle();
    if(cancelled)return;
-   if(profile?.role==='PROVIDER')setSharedRole('provider');
-   else if(profile?.role==='CUSTOMER')setSharedRole('customer');
-   else setSharedRole(null);
+   const role:NavRole|null=profile?.role==='PROVIDER'?'provider':profile?.role==='CUSTOMER'?'customer':cached;
+   if(role){setSharedRole(role);try{localStorage.setItem('fixit:mobile-nav-role',role);}catch{}}
   });
   return()=>{cancelled=true;};
  },[customerRoute,providerRoute,sharedRoute,path]);
