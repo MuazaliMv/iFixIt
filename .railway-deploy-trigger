@@ -1,9 +1,9 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-22T21:43:00+05:00
-Reason: force production redeploy after profile Atoll/Island dropdown fix.
+Created: 2026-08-22T22:48:00+05:00
+Reason: deploy registration backend fix after removing WhatsApp OTP requirement.
 Required production behavior:
-- Profile label is Atoll.
-- Atoll is a select control populated from the atolls table.
-- City / Island is a dependent select control populated from the islands table.
-- Country remains fixed to Maldives.
-Target application commit includes: 85c17b3390aac1a5b9d33308bd686af4cd9f41ed
+- Registration works with name, email and password only.
+- Phone number is optional.
+- WhatsApp OTP is not required.
+- Registration API proxies to the Supabase register-account Edge Function.
+Target application commit includes: d86791dca2d4d763972356ca976da449daf91d24
