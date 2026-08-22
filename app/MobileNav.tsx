@@ -17,7 +17,7 @@ export default function MobileNav({role}:Props){
   {href:'/profile',label:'Profile',icon:'♙',match:p=>p==='/profile'}
  ];
  const provider:Item[]=[
-  {href:'/provider',label:'Today',icon:'⌂',match:p=>p==='/provider'},
+  {href:'/provider/today',label:'Today',icon:'⌂',match:p=>p==='/provider/today'||p==='/provider'},
   {href:'/provider/calendar',label:'Calendar',icon:'□',match:p=>p==='/provider/calendar'},
   {href:'/provider/listings',label:'Listings',icon:'▤',match:p=>p==='/provider/listings'||p==='/provider/onboarding'},
   {href:'/messages',label:'Messages',icon:'◌',match:p=>p==='/messages'},
