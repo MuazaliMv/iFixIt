@@ -22,11 +22,10 @@ const menus:Record<Role,RoleMenu>={
     secondary:{href:'/messages',label:'Messages'},
     primary:{href:'/#request',label:'New Request'},
     items:[
-      {href:'/profile',label:'Profile'},
       {href:'/',label:'Home'},
-      {href:'/requests',label:'My Requests'},
-      {href:'/#request',label:'New Request'},
+      {href:'/requests',label:'Service Requests'},
       {href:'/messages',label:'Messages'},
+      {href:'/profile',label:'Profile'},
     ],
   },
   provider:{
