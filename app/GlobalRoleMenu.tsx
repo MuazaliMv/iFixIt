@@ -44,9 +44,7 @@ const menus:Record<Role,RoleMenu>={
       {href:'/profile',label:'My Profile'},
       {href:'/admin/requests',label:'Request Management'},
       {href:'/admin/escalations',label:'Attention / Escalations'},
-      {href:'/admin/users',label:'Users'},
-      {href:'/admin/providers',label:'Providers'},
-      {href:'/admin/services',label:'Services'},
+      {href:'/admin/users',label:'User Management'},
       {href:'/admin/locations',label:'Locations'},
       {href:'/admin/reports',label:'Reports'},
       {href:'/admin/settings',label:'Settings'},
@@ -69,6 +67,7 @@ function isPublicOrAuth(path:string){
 
 function itemIsActive(path:string,href:string){
   if(href==='/')return path==='/';
+  if(href==='/admin/users')return path.startsWith('/admin/users')||path.startsWith('/admin/providers')||path.startsWith('/admin/services');
   if(href.includes('#'))return false;
   return path===href||path.startsWith(href+'/');
 }
