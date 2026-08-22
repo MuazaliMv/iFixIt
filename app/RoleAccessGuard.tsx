@@ -6,9 +6,13 @@ import { supabase } from '../lib/supabaseClient';
 
 type AccountRole='CUSTOMER'|'PROVIDER'|'ADMIN';
 
-function destination(role:AccountRole){
+function destination(role:AccountRole,path:string){
   if(role==='ADMIN')return '/admin';
-  if(role==='PROVIDER')return '/provider/today';
+  if(role==='PROVIDER'){
+    if(path==='/messages'||path.startsWith('/messages/'))return '/provider/messages';
+    if(path==='/requests'||path.startsWith('/requests/'))return '/provider/jobs';
+    return '/provider/today';
+  }
   return '/';
 }
 
@@ -48,7 +52,7 @@ export default function RoleAccessGuard(){
           (role==='PROVIDER'&&(customerRoute||adminRoute))||
           (role==='CUSTOMER'&&(providerRoute||adminRoute));
 
-        if(wrongRoute&&active)router.replace(destination(role));
+        if(wrongRoute&&active)router.replace(destination(role,path));
       }catch{}
     }
 
