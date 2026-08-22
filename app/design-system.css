@@ -1,0 +1,68 @@
+:root {
+  --fx-color-primary: #2563eb;
+  --fx-color-primary-hover: #1d4ed8;
+  --fx-color-bg: #f8fafc;
+  --fx-color-surface: #ffffff;
+  --fx-color-surface-muted: #f1f5f9;
+  --fx-color-border: #e2e8f0;
+  --fx-color-text: #0f172a;
+  --fx-color-text-muted: #64748b;
+  --fx-color-success: #15803d;
+  --fx-color-warning: #b45309;
+  --fx-color-danger: #b91c1c;
+  --fx-color-info: #0369a1;
+
+  --fx-space-1: 4px;
+  --fx-space-2: 8px;
+  --fx-space-3: 12px;
+  --fx-space-4: 16px;
+  --fx-space-6: 24px;
+  --fx-space-8: 32px;
+  --fx-space-12: 48px;
+  --fx-space-16: 64px;
+
+  --fx-radius-sm: 8px;
+  --fx-radius-md: 12px;
+  --fx-radius-lg: 16px;
+  --fx-radius-pill: 999px;
+
+  --fx-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06);
+  --fx-shadow-md: 0 8px 24px rgb(15 23 42 / 0.08);
+
+  --fx-font-xs: 12px;
+  --fx-font-sm: 14px;
+  --fx-font-md: 16px;
+  --fx-font-lg: 20px;
+  --fx-font-xl: 24px;
+  --fx-font-2xl: 32px;
+
+  --fx-control-height: 44px;
+  --fx-content-max: 1200px;
+}
+
+.fx-surface {
+  background: var(--fx-color-surface);
+  border: 1px solid var(--fx-color-border);
+  border-radius: var(--fx-radius-lg);
+  box-shadow: var(--fx-shadow-sm);
+}
+
+.fx-focusable:focus-visible,
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgb(37 99 235 / 0.28);
+  outline-offset: 2px;
+}
+
+.fx-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--fx-space-3);
+  border-radius: var(--fx-radius-pill);
+  font-size: var(--fx-font-sm);
+  font-weight: 700;
+}
