@@ -70,33 +70,49 @@ export default function AdminAuditLogsPage() {
   async function load() {
     setLoadState('loading');
     setErrorMessage('');
+
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+
+      const session = sessionData.session;
+      if (!session) {
         window.location.href = '/login';
         return;
       }
-      const { data: profile } = await supabase
-        .from('auth_profiles')
-        .select('role')
-        .eq('user_id', sessionData.session.user.id)
-        .maybeSingle();
 
-      if (profile?.role !== 'ADMIN') {
+      const response = await fetch('/api/admin/audit-logs', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        cache: 'no-store',
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        events?: AuditRow[];
+        error?: string;
+      };
+
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+
+      if (response.status === 403) {
+        setEvents([]);
         setLoadState('forbidden');
         return;
       }
 
-      const { data, error } = await supabase
-        .from('security_events')
-        .select('id,event_type,severity,entity_type,entity_id,created_at,metadata')
-        .order('created_at', { ascending: false })
-        .limit(500);
+      if (!response.ok) {
+        throw new Error(payload.error || 'Unable to load audit logs.');
+      }
 
-      if (error) throw error;
-      setEvents((data || []) as AuditRow[]);
+      setEvents(Array.isArray(payload.events) ? payload.events : []);
       setLoadState('ready');
     } catch (error) {
+      setEvents([]);
       setErrorMessage(error instanceof Error ? error.message : 'Unable to load audit logs.');
       setLoadState('error');
     }
@@ -129,6 +145,7 @@ export default function AdminAuditLogsPage() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const visibleEvents = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const eventCountLabel = loadState === 'ready' ? `${filtered.length} events` : '— events';
 
   return (
     <main className="shell">
@@ -146,7 +163,7 @@ export default function AdminAuditLogsPage() {
             <p className="eyebrow">AUDIT & SECURITY</p>
             <h2>Admin Activity Log</h2>
           </div>
-          <span className="pill">{filtered.length} events</span>
+          <span className="pill">{eventCountLabel}</span>
         </div>
 
         {loadState === 'loading' && <p className="formMessage" role="status">Loading audit logs…</p>}
