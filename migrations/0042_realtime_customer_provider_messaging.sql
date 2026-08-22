@@ -34,12 +34,8 @@ drop policy if exists request_messages_participant_select on public.request_mess
 create policy request_messages_participant_select
 on public.request_messages for select to authenticated
 using (
-  exists (
-    select 1 from public.request_intake r
-    where r.id=request_messages.request_id
-      and r.assigned_provider_user_id is not null
-      and ((select auth.uid())=r.customer_auth_user_id or (select auth.uid())=r.assigned_provider_user_id)
-  )
+  (select auth.uid())=sender_auth_user_id
+  or (select auth.uid())=recipient_auth_user_id
 );
 
 grant select on public.request_messages to authenticated;
