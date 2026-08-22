@@ -1,50 +1,102 @@
 :root {
-  --fx-color-primary: #2563eb;
-  --fx-color-primary-hover: #1d4ed8;
-  --fx-color-bg: #f8fafc;
-  --fx-color-surface: #ffffff;
-  --fx-color-surface-muted: #f1f5f9;
-  --fx-color-border: #e2e8f0;
-  --fx-color-text: #0f172a;
-  --fx-color-text-muted: #64748b;
-  --fx-color-success: #15803d;
-  --fx-color-warning: #b45309;
-  --fx-color-danger: #b91c1c;
-  --fx-color-info: #0369a1;
+  --fx-color-primary: #2563EB;
+  --fx-color-primary-hover: #1D4ED8;
+  --fx-color-primary-active: #1A4CB8;
+  --fx-color-primary-soft: #EFF6FF;
+  --fx-color-primary-strong: #DBEAFE;
+  --fx-color-primary-ring: rgba(37,99,235,0.14);
 
-  --fx-space-1: 4px;
-  --fx-space-2: 8px;
-  --fx-space-3: 12px;
-  --fx-space-4: 16px;
-  --fx-space-6: 24px;
-  --fx-space-8: 32px;
-  --fx-space-12: 48px;
-  --fx-space-16: 64px;
+  --fx-color-success: #168451;
+  --fx-color-success-hover: #0F6D42;
+  --fx-color-success-active: #0A5633;
+  --fx-color-warning: #A15C00;
+  --fx-color-danger: #B42318;
+  --fx-color-danger-hover: #9E1F14;
+  --fx-color-danger-active: #851A11;
+  --fx-color-provider: #F59E0B;
+  --fx-color-provider-soft: #FFF7ED;
+  --fx-color-provider-border: #FED7AA;
 
-  --fx-radius-sm: 8px;
-  --fx-radius-md: 12px;
-  --fx-radius-lg: 16px;
+  --fx-color-text: #172033;
+  --fx-color-text-secondary: #667085;
+  --fx-color-text-muted: #6A6A6A;
+  --fx-color-text-inverse: #FFFFFF;
+  --fx-color-page: #F4F7FB;
+  --fx-color-surface: #FFFFFF;
+  --fx-color-surface-alt: #F8FAFC;
+  --fx-color-surface-hover: #F1F5F9;
+  --fx-color-border: #E4E9F1;
+  --fx-color-border-strong: #DDDDDD;
+
+  --fx-space-xs: 4px;
+  --fx-space-sm: 8px;
+  --fx-space-md: 12px;
+  --fx-space-base: 16px;
+  --fx-space-lg: 20px;
+  --fx-space-xl: 24px;
+  --fx-space-2xl: 32px;
+  --fx-space-3xl: 40px;
+  --fx-space-4xl: 56px;
+  --fx-space-5xl: 72px;
+
+  --fx-radius-control: 12px;
+  --fx-radius-card: 16px;
   --fx-radius-pill: 999px;
 
-  --fx-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06);
-  --fx-shadow-md: 0 8px 24px rgb(15 23 42 / 0.08);
+  --fx-shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(15,23,42,0.06);
+  --fx-shadow-card-hover: 0 1px 2px rgba(0,0,0,0.06), 0 12px 34px rgba(15,23,42,0.10);
 
-  --fx-font-xs: 12px;
-  --fx-font-sm: 14px;
-  --fx-font-md: 16px;
-  --fx-font-lg: 20px;
-  --fx-font-xl: 24px;
-  --fx-font-2xl: 32px;
+  --fx-font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --fx-font-display: 48px;
+  --fx-font-h1: 36px;
+  --fx-font-h2: 28px;
+  --fx-font-h3: 22px;
+  --fx-font-h4: 18px;
+  --fx-font-body-lg: 16px;
+  --fx-font-body: 15px;
+  --fx-font-body-sm: 14px;
+  --fx-font-caption: 12px;
 
-  --fx-control-height: 44px;
-  --fx-content-max: 1200px;
+  --fx-control-height: 48px;
+  --fx-icon-control-size: 44px;
+  --fx-content-max: 1120px;
+
+  /* Compatibility aliases for existing screens. */
+  --surface: var(--fx-color-surface);
+  --surface-alt: var(--fx-color-surface-alt);
+  --page-bg: var(--fx-color-page);
+  --text: var(--fx-color-text);
+  --muted: var(--fx-color-text-secondary);
+  --line: var(--fx-color-border);
+  --brand: var(--fx-color-primary);
+  --brand-soft: var(--fx-color-primary-soft);
+  --success: var(--fx-color-success);
+  --warning: var(--fx-color-warning);
+  --danger: var(--fx-color-danger);
+  --radius-sm: var(--fx-radius-control);
+  --radius-md: var(--fx-radius-card);
+  --radius-lg: var(--fx-radius-card);
+  --content-max: var(--fx-content-max);
+
+  --air-primary: var(--fx-color-primary);
+  --air-primary-dark: var(--fx-color-primary-hover);
+  --air-primary-soft: var(--fx-color-primary-soft);
+  --air-primary-soft-strong: var(--fx-color-primary-strong);
+  --air-ink: var(--fx-color-text);
+  --air-muted: var(--fx-color-text-secondary);
+  --air-bg: var(--fx-color-page);
+  --air-surface: var(--fx-color-surface);
+  --air-border: var(--fx-color-border);
+  --air-soft: var(--fx-color-surface-alt);
+  --air-radius: var(--fx-radius-card);
+  --air-font: var(--fx-font-family);
 }
 
 .fx-surface {
   background: var(--fx-color-surface);
   border: 1px solid var(--fx-color-border);
-  border-radius: var(--fx-radius-lg);
-  box-shadow: var(--fx-shadow-sm);
+  border-radius: var(--fx-radius-card);
+  box-shadow: var(--fx-shadow-card);
 }
 
 .fx-focusable:focus-visible,
@@ -53,7 +105,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid rgb(37 99 235 / 0.28);
+  outline: 3px solid rgba(37,99,235,0.30);
   outline-offset: 2px;
 }
 
@@ -61,8 +113,8 @@ textarea:focus-visible {
   display: inline-flex;
   align-items: center;
   min-height: 28px;
-  padding: 0 var(--fx-space-3);
+  padding: 0 var(--fx-space-md);
   border-radius: var(--fx-radius-pill);
-  font-size: var(--fx-font-sm);
+  font-size: var(--fx-font-body-sm);
   font-weight: 700;
 }
