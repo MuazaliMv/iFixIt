@@ -70,4 +70,60 @@ create trigger trg_auth_profiles_provider_subscription
 after insert or update of role, provider_approved on public.auth_profiles
 for each row execute function public.ensure_provider_subscription_row();
 
+create or replace function public.activate_provider_subscription_payment(
+  p_provider_user_id uuid,
+  p_gateway text,
+  p_gateway_reference text,
+  p_paid_at timestamptz default now()
+)
+returns table(subscription_status text, period_ends_at timestamptz)
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_sub public.provider_subscriptions%rowtype;
+  v_base timestamptz;
+begin
+  select * into v_sub
+  from public.provider_subscriptions
+  where provider_user_id=p_provider_user_id
+  for update;
+  if not found then raise exception 'Provider subscription not found'; end if;
+  if coalesce(trim(p_gateway_reference),'')='' then raise exception 'Gateway reference required'; end if;
+
+  if exists(
+    select 1 from public.provider_subscription_payments
+    where gateway=p_gateway and gateway_reference=p_gateway_reference and status='PAID'
+  ) then
+    return query select v_sub.status, v_sub.current_period_ends_at;
+    return;
+  end if;
+
+  v_base := case when v_sub.current_period_ends_at > p_paid_at then v_sub.current_period_ends_at else p_paid_at end;
+
+  insert into public.provider_subscription_payments(
+    provider_user_id,subscription_id,amount_mvr,gateway,gateway_reference,status,paid_at
+  ) values(
+    p_provider_user_id,v_sub.id,250.00,p_gateway,p_gateway_reference,'PAID',p_paid_at
+  )
+  on conflict (gateway,gateway_reference) where gateway_reference is not null
+  do update set status='PAID',paid_at=excluded.paid_at,updated_at=now();
+
+  update public.provider_subscriptions
+  set status='ACTIVE',
+      current_period_started_at=p_paid_at,
+      current_period_ends_at=v_base+interval '30 days',
+      last_payment_at=p_paid_at,
+      updated_at=now()
+  where id=v_sub.id
+  returning status,current_period_ends_at into subscription_status,period_ends_at;
+
+  return next;
+end;
+$$;
+
+revoke all on function public.activate_provider_subscription_payment(uuid,text,text,timestamptz) from public,anon,authenticated;
+grant execute on function public.activate_provider_subscription_payment(uuid,text,text,timestamptz) to service_role;
+
 commit;
