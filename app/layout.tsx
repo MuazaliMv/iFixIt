@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './design-system.css';
 import './ui-compat.css';
 import './ui-reference.css';
 import './iphone-audit.css';
