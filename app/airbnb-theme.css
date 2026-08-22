@@ -1,0 +1,124 @@
+:root{
+  --air-primary:#e6485c;
+  --air-primary-dark:#cf344a;
+  --air-ink:#222222;
+  --air-muted:#6a6a6a;
+  --air-bg:#f7f7f7;
+  --air-surface:#ffffff;
+  --air-border:#dddddd;
+  --air-soft:#f3f3f3;
+  --air-shadow:0 6px 24px rgba(0,0,0,.08);
+  --air-shadow-soft:0 2px 12px rgba(0,0,0,.06);
+  --air-radius:18px;
+  --air-font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+
+html,body{background:var(--air-bg);color:var(--air-ink)}
+body{font-family:var(--air-font)}
+
+/* Customer shell */
+.c4App{background:var(--air-bg)!important;color:var(--air-ink)!important;font-family:var(--air-font)!important}
+.c4App.dv{font-family:"Noto Sans Thaana","MV Boli",Tahoma,sans-serif!important}
+.c4App .c4Sidebar{background:#fff!important;border-color:var(--air-border)!important;padding:26px 18px!important;box-shadow:none!important}
+.c4App .c4Brand{padding-bottom:24px!important;color:var(--air-ink)!important}
+.c4App .c4BrandMark{background:var(--air-primary)!important;border-radius:50%!important;box-shadow:none!important}
+.c4App .c4Brand strong{font-size:22px!important;font-weight:800!important;letter-spacing:-.6px!important}
+.c4App .c4Brand small{color:var(--air-muted)!important}
+.c4App .c4Lang,.c4App .c4LangCompact{border-color:var(--air-border)!important;background:#fff!important;border-radius:999px!important;padding:4px!important}
+.c4App .c4Lang button,.c4App .c4LangCompact button{border-radius:999px!important;color:var(--air-muted)!important}
+.c4App .c4Lang button.active,.c4App .c4LangCompact button.active{background:var(--air-ink)!important;color:#fff!important;box-shadow:none!important}
+.c4App .c4NavLabel{color:#999!important;font-size:11px!important;letter-spacing:.08em!important}
+.c4App .c4Nav{gap:5px!important}
+.c4App .c4Nav a,.c4App .c4Nav button{min-height:48px!important;border-radius:12px!important;color:var(--air-ink)!important;font-size:15px!important;font-weight:650!important;padding:0 14px!important}
+.c4App .c4Nav a:hover,.c4App .c4Nav button:hover{background:var(--air-soft)!important}
+.c4App .c4Nav a.active{background:#fff0f2!important;color:var(--air-primary)!important;box-shadow:none!important}
+.c4App .c4SidebarFoot{border-color:var(--air-border)!important}
+.c4App .c4Identity>span{background:#fff0f2!important;color:var(--air-primary)!important}
+
+/* Header */
+.c4App .c3Header,.c3Header{background:rgba(255,255,255,.97)!important;border-bottom:1px solid var(--air-border)!important;box-shadow:none!important}
+.c4App .c3Logo,.c3Logo{font-family:var(--air-font)!important;font-weight:800!important;letter-spacing:-1px!important}
+.c4App .c3Logo span,.c3Logo span{color:var(--air-ink)!important}
+.c4App .c3Logo b,.c3Logo b{color:var(--air-primary)!important}
+.c4App .c3Logo small,.c3Logo small{color:var(--air-muted)!important;font-weight:700!important}
+.c4App .c3IconButton,.c4App .c3Avatar,.c3IconButton,.c3Avatar{border-color:var(--air-border)!important;background:#fff!important;color:var(--air-ink)!important;box-shadow:none!important}
+.c4App .c3Avatar,.c3Avatar{background:var(--air-ink)!important;color:#fff!important;border-color:var(--air-ink)!important}
+
+/* Customer homepage and wizard */
+.c4App .c3Page,.c3Page{background:var(--air-bg)!important;color:var(--air-ink)!important}
+.c4App .c3Welcome,.c3Welcome{background:#fff!important;border:1px solid var(--air-border)!important;border-radius:24px!important;box-shadow:none!important;padding:34px!important}
+.c4App .c3Welcome:after,.c3Welcome:after{background:rgba(230,72,92,.07)!important}
+.c4App .c3Welcome small,.c3Welcome small,.c4App .c3SectionHead small,.c4App .c3Question small{color:var(--air-primary)!important}
+.c4App .c3Welcome h1,.c3Welcome h1,.c4App .c3Question h1{color:var(--air-ink)!important;font-family:var(--air-font)!important;font-weight:800!important;letter-spacing:-1.4px!important}
+.c4App .c3Welcome p,.c3Welcome p,.c4App .c3Question p,.c4App .c3SectionHead p{color:var(--air-muted)!important}
+
+.c4App .c3Primary,.c3Primary,.accountApp .primary{background:var(--air-primary)!important;color:#fff!important;border:0!important;border-radius:12px!important;box-shadow:none!important;font-family:var(--air-font)!important;font-weight:700!important;min-height:48px!important}
+.c4App .c3Primary:hover,.c3Primary:hover,.accountApp .primary:hover{background:var(--air-primary-dark)!important;transform:none!important}
+.c4App .c3Welcome .c3Primary,.c3Welcome .c3Primary{background:var(--air-primary)!important;color:#fff!important;box-shadow:none!important}
+.c4App .c3Secondary,.c3Secondary,.accountApp .secondary{background:#fff!important;color:var(--air-ink)!important;border:1px solid var(--air-ink)!important;border-radius:12px!important;box-shadow:none!important;font-weight:700!important}
+
+.c4App .c3Section,.c3Section{background:#fff!important;border:1px solid var(--air-border)!important;border-radius:20px!important;box-shadow:none!important}
+.c4App .c3ServiceTile,.c3ServiceTile{background:#fff!important;border:1px solid var(--air-border)!important;border-radius:16px!important;box-shadow:none!important;color:var(--air-ink)!important}
+.c4App .c3ServiceTile:hover,.c3ServiceTile:hover{border-color:#b0b0b0!important;box-shadow:var(--air-shadow-soft)!important;transform:translateY(-1px)!important}
+.c4App .c3ServiceTile.selected,.c3ServiceTile.selected{background:#fff5f6!important;border-color:var(--air-primary)!important;color:var(--air-primary)!important}
+.c4App .c3ServiceIcon,.c3ServiceIcon{color:var(--air-ink)!important}
+.c4App .c3ServiceTile.selected .c3ServiceIcon{color:var(--air-primary)!important}
+.c4App .c3ServiceTile span,.c3ServiceTile span{color:var(--air-muted)!important}
+.c4App .c3ActiveCard,.c3ActiveCard{border-color:var(--air-border)!important;border-radius:16px!important}
+.c4App .c3Status,.c3Status{background:#fff0f2!important;color:var(--air-primary)!important}
+
+.c4App .c3WizardCard,.c3WizardCard{background:#fff!important;border:1px solid var(--air-border)!important;border-radius:22px!important;box-shadow:none!important}
+.c4App .c3StepDot.active,.c4App .c3StepDot.done,.c3StepDot.active,.c3StepDot.done{background:var(--air-primary)!important}
+.c4App .c3Field input,.c4App .c3Field select,.c4App .c3Field textarea,.c3Field input,.c3Field select,.c3Field textarea{border-color:#bdbdbd!important;border-radius:12px!important;color:var(--air-ink)!important;font-family:var(--air-font)!important}
+.c4App .c3Field input:focus,.c4App .c3Field select:focus,.c4App .c3Field textarea:focus,.c3Field input:focus,.c3Field select:focus,.c3Field textarea:focus{border-color:var(--air-ink)!important;box-shadow:0 0 0 2px var(--air-ink)!important}
+.c4App .c3Chip.selected,.c3Chip.selected{background:var(--air-ink)!important;border-color:var(--air-ink)!important;color:#fff!important}
+.c4App .c3Urgency button.selected,.c3Urgency button.selected{background:#fff5f6!important;border-color:var(--air-primary)!important;color:var(--air-primary)!important}
+.c4App .c3ActionDock,.c3ActionDock{background:rgba(247,247,247,.96)!important}
+
+/* Requests cards */
+.c3RequestCard{border:1px solid var(--air-border)!important;border-radius:18px!important;box-shadow:none!important}
+.c3RequestIcon{background:#f3f3f3!important;color:var(--air-ink)!important}
+.c3Filters button{background:#fff!important;border:1px solid var(--air-border)!important;color:var(--air-ink)!important}
+.c3Filters button.active{background:var(--air-ink)!important;border-color:var(--air-ink)!important;color:#fff!important}
+
+/* Shared profile and messages pages */
+.accountApp{font-family:var(--air-font)!important;color:var(--air-ink)!important}
+.accountApp .accountHeader h1{font-weight:800!important;letter-spacing:-.7px!important;color:var(--air-ink)!important}
+.accountApp .accountHeader p{color:var(--air-muted)!important}
+.accountApp .accountBack,.accountApp .accountIconButton{border-color:var(--air-border)!important;color:var(--air-ink)!important;border-radius:50%!important;background:#fff!important;box-shadow:none!important}
+.accountApp .messagesHero,.accountApp .profileHeroCard{background:#fff!important;border-color:var(--air-border)!important;border-radius:20px!important;box-shadow:none!important}
+.accountApp .messagesHeroIcon,.accountApp .profileQuickIcon,.accountApp .profileSectionIcon{background:#fff0f2!important;color:var(--air-primary)!important}
+.accountApp .messageFilters{border-color:var(--air-border)!important}
+.accountApp .messageFilters button{color:var(--air-muted)!important;font-weight:700!important}
+.accountApp .messageFilters button.active{color:var(--air-ink)!important;box-shadow:inset 0 -2px 0 var(--air-ink)!important}
+.accountApp .messageFilters span{background:#f1f1f1!important;color:var(--air-ink)!important}
+.accountApp .conversationCard,.accountApp .profileSection,.accountApp .profileQuickCard{border-color:var(--air-border)!important;border-radius:16px!important;box-shadow:none!important;background:#fff!important}
+.accountApp .conversationCard:hover,.accountApp .profileQuickCard:hover{border-color:#b0b0b0!important;box-shadow:var(--air-shadow-soft)!important}
+.accountApp .conversationAvatar,.accountApp .profileAvatar{background:#f3f3f3!important;color:var(--air-ink)!important}
+.accountApp .conversationStatus.active,.accountApp .profileBadge{background:#fff0f2!important;color:var(--air-primary)!important}
+.accountApp .unreadDot{background:var(--air-primary)!important}
+.accountApp .completionTop strong{color:var(--air-primary)!important}
+.accountApp .completionFill{background:var(--air-primary)!important}
+.accountApp .profileMetricGrid div{background:#f7f7f7!important}
+
+/* Mobile nav: compact, calm, Airbnb-like */
+.mobileNav{width:min(760px,100%)!important;background:rgba(255,255,255,.98)!important;border:0!important;border-top:1px solid var(--air-border)!important;border-radius:0!important;box-shadow:0 -2px 14px rgba(0,0,0,.05)!important;padding:8px 8px calc(7px + env(safe-area-inset-bottom))!important;backdrop-filter:blur(18px)!important}
+.mobileNav a{min-height:58px!important;color:#717171!important;border-radius:12px!important;font-family:var(--air-font)!important;font-size:10px!important;font-weight:600!important;gap:5px!important}
+.mobileNav a .navIcon{font-size:23px!important;color:inherit!important}
+.mobileNav a.active{color:var(--air-primary)!important;background:transparent!important}
+.mobileNav a.primaryNav{color:#717171!important}
+.mobileNav a.primaryNav .navIcon{width:38px!important;height:38px!important;margin-top:0!important;border-radius:50%!important;background:var(--air-primary)!important;color:#fff!important;font-size:23px!important;box-shadow:none!important}
+.mobileNav a.primaryNav:hover .navIcon{background:var(--air-primary-dark)!important}
+.providerMobileNav a.primaryNav .navIcon{background:transparent!important;color:inherit!important;width:auto!important;height:auto!important;border-radius:0!important}
+
+/* Global touch feedback inside customer surfaces */
+.c4App button,.c4App a,.accountApp button,.accountApp a,.mobileNav a{transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease!important}
+.c4App button:focus-visible,.c4App a:focus-visible,.accountApp button:focus-visible,.accountApp a:focus-visible,.mobileNav a:focus-visible{outline:2px solid var(--air-ink)!important;outline-offset:2px!important}
+
+@media(max-width:760px){
+  .c4App .c3Welcome,.c3Welcome{border-radius:18px!important;padding:22px!important}
+  .c4App .c3Welcome h1,.c3Welcome h1{font-size:30px!important}
+  .c4App .c3Section,.c3Section,.c4App .c3WizardCard,.c3WizardCard{border-radius:16px!important}
+  .mobileNavSpacer{height:82px!important}
+  .accountApp{padding-bottom:8px!important}
+}
