@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import AdminNav from '../AdminNav';
+import styles from './requests.module.css';
 
 const API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/admin-request-oversight';
 const PAGE_SIZE=10;
@@ -34,7 +35,7 @@ export default function AdminRequestsPage(){
  async function transition(){if(!selected)return;const target=selected.status==='ACCEPTED'?'PROCESSING':selected.status==='PROCESSING'?'COMPLETED':'';if(!target)return;if(!window.confirm(`Move ${selected.ticket_number} to ${target}?`))return;setLoading(true);try{await call({action:'transition_request',ticketNumber:selected.ticket_number,targetStatus:target});setMessage(`${selected.ticket_number} moved to ${target}.`);await load();setSelected(null);}catch(e){setMessage(e instanceof Error?e.message:'Unable to transition service request.');}finally{setLoading(false);}}
  function ownership(r:RequestRow){if(r.ownershipState==='CUSTOMER_OWNED')return r.customer?.full_name||r.customer?.email||'Customer';if(r.ownershipState==='TEST_SYSTEM')return 'Unlinked / Test / System';return 'Unlinked';}
  const statCards:[View,string,number,string][]=[['ALL','All Requests',counts.all,'Total'],['ATTENTION','Needs Attention',counts.attention,'Requires action'],['UNASSIGNED','Unassigned',counts.unassigned,'Awaiting assignment'],['EXCEPTIONS','Exceptions',counts.exceptions,'Need resolution']];
- return <main className="shell adminRequestsPage">
+ return <main className={`${styles.page} shell adminRequestsPage`}>
   <header className="topbar adminRequestsTopbar"><div><p className="eyebrow">ADMIN WORKSPACE</p><h1 className="pageTitle">Service Requests</h1><p className="tagline">Monitor, manage and resolve customer requests.</p></div><button className="primary refreshAction" onClick={()=>void load()} disabled={loading}><span aria-hidden="true">↻</span>{loading?'Refreshing…':'Refresh'}</button></header>
   <AdminNav />
 
