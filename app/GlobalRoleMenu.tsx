@@ -42,7 +42,6 @@ const menus:Record<Role,RoleMenu>={
     secondary:{href:'/admin/reports',label:'Reports'},
     items:[
       {href:'/profile',label:'My Profile'},
-      {href:'/admin',label:'Dashboard'},
       {href:'/admin/requests',label:'Request Management'},
       {href:'/admin/escalations',label:'Attention / Escalations'},
       {href:'/admin/users',label:'Users'},
