@@ -22,10 +22,10 @@ const menus:Record<Role,RoleMenu>={
     secondary:{href:'/messages',label:'Messages'},
     primary:{href:'/#request',label:'New Request'},
     items:[
+      {href:'/profile',label:'My Profile'},
       {href:'/',label:'Home'},
       {href:'/requests',label:'Service Requests'},
       {href:'/messages',label:'Messages'},
-      {href:'/profile',label:'Profile'},
     ],
   },
   provider:{
@@ -45,7 +45,7 @@ const menus:Record<Role,RoleMenu>={
     secondary:{href:'/admin/reports',label:'Reports'},
     primary:{href:'/admin',label:'Dashboard'},
     items:[
-      {href:'/profile',label:'Profile'},
+      {href:'/profile',label:'My Profile'},
       {href:'/admin',label:'Dashboard'},
       {href:'/admin/requests',label:'Request Management'},
       {href:'/admin/escalations',label:'Attention / Escalations'},
