@@ -96,8 +96,7 @@ export default function ProviderServicesPage(){
 
   <div className="providerServicesBottomBar">
    <div className="providerServicesBottomInner">
-    <a className="providerServicesMenuButton" href="/provider/menu"><span aria-hidden="true">↩</span> Back to Menu</a>
-    <button className="providerServicesSaveButton" disabled={busy} onClick={()=>void save()}><span aria-hidden="true">▣</span>{busy?'Saving…':'Save services'}</button>
+    <button className="providerServicesSaveButton" style={{width:'100%',gridColumn:'1 / -1'}} disabled={busy} onClick={()=>void save()}><span aria-hidden="true">▣</span>{busy?'Saving…':'Save services'}</button>
    </div>
   </div>
  </main>;
