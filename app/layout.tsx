@@ -20,11 +20,12 @@ import './p1-customer-home-wizard.css';
 import './p1-provider-work.css';
 import './p1-remaining-consistency.css';
 import './responsive-v2.css';
+import './global-role-menu.css';
 import ThemeRuntime from './ThemeRuntime';
-import RouteMobileNav from './RouteMobileNav';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
 import RoleAccessGuard from './RoleAccessGuard';
+import GlobalRoleMenu from './GlobalRoleMenu';
 
 export const metadata: Metadata = {
   title: 'FixIt Maldives',
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/><ResponsiveRuntime/><RoleAccessGuard/>{children}<RouteMobileNav/><ModeToast/></body>
+      <body><ThemeRuntime/><ResponsiveRuntime/><RoleAccessGuard/><GlobalRoleMenu/>{children}<ModeToast/></body>
     </html>
   );
 }
