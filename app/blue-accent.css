@@ -1,0 +1,89 @@
+:root{
+  --air-primary:#2563eb;
+  --air-primary-dark:#1d4ed8;
+  --air-primary-soft:#eff6ff;
+  --air-primary-soft-strong:#dbeafe;
+}
+
+/* Replace the previous coral/pink accents with blue while preserving the Airbnb-like layout. */
+.c4App .c4Nav a.active,
+.c4App .c4Identity>span,
+.accountApp .messagesHeroIcon,
+.accountApp .profileQuickIcon,
+.accountApp .profileSectionIcon,
+.accountApp .conversationStatus.active,
+.accountApp .profileBadge,
+.c4App .c3Status,
+.c3Status{
+  background:var(--air-primary-soft)!important;
+  color:var(--air-primary)!important;
+}
+
+.c4App .c3ServiceTile.selected,
+.c3ServiceTile.selected,
+.c4App .c3Urgency button.selected,
+.c3Urgency button.selected{
+  background:var(--air-primary-soft)!important;
+  border-color:var(--air-primary)!important;
+  color:var(--air-primary)!important;
+}
+
+.c4App .c3Welcome:after,
+.c3Welcome:after{
+  background:rgba(37,99,235,.08)!important;
+}
+
+.c4App .c4BrandMark,
+.c4App .c3Primary,
+.c3Primary,
+.accountApp .primary,
+.c4App .c3Welcome .c3Primary,
+.c3Welcome .c3Primary,
+.accountApp .unreadDot,
+.accountApp .completionFill,
+.mobileNav a.primaryNav .navIcon{
+  background:var(--air-primary)!important;
+}
+
+.c4App .c3Primary:hover,
+.c3Primary:hover,
+.accountApp .primary:hover,
+.mobileNav a.primaryNav:hover .navIcon{
+  background:var(--air-primary-dark)!important;
+}
+
+.c4App .c3Logo b,
+.c3Logo b,
+.c4App .c3Welcome small,
+.c3Welcome small,
+.c4App .c3SectionHead small,
+.c4App .c3Question small,
+.c4App .c3ServiceTile.selected .c3ServiceIcon,
+.accountApp .completionTop strong,
+.mobileNav a.active{
+  color:var(--air-primary)!important;
+}
+
+/* Blue focus and selection feedback for the customer theme. */
+.c4App .c3Field input:focus,
+.c4App .c3Field select:focus,
+.c4App .c3Field textarea:focus,
+.c3Field input:focus,
+.c3Field select:focus,
+.c3Field textarea:focus{
+  border-color:var(--air-primary)!important;
+  box-shadow:0 0 0 3px rgba(37,99,235,.14)!important;
+}
+
+.c4App button:focus-visible,
+.c4App a:focus-visible,
+.accountApp button:focus-visible,
+.accountApp a:focus-visible,
+.mobileNav a:focus-visible,
+button:focus-visible,
+input[type="button"]:focus-visible,
+input[type="submit"]:focus-visible,
+input[type="reset"]:focus-visible,
+[role="button"]:focus-visible{
+  outline-color:var(--air-primary)!important;
+}
