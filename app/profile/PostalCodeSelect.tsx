@@ -16,14 +16,52 @@ type LookupResponse = {
   error?: string;
 };
 
+type WardLookupResponse = {
+  wards?: string[];
+  error?: string;
+};
+
 export default function PostalCodeSelect({ atoll, city, road, value, onChange, disabled }: Props) {
+  const [ward, setWard] = useState('');
+  const [wards, setWards] = useState<string[]>([]);
+  const [wardLoading, setWardLoading] = useState(false);
   const [postalCodes, setPostalCodes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const previousAddress = useRef('');
 
+  const wardReady = Boolean(atoll.trim() && city.trim());
   const ready = Boolean(atoll.trim() && city.trim() && road.trim());
-  const addressKey = `${atoll.trim()}|${city.trim()}|${road.trim()}`;
+  const addressKey = `${atoll.trim()}|${city.trim()}|${road.trim()}|${ward.trim()}`;
+
+  useEffect(() => {
+    setWard('');
+    setWards([]);
+    if (!wardReady) return;
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setWardLoading(true);
+      try {
+        const params = new URLSearchParams({ atoll, city });
+        const response = await fetch(`/api/locations/wards?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        const payload = (await response.json()) as WardLookupResponse;
+        if (!response.ok) throw new Error(payload.error || 'Unable to load wards.');
+        setWards(Array.isArray(payload.wards) ? payload.wards : []);
+      } catch {
+        if (!controller.signal.aborted) setWards([]);
+      } finally {
+        if (!controller.signal.aborted) setWardLoading(false);
+      }
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [atoll, city, wardReady]);
 
   useEffect(() => {
     if (previousAddress.current && previousAddress.current !== addressKey && value) {
@@ -46,6 +84,7 @@ export default function PostalCodeSelect({ atoll, city, road, value, onChange, d
       setError('');
       try {
         const params = new URLSearchParams({ atoll, city, road });
+        if (ward) params.set('ward', ward);
         const response = await fetch(`/api/locations/postal-codes?${params.toString()}`, {
           signal: controller.signal,
         });
@@ -65,30 +104,52 @@ export default function PostalCodeSelect({ atoll, city, road, value, onChange, d
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [atoll, city, road, ready]);
+  }, [atoll, city, road, ward, ready]);
 
   const options = value && !postalCodes.includes(value) ? [value, ...postalCodes] : postalCodes;
 
-  let placeholder = 'Select Atoll, City / Island and Road first';
-  if (ready && loading) placeholder = 'Finding postal codes…';
-  else if (ready && error) placeholder = 'Postal lookup unavailable';
-  else if (ready && !loading && postalCodes.length === 0) placeholder = 'No postal code found for this address';
-  else if (ready) placeholder = 'Select Postal Code';
+  let postalPlaceholder = 'Select Atoll, City / Island and Road first';
+  if (ready && loading) postalPlaceholder = 'Finding postal codes…';
+  else if (ready && error) postalPlaceholder = 'Postal lookup unavailable';
+  else if (ready && !loading && postalCodes.length === 0) postalPlaceholder = 'No postal code found for this address';
+  else if (ready) postalPlaceholder = 'Select Postal Code';
+
+  let wardPlaceholder = 'Select City / Island first';
+  if (wardReady && wardLoading) wardPlaceholder = 'Loading wards…';
+  else if (wardReady && wards.length === 0) wardPlaceholder = 'No ward listed / Not applicable';
+  else if (wardReady) wardPlaceholder = 'Select Ward';
 
   return (
-    <>
+    <div className="wardPostalControl">
+      <style>{`.scheduleGrid label:has(.wardPostalControl){font-size:0}.wardPostalControl{font-size:16px;display:grid;gap:8px}.wardPostalControl .fieldLabel{font-size:inherit;font-weight:700;line-height:1.25;margin-top:2px}.wardPostalControl select,.wardPostalControl small{font-size:16px}`}</style>
+      <span className="fieldLabel">Ward</span>
+      <select
+        value={ward}
+        onChange={(event) => setWard(event.target.value)}
+        disabled={disabled || !wardReady || wardLoading || wards.length === 0}
+        aria-label="Ward"
+        aria-busy={wardLoading}
+      >
+        <option value="">{wardPlaceholder}</option>
+        {wards.map((item) => (
+          <option key={item} value={item}>{item}</option>
+        ))}
+      </select>
+
+      <span className="fieldLabel">Postal code</span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled || !ready || loading || (postalCodes.length === 0 && !value)}
+        aria-label="Postal code"
         aria-busy={loading}
       >
-        <option value="">{placeholder}</option>
+        <option value="">{postalPlaceholder}</option>
         {options.map((postalCode) => (
           <option key={postalCode} value={postalCode}>{postalCode}</option>
         ))}
       </select>
       {error ? <small className="muted" role="status">{error}</small> : null}
-    </>
+    </div>
   );
 }
