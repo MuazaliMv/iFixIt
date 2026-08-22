@@ -14,6 +14,7 @@ import './dual-mode.css';
 import ThemeRuntime from './ThemeRuntime';
 import RouteMobileNav from './RouteMobileNav';
 import ModeToast from './ModeToast';
+import GlobalModeSwitch from './GlobalModeSwitch';
 
 export const metadata: Metadata = {
   title: 'FixIt Maldives',
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/>{children}<RouteMobileNav/><ModeToast/></body>
+      <body><ThemeRuntime/>{children}<RouteMobileNav/><GlobalModeSwitch/><ModeToast/></body>
     </html>
   );
 }
