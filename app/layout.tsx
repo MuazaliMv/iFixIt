@@ -10,8 +10,10 @@ import './request-detail-v3.css';
 import './airbnb-theme.css';
 import './global-buttons.css';
 import './blue-accent.css';
+import './dual-mode.css';
 import ThemeRuntime from './ThemeRuntime';
 import RouteMobileNav from './RouteMobileNav';
+import ModeToast from './ModeToast';
 
 export const metadata: Metadata = {
   title: 'FixIt Maldives',
@@ -21,7 +23,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/>{children}<RouteMobileNav/></body>
+      <body><ThemeRuntime/>{children}<RouteMobileNav/><ModeToast/></body>
     </html>
   );
 }
