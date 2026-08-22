@@ -16,21 +16,19 @@ function when(v:string){return new Date(v).toLocaleString(undefined,{day:'2-digi
 function cardTone(status:Escalation['status']){return status==='RESOLVED'?'completed':status==='ACKNOWLEDGED'?'processing':status==='OPEN'?'unaccepted':'other';}
 
 export default function EscalationsPage(){
- const[rows,setRows]=useState<Escalation[]>([]);const[counts,setCounts]=useState<Counts>(empty);const[message,setMessage]=useState('Loading escalations…');const[busy,setBusy]=useState(false);const[filter,setFilter]=useState<Filter>('ALL');const[query,setQuery]=useState('');const[page,setPage]=useState(1);const[expanded,setExpanded]=useState<string|null>(null);
+ const[rows,setRows]=useState<Escalation[]>([]);const[counts,setCounts]=useState<Counts>(empty);const[busy,setBusy]=useState(false);const[filter,setFilter]=useState<Filter>('ALL');const[query,setQuery]=useState('');const[page,setPage]=useState(1);const[expanded,setExpanded]=useState<string|null>(null);
  useEffect(()=>{void load();},[]);
  useEffect(()=>{setPage(1);setExpanded(null);},[filter,query]);
  async function token(){const{data}=await supabase.auth.getSession();if(!data.session){window.location.href='/login';return'';}return data.session.access_token;}
  async function call(body:Record<string,unknown>){const t=await token();if(!t)return null;const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify(body)});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Escalation request failed');return p;}
- async function load(){setBusy(true);try{const p=await call({action:'list',status:'ACTIVE'});if(!p)return;setRows(p.escalations||[]);setCounts(p.counts||empty);setMessage(p.escalations?.length?'Active cases requiring operations attention.':'No active SLA escalations.');}catch(e){setMessage(e instanceof Error?e.message:'Unable to load escalations.');}finally{setBusy(false);}}
- async function act(id:string,action:'acknowledge'|'resolve'){setBusy(true);try{await call({action,escalationId:id});await load();setExpanded(null);}catch(e){setMessage(e instanceof Error?e.message:'Unable to update escalation.');setBusy(false);}}
- async function run(){setBusy(true);try{await call({action:'run',escalationId:'manual'});await load();}catch(e){setMessage(e instanceof Error?e.message:'Unable to run SLA scan.');setBusy(false);}}
+ async function load(){setBusy(true);try{const p=await call({action:'list',status:'ACTIVE'});if(!p)return;setRows(p.escalations||[]);setCounts(p.counts||empty);}catch(e){console.error(e);}finally{setBusy(false);}}
+ async function act(id:string,action:'acknowledge'|'resolve'){setBusy(true);try{await call({action,escalationId:id});await load();setExpanded(null);}catch(e){console.error(e);setBusy(false);}}
  const visible=useMemo(()=>rows.filter(e=>(filter==='ALL'||e.status===filter)&&(!query.trim()||`${e.ticket_number} ${e.summary} ${e.escalation_type} ${e.severity} ${e.status}`.toLowerCase().includes(query.trim().toLowerCase()))).sort((a,b)=>new Date(b.last_detected_at||b.first_detected_at).getTime()-new Date(a.last_detected_at||a.first_detected_at).getTime()),[rows,filter,query]);
  const totalPages=Math.max(1,Math.ceil(visible.length/PAGE_SIZE));
  const paged=visible.slice((page-1)*PAGE_SIZE,page*PAGE_SIZE);
  useEffect(()=>{if(page>totalPages)setPage(totalPages);},[page,totalPages]);
  return <main className={`${styles.page} shell`}>
   <AdminNav />
-  <section className="panel escalationHeader"><div className="panelHeader"><div><p className="eyebrow">OPERATIONS SLA</p><h2>Attention</h2><p className="muted">Automatic provider-search, response and job-delay issues that need admin attention.</p></div><div className="actions"><button className="secondary" onClick={()=>void run()} disabled={busy}>Run Scan</button><button className="primary" onClick={()=>void load()} disabled={busy}>{busy?'Refreshing…':'Refresh'}</button></div></div>{message?<p className="formMessage" role="status">{message}</p>:null}</section>
 
   <section className="attentionStats"><article><span>Critical</span><strong>{counts.critical}</strong></article><article><span>High</span><strong>{counts.high}</strong></article><article><span>Warning</span><strong>{counts.warning}</strong></article><article><span>Open</span><strong>{counts.open}</strong></article><article><span>Acknowledged</span><strong>{counts.acknowledged}</strong></article></section>
 
