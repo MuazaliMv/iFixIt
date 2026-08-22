@@ -53,6 +53,12 @@ function resultStyles(result: string) {
   return { background: '#dcfce7', color: '#166534', borderColor: '#bbf7d0' };
 }
 
+function detailValue(value: unknown) {
+  if (value === null || value === undefined || value === '') return '—';
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return JSON.stringify(value, null, 2);
+}
+
 export default function AdminAuditLogsPage() {
   const [events, setEvents] = useState<AuditRow[]>([]);
   const [loadState, setLoadState] = useState<LoadState>('loading');
@@ -83,16 +89,11 @@ export default function AdminAuditLogsPage() {
 
       const response = await fetch('/api/admin/audit-logs', {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers: { Authorization: `Bearer ${session.access_token}` },
         cache: 'no-store',
       });
 
-      const payload = (await response.json().catch(() => ({}))) as {
-        events?: AuditRow[];
-        error?: string;
-      };
+      const payload = (await response.json().catch(() => ({}))) as { events?: AuditRow[]; error?: string };
 
       if (response.status === 401) {
         window.location.href = '/login';
@@ -105,9 +106,7 @@ export default function AdminAuditLogsPage() {
         return;
       }
 
-      if (!response.ok) {
-        throw new Error(payload.error || 'Unable to load audit logs.');
-      }
+      if (!response.ok) throw new Error(payload.error || 'Unable to load audit logs.');
 
       setEvents(Array.isArray(payload.events) ? payload.events : []);
       setLoadState('ready');
@@ -141,7 +140,12 @@ export default function AdminAuditLogsPage() {
     });
   }, [events, search, modelFilter, resultFilter, dateFrom, dateTo]);
 
-  useEffect(() => { setPage(1); }, [search, modelFilter, resultFilter, dateFrom, dateTo]);
+  useEffect(() => {
+    setPage(1);
+    setExpanded(null);
+  }, [search, modelFilter, resultFilter, dateFrom, dateTo]);
+
+  useEffect(() => { setExpanded(null); }, [page]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const visibleEvents = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -220,35 +224,93 @@ export default function AdminAuditLogsPage() {
                 const result = resultLabel(event);
                 const meta = event.metadata || {};
                 const actor = String(meta.actor_name || meta.admin_name || meta.user_name || meta.actor_email || meta.user_email || 'System / unavailable');
+                const isExpanded = expanded === event.id;
+
                 return (
-                  <article className="jobCard" key={event.id} style={{ borderLeft: '4px solid #2563eb' }}>
-                    <div className="jobTop">
-                      <div style={{ minWidth: 0 }}>
-                        <div className="muted" style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em' }}>{model.icon} {model.label}</div>
-                        <strong style={{ display: 'block', marginTop: 5 }}>{humanize(event.event_type)}</strong>
-                        <div className="muted">{new Date(event.created_at).toLocaleString()}</div>
+                  <article
+                    className="jobCard"
+                    key={event.id}
+                    style={{
+                      borderLeft: '4px solid #2563eb',
+                      cursor: 'pointer',
+                      background: isExpanded ? '#f8fbff' : undefined,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      aria-expanded={isExpanded}
+                      aria-controls={`audit-details-${event.id}`}
+                      onClick={() => setExpanded(isExpanded ? null : event.id)}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: 0,
+                        margin: 0,
+                        border: 0,
+                        background: 'transparent',
+                        color: 'inherit',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <div className="jobTop">
+                        <div style={{ minWidth: 0 }}>
+                          <div className="muted" style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em' }}>{model.icon} {model.label}</div>
+                          <strong style={{ display: 'block', marginTop: 5 }}>{humanize(event.event_type)}</strong>
+                          <div className="muted">{new Date(event.created_at).toLocaleString()}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span className="pill" style={{ ...resultStyles(result), borderStyle: 'solid', borderWidth: 1 }}>{result}</span>
+                          <span aria-hidden="true" style={{ fontSize: 18, transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform .15s ease' }}>⌄</span>
+                        </div>
                       </div>
-                      <span className="pill" style={{ ...resultStyles(result), borderStyle: 'solid', borderWidth: 1 }}>{result}</span>
-                    </div>
 
-                    <div className="jobMeta" style={{ marginTop: 12 }}>
-                      <span><b>Performed by:</b> {actor}</span>
-                      {event.entity_type ? <span><b>Entity:</b> {humanize(event.entity_type)}</span> : null}
-                      {event.entity_id ? <span><b>Reference:</b> {event.entity_id}</span> : null}
-                      <span><b>Severity:</b> {humanize(event.severity || 'info')}</span>
-                    </div>
+                      <div className="jobMeta" style={{ marginTop: 12 }}>
+                        <span><b>Performed by:</b> {actor}</span>
+                        {event.entity_type ? <span><b>Entity:</b> {humanize(event.entity_type)}</span> : null}
+                        {event.entity_id ? <span><b>Reference:</b> {event.entity_id}</span> : null}
+                        <span><b>Severity:</b> {humanize(event.severity || 'info')}</span>
+                      </div>
+                    </button>
 
-                    {event.metadata && Object.keys(event.metadata).length > 0 && (
-                      <>
-                        <button type="button" onClick={() => setExpanded(expanded === event.id ? null : event.id)} style={{ marginTop: 12 }}>
-                          {expanded === event.id ? 'Hide details' : 'View details'}
-                        </button>
-                        {expanded === event.id && (
-                          <div style={{ marginTop: 12, padding: 14, borderRadius: 12, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                            <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', margin: 0, fontSize: 12 }}>{JSON.stringify(event.metadata, null, 2)}</pre>
-                          </div>
-                        )}
-                      </>
+                    {isExpanded && (
+                      <div
+                        id={`audit-details-${event.id}`}
+                        style={{
+                          marginTop: 14,
+                          paddingTop: 14,
+                          borderTop: '1px solid #dbe4f0',
+                        }}
+                      >
+                        <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>Activity details</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 10 }}>
+                          <div><div className="muted" style={{ fontSize: 12 }}>Log ID</div><div style={{ overflowWrap: 'anywhere' }}>{event.id}</div></div>
+                          <div><div className="muted" style={{ fontSize: 12 }}>Event</div><div>{humanize(event.event_type)}</div></div>
+                          <div><div className="muted" style={{ fontSize: 12 }}>Log model</div><div>{model.label}</div></div>
+                          <div><div className="muted" style={{ fontSize: 12 }}>Result</div><div>{result}</div></div>
+                          <div><div className="muted" style={{ fontSize: 12 }}>Performed by</div><div style={{ overflowWrap: 'anywhere' }}>{actor}</div></div>
+                          <div><div className="muted" style={{ fontSize: 12 }}>Date & time</div><div>{new Date(event.created_at).toLocaleString()}</div></div>
+                          <div><div className="muted" style={{ fontSize: 12 }}>Entity type</div><div>{event.entity_type ? humanize(event.entity_type) : '—'}</div></div>
+                          <div><div className="muted" style={{ fontSize: 12 }}>Reference</div><div style={{ overflowWrap: 'anywhere' }}>{event.entity_id || '—'}</div></div>
+                          <div><div className="muted" style={{ fontSize: 12 }}>Severity</div><div>{humanize(event.severity || 'info')}</div></div>
+                        </div>
+
+                        <div style={{ marginTop: 14 }}>
+                          <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>Recorded attributes</div>
+                          {Object.keys(meta).length > 0 ? (
+                            <div style={{ display: 'grid', gap: 8 }}>
+                              {Object.entries(meta).map(([key, value]) => (
+                                <div key={key} style={{ padding: 10, borderRadius: 10, background: '#fff', border: '1px solid #e2e8f0' }}>
+                                  <div style={{ fontSize: 12, fontWeight: 700 }}>{humanize(key)}</div>
+                                  <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', margin: '4px 0 0', fontFamily: 'inherit', fontSize: 13 }}>{detailValue(value)}</pre>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="muted">No additional attributes were recorded for this activity.</div>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </article>
                 );
