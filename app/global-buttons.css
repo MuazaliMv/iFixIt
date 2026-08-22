@@ -1,0 +1,236 @@
+:root{
+  --btn-radius:12px;
+  --btn-height:48px;
+  --btn-font:700;
+  --btn-pad-x:20px;
+  --btn-primary:var(--air-primary,#e6485c);
+  --btn-primary-hover:var(--air-primary-dark,#cf344a);
+  --btn-ink:var(--air-ink,#222222);
+  --btn-muted:#717171;
+  --btn-border:var(--air-border,#dddddd);
+  --btn-soft:#f7f7f7;
+  --btn-danger:#c13515;
+  --btn-danger-soft:#fff4f1;
+}
+
+/* Global button foundation */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"]{
+  font-family:var(--air-font,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif);
+  font-weight:var(--btn-font);
+  letter-spacing:0;
+  border-radius:var(--btn-radius);
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease,transform .08s ease,opacity .15s ease;
+}
+
+button:not(:disabled),
+input[type="button"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="reset"]:not(:disabled),
+[role="button"]:not([aria-disabled="true"]){cursor:pointer}
+
+button:active:not(:disabled),
+input[type="button"]:active:not(:disabled),
+input[type="submit"]:active:not(:disabled),
+input[type="reset"]:active:not(:disabled),
+[role="button"]:active:not([aria-disabled="true"]){transform:scale(.985)}
+
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled,
+[role="button"][aria-disabled="true"]{opacity:.45;cursor:not-allowed;box-shadow:none!important}
+
+button:focus-visible,
+input[type="button"]:focus-visible,
+input[type="submit"]:focus-visible,
+input[type="reset"]:focus-visible,
+[role="button"]:focus-visible{
+  outline:2px solid var(--btn-ink)!important;
+  outline-offset:3px!important;
+}
+
+/* Primary actions */
+.primary,
+.c3Primary,
+button.primary,
+a.primary,
+input[type="submit"].primary,
+.profileAlert .primary,
+.conversationEmpty .primary{
+  min-height:var(--btn-height)!important;
+  padding:0 var(--btn-pad-x)!important;
+  border:1px solid var(--btn-primary)!important;
+  border-radius:var(--btn-radius)!important;
+  background:var(--btn-primary)!important;
+  color:#fff!important;
+  box-shadow:none!important;
+  font-size:15px!important;
+  font-weight:700!important;
+  line-height:1!important;
+  text-decoration:none!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+}
+
+.primary:hover,
+.c3Primary:hover,
+button.primary:hover,
+a.primary:hover,
+input[type="submit"].primary:hover{
+  background:var(--btn-primary-hover)!important;
+  border-color:var(--btn-primary-hover)!important;
+  color:#fff!important;
+}
+
+/* Secondary / outline actions */
+.secondary,
+.c3Secondary,
+button.secondary,
+a.secondary{
+  min-height:var(--btn-height)!important;
+  padding:0 var(--btn-pad-x)!important;
+  border:1px solid var(--btn-ink)!important;
+  border-radius:var(--btn-radius)!important;
+  background:#fff!important;
+  color:var(--btn-ink)!important;
+  box-shadow:none!important;
+  font-size:15px!important;
+  font-weight:700!important;
+  line-height:1!important;
+  text-decoration:none!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+}
+
+.secondary:hover,
+.c3Secondary:hover,
+button.secondary:hover,
+a.secondary:hover{
+  background:var(--btn-soft)!important;
+  color:var(--btn-ink)!important;
+}
+
+/* Quiet / neutral buttons that do not use explicit variants */
+button:not(.primary):not(.secondary):not(.danger):not(.c3Primary):not(.c3Secondary):not(.c3Danger):not(.accountIconButton):not(.accountBack):not(.c3IconButton):not(.c3Avatar):not(.nav-item):not(.c4Logout):not(.conversationCard):not(.c3ServiceTile):not(.c3Chip):not(.profileSignOut):not(.mobileNav *){
+  border-radius:var(--btn-radius);
+}
+
+/* Danger actions */
+.danger,
+.c3Danger,
+.profileSignOut,
+button.danger{
+  min-height:var(--btn-height)!important;
+  padding:0 var(--btn-pad-x)!important;
+  border:1px solid #e7b6aa!important;
+  border-radius:var(--btn-radius)!important;
+  background:var(--btn-danger-soft)!important;
+  color:var(--btn-danger)!important;
+  box-shadow:none!important;
+  font-size:15px!important;
+  font-weight:700!important;
+}
+
+.danger:hover,
+.c3Danger:hover,
+.profileSignOut:hover,
+button.danger:hover{
+  background:#ffe9e4!important;
+  border-color:#d99586!important;
+}
+
+/* Icon buttons */
+.accountIconButton,
+.accountBack,
+.c3IconButton,
+.c3Avatar{
+  width:44px!important;
+  min-width:44px!important;
+  height:44px!important;
+  min-height:44px!important;
+  padding:0!important;
+  border:1px solid var(--btn-border)!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  color:var(--btn-ink)!important;
+  box-shadow:none!important;
+}
+
+.accountIconButton:hover,
+.accountBack:hover,
+.c3IconButton:hover{
+  background:var(--btn-soft)!important;
+  border-color:#b0b0b0!important;
+}
+
+/* Pills, filters and compact selectors */
+.c3Filters button,
+.messageFilters button,
+.c3Chip,
+.c4Lang button,
+.c4LangCompact button{
+  border-radius:999px!important;
+  font-weight:650!important;
+}
+
+.c3Filters button{
+  min-height:40px!important;
+  padding:0 16px!important;
+}
+
+.c3Filters button.active{
+  background:var(--btn-ink)!important;
+  border-color:var(--btn-ink)!important;
+  color:#fff!important;
+}
+
+/* Service / option cards are buttons, but should look like cards */
+.c3ServiceTile,
+.c3Urgency button,
+.conversationCard{
+  border-radius:16px!important;
+  font-weight:inherit!important;
+}
+
+/* Action docks: strong CTA, calm secondary */
+.c3ActionInner .c3Primary,
+.c3ActionInner .primary{
+  min-height:52px!important;
+  border-radius:12px!important;
+  font-size:16px!important;
+}
+
+/* Mobile bottom navigation uses icon/tab language, not raised buttons */
+.mobileNav a{
+  border-radius:10px!important;
+  font-weight:600!important;
+}
+
+.mobileNav a.primaryNav .navIcon{
+  border-radius:50%!important;
+}
+
+/* Make compact editor/control rows consistent */
+.actions button,
+.profileSectionHeader button,
+.profileEditButton{
+  min-height:42px!important;
+  border-radius:10px!important;
+  padding-inline:14px!important;
+  font-size:14px!important;
+}
+
+@media(max-width:760px){
+  :root{--btn-height:50px;--btn-pad-x:18px}
+  .primary,.secondary,.danger,.c3Primary,.c3Secondary,.c3Danger,.profileSignOut{font-size:15px!important}
+  .c3ActionInner .c3Primary,.c3ActionInner .primary{min-height:54px!important}
+}
