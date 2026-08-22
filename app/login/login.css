@@ -1,0 +1,22 @@
+.authPage{min-height:100dvh;display:grid;place-items:center;padding:32px 16px;background:var(--page-bg)}
+.authCardClean{width:min(100%,480px);background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:32px;box-shadow:var(--shadow-card)}
+.authBrand{display:inline-block;font-size:32px;font-weight:900;letter-spacing:-1.3px;color:var(--text)}
+.authBrand::after{content:".";color:var(--brand)}
+.authIntro{margin:32px 0 24px}
+.authIntro h1{margin:0;font-size:34px;line-height:1.08;letter-spacing:-1.2px}
+.authIntro p{margin:10px 0 0;color:var(--muted);font-size:16px;line-height:1.5}
+.authFormClean{display:grid;gap:18px}
+.authFormClean label{font-size:14px;font-weight:750}
+.authFormClean input,.authFormClean select{min-height:52px;font-size:16px}
+.optionalLabel{font-weight:500;color:var(--muted);margin-left:4px}
+.passwordField{position:relative}
+.passwordField input{padding-right:72px}
+.passwordToggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--brand);padding:8px;font-weight:800;font-size:13px}
+.authUtility{display:flex;justify-content:flex-end;margin-top:-6px}
+.authUtility a{color:var(--brand);font-size:14px;font-weight:750}
+.authSubmit{width:100%;min-height:52px;font-size:16px;margin-top:2px}
+.authHint{margin:16px 0 0;padding:12px 14px;border-radius:12px;background:var(--surface-alt);color:var(--muted);font-size:13px;line-height:1.5}
+.authSwitch{margin:24px 0 0;text-align:center;color:var(--muted);font-size:14px}
+.authSwitch button{border:0;background:transparent;color:var(--brand);font-weight:800;padding:4px;cursor:pointer}
+.authCardClean .formMessage{margin-top:16px}
+@media(max-width:560px){.authPage{place-items:start center;padding:20px 14px}.authCardClean{border-radius:20px;padding:26px 20px}.authIntro{margin:28px 0 22px}.authIntro h1{font-size:30px}}
