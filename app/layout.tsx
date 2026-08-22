@@ -21,6 +21,7 @@ import './p1-provider-work.css';
 import './p1-remaining-consistency.css';
 import './responsive-v2.css';
 import './global-role-menu.css';
+import './profile-flat.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
