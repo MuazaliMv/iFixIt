@@ -12,7 +12,6 @@ type MenuItem={href:string;label:string};
 type RoleMenu={
   label:string;
   secondary:{href:string;label:string};
-  primary:{href:string;label:string};
   items:MenuItem[];
 };
 
@@ -20,7 +19,6 @@ const menus:Record<Role,RoleMenu>={
   customer:{
     label:'Customer',
     secondary:{href:'/messages',label:'Messages'},
-    primary:{href:'/#request',label:'New Request'},
     items:[
       {href:'/profile',label:'My Profile'},
       {href:'/provider/setup',label:'Become a Provider'},
@@ -31,7 +29,6 @@ const menus:Record<Role,RoleMenu>={
   provider:{
     label:'Provider',
     secondary:{href:'/provider/availability',label:'Availability'},
-    primary:{href:'/provider/jobs',label:'View Jobs'},
     items:[
       {href:'/provider/profile',label:'My Profile'},
       {href:'/provider/jobs',label:'My Jobs'},
@@ -43,7 +40,6 @@ const menus:Record<Role,RoleMenu>={
   admin:{
     label:'Admin',
     secondary:{href:'/admin/reports',label:'Reports'},
-    primary:{href:'/admin',label:'Dashboard'},
     items:[
       {href:'/profile',label:'My Profile'},
       {href:'/admin',label:'Dashboard'},
@@ -131,7 +127,6 @@ export default function GlobalRoleMenu(){
         </Link>
         <div className="globalMenuHeaderActions">
           <Link className="globalMenuSecondary" href={menu.secondary.href}>{menu.secondary.label}</Link>
-          <Link className="globalMenuPrimary" href={menu.primary.href}>{menu.primary.label}</Link>
           <button className="globalMenuToggle" type="button" aria-label={open?'Close menu':'Open menu'} aria-expanded={open} onClick={()=>setOpen(v=>!v)}>
             {open?<span className="globalMenuClose">×</span>:<span className="globalMenuBars"><i/><i/><i/></span>}
           </button>
