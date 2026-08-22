@@ -74,10 +74,17 @@ function isPublicOrAuth(path:string){
   return path.startsWith('/login')||path.startsWith('/register')||path.startsWith('/auth')||path.startsWith('/api/')||path.startsWith('/onboarding');
 }
 
+function itemIsActive(path:string,href:string){
+  if(href==='/')return path==='/';
+  if(href.includes('#'))return false;
+  return path===href||path.startsWith(href+'/');
+}
+
 export default function GlobalRoleMenu(){
   const path=usePathname();
   const[role,setRole]=useState<Role|null>(routeRole(path));
   const[open,setOpen]=useState(false);
+  const[openGroup,setOpenGroup]=useState<string|null>(null);
 
   useEffect(()=>{
     let active=true;
@@ -116,8 +123,32 @@ export default function GlobalRoleMenu(){
     return [...map.entries()];
   },[role]);
 
+  useEffect(()=>{
+    if(!role||!open)return;
+    const activeGroup=grouped.find(([,items])=>items.some(item=>itemIsActive(path,item.href)))?.[0];
+    if(activeGroup){
+      setOpenGroup(activeGroup);
+      try{localStorage.setItem(`fixit-menu-group-${role}`,activeGroup);}catch{}
+      return;
+    }
+    try{
+      const remembered=localStorage.getItem(`fixit-menu-group-${role}`);
+      const valid=remembered&&grouped.some(([group])=>group===remembered);
+      setOpenGroup(valid?remembered:grouped[0]?.[0]||null);
+    }catch{setOpenGroup(grouped[0]?.[0]||null);}
+  },[grouped,open,path,role]);
+
   if(!role)return null;
   const menu=menus[role];
+
+  const toggleGroup=(group:string)=>{
+    const next=openGroup===group?null:group;
+    setOpenGroup(next);
+    try{
+      if(next)localStorage.setItem(`fixit-menu-group-${role}`,next);
+      else localStorage.removeItem(`fixit-menu-group-${role}`);
+    }catch{}
+  };
 
   return <>
     {role==='customer'&&path.startsWith('/requests/')?<DispatchLivePanel/>:null}
@@ -148,8 +179,20 @@ export default function GlobalRoleMenu(){
         </div>
         <div className="globalMenuDivider"/>
         <div className="globalMenuRoleLabel">{menu.label}</div>
-        <nav className="globalMenuLinks">
-          {grouped.map(([group,items])=><div className="globalMenuGroup" key={group}><p>{group}</p>{items.map(item=><Link key={item.href+item.label} href={item.href} onClick={()=>setOpen(false)} className={path===item.href||path.startsWith(item.href+'/')?'active':''}>{item.label}<span>→</span></Link>)}</div>)}
+        <nav className="globalMenuLinks" aria-label={`${menu.label} sections`}>
+          {grouped.map(([group,items])=>{
+            const expanded=openGroup===group;
+            const hasActive=items.some(item=>itemIsActive(path,item.href));
+            const panelId=`fixit-menu-${role}-${group.toLowerCase().replace(/[^a-z0-9]+/g,'-')}`;
+            return <div className={`globalMenuGroup${expanded?' expanded':''}${hasActive?' hasActive':''}`} key={group}>
+              <button className="globalMenuGroupToggle" type="button" aria-expanded={expanded} aria-controls={panelId} onClick={()=>toggleGroup(group)}>
+                <span>{group}</span><span className="globalMenuGroupChevron" aria-hidden="true">⌄</span>
+              </button>
+              <div id={panelId} className="globalMenuSubmenu" hidden={!expanded}>
+                {items.map(item=><Link key={item.href+item.label} href={item.href} onClick={()=>setOpen(false)} className={itemIsActive(path,item.href)?'active':''}>{item.label}<span>→</span></Link>)}
+              </div>
+            </div>;
+          })}
         </nav>
       </section>
     </div>:null}
