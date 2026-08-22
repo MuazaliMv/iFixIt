@@ -26,15 +26,31 @@ const SERVICE_ICONS:Record<string,string>={
  'Small Renovation':'⌂',
 };
 
+function sameSelection(a:string[],b:string[]){
+ if(a.length!==b.length)return false;
+ const aa=[...a].sort();
+ const bb=[...b].sort();
+ return aa.every((id,index)=>id===bb[index]);
+}
+
 export default function ProviderServicesPage(){
  const mode=useProviderMode(true);
  const[selected,setSelected]=useState<string[]>([]);
+ const[savedSelected,setSavedSelected]=useState<string[]>([]);
  const[busy,setBusy]=useState(false);
  const[message,setMessage]=useState('');
 
- useEffect(()=>{if(mode.ready)setSelected(mode.selectedCategoryIds);},[mode.ready,mode.selectedCategoryIds]);
+ useEffect(()=>{
+  if(mode.ready){
+   setSelected(mode.selectedCategoryIds);
+   setSavedSelected(mode.selectedCategoryIds);
+  }
+ },[mode.ready,mode.selectedCategoryIds]);
+
+ const hasChanges=!sameSelection(selected,savedSelected);
 
  async function save(){
+  if(!hasChanges||busy)return;
   setBusy(true);setMessage('');
   try{
    const{data}=await supabase.auth.getSession();
@@ -45,6 +61,7 @@ export default function ProviderServicesPage(){
    const r=await fetch(ONBOARDING_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({action:'save',providerType:p.provider_type||'INDIVIDUAL',publicName:p.public_name||mode.name,businessName:p.business_name||'',description:p.description||'',experienceYears:Number(p.experience_years||0),availabilityStatus:p.availability_status||'BY_APPOINTMENT',categoryIds:selected,hours,serviceAreas:mode.serviceAreas.map((a:any)=>({islandId:a.islandId,locationUnitId:a.locationUnitId||null}))})});
    const out=await r.json();
    if(!r.ok)throw new Error(out?.error||'Unable to save services');
+   setSavedSelected(selected);
    await mode.reload();
   }catch(e){setMessage(e instanceof Error?e.message:'Unable to save services.');}
   finally{setBusy(false);}
@@ -95,7 +112,7 @@ export default function ProviderServicesPage(){
 
   <div className="providerServicesBottomBar">
    <div className="providerServicesBottomInner">
-    <button className="providerServicesSaveButton" style={{width:'100%',gridColumn:'1 / -1'}} disabled={busy} onClick={()=>void save()}><span aria-hidden="true">▣</span>{busy?'Saving…':'Save services'}</button>
+    <button className="providerServicesSaveButton" style={{width:'100%',gridColumn:'1 / -1'}} disabled={busy||!hasChanges} onClick={()=>void save()}><span aria-hidden="true">▣</span>{busy?'Saving…':'Save services'}</button>
    </div>
   </div>
  </main>;
