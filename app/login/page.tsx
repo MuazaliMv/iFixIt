@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import './login.css';
 
 type Mode='login'|'register';
 type Role='CUSTOMER'|'PROVIDER';
