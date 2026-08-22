@@ -1,3 +1,5 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-21T18:29:00+05:00
-Expected source includes current production UI, customer/provider marketplace flows, create-request upgrade, messages/profile polish, root package.json and scripts/bootstrap-fixit.sh.
+Created: 2026-08-22T15:26:00+05:00
+Baseline branch: baseline/pre-ui-audit-2026-08-22
+Baseline commit: 42774a9e78f4036b2bb0c275c7bff5e62dac201a
+Purpose: redeploy the current working FixIt application before the UI/UX audit and refactor. No application logic changes are included in this trigger commit.
