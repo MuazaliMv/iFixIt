@@ -1,0 +1,15 @@
+'use client';
+
+import AppModeSwitch from '../../AppModeSwitch';
+import { useProviderMode } from '../useProviderMode';
+
+export default function ProviderMenuPage(){
+ const state=useProviderMode(true);
+ if(state.loading)return <main className="providerModePage"><div className="providerModeShell"><div className="providerModeCard">Loading provider menu…</div></div></main>;
+ return <main className="providerModePage"><div className="providerModeShell">
+  <header className="providerModeTop"><div><span className="modeBadge provider"><span className="modeDot provider"/>Provider</span><h1>Menu</h1><p>Provider settings, earnings, reviews and verification.</p></div><AppModeSwitch mode="provider" compact/></header>
+  <section className="providerModeCard"><div className="providerModeHero"><div><span className="modeBadge provider">{state.status}</span><h2>{state.name}</h2><p>{state.providerApproved?'Your provider account is approved and can receive matching jobs.':'Your provider setup is not fully approved yet.'}</p></div><a className="primary" href="/provider/onboarding">Provider Setup</a></div></section>
+  <section className="providerMenuGrid"><a className="providerMenuCard" href="/provider/earnings"><span><strong>Earnings</strong><small>Revenue and completed work</small></span><b>›</b></a><a className="providerMenuCard" href="/provider/listings"><span><strong>Listings</strong><small>Services you offer</small></span><b>›</b></a><a className="providerMenuCard" href="/provider/calendar"><span><strong>Availability</strong><small>Weekly schedule</small></span><b>›</b></a><a className="providerMenuCard" href="/provider/onboarding"><span><strong>Verification</strong><small>{state.providerApproved?'Approved':'Review provider setup'}</small></span><b>›</b></a><a className="providerMenuCard" href="/profile"><span><strong>Account profile</strong><small>Identity and contact settings</small></span><b>›</b></a><a className="providerMenuCard" href="/messages"><span><strong>Messages</strong><small>Customer conversations</small></span><b>›</b></a></section>
+  <section className="providerModeCard"><div className="providerSectionHead"><div><h2>Viewing mode</h2><p>Switching mode only changes what you see. Customers never see your provider dashboard.</p></div></div><AppModeSwitch mode="provider"/></section>
+ </div></main>;
+}
