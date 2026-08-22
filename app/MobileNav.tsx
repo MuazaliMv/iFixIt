@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import './mobile-nav.css';
 
@@ -23,5 +24,5 @@ export default function MobileNav({role}:Props){
   {href:'/profile',label:'Profile',icon:'♙',match:p=>p==='/profile'}
  ];
  const items=role==='provider'?provider:customer;
- return <><div className="mobileNavSpacer" aria-hidden="true"/><nav className={`mobileNav ${role==='provider'?'providerMobileNav':''}`} aria-label={`${role} navigation`}>{items.map(item=><a key={item.label} href={item.href} className={`${item.match(pathname)?'active ':''}${item.primary?'primaryNav':''}`.trim()}><span className="navIcon">{item.icon}</span><span>{item.label}</span></a>)}</nav></>;
+ return <><div className="mobileNavSpacer" aria-hidden="true"/><nav className={`mobileNav ${role==='provider'?'providerMobileNav':''}`} aria-label={`${role} navigation`}>{items.map(item=><Link key={item.label} href={item.href} className={`${item.match(pathname)?'active ':''}${item.primary?'primaryNav':''}`.trim()}><span className="navIcon">{item.icon}</span><span>{item.label}</span></Link>)}</nav></>;
 }
