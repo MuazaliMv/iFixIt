@@ -34,11 +34,11 @@ const menus:Record<Role,RoleMenu>={
     secondary:{href:'/provider/availability',label:'Availability'},
     primary:{href:'/provider/jobs',label:'View Jobs'},
     items:[
-      {href:'/profile',label:'Profile'},
-      {href:'/provider/jobs',label:'Jobs'},
-      {href:'/provider/calendar',label:'Calendar'},
+      {href:'/profile',label:'My Profile'},
+      {href:'/provider/jobs',label:'My Jobs'},
+      {href:'/provider/calendar',label:'Schedule'},
       {href:'/provider/messages',label:'Messages'},
-      {href:'/provider/setup',label:'Provider Setup'},
+      {href:'/provider/setup',label:'Service Settings'},
     ],
   },
   admin:{
