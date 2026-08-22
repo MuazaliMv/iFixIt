@@ -15,42 +15,85 @@ export default function LoginPage(){
  const[phone,setPhone]=useState('');
  const[message,setMessage]=useState('');
  const[busy,setBusy]=useState(false);
+ const[showPassword,setShowPassword]=useState(false);
 
- useEffect(()=>{supabase.auth.getSession().then(({data})=>{if(data.session)window.location.href='/';});},[]);
- function switchMode(next:Mode){setMode(next);setMessage('');}
+ async function routeUser(userId:string){
+  const{data:profile}=await supabase.from('auth_profiles').select('role').eq('user_id',userId).maybeSingle();
+  if(profile?.role==='PROVIDER')window.location.href='/provider';
+  else if(profile?.role==='ADMIN')window.location.href='/admin';
+  else window.location.href='/';
+ }
+
+ useEffect(()=>{
+  supabase.auth.getSession().then(({data})=>{
+   if(data.session)void routeUser(data.session.user.id);
+  });
+ },[]);
+
+ function switchMode(next:Mode){
+  setMode(next);
+  setMessage('');
+  setPassword('');
+  setShowPassword(false);
+ }
+
  async function submit(event:FormEvent){
   event.preventDefault();setBusy(true);setMessage('');
   try{
    if(mode==='register'){
     if(!fullName.trim())throw new Error('Enter your name.');
-    const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName:fullName.trim(),email:email.trim(),password,role,phoneNumber:phone.trim()})});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to create account.');
-    setMessage('Account created. Sign in with your email and password.');setMode('login');setPassword('');
+    const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName:fullName.trim(),email:email.trim(),password,role,phoneNumber:phone.trim()})});
+    const p=await r.json();
+    if(!r.ok)throw new Error(p?.error||'Unable to create account.');
+    setMessage('Account created. You can now sign in.');
+    setMode('login');
+    setPassword('');
    }else{
-    const{data,error}=await supabase.auth.signInWithPassword({email:email.trim(),password});if(error)throw error;
-    const{data:profile}=await supabase.from('auth_profiles').select('role,provider_approved').eq('user_id',data.user.id).maybeSingle();
-    if(profile?.role==='PROVIDER')window.location.href='/provider';else if(profile?.role==='ADMIN')window.location.href='/admin';else window.location.href='/';
+    const{data,error}=await supabase.auth.signInWithPassword({email:email.trim(),password});
+    if(error)throw error;
+    await routeUser(data.user.id);
    }
-  }catch(e){setMessage(e instanceof Error?e.message:'Unable to continue.');}finally{setBusy(false);}
+  }catch(e){setMessage(e instanceof Error?e.message:'Unable to continue.');}
+  finally{setBusy(false);}
  }
- return <main className="shell authShell">
-  <header className="topbar"><div><a className="brand" href="/">FixIt</a><p className="tagline">Secure account access</p></div><a className="secondary" href="/">Home</a></header>
-  <section className="panel authCard">
-   <div className="panelHeader"><div><p className="eyebrow">ACCOUNT</p><h2>{mode==='login'?'Sign in to FixIt':'Create your FixIt account'}</h2></div><span className="pill">Secure Auth</span></div>
-   <div className="filterRow"><button className={mode==='login'?'filterChip active':'filterChip'} onClick={()=>switchMode('login')} type="button">Sign In</button><button className={mode==='register'?'filterChip active':'filterChip'} onClick={()=>switchMode('register')} type="button">Register</button></div>
-   <form onSubmit={submit} className="authForm">
-    {mode==='register'?<>
-     <label>Full name<input value={fullName} onChange={e=>setFullName(e.target.value)} placeholder="Your name" required/></label>
-     <label>Account type<select value={role} onChange={e=>setRole(e.target.value as Role)}><option value="CUSTOMER">Customer</option><option value="PROVIDER">Provider</option></select></label>
-     <label>Phone number (optional)<input type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="+9607XXXXXX"/></label>
+
+ const isLogin=mode==='login';
+
+ return <main className="authPage">
+  <section className="authCardClean">
+   <a className="authBrand" href="/">FixIt</a>
+
+   <div className="authIntro">
+    <h1>{isLogin?'Welcome back':'Create your account'}</h1>
+    <p>{isLogin?'Sign in to continue to FixIt.':'Set up your FixIt account in a few steps.'}</p>
+   </div>
+
+   <form onSubmit={submit} className="authFormClean">
+    {!isLogin?<>
+     <label>Full name<input value={fullName} onChange={e=>setFullName(e.target.value)} placeholder="Your name" autoComplete="name" required/></label>
+     <label>Account type<select value={role} onChange={e=>setRole(e.target.value as Role)}><option value="CUSTOMER">User</option><option value="PROVIDER">Service Provider</option></select></label>
+     <label>Phone number <span className="optionalLabel">Optional</span><input type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="+960 7XXXXXX"/></label>
     </>:null}
+
     <label>Email<input type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" required/></label>
-    <label>Password<input type="password" autoComplete={mode==='login'?'current-password':'new-password'} value={password} onChange={e=>setPassword(e.target.value)} minLength={8} required/></label>
-    <button className="primary" disabled={busy}>{busy?'Please wait…':mode==='login'?'Sign In':'Create Account'}</button>
+
+    <label>Password
+     <div className="passwordField">
+      <input type={showPassword?'text':'password'} autoComplete={isLogin?'current-password':'new-password'} value={password} onChange={e=>setPassword(e.target.value)} minLength={8} required/>
+      <button type="button" className="passwordToggle" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'}>{showPassword?'Hide':'Show'}</button>
+     </div>
+    </label>
+
+    {isLogin?<div className="authUtility"><a href="/forgot-password">Forgot password?</a></div>:null}
+
+    <button className="primary authSubmit" disabled={busy}>{busy?'Please wait…':isLogin?'Sign In':'Create Account'}</button>
    </form>
-   {mode==='login'?<p className="localNotice"><a href="/forgot-password">Forgot Password?</a></p>:null}
+
    {message?<p className="formMessage" role="status">{message}</p>:null}
-   {mode==='register'?<p className="localNotice">Phone number is optional at registration and can be added or verified later. Profile photo and address information can also be updated later.</p>:null}
-   {mode==='register'&&role==='PROVIDER'?<p className="localNotice">Provider accounts require Admin approval before receiving marketplace work.</p>:null}
+
+   {!isLogin&&role==='PROVIDER'?<p className="authHint">Service Provider accounts require Admin approval before receiving service requests.</p>:null}
+
+   <p className="authSwitch">{isLogin?'New to FixIt?':'Already have an account?'} <button type="button" onClick={()=>switchMode(isLogin?'register':'login')}>{isLogin?'Create account':'Sign in'}</button></p>
   </section>
  </main>;
 }
