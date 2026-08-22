@@ -31,7 +31,6 @@ export default function AdminPage(){
  const actionTotal=criticalEscalations+pendingProviders+counts.pending;
 
  return <main className="shell">
-  <header className="topbar"><div><a className="brand" href="/admin">FixIt</a><p className="tagline">Admin Control Center</p></div><div className="actions"><a className="secondary" href="/profile">Profile</a></div></header>
   <AdminNav />
 
   <section className="panel"><div className="panelHeader"><div><p className="eyebrow">ADMIN DASHBOARD</p><h2>{profile?.full_name?`Welcome, ${profile.full_name}`:'Operations Dashboard'}</h2><p className="muted">Review items that need intervention first, then monitor daily marketplace operations.</p></div><button className="secondary" onClick={loadDashboard} disabled={profile?.role!=='ADMIN'||loading}>{loading?'Refreshing…':'Refresh'}</button></div>{message?<p className="formMessage" role="status">{message}</p>:null}</section>
