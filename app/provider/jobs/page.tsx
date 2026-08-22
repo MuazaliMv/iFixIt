@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
 import AppModeSwitch from '../../AppModeSwitch';
 import { useProviderMode } from '../useProviderMode';
@@ -15,7 +14,8 @@ type Job={ticket_number:string;service_name:string;service_location_text:string;
 function left(value:string){const d=new Date(value);if(Number.isNaN(d.getTime()))return'';const m=Math.max(0,Math.ceil((d.getTime()-Date.now())/60000));return m>60?`${Math.floor(m/60)}h ${m%60}m left`:`${m}m left`;}
 function stage(j:Job,confirmed:Set<string>){if(j.status==='COMPLETED'&&j.completion?.status==='CONFIRMED')return'CUSTOMER CONFIRMED';if(j.status==='COMPLETED')return'COMPLETED';if(j.status==='IN_PROGRESS'||j.status==='INSPECTION_SCHEDULED')return'IN PROGRESS';if(j.status==='ACCEPTED'&&confirmed.has(j.ticket_number))return'CONFIRMED';return'ACCEPTED';}
 export default function ProviderJobsPage(){
- const mode=useProviderMode(true);const params=useSearchParams();const initial=(params.get('tab')||'active') as Tab;const[tab,setTab]=useState<Tab>(['new','active','completed'].includes(initial)?initial:'active');const[offers,setOffers]=useState<Offer[]>([]);const[jobs,setJobs]=useState<Job[]>([]);const[confirmed,setConfirmed]=useState<Set<string>>(new Set());const[busy,setBusy]=useState(true);const[message,setMessage]=useState('Loading customer work…');
+ const mode=useProviderMode(true);const[tab,setTab]=useState<Tab>('active');const[offers,setOffers]=useState<Offer[]>([]);const[jobs,setJobs]=useState<Job[]>([]);const[confirmed,setConfirmed]=useState<Set<string>>(new Set());const[busy,setBusy]=useState(true);const[message,setMessage]=useState('Loading customer work…');
+ useEffect(()=>{const requested=new URLSearchParams(window.location.search).get('tab');if(requested==='new'||requested==='active'||requested==='completed')setTab(requested);},[]);
  useEffect(()=>{if(mode.ready)void load();},[mode.ready]);
  async function auth(){const{data}=await supabase.auth.getSession();if(!data.session){window.location.href='/login';return null;}return data.session;}
  async function load(){setBusy(true);try{const s=await auth();if(!s)return;const headers={'Content-Type':'application/json','Authorization':`Bearer ${s.access_token}`};const[or,mr,cr]=await Promise.all([fetch(OFFERS_URL,{method:'POST',headers,body:JSON.stringify({action:'list'})}),fetch(MARKET_URL,{method:'POST',headers,body:JSON.stringify({action:'dashboard'})}),fetch(CONFIRM_URL,{method:'POST',headers,body:'{}'})]);const op=await or.json(),mp=await mr.json(),cp=await cr.json();if(!or.ok)throw new Error(op?.error||'Unable to load new requests');if(!mr.ok)throw new Error(mp?.error||'Unable to load jobs');setOffers(op.offers||[]);setJobs((mp.requests||[]).filter((j:Job)=>['ACCEPTED','INSPECTION_SCHEDULED','IN_PROGRESS','COMPLETED'].includes(j.status)));if(cr.ok)setConfirmed(new Set(cp.confirmedTickets||[]));setMessage('Customer work is up to date.');}catch(e){setMessage(e instanceof Error?e.message:'Unable to load customer work.');}finally{setBusy(false);}}
