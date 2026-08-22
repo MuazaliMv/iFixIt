@@ -13,11 +13,11 @@ export function useProviderMode(redirectIncomplete=true){
   try{
    const{data}=await supabase.auth.getSession();if(!data.session){window.location.href='/login';return;}
    const r=await fetch(ONBOARDING_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${data.session.access_token}`},body:JSON.stringify({action:'get'})});
-   if(!r.ok){if(redirectIncomplete)window.location.href='/provider/onboarding?from=provider-mode';setState(s=>({...s,loading:false}));return;}
+   if(!r.ok){if(redirectIncomplete)window.location.href='/provider/setup?from=provider-mode';setState(s=>({...s,loading:false}));return;}
    const p=await r.json();const status=String(p?.profile?.onboarding_status||'DRAFT');const approved=Boolean(p?.authProfile?.provider_approved&&status==='APPROVED');
-   if(redirectIncomplete&&!approved){window.location.href='/provider/onboarding?from=provider-mode';return;}
+   if(redirectIncomplete&&!approved){window.location.href='/provider/setup?from=provider-mode';return;}
    setState({loading:false,ready:true,approved,status,name:p?.profile?.public_name||p?.authProfile?.full_name||'Provider',providerApproved:Boolean(p?.authProfile?.provider_approved),categories:p?.categories||[],selectedCategoryIds:p?.selectedCategoryIds||[],hours:p?.hours||[],profile:p?.profile||null});
-  }catch{if(redirectIncomplete)window.location.href='/provider/onboarding?from=provider-mode';else setState(s=>({...s,loading:false}));}
+  }catch{if(redirectIncomplete)window.location.href='/provider/setup?from=provider-mode';else setState(s=>({...s,loading:false}));}
  },[redirectIncomplete]);
  useEffect(()=>{void load();},[load]);
  return{...state,reload:load};
