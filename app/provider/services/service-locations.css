@@ -15,30 +15,23 @@
 .providerLocationAddButton{align-self:end;min-height:48px;padding:0 18px;border:0;border-radius:13px;background:#2563eb;color:#fff;font-weight:850;cursor:pointer;box-shadow:0 7px 16px rgba(37,99,235,.18)}
 .providerLocationAddButton:disabled{background:#cbd5e1;box-shadow:none;cursor:not-allowed}
 .providerLocationList{display:grid;gap:16px}
-.providerLocationCardGroup{display:grid;gap:0}
 .providerLocationCard{border-radius:18px;padding:20px;border:1px solid;outline:6px solid #fff;outline-offset:0;margin:8px;box-shadow:0 0 0 7px #dfe5ee,0 14px 30px rgba(15,23,42,.08);transition:transform .16s ease,box-shadow .16s ease}
 .providerLocationCard:hover{transform:translateY(-1px);box-shadow:0 0 0 7px #dfe5ee,0 18px 34px rgba(15,23,42,.11)}
 .providerLocationCard.saved{background:#f0fdf4;border-color:#bbf7d0}
 .providerLocationCard.pending{background:#fffbeb;border-color:#fde68a}
 .providerLocationCardTop{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
-.providerLocationCardTop>div{display:grid;gap:4px}
+.providerLocationCardTop>div:first-child{display:grid;gap:4px;min-width:0}
 .providerLocationCardTop strong{font-size:18px;color:#14213a}
-.providerLocationCardTop>div span{font-size:14px;color:#647087}
+.providerLocationCardTop>div:first-child span{font-size:14px;color:#647087}
+.providerLocationCardControls{display:flex;align-items:center;gap:8px;flex:0 0 auto}
 .providerLocationBadge{display:inline-flex;align-items:center;justify-content:center;min-height:30px;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:850;white-space:nowrap}
 .providerLocationBadge.saved{background:#dcfce7;color:#15803d}
 .providerLocationBadge.pending{background:#fef3c7;color:#a16207}
+.providerLocationQuickRemove{width:34px;height:34px;border-radius:50%;border:1px solid #fecaca;background:#fff7f7;color:#b42318;font-size:21px;line-height:1;font-weight:700;display:grid;place-items:center;padding:0;cursor:pointer;flex:0 0 auto;touch-action:manipulation}
+.providerLocationQuickRemove:active{transform:scale(.94)}
 .providerLocationMeta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
 .providerLocationMeta span{display:grid;gap:4px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.72);color:#334155;font-size:13px;overflow-wrap:anywhere}
 .providerLocationMeta b{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#8791a3}
-.providerLocationActions{margin-top:14px}
-.providerLocationOpenButton{min-width:142px;min-height:44px;border:0;border-radius:12px;color:#fff;font-weight:850;cursor:pointer;background:#16a34a;box-shadow:0 6px 14px rgba(22,163,74,.18)}
-.providerLocationCard.pending .providerLocationOpenButton{background:#d97706;box-shadow:0 6px 14px rgba(217,119,6,.18)}
-.providerLocationDetail{margin:2px 8px 8px;padding:20px;border:1px solid #dfe5ee;border-radius:0 0 18px 18px;background:#fff;display:flex;justify-content:space-between;align-items:flex-start;gap:20px;box-shadow:0 12px 24px rgba(15,23,42,.06)}
-.providerLocationDetail h3{margin:3px 0 5px;font-size:20px;color:#14213a}
-.providerLocationDetail p{margin:0;color:#647087}
-.providerLocationEyebrow{font-size:11px!important;font-weight:900;letter-spacing:.08em;color:#64748b!important}
-.providerLocationDetailActions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
-.providerLocationRemoveButton{min-height:42px;padding:0 14px;border:1px solid #fecaca;border-radius:12px;background:#fff1f2;color:#b91c1c;font-weight:850;cursor:pointer}
 .providerLocationEmpty{padding:28px 18px;text-align:center;border:1px dashed #cbd5e1;border-radius:16px;background:#f8fafc;color:#647087;font-weight:700}
 .providerLocationPagination{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px}
 .providerLocationPagination button{min-height:42px;padding:0 16px;border:1px solid #d7deea;border-radius:12px;background:#fff;color:#334155;font-weight:800;cursor:pointer}
@@ -55,5 +48,5 @@
 .providerAvailabilityRow input[type=time]{min-height:44px;padding:0 10px;border:1px solid #d7deea;border-radius:11px;background:#fff;color:#14213a;font:inherit}
 .providerAvailabilityRow input[type=time]:disabled{opacity:.45;background:#eef2f7}
 .providerAvailabilityRow>span{color:#64748b;font-size:13px;font-weight:700;text-align:center}
-@media(max-width:760px){.providerLocationsSection{padding:16px;border-radius:20px}.providerLocationAddForm{grid-template-columns:1fr 1fr}.providerLocationAddButton{width:100%}.providerLocationMeta{grid-template-columns:1fr 1fr}.providerLocationCard{padding:16px;margin:7px 4px}.providerLocationDetail{margin:1px 4px 7px;padding:16px;display:grid}.providerLocationDetailActions{justify-content:flex-start}.providerLocationOpenButton{width:100%}.providerAvailabilityRow{grid-template-columns:1fr 1fr 28px 1fr}}
-@media(max-width:520px){.providerLocationAddForm{grid-template-columns:1fr}.providerLocationMeta{grid-template-columns:1fr}.providerLocationCardTop{align-items:flex-start}.providerLocationDetailActions{display:grid}.providerLocationRemoveButton{width:100%}.providerLocationPagination{flex-wrap:wrap;justify-content:center}.providerLocationPagination span{width:100%;text-align:center;order:-1}.providerAvailabilityStatusGrid{grid-template-columns:1fr}.providerAvailabilityRow{grid-template-columns:1fr 1fr}.providerAvailabilityRow>label{grid-column:1/-1}.providerAvailabilityRow>span{display:none}}
+@media(max-width:760px){.providerLocationsSection{padding:16px;border-radius:20px}.providerLocationAddForm{grid-template-columns:1fr 1fr}.providerLocationAddButton{width:100%}.providerLocationMeta{grid-template-columns:1fr 1fr}.providerLocationCard{padding:16px;margin:7px 4px}.providerAvailabilityRow{grid-template-columns:1fr 1fr 28px 1fr}}
+@media(max-width:520px){.providerLocationAddForm{grid-template-columns:1fr}.providerLocationMeta{grid-template-columns:1fr}.providerLocationCardTop{align-items:flex-start}.providerLocationCardControls{gap:6px}.providerLocationBadge{font-size:11px;padding:4px 9px}.providerLocationQuickRemove{width:32px;height:32px;font-size:20px}.providerLocationPagination{flex-wrap:wrap;justify-content:center}.providerLocationPagination span{width:100%;text-align:center;order:-1}.providerAvailabilityStatusGrid{grid-template-columns:1fr}.providerAvailabilityRow{grid-template-columns:1fr 1fr}.providerAvailabilityRow>label{grid-column:1/-1}.providerAvailabilityRow>span{display:none}}
