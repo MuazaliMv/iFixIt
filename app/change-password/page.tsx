@@ -1,7 +1,6 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
 
 function EyeIcon({hidden}:{hidden:boolean}){
  return hidden
@@ -35,16 +34,25 @@ export default function ChangePasswordPage(){
  const[isError,setIsError]=useState(false);
  const[ready,setReady]=useState(false);
 
- useEffect(()=>{supabase.auth.getSession().then(({data})=>{if(!data.session){window.location.href='/login';return;}setReady(true);});},[]);
+ useEffect(()=>{
+  let active=true;
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),7000);
+  fetch('/api/auth/session',{credentials:'same-origin',cache:'no-store',signal:controller.signal})
+   .then(r=>{if(!active)return;if(r.status===401){window.location.replace('/login?next=%2Fchange-password');return;}if(!r.ok)throw new Error('Unable to verify session.');setReady(true);})
+   .catch(()=>{if(active){setIsError(true);setMessage('Unable to verify your session. Please refresh and try again.');setReady(true);}})
+   .finally(()=>clearTimeout(timer));
+  return()=>{active=false;clearTimeout(timer);controller.abort();};
+ },[]);
 
  const requirements=useMemo(()=>[
-  {label:'At least 8 characters',ok:newPassword.length>=8},
+  {label:'At least 10 characters',ok:newPassword.length>=10},
   {label:'Contains an uppercase letter',ok:/[A-Z]/.test(newPassword)},
   {label:'Contains a lowercase letter',ok:/[a-z]/.test(newPassword)},
   {label:'Contains a number',ok:/\d/.test(newPassword)},
   {label:'Different from your current password',ok:newPassword.length>0&&currentPassword.length>0&&newPassword!==currentPassword},
  ],[currentPassword,newPassword]);
- const passwordValid=requirements.every(r=>r.ok);
+ const passwordValid=requirements.every(r=>r.ok)&&newPassword.length<=128;
  const mismatch=confirmPassword.length>0&&confirmPassword!==newPassword;
  const confirmValid=confirmPassword.length>0&&confirmPassword===newPassword;
  const valid=currentPassword.length>0&&passwordValid&&confirmValid;
@@ -54,10 +62,9 @@ export default function ChangePasswordPage(){
   if(!valid)return;
   setBusy(true);setMessage('');setIsError(false);
   try{
-   const{data}=await supabase.auth.getSession();
-   if(!data.session){window.location.href='/login';return;}
-   const r=await fetch('/api/auth/change-password',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({currentPassword,newPassword})});
-   const p=await r.json();
+   const r=await fetch('/api/auth/change-password',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({currentPassword,newPassword})});
+   const p=await r.json().catch(()=>({}));
+   if(r.status===401){window.location.replace('/login?next=%2Fchange-password');return;}
    if(!r.ok)throw new Error(p?.error||'Unable to change password.');
    setCurrentPassword('');setNewPassword('');setConfirmPassword('');
    setMessage('Password changed successfully.');
