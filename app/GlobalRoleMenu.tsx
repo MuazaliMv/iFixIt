@@ -33,7 +33,8 @@ const menus:Record<Role,RoleMenu>={
       {href:'/provider/jobs',label:'My Jobs'},
       {href:'/provider/calendar',label:'Schedule'},
       {href:'/provider/messages',label:'Messages'},
-      {href:'/provider/services',label:'Service Settings'},
+      {href:'/provider/availability',label:'Location'},
+      {href:'/provider/services',label:'Services Provided'},
     ],
   },
   admin:{
