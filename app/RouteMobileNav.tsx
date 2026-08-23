@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { supabase } from '../lib/supabaseClient';
 import MobileNav from './MobileNav';
 import DispatchLivePanel from './DispatchLivePanel';
 
@@ -26,11 +25,12 @@ export default function RouteMobileNav(){
    let role:NavRole|null=adminRoute?'admin':providerRoute?'provider':customerRoute?'customer':null;
    if(sharedRoute){
     try{
-     const{data}=await supabase.auth.getSession();
-     if(data.session){
-      const r=await fetch('/api/user/profile',{headers:{Authorization:`Bearer ${data.session.access_token}`}});
-      if(r.ok){const p=await r.json();const accountRole=String(p?.profile?.role||'').toUpperCase();role=accountRole==='ADMIN'?'admin':accountRole==='PROVIDER'?'provider':'customer';}
-     }
+     const controller=new AbortController();
+     const timer=setTimeout(()=>controller.abort(),7000);
+     const r=await fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store',signal:controller.signal});
+     clearTimeout(timer);
+     if(r.ok){const p=await r.json();const accountRole=String(p?.profile?.role||'').toUpperCase();role=accountRole==='ADMIN'?'admin':accountRole==='PROVIDER'?'provider':'customer';}
+     else if(r.status===401){role=null;}
     }catch{}
     role=role||rememberedRole()||'customer';
    }
