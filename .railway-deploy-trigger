@@ -1,11 +1,8 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-24T02:24:00+05:00
-Reason: remove the legacy automatic location flow and deploy manual-tap-only geolocation.
+Created: 2026-08-24T02:35:00+05:00
+Reason: deploy mobile request-wizard tile visibility fix.
 Required production behavior:
-- Remove the old background/automatic location attempt entirely.
-- Keep only the current Use my location button flow.
-- Request geolocation only after the user taps Use my location.
-- On success, populate Atoll and Island/City from the resolved GPS location.
-- Show location errors only after an actual user-initiated attempt.
-- Keep manual Atoll and Island/City selection available as fallback.
-Target application commit includes: 0215b19cfaac2c2b796d643b7e8288378bf5f0a2
+- Keep the fixed Back/Continue action dock at the safe-area bottom on iPhone.
+- Do not let the action dock cover the On-site contact choice tiles or other lower wizard content.
+- Add enough bottom scroll space so the final tile can move fully above the dock.
+Target application commit includes: 881f6f982daf9888e6139b3f342e2649530d9f7a
