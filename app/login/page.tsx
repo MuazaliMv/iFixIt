@@ -22,7 +22,6 @@ export default function LoginPage(){
  const[showPassword,setShowPassword]=useState(false);
  const[rememberMe,setRememberMe]=useState(true);
  const[capsLock,setCapsLock]=useState(false);
- const[shellMenuOpen,setShellMenuOpen]=useState(false);
  const[touched,setTouched]=useState({email:false,password:false,phone:false,fullName:false});
 
  useEffect(()=>{
@@ -46,7 +45,7 @@ export default function LoginPage(){
  }
 
  function switchMode(next:Mode){
-  setMode(next);setMessage('');setPassword('');setShowPassword(false);setCapsLock(false);setShellMenuOpen(false);
+  setMode(next);setMessage('');setPassword('');setShowPassword(false);setCapsLock(false);
   setTouched({email:false,password:false,phone:false,fullName:false});
   try{
    const url=new URL(window.location.href);
@@ -88,12 +87,8 @@ export default function LoginPage(){
  return <div className="authShell">
   <div className="globalMenuHeaderWrap authShellHeaderWrap">
    <header className="globalMenuHeader" aria-label="iFixMV navigation">
-    <a href="/" className="globalMenuBrand"><span className="globalMenuBrandMark">F</span><span>FixIt</span></a>
-    <div className="globalMenuHeaderActions">
-     <button className="globalMenuToggle" type="button" aria-label={shellMenuOpen?'Close menu':'Open menu'} aria-expanded={shellMenuOpen} onClick={()=>setShellMenuOpen(v=>!v)}>{shellMenuOpen?<span className="globalMenuClose">×</span>:<span className="globalMenuBars"><i/><i/><i/></span>}</button>
-    </div>
+    <a href="/" className="globalMenuBrand" aria-label="Go to iFixMV home"><span className="globalMenuBrandMark">F</span><span>FixIt</span></a>
    </header>
-   {shellMenuOpen?<nav className="authShellMenu" aria-label="Public navigation"><a href="/">Home</a></nav>:null}
   </div>
 
   <main className="authPage">
