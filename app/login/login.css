@@ -1,13 +1,9 @@
-.authPage{min-height:100dvh;display:grid;place-items:center;padding:32px 16px;background:var(--page-bg)}
+.authShell{min-height:100dvh;background:var(--page-bg)}
+.authShellHeaderWrap{position:sticky;top:0;z-index:80}
+.authShellMenu{max-width:1600px;margin:0 auto;padding:8px 0 2px;display:flex;justify-content:flex-end;gap:8px}.authShellMenu a,.authShellMenu button{border:0;background:transparent;color:var(--text);font:inherit;font-size:14px;font-weight:750;text-decoration:none;padding:9px 12px;border-radius:10px;cursor:pointer}.authShellMenu a:hover,.authShellMenu button:hover{background:var(--surface-alt);color:var(--brand)}
+.authPage{min-height:calc(100dvh - 83px);display:grid;place-items:center;padding:32px 16px;background:var(--page-bg)}
 .authCardClean{width:min(100%,500px);background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:30px;box-shadow:var(--shadow-card)}
-.backHome{display:inline-flex;align-items:center;color:var(--muted);font-size:13px;font-weight:750;margin-bottom:20px}
-.backHome:hover{color:var(--brand)}
-.authLogoWrap{display:flex;align-items:center;gap:12px}
-.authLogoMark{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:var(--brand);color:#fff;font-weight:900;letter-spacing:-1px;box-shadow:0 8px 22px rgba(49,91,232,.18)}
-.authBrand{display:inline-block;font-size:29px;font-weight:900;letter-spacing:-1.2px;color:var(--text);line-height:1}
-.authBrand::after{content:".";color:var(--brand)}
-.authSecure{margin-top:5px;font-size:12px;font-weight:700;color:var(--muted)}
-.authModeTabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:24px;padding:5px;border:1px solid var(--line);border-radius:14px;background:var(--surface-alt)}
+.authModeTabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;border:1px solid var(--line);border-radius:14px;background:var(--surface-alt)}
 .authModeTabs button{border:0;border-radius:10px;background:transparent;color:var(--muted);min-height:42px;font-weight:800;cursor:pointer}
 .authModeTabs button.active{background:var(--surface);color:var(--brand);box-shadow:0 2px 10px rgba(15,23,42,.08)}
 .authIntro{margin:26px 0 20px}.authIntro h1{margin:0;font-size:34px;line-height:1.08;letter-spacing:-1.2px}.authIntro p{margin:9px 0 0;color:var(--muted);font-size:15px;line-height:1.5}
@@ -18,5 +14,5 @@
 .passwordField{position:relative}.passwordField input{width:100%;padding-right:54px}.passwordToggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:38px;height:38px;border:0;border-radius:10px;background:transparent;color:var(--brand);display:grid;place-items:center;cursor:pointer}.passwordToggle:hover,.passwordToggle:focus-visible{background:var(--surface-alt);outline:none}.eyeIcon{width:21px;height:21px}
 .authUtility{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:-3px}.authUtility a{color:var(--brand);font-size:14px;font-weight:750}.rememberMe{display:flex!important;grid-template-columns:none!important;align-items:center;gap:8px!important;font-size:13px!important;font-weight:650!important;color:var(--muted);cursor:pointer}.rememberMe input{min-height:auto!important;width:17px;height:17px;margin:0;accent-color:var(--brand)}
 .authSubmit{width:100%;min-height:54px;font-size:16px;margin-top:2px;display:flex;align-items:center;justify-content:center;gap:9px}.authSubmit:disabled{opacity:.58;cursor:not-allowed}.buttonSpinner{width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:authSpin .7s linear infinite}@keyframes authSpin{to{transform:rotate(360deg)}}
-.authHint{margin:16px 0 0;padding:12px 14px;border-radius:12px;background:var(--surface-alt);color:var(--muted);font-size:13px;line-height:1.5}.authSwitch{margin:22px 0 0;text-align:center;color:var(--muted);font-size:14px}.authSwitch button{border:0;background:transparent;color:var(--brand);font-weight:800;padding:4px;cursor:pointer}.authCardClean .formMessage{margin-top:16px}
-@media(max-width:560px){.authPage{place-items:start center;padding:12px 10px 24px}.authCardClean{border-radius:18px;padding:20px 16px}.backHome{margin-bottom:16px}.authLogoMark{width:42px;height:42px;border-radius:12px}.authBrand{font-size:27px}.authModeTabs{margin-top:20px}.authIntro{margin:22px 0 18px}.authIntro h1{font-size:29px}.phoneField{grid-template-columns:108px minmax(0,1fr)}.authFormClean{gap:15px}.authUtility{align-items:center}.authFormClean input,.authFormClean select,.authSubmit{min-height:54px}}
+.authSwitch{margin:22px 0 0;text-align:center;color:var(--muted);font-size:14px}.authSwitch button{border:0;background:transparent;color:var(--brand);font-weight:800;padding:4px;cursor:pointer}.authCardClean .formMessage{margin-top:16px}
+@media(max-width:560px){.authShellMenu{padding:6px 2px 0;justify-content:stretch}.authShellMenu a,.authShellMenu button{flex:1;text-align:center}.authPage{min-height:calc(100dvh - 77px);place-items:start center;padding:24px 10px}.authCardClean{border-radius:18px;padding:20px 16px}.authIntro{margin:22px 0 18px}.authIntro h1{font-size:29px}.phoneField{grid-template-columns:108px minmax(0,1fr)}.authFormClean{gap:15px}.authUtility{align-items:center}.authFormClean input,.authFormClean select,.authSubmit{min-height:54px}}
