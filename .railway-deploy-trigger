@@ -1,10 +1,8 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-23T23:31:00+05:00
-Reason: fix provider Next action controls so they work immediately after confirmation.
+Created: 2026-08-24T01:39:00+05:00
+Reason: deploy the blue iFixMV landing theme and global-shell auth updates to production.
 Required production behavior:
-- Confirmed provider can Start Work Now without first scheduling a visit.
-- Confirmed provider can use Work Done when the work is finished.
-- Visit scheduling remains optional and only accepts future times.
-- Expired preferred customer times are not selectable.
-- Backend supports completing accepted, scheduled, or in-progress jobs safely.
-Target application commit includes: b89f76f5adb8b23aff7cc04c1cbf583be89f1731
+- Landing page uses blue iFixMV branding, not green.
+- Hero, CTA buttons, accents, status badges, request card and provider sections use the blue palette.
+- Login/create-account stays inside the global iFixMV shell.
+Target application commit includes: c9d17ff54d2bc947108d26f9ae0f6fb536f44ea3
