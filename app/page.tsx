@@ -1,4 +1,5 @@
 import './landing.css';
+import './landing-blue.css';
 
 const services = [
   { icon: '🔧', title: 'General repairs', text: 'Everyday fixes and maintenance' },
