@@ -50,8 +50,11 @@ export default function LoginPage(){
     setMode('login');
     setPassword('');
    }else{
-    const{data,error}=await supabase.auth.signInWithPassword({email:email.trim(),password});
-    if(error)throw error;
+    const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email.trim(),password})});
+    const p=await r.json();
+    if(!r.ok)throw new Error(p?.error||'Unable to sign in.');
+    const{data,error}=await supabase.auth.setSession({access_token:p.session.access_token,refresh_token:p.session.refresh_token});
+    if(error||!data.user)throw error||new Error('Unable to open session.');
     await routeUser(data.user.id);
    }
   }catch(e){setMessage(e instanceof Error?e.message:'Unable to continue.');}
