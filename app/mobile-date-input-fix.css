@@ -1,0 +1,48 @@
+/* iPhone/mobile fix for native preferred-date controls. */
+.c3Field input[type='date'] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 54px;
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+  -webkit-appearance: auto;
+  appearance: auto;
+  color: var(--c3-text, #101828);
+  background-color: #fff;
+  touch-action: manipulation;
+}
+
+.c3Field input[type='date']::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 1.2em;
+}
+
+.c3Field input[type='date']::-webkit-calendar-picker-indicator {
+  display: block;
+  opacity: 1;
+  cursor: pointer;
+  pointer-events: auto;
+  min-width: 28px;
+  min-height: 28px;
+}
+
+@media (max-width: 760px) {
+  .c3Field input[type='date'] {
+    font-size: 16px !important;
+    height: 56px;
+    padding: 12px 14px;
+    overflow: visible;
+  }
+
+  .c3Form,
+  .c3Field {
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .c3WizardCard {
+    overflow: visible !important;
+  }
+}
