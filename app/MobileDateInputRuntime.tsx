@@ -8,6 +8,13 @@ function localToday(){
   return new Date(now.getTime()-offset).toISOString().slice(0,10);
 }
 
+function setNativeDateValue(input:HTMLInputElement,value:string){
+  const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')?.set;
+  if(setter)setter.call(input,value);else input.value=value;
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+  input.dispatchEvent(new Event('change',{bubbles:true}));
+}
+
 export default function MobileDateInputRuntime(){
   useEffect(()=>{
     const openPicker=(input:HTMLInputElement)=>{
@@ -33,6 +40,7 @@ export default function MobileDateInputRuntime(){
       input.style.zIndex='30';
       input.style.opacity='1';
       input.style.touchAction='manipulation';
+      if(!input.value)setNativeDateValue(input,today);
       if(input.dataset.fixitDateEnhanced==='1')return;
       input.dataset.fixitDateEnhanced='1';
       input.addEventListener('pointerdown',()=>openPicker(input));
