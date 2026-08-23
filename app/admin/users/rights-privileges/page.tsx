@@ -13,7 +13,7 @@ export default function RightsPrivilegesPage(){
   </header>
   <AdminNav/>
   <section className="panel" style={{padding:18,marginBottom:18}}>
-   <div className="panelHeader"><div><p className="eyebrow">ACCESS MODEL</p><h2>Role permissions</h2><p className="muted">These rights describe the current application access model. Open an individual user from the Users tab to see that account's effective privilege level and suspension state.</p></div></div>
+   <div className="panelHeader"><div><p className="eyebrow">ACCESS MODEL</p><h2>Role permissions</h2><p className="muted">These rights describe the current application access model. Open an individual user from the Users tab to see that account&apos;s effective privilege level and suspension state.</p></div></div>
    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:14}}>
     {roles.map(role=><article key={role.name} className="jobCard" style={{padding:16}}>
      <div className="jobTop"><div><p className="eyebrow">{role.name.toUpperCase()}</p><h3 style={{margin:'3px 0 4px'}}>{role.name} Rights</h3><p className="muted" style={{margin:0}}>{role.level}</p></div></div>
