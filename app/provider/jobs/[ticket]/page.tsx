@@ -7,7 +7,6 @@ import AppModeSwitch from '../../../AppModeSwitch';
 import { useProviderMode } from '../../useProviderMode';
 
 const MARKET_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-marketplace';
-const CONFIRM_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-confirmations';
 const FLOW_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-job-flow';
 
 type Job={
@@ -20,17 +19,18 @@ type Job={
  contactUnlocked?:boolean;
  customer?:{name?:string|null;phone?:string|null}|null;
  onSiteContact?:{sameAsCustomer?:boolean;name?:string|null;phone?:string|null}|null;
+ providerResponse?:{status?:string|null;provider_confirmed_at?:string|null}|null;
  inspection?:{preferred_slots?:string[]|null;scheduled_start?:string|null}|null;
  completion?:{status?:string|null}|null;
 };
 
 const stages=['ACCEPTED','CONFIRMED','IN PROGRESS','COMPLETED','CUSTOMER CONFIRMED'];
 
-function label(job:Job,confirmed:boolean){
+function label(job:Job){
  if(job.status==='COMPLETED'&&job.completion?.status==='CONFIRMED')return'CUSTOMER CONFIRMED';
  if(job.status==='COMPLETED')return'COMPLETED';
  if(job.status==='IN_PROGRESS'||job.status==='INSPECTION_SCHEDULED')return'IN PROGRESS';
- if(job.status==='ACCEPTED'&&confirmed)return'CONFIRMED';
+ if(job.status==='ACCEPTED'&&job.providerResponse?.provider_confirmed_at)return'CONFIRMED';
  return'ACCEPTED';
 }
 
@@ -54,7 +54,6 @@ export default function ProviderJobDetailPage(){
  const params=useParams<{ticket:string}>();
  const ticket=decodeURIComponent(String(params?.ticket||''));
  const[job,setJob]=useState<Job|null>(null);
- const[confirmed,setConfirmed]=useState(false);
  const[schedule,setSchedule]=useState('');
  const[busy,setBusy]=useState(true);
  const[message,setMessage]=useState('Loading customer job…');
@@ -72,20 +71,30 @@ export default function ProviderJobDetailPage(){
   try{
    const s=await session();if(!s)return;
    const headers={'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`};
-   const[mr,cr]=await Promise.all([
-    fetch(MARKET_URL,{method:'POST',headers,body:JSON.stringify({action:'dashboard'})}),
-    fetch(CONFIRM_URL,{method:'POST',headers,body:'{}'})
-   ]);
-   const mp=await mr.json(),cp=await cr.json();
+   const mr=await fetch(MARKET_URL,{method:'POST',headers,body:JSON.stringify({action:'dashboard'})});
+   const mp=await mr.json();
    if(!mr.ok)throw new Error(mp?.error||'Unable to load job');
    const found=(mp.requests||[]).find((x:Job)=>x.ticket_number===ticket&&['ACCEPTED','INSPECTION_SCHEDULED','IN_PROGRESS','COMPLETED'].includes(x.status));
    if(!found)throw new Error('This customer job is not assigned to you.');
    setJob(found);
-   setConfirmed(Boolean((cp.confirmedTickets||[]).includes(ticket)));
    setMessage('');
   }catch(e){
    setJob(null);
    setMessage(e instanceof Error?e.message:'Unable to load customer job.');
+  }finally{setBusy(false);}
+ }
+
+ async function confirmJob(){
+  setBusy(true);
+  try{
+   const s=await session();if(!s)return;
+   const r=await fetch(MARKET_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`},body:JSON.stringify({action:'confirm_selection',ticketNumber:ticket})});
+   const p=await r.json();
+   if(!r.ok)throw new Error(p?.error||'Unable to confirm this job');
+   setMessage('Job confirmed. Choose the customer preferred visit time or set another agreed time.');
+   await load();
+  }catch(e){
+   setMessage(e instanceof Error?e.message:'Unable to confirm this job.');
   }finally{setBusy(false);}
  }
 
@@ -105,7 +114,7 @@ export default function ProviderJobDetailPage(){
 
  if(mode.loading||busy&&!job)return <main className="providerModePage"><div className="providerModeShell"><div className="providerModeCard">Loading customer job…</div></div></main>;
 
- const stage=job?label(job,confirmed):'';
+ const stage=job?label(job):'';
  const index=Math.max(0,stages.indexOf(stage));
  const contactUnlocked=Boolean(job?.contactUnlocked);
  const scheduledInternal=job?.status==='INSPECTION_SCHEDULED';
@@ -117,7 +126,8 @@ export default function ProviderJobDetailPage(){
  return <main className="providerModePage"><div className="providerModeShell"><header className="providerModeTop"><div><span className="modeBadge provider"><span className="modeDot provider"/>Provider</span><h1>{job?.service_name||'Customer Job'}</h1><p>{ticket}</p></div><AppModeSwitch mode="provider" compact/></header>{job?<>
   <section className="providerModeCard providerJobHero"><div><span className="modeBadge provider">{stage}</span><h2>{job.service_name}</h2><p>{job.service_location_text}</p></div><a className="secondary" href="/provider/jobs?tab=active">Back to jobs</a></section>
   <section className="providerModeCard"><div className="providerProgressCompact">{stages.map((item,i)=><div className={i<index?'done':i===index?'current':''} key={item}><span>{i<index?'✓':i+1}</span><small>{item}</small></div>)}</div></section>
-  <section className="providerModeCard providerNextAction"><div className="providerSectionHead"><div><h2>{closed?'Job closed':'Next action'}</h2><p>{stage==='ACCEPTED'?'Waiting for the customer to confirm you.':stage==='CONFIRMED'?'Choose one of the customer preferred times below, or set another agreed visit time.':stage==='IN PROGRESS'&&scheduledInternal?'The visit time is saved. Start the work when ready.':stage==='IN PROGRESS'&&workingInternal?'Work is active. Mark the job complete when finished.':stage==='COMPLETED'?'Work is complete. Waiting for the customer to confirm completion.':'No further provider action is required.'}</p></div></div>
+  <section className="providerModeCard providerNextAction"><div className="providerSectionHead"><div><h2>{closed?'Job closed':'Next action'}</h2><p>{stage==='ACCEPTED'?'The customer selected you. Confirm this job to continue.':stage==='CONFIRMED'?'Choose one of the customer preferred times below, or set another agreed visit time.':stage==='IN PROGRESS'&&scheduledInternal?'The visit time is saved. Start the work when ready.':stage==='IN PROGRESS'&&workingInternal?'Work is active. Mark the job complete when finished.':stage==='COMPLETED'?'Work is complete. Waiting for the customer to confirm completion.':'No further provider action is required.'}</p></div></div>
+   {stage==='ACCEPTED'?<button className="primary providerPrimaryAction" disabled={busy} onClick={()=>void confirmJob()}>{busy?'Confirming…':'Confirm Job'}</button>:null}
    {stage==='CONFIRMED'&&preferredSlots.length?<div style={{marginBottom:16}}><strong>Customer preferred times</strong><div className="providerActionRow" style={{marginTop:10,flexWrap:'wrap'}}>{preferredSlots.map((slot,i)=><button key={`${slot}-${i}`} type="button" className="secondary" onClick={()=>setSchedule(toDateTimeLocal(slot))}>{formatPreferredSlot(slot)}</button>)}</div></div>:null}
    {stage==='CONFIRMED'?<div className="providerActionRow"><input aria-label="Visit time" type="datetime-local" value={schedule} onChange={e=>setSchedule(e.target.value)}/><button className="primary" disabled={busy||!schedule} onClick={()=>void act('schedule')}>Save Visit Time</button></div>:null}
    {stage==='IN PROGRESS'&&scheduledInternal?<button className="primary providerPrimaryAction" disabled={busy} onClick={()=>void act('start')}>Start Work</button>:null}
