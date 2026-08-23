@@ -1,14 +1,17 @@
 'use client';
 
-/**
- * Legacy admin command grid intentionally disabled.
- *
- * Admin navigation is provided by the global role menu, so this component
- * remains as a compatibility shim for existing page imports while rendering
- * nothing. This removes the duplicated Dashboard / Service Requests /
- * Providers / Users / Services / Locations / Reports / Settings tile grid
- * from every admin page without forcing each page to carry its own cleanup.
- */
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
 export default function AdminNav(){
- return null;
+ const path=usePathname();
+ if(!(path.startsWith('/admin/users')||path.startsWith('/admin/providers')||path.startsWith('/admin/services')))return null;
+ const items=[
+  {href:'/admin/users',label:'Users'},
+  {href:'/admin/providers',label:'Providers'},
+  {href:'/admin/users/rights-privileges',label:'Rights & Privileges'},
+ ];
+ return <nav aria-label="User Management sections" style={{display:'flex',gap:10,flexWrap:'wrap',margin:'0 0 18px'}}>
+  {items.map(item=>{const active=item.href==='/admin/users'?path==='/admin/users':path.startsWith(item.href);return <Link key={item.href} href={item.href} className={active?'primary compactButton':'secondary compactButton'}>{item.label}</Link>;})}
+ </nav>;
 }
