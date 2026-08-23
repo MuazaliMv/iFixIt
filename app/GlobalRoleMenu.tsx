@@ -55,7 +55,7 @@ const menus:Record<Role,RoleMenu>={
 function routeRole(path:string):Role|null{
   if(path.startsWith('/admin'))return 'admin';
   if(path.startsWith('/provider'))return 'provider';
-  if(path==='/'||path==='/requests'||path.startsWith('/requests/')||path==='/messages'||path.startsWith('/messages/')||path==='/profile')return null;
+  if(path==='/'||path==='/requests'||path.startsWith('/requests/')||path==='/messages'||path.startsWith('/messages/')||path==='/profile')return 'customer';
   return null;
 }
 
