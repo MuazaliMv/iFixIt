@@ -44,5 +44,16 @@
 .providerLocationPagination button{min-height:42px;padding:0 16px;border:1px solid #d7deea;border-radius:12px;background:#fff;color:#334155;font-weight:800;cursor:pointer}
 .providerLocationPagination button:disabled{opacity:.45;cursor:not-allowed}
 .providerLocationPagination span{color:#647087;font-size:13px;font-weight:700}
-@media(max-width:760px){.providerLocationsSection{padding:16px;border-radius:20px}.providerLocationAddForm{grid-template-columns:1fr 1fr}.providerLocationAddButton{width:100%}.providerLocationMeta{grid-template-columns:1fr 1fr}.providerLocationCard{padding:16px;margin:7px 4px}.providerLocationDetail{margin:1px 4px 7px;padding:16px;display:grid}.providerLocationDetailActions{justify-content:flex-start}.providerLocationOpenButton{width:100%}}
-@media(max-width:520px){.providerLocationAddForm{grid-template-columns:1fr}.providerLocationMeta{grid-template-columns:1fr}.providerLocationCardTop{align-items:flex-start}.providerLocationDetailActions{display:grid}.providerLocationRemoveButton{width:100%}.providerLocationPagination{flex-wrap:wrap;justify-content:center}.providerLocationPagination span{width:100%;text-align:center;order:-1}}
+.providerAvailabilitySection{scroll-margin-top:24px}
+.providerAvailabilityStatusGrid{display:grid;grid-template-columns:minmax(0,340px);gap:12px;margin-bottom:18px}
+.providerAvailabilityStatusGrid label{display:grid;gap:8px;color:#475569;font-size:13px;font-weight:800}
+.providerAvailabilityStatusGrid select{min-height:50px;padding:0 14px;border:1px solid #d7deea;border-radius:14px;background:#fff;color:#14213a;font:inherit;font-weight:700}
+.providerAvailabilityEditor{display:grid;gap:10px}
+.providerAvailabilityRow{display:grid;grid-template-columns:minmax(110px,1fr) 135px auto 135px;align-items:center;gap:10px;padding:12px 14px;border:1px solid #e2e8f0;border-radius:15px;background:#f8fafc}
+.providerAvailabilityRow>label{display:flex;align-items:center;gap:10px;color:#1e293b}
+.providerAvailabilityRow input[type=checkbox]{width:20px;height:20px}
+.providerAvailabilityRow input[type=time]{min-height:44px;padding:0 10px;border:1px solid #d7deea;border-radius:11px;background:#fff;color:#14213a;font:inherit}
+.providerAvailabilityRow input[type=time]:disabled{opacity:.45;background:#eef2f7}
+.providerAvailabilityRow>span{color:#64748b;font-size:13px;font-weight:700;text-align:center}
+@media(max-width:760px){.providerLocationsSection{padding:16px;border-radius:20px}.providerLocationAddForm{grid-template-columns:1fr 1fr}.providerLocationAddButton{width:100%}.providerLocationMeta{grid-template-columns:1fr 1fr}.providerLocationCard{padding:16px;margin:7px 4px}.providerLocationDetail{margin:1px 4px 7px;padding:16px;display:grid}.providerLocationDetailActions{justify-content:flex-start}.providerLocationOpenButton{width:100%}.providerAvailabilityRow{grid-template-columns:1fr 1fr 28px 1fr}}
+@media(max-width:520px){.providerLocationAddForm{grid-template-columns:1fr}.providerLocationMeta{grid-template-columns:1fr}.providerLocationCardTop{align-items:flex-start}.providerLocationDetailActions{display:grid}.providerLocationRemoveButton{width:100%}.providerLocationPagination{flex-wrap:wrap;justify-content:center}.providerLocationPagination span{width:100%;text-align:center;order:-1}.providerAvailabilityStatusGrid{grid-template-columns:1fr}.providerAvailabilityRow{grid-template-columns:1fr 1fr}.providerAvailabilityRow>label{grid-column:1/-1}.providerAvailabilityRow>span{display:none}}
