@@ -75,3 +75,10 @@ input,textarea,select{font-size:16px}
  .requestTabs,.providerTabs{gap:12px}
  .mobileNav a{font-size:9px}.mobileNav a .navIcon{font-size:20px}
 }
+
+/* Keep inspection time selection clean on phones and landscape mobile widths. */
+@media(max-width:900px){
+ .scheduleGrid{grid-template-columns:1fr!important;gap:10px!important}
+ .scheduleGrid input[type="datetime-local"]{width:100%;min-width:0;min-height:52px;box-sizing:border-box}
+ .scheduleGrid + .blueButton{width:100%;margin-top:12px;min-height:52px}
+}
