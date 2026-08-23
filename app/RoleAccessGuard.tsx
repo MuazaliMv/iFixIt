@@ -8,11 +8,7 @@ type AccountRole='CUSTOMER'|'PROVIDER'|'ADMIN';
 
 function destination(role:AccountRole,path:string){
   if(role==='ADMIN')return '/admin';
-  if(role==='PROVIDER'){
-    if(path==='/messages'||path.startsWith('/messages/'))return '/provider/messages';
-    if(path==='/requests'||path.startsWith('/requests/'))return '/provider/jobs';
-    return '/provider/today';
-  }
+  if(role==='PROVIDER')return '/provider/jobs';
   return '/';
 }
 
@@ -40,8 +36,8 @@ export default function RoleAccessGuard(){
         const role:AccountRole=raw==='ADMIN'?'ADMIN':raw==='PROVIDER'?'PROVIDER':'CUSTOMER';
 
         try{
-          const navRole=role.toLowerCase();
-          localStorage.setItem('fixit:account-role',navRole);
+          const navRole=role==='ADMIN'?'admin':providerRoute&&role==='PROVIDER'?'provider':'customer';
+          localStorage.setItem('fixit:account-role',role.toLowerCase());
           localStorage.setItem('fixit:mobile-nav-role',navRole);
           if(role!=='ADMIN')localStorage.setItem('fixit:app-mode',navRole);
           else localStorage.removeItem('fixit:app-mode');
@@ -49,7 +45,7 @@ export default function RoleAccessGuard(){
 
         const wrongRoute=
           (role==='ADMIN'&&(customerRoute||providerRoute))||
-          (role==='PROVIDER'&&(customerRoute||adminRoute))||
+          (role==='PROVIDER'&&adminRoute)||
           (role==='CUSTOMER'&&(providerRoute||adminRoute));
 
         if(wrongRoute&&active)router.replace(destination(role,path));
