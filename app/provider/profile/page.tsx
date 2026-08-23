@@ -23,10 +23,34 @@ export default function ProviderProfilePage(){
  useEffect(()=>{void loadVerification();},[]);
 
  async function session(){const{data}=await supabase.auth.getSession();return data.session;}
- async function postJson(url:string,body:Record<string,unknown>){const s=await session();if(!s)throw new Error('Sign in required');const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`},body:JSON.stringify(body)});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to load provider verification');return p;}
- async function loadVerification(){setLoadingDocs(true);try{const[onboarding,setup]=await Promise.all([postJson(ONBOARDING_URL,{action:'get'}),postJson(SETUP_URL,{action:'get'})]);const type=String(onboarding?.profile?.provider_type||'INDIVIDUAL').toUpperCase()==='BUSINESS'?'BUSINESS':'INDIVIDUAL';setProviderType(type);setDocuments((setup?.documents||[]) as VerificationDocument[]);setDocMessage('');}catch(e){setDocMessage(e instanceof Error?e.message:'Unable to load verification documents.');}finally{setLoadingDocs(false);}}
+ async function postJson(url:string,body:Record<string,unknown>){
+  const s=await session();
+  if(!s)throw new Error('Sign in required');
+  let r:Response;
+  try{
+   r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`},body:JSON.stringify(body),signal:AbortSignal.timeout(8000)});
+  }catch(error){
+   const timedOut=error instanceof Error&&(error.name==='TimeoutError'||error.name==='AbortError');
+   throw new Error(timedOut?'Provider verification service timed out. Tap Retry to try again.':'Unable to reach provider verification service.');
+  }
+  const p=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(p?.error||'Unable to load provider verification');
+  return p;
+ }
+ async function loadVerification(){
+  setLoadingDocs(true);
+  setDocMessage('');
+  try{
+   const onboarding=await postJson(ONBOARDING_URL,{action:'get'});
+   const type=String(onboarding?.profile?.provider_type||'INDIVIDUAL').toUpperCase()==='BUSINESS'?'BUSINESS':'INDIVIDUAL';
+   setProviderType(type);
+   const setup=await postJson(SETUP_URL,{action:'get'});
+   setDocuments((setup?.documents||[]) as VerificationDocument[]);
+  }catch(e){setDocMessage(e instanceof Error?e.message:'Unable to load verification documents.');}
+  finally{setLoadingDocs(false);}
+ }
 
- async function uploadDocument(type:DocumentType,file:File){setUploading(type);setDocMessage('Uploading document…');try{const s=await session();if(!s)throw new Error('Sign in required');const form=new FormData();form.set('file',file);form.set('documentType',type);form.set('documentLabel',type==='ID_CARD'?'ID Card':'Business Permit');const r=await fetch(UPLOAD_URL,{method:'POST',headers:{Authorization:`Bearer ${s.access_token}`},body:form});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to upload document');await loadVerification();setDocMessage(`${type==='ID_CARD'?'ID Card':'Business Permit'} uploaded and sent for admin review.`);}catch(e){setDocMessage(e instanceof Error?e.message:'Unable to upload document.');}finally{setUploading(null);}}
+ async function uploadDocument(type:DocumentType,file:File){setUploading(type);setDocMessage('Uploading document…');try{const s=await session();if(!s)throw new Error('Sign in required');const form=new FormData();form.set('file',file);form.set('documentType',type);form.set('documentLabel',type==='ID_CARD'?'ID Card':'Business Permit');const r=await fetch(UPLOAD_URL,{method:'POST',headers:{Authorization:`Bearer ${s.access_token}`},body:form,signal:AbortSignal.timeout(20000)});const p=await r.json().catch(()=>({}));if(!r.ok)throw new Error(p?.error||'Unable to upload document');await loadVerification();setDocMessage(`${type==='ID_CARD'?'ID Card':'Business Permit'} uploaded and sent for admin review.`);}catch(e){setDocMessage(e instanceof Error?e.message:'Unable to upload document.');}finally{setUploading(null);}}
  function pick(type:DocumentType,e:ChangeEvent<HTMLInputElement>){const file=e.target.files?.[0];e.target.value='';if(file)void uploadDocument(type,file);}
 
  const latestByType=useMemo(()=>{const map=new Map<string,VerificationDocument>();for(const d of documents){if(!map.has(d.document_type))map.set(d.document_type,d);}return map;},[documents]);
@@ -58,8 +82,7 @@ export default function ProviderProfilePage(){
     <span className={ready?'profileBadge verified':'profileBadge warning'}>{ready?'Requirements Complete':'Action Required'}</span>
    </div>
    <div style={{marginBottom:14,padding:12,borderRadius:14,background:'#f8fafc',border:'1px solid #e5e7eb'}}><strong>Provider type: {pretty(providerType)}</strong><p className="muted" style={{margin:'5px 0 0'}}>{providerType==='BUSINESS'?'Required: approved ID Card and approved Business Permit.':'Required: approved ID Card.'}</p></div>
-   {loadingDocs?<p className="formMessage">Loading verification documents…</p>:<div style={{display:'grid',gap:12}}><DocumentField type="ID_CARD" label="ID Card" description={providerType==='BUSINESS'?'ID Card of the business owner or authorized person.':'Your government-issued ID Card.'} doc={idCard}/>{providerType==='BUSINESS'?<DocumentField type="BUSINESS_LICENSE" label="Business Permit" description="Valid business permit / registration document." doc={businessPermit}/>:null}</div>}
-   {docMessage?<p className="formMessage" role="status" style={{marginTop:12}}>{docMessage}</p>:null}
+   {loadingDocs?<p className="formMessage">Loading verification documents…</p>:docMessage?<div style={{display:'grid',gap:10}}><p className="formMessage" role="alert">{docMessage}</p><button className="secondary" type="button" onClick={()=>void loadVerification()}>Retry</button></div>:<div style={{display:'grid',gap:12}}><DocumentField type="ID_CARD" label="ID Card" description={providerType==='BUSINESS'?'ID Card of the business owner or authorized person.':'Your government-issued ID Card.'} doc={idCard}/>{providerType==='BUSINESS'?<DocumentField type="BUSINESS_LICENSE" label="Business Permit" description="Valid business permit / registration document." doc={businessPermit}/>:null}</div>}
   </section>
  </main>;
 }
