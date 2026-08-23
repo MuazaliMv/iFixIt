@@ -7,6 +7,10 @@ import './login.css';
 type Mode='login'|'register';
 type Role='CUSTOMER'|'PROVIDER';
 
+function EyeIcon({off=false}:{off?:boolean}){
+ return <svg viewBox="0 0 24 24" aria-hidden="true" className="eyeIcon"><path d="M2.3 12s3.5-5.5 9.7-5.5S21.7 12 21.7 12 18.2 17.5 12 17.5 2.3 12 2.3 12Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8"/>{off?<path d="M4 4l16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>:null}</svg>;
+}
+
 export default function LoginPage(){
  const[mode,setMode]=useState<Mode>('login');
  const[role,setRole]=useState<Role>('CUSTOMER');
@@ -18,6 +22,8 @@ export default function LoginPage(){
  const[message,setMessage]=useState('');
  const[busy,setBusy]=useState(false);
  const[showPassword,setShowPassword]=useState(false);
+ const[rememberMe,setRememberMe]=useState(true);
+ const[capsLock,setCapsLock]=useState(false);
  const[touched,setTouched]=useState({email:false,password:false,phone:false,fullName:false});
 
  async function routeUser(userId:string){
@@ -28,16 +34,12 @@ export default function LoginPage(){
  }
 
  useEffect(()=>{
-  supabase.auth.getSession().then(({data})=>{
-   if(data.session)void routeUser(data.session.user.id);
-  });
+  supabase.auth.getSession().then(({data})=>{if(data.session)void routeUser(data.session.user.id);});
+  try{const saved=localStorage.getItem('ifixmv-login-email');if(saved){setEmail(saved);setRememberMe(true);}}catch{}
  },[]);
 
  function switchMode(next:Mode){
-  setMode(next);
-  setMessage('');
-  setPassword('');
-  setShowPassword(false);
+  setMode(next);setMessage('');setPassword('');setShowPassword(false);setCapsLock(false);
   setTouched({email:false,password:false,phone:false,fullName:false});
  }
 
@@ -49,80 +51,55 @@ export default function LoginPage(){
  const formValid=useMemo(()=>isLogin?(emailValid&&passwordValid):(nameValid&&emailValid&&passwordValid&&phoneValid),[isLogin,emailValid,passwordValid,nameValid,phoneValid]);
 
  async function submit(event:FormEvent){
-  event.preventDefault();
-  setTouched({email:true,password:true,phone:true,fullName:true});
-  if(!formValid)return;
+  event.preventDefault();setTouched({email:true,password:true,phone:true,fullName:true});if(!formValid)return;
   setBusy(true);setMessage('');
   try{
    if(mode==='register'){
     const phoneNumber=phone?`${countryCode}${phone}`:'';
     const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName:fullName.trim(),email:email.trim(),password,role,phoneNumber})});
-    const p=await r.json();
-    if(!r.ok)throw new Error(p?.error||'Unable to create account.');
-    setMessage('Account created. You can now sign in.');
-    setMode('login');
-    setPassword('');
-    setTouched({email:false,password:false,phone:false,fullName:false});
+    const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to create account.');
+    setMessage('Account created. You can now sign in.');setMode('login');setPassword('');setTouched({email:false,password:false,phone:false,fullName:false});
    }else{
     const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email.trim(),password})});
-    const p=await r.json();
-    if(!r.ok)throw new Error(p?.error||'Unable to sign in.');
+    const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to sign in.');
     const{data,error}=await supabase.auth.setSession({access_token:p.session.access_token,refresh_token:p.session.refresh_token});
     if(error||!data.user)throw error||new Error('Unable to open session.');
+    try{if(rememberMe)localStorage.setItem('ifixmv-login-email',email.trim());else localStorage.removeItem('ifixmv-login-email');}catch{}
     await routeUser(data.user.id);
    }
-  }catch(e){setMessage(e instanceof Error?e.message:'Unable to continue.');}
-  finally{setBusy(false);}
+  }catch(e){setMessage(e instanceof Error?e.message:'Unable to continue.');}finally{setBusy(false);}
  }
 
  return <main className="authPage">
   <section className="authCardClean">
-   <div className="authTopbar"><a className="authBrand" href="/">iFixMV</a><span className="authSecure">Secure account access</span></div>
+   <a className="backHome" href="/" aria-label="Back to iFixMV home">← Back to iFixMV</a>
+   <div className="authLogoWrap"><div className="authLogoMark" aria-hidden="true">iF</div><div><a className="authBrand" href="/">iFixMV</a><div className="authSecure">🔒 Secure account access</div></div></div>
 
    <div className="authModeTabs" role="tablist" aria-label="Account access">
     <button type="button" role="tab" aria-selected={isLogin} className={isLogin?'active':''} onClick={()=>switchMode('login')}>Sign in</button>
     <button type="button" role="tab" aria-selected={!isLogin} className={!isLogin?'active':''} onClick={()=>switchMode('register')}>Create account</button>
    </div>
 
-   <div className="authIntro">
-    <h1>{isLogin?'Welcome back':'Create your account'}</h1>
-    <p>{isLogin?'Sign in with your email to continue to iFixMV.':'Enter your details to get started with iFixMV.'}</p>
-   </div>
+   <div className="authIntro"><h1>{isLogin?'Welcome back':'Create your account'}</h1><p>{isLogin?'Sign in with your email to continue to iFixMV.':'Enter your details to get started with iFixMV.'}</p></div>
 
    <form onSubmit={submit} className="authFormClean" noValidate>
     {!isLogin?<>
      <label>Full name<input value={fullName} onBlur={()=>setTouched(v=>({...v,fullName:true}))} onChange={e=>setFullName(e.target.value)} placeholder="Your name" autoComplete="name" aria-invalid={touched.fullName&&!nameValid}/>{touched.fullName&&!nameValid?<span className="fieldError">Enter your full name.</span>:null}</label>
      <label>Account type<select value={role} onChange={e=>setRole(e.target.value as Role)}><option value="CUSTOMER">User</option><option value="PROVIDER">Service Provider</option></select></label>
-     <label>Phone number <span className="optionalLabel">Optional</span>
-      <div className="phoneField">
-       <select className="countryCode" value={countryCode} onChange={e=>setCountryCode(e.target.value)} aria-label="Country code"><option value="+960">🇲🇻 +960</option></select>
-       <input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onBlur={()=>setTouched(v=>({...v,phone:true}))} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} aria-invalid={touched.phone&&!phoneValid}/>
-      </div>
-      <span className="fieldHelp">Enter the 7-digit local number only.</span>
-      {touched.phone&&!phoneValid?<span className="fieldError">Enter a valid 7-digit Maldives number.</span>:null}
-     </label>
+     <label>Phone number <span className="optionalLabel">Optional</span><div className="phoneField"><select className="countryCode" value={countryCode} onChange={e=>setCountryCode(e.target.value)} aria-label="Country code"><option value="+960">🇲🇻 +960</option></select><input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onBlur={()=>setTouched(v=>({...v,phone:true}))} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} aria-invalid={touched.phone&&!phoneValid}/></div><span className="fieldHelp">Enter the 7-digit local number only.</span>{touched.phone&&!phoneValid?<span className="fieldError">Enter a valid 7-digit Maldives number.</span>:null}</label>
     </>:null}
 
     <label>Email address<input type="email" inputMode="email" autoComplete="email" value={email} onBlur={()=>setTouched(v=>({...v,email:true}))} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" aria-invalid={touched.email&&!emailValid}/>{touched.email&&!emailValid?<span className="fieldError">Enter a valid email address.</span>:null}</label>
 
-    <label>Password
-     <div className="passwordField">
-      <input type={showPassword?'text':'password'} autoComplete={isLogin?'current-password':'new-password'} value={password} onBlur={()=>setTouched(v=>({...v,password:true}))} onChange={e=>setPassword(e.target.value)} minLength={8} aria-invalid={touched.password&&!passwordValid}/>
-      <button type="button" className="passwordToggle" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'} title={showPassword?'Hide password':'Show password'}>{showPassword?'◉':'◌'}</button>
-     </div>
-     {!isLogin?<span className="fieldHelp">Use at least 8 characters.</span>:null}
-     {touched.password&&!passwordValid?<span className="fieldError">Password must be at least 8 characters.</span>:null}
-    </label>
+    <label>Password<div className="passwordField"><input type={showPassword?'text':'password'} autoComplete={isLogin?'current-password':'new-password'} value={password} onBlur={()=>setTouched(v=>({...v,password:true}))} onKeyUp={e=>setCapsLock(e.getModifierState('CapsLock'))} onKeyDown={e=>setCapsLock(e.getModifierState('CapsLock'))} onChange={e=>setPassword(e.target.value)} minLength={8} aria-invalid={touched.password&&!passwordValid}/><button type="button" className="passwordToggle" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'} title={showPassword?'Hide password':'Show password'}><EyeIcon off={showPassword}/></button></div>{capsLock?<span className="capsWarning">Caps Lock is on.</span>:null}{!isLogin?<span className="fieldHelp">Use at least 8 characters.</span>:null}{touched.password&&!passwordValid?<span className="fieldError">Password must be at least 8 characters.</span>:null}</label>
 
-    {isLogin?<div className="authUtility"><span className="authEmailHint">Email sign in</span><a href="/forgot-password">Forgot password?</a></div>:null}
+    {isLogin?<div className="authUtility"><label className="rememberMe"><input type="checkbox" checked={rememberMe} onChange={e=>setRememberMe(e.target.checked)}/><span>Remember me</span></label><a href="/forgot-password">Forgot password?</a></div>:null}
 
-    <button className="primary authSubmit" disabled={busy||!formValid} aria-busy={busy}>{busy?<><span className="buttonSpinner" aria-hidden="true"/>Signing in…</>:isLogin?'Sign In':'Create Account'}</button>
+    <button className="primary authSubmit" disabled={busy||!formValid} aria-busy={busy}>{busy?<><span className="buttonSpinner" aria-hidden="true"/>{isLogin?'Signing in…':'Creating account…'}</>:isLogin?'Sign In':'Create Account'}</button>
    </form>
 
    {message?<p className="formMessage" role="status">{message}</p>:null}
-
    {!isLogin&&role==='PROVIDER'?<p className="authHint">Service Provider accounts require Admin approval before receiving service requests.</p>:null}
-
    <p className="authSwitch">{isLogin?'New to iFixMV?':'Already have an account?'} <button type="button" onClick={()=>switchMode(isLogin?'register':'login')}>{isLogin?'Create account':'Sign in'}</button></p>
   </section>
  </main>;
