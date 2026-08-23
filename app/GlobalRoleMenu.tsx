@@ -21,6 +21,7 @@ const menus:Record<Role,RoleMenu>={
     secondary:{href:'/messages',label:'Messages'},
     items:[
       {href:'/profile',label:'My Profile'},
+      {href:'/change-password',label:'Change Password'},
       {href:'/requests',label:'Service Requests'},
       {href:'/messages',label:'Messages'},
     ],
@@ -30,6 +31,7 @@ const menus:Record<Role,RoleMenu>={
     secondary:{href:'/provider/availability',label:'Availability'},
     items:[
       {href:'/provider/profile',label:'My Profile'},
+      {href:'/change-password',label:'Change Password'},
       {href:'/provider/jobs',label:'My Jobs'},
       {href:'/provider/calendar',label:'Schedule'},
       {href:'/provider/messages',label:'Messages'},
@@ -42,6 +44,7 @@ const menus:Record<Role,RoleMenu>={
     secondary:{href:'/admin/reports',label:'Reports'},
     items:[
       {href:'/profile',label:'My Profile'},
+      {href:'/change-password',label:'Change Password'},
       {href:'/admin/requests',label:'Request Management'},
       {href:'/admin/escalations',label:'Attention / Escalations'},
       {href:'/admin/users',label:'User Management'},
