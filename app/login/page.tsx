@@ -22,7 +22,7 @@ export default function LoginPage(){
   const{data:profile}=await supabase.from('auth_profiles').select('role').eq('user_id',userId).maybeSingle();
   if(profile?.role==='PROVIDER')window.location.href='/provider';
   else if(profile?.role==='ADMIN')window.location.href='/admin';
-  else window.location.href='/';
+  else window.location.href='/home';
  }
 
  useEffect(()=>{
