@@ -1,10 +1,10 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-24T02:41:00+05:00
-Reason: disable Urgent and Scheduled request modes.
+Created: 2026-08-24T02:47:00+05:00
+Reason: show any running customer request timer globally.
 Required production behavior:
-- Show Standard as the only request type in Step 4.
-- Hide Urgent and Scheduled choices.
-- Keep preferred date selection.
-- New requests must be stored as STANDARD even if an old client sends another urgency value.
-Target application commits include: 06e666990b578e5c224b10a8eb97c0e74855992b, e2e51598d9987d59f66d77b60ed62a8103ffe20a, 4ac3ab40f1ec480901d44bee0c3f39cabd5acec9
-Supabase submit-request function version: 12
+- If a customer has an active provider-search or provider-selection countdown, show it visibly on every authenticated customer page.
+- Update the countdown every second.
+- Poll dispatch state every 15 seconds.
+- Hide the indicator automatically when no timer is running.
+- Tapping the timer opens the related service request.
+Target application commits include: 5eec7122c8a7ce01ba48d8c44663e525aafd22b7, 032a6f04ab6c183f1636ee21941e6820edb7e0aa
