@@ -3,7 +3,21 @@ import { NextRequest, NextResponse } from 'next/server';
 const REGISTER_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/register-account';
 const ALLOWED_ROLES=new Set(['CUSTOMER','PROVIDER']);
 
-function sameOrigin(request:NextRequest){const origin=request.headers.get('origin');return !origin||origin===request.nextUrl.origin;}
+function sameOrigin(request:NextRequest){
+  const origin=request.headers.get('origin');
+  if(!origin)return true;
+  try{
+    const originUrl=new URL(origin);
+    const forwardedHost=(request.headers.get('x-forwarded-host')||'').split(',')[0]?.trim();
+    const host=(forwardedHost||request.headers.get('host')||request.nextUrl.host).trim();
+    const forwardedProto=(request.headers.get('x-forwarded-proto')||'').split(',')[0]?.trim();
+    const protocol=(forwardedProto||request.nextUrl.protocol.replace(':','')).trim();
+    const expectedOrigin=`${protocol}://${host}`;
+    return originUrl.origin===expectedOrigin||originUrl.origin===request.nextUrl.origin;
+  }catch{
+    return false;
+  }
+}
 
 export async function POST(request:NextRequest){
   if(!sameOrigin(request))return NextResponse.json({error:'Invalid request origin.'},{status:403});
