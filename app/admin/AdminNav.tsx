@@ -10,6 +10,7 @@ export default function AdminNav(){
   {href:'/admin/users',label:'Users'},
   {href:'/admin/providers',label:'Providers'},
   {href:'/admin/users/rights-privileges',label:'Rights & Privileges'},
+  {href:'/admin/users/reset-password',label:'Reset Password'},
  ];
  return <nav aria-label="User Management sections" style={{display:'flex',gap:10,flexWrap:'wrap',margin:'0 0 18px'}}>
   {items.map(item=>{const active=item.href==='/admin/users'?path==='/admin/users':path.startsWith(item.href);return <Link key={item.href} href={item.href} className={active?'primary compactButton':'secondary compactButton'}>{item.label}</Link>;})}
