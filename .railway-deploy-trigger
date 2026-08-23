@@ -1,9 +1,10 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-23T23:18:00+05:00
-Reason: enable provider action flow in production now.
+Created: 2026-08-23T23:24:00+05:00
+Reason: expose provider Work Done action and enforce valid future visit scheduling.
 Required production behavior:
-- Selected provider sees and can use Confirm Job.
-- Confirm Job calls provider-marketplace confirm_selection.
-- After provider confirmation, customer preferred times are visible and selectable.
-- Provider can save visit time, start work, and mark complete.
-Target application commit includes: 8cf861bdf2a69738ca4283d745da6e6b7f87ac56
+- Expired and duplicate customer preferred times are not selectable.
+- Provider can enter a valid future visit time and save it.
+- Once a visit is scheduled, provider sees both Start Work and Work Done.
+- Work Done can complete a scheduled or already in-progress job.
+- Customer then receives the completion for confirmation.
+Target application commit includes: 4f2fd5bcecb001f8753ce694c3d25c33c0521af3
