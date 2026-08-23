@@ -1,117 +1,57 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabaseClient';
+
+const ONBOARDING_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-onboarding';
 
 type Role='CUSTOMER'|'PROVIDER'|'ADMIN';
 type Address={line1?:string|null;line2?:string|null;city?:string|null;stateRegion?:string|null;postalCode?:string|null;country?:string|null};
 type ServiceAddress={id?:string;label?:string|null;address_line1?:string|null;address_line2?:string|null;city?:string|null;state_region?:string|null;postal_code?:string|null;country?:string|null;access_instructions?:string|null;is_default?:boolean|null};
-type Profile={user_id:string;email?:string|null;full_name?:string|null;role:Role;provider_approved?:boolean;phone_number?:string|null;is_phone_verified?:boolean;profile_photo_url?:string|null;address_line1?:string|null;address_line2?:string|null;city?:string|null;state_region?:string|null;postal_code?:string|null;country?:string|null;created_at?:string|null;primaryAddress?:Address;providerAddress?:Address;serviceAddresses?:ServiceAddress[]};
+type Profile={user_id:string;email?:string|null;full_name?:string|null;role:Role;provider_approved?:boolean;phone_number?:string|null;is_phone_verified?:boolean;profile_photo_url?:string|null;address_line1?:string|null;address_line2?:string|null;city?:string|null;state_region?:string|null;postal_code?:string|null;country?:string|null;account_status?:string|null;created_at?:string|null;updated_at?:string|null;last_active_at?:string|null;primaryAddress?:Address;providerAddress?:Address;serviceAddresses?:ServiceAddress[]};
+type ProviderProfile={provider_type?:string;public_name?:string|null;business_name?:string|null;description?:string|null;experience_years?:number|null;service_area_text?:string|null;availability_status?:string|null;accepting_leads?:boolean;onboarding_status?:string|null;submitted_at?:string|null;approved_at?:string|null};
+type Category={id:string;name:string};
+type ProviderHour={day_of_week:number;is_working:boolean;start_time?:string|null;end_time?:string|null};
+type ProviderArea={id?:string;islandName?:string|null;locationUnitName?:string|null};
+type ProviderData={profile?:ProviderProfile|null;categories?:Category[];selectedCategoryIds?:string[];hours?:ProviderHour[];serviceAreas?:ProviderArea[]};
 
-function localPhone(value?:string|null){const raw=(value||'').trim();return /^\+960\d{7}$/.test(raw)?raw.slice(4):raw;}
+function localPhone(v?:string|null){const raw=(v||'').trim();return /^\+960\d{7}$/.test(raw)?raw.slice(4):raw;}
 function value(v?:string|null){return String(v||'').trim()||'Not provided';}
 function addressLine(a?:Address|null){if(!a)return'Not provided';return [a.line1,a.line2,a.city,a.stateRegion,a.postalCode,a.country].filter(Boolean).join(', ')||'Not provided';}
+function pretty(v?:string|null){return value(v).replaceAll('_',' ').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());}
+function dateTime(v?:string|null){return v?new Date(v).toLocaleString():'Not available';}
 
 async function profileRequest(){
- const controller=new AbortController();
- const timer=setTimeout(()=>controller.abort(),20000);
- try{
-  const response=await fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store',signal:controller.signal});
-  const payload=await response.json().catch(()=>({}));
-  if(!response.ok)throw Object.assign(new Error(payload?.error||'Unable to load profile.'),{status:response.status});
-  if(!payload?.profile)throw new Error('Profile data was not returned.');
-  return payload.profile as Profile;
- }finally{clearTimeout(timer);}
+ const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),20000);
+ try{const response=await fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store',signal:controller.signal});const payload=await response.json().catch(()=>({}));if(!response.ok)throw Object.assign(new Error(payload?.error||'Unable to load profile.'),{status:response.status});if(!payload?.profile)throw new Error('Profile data was not returned.');return payload.profile as Profile;}finally{clearTimeout(timer);}
+}
+
+async function providerRequest(){
+ const {data}=await supabase.auth.getSession();const token=data.session?.access_token;if(!token)return null;
+ const response=await fetch(ONBOARDING_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({action:'get'}),cache:'no-store'});
+ if(!response.ok)return null;return await response.json() as ProviderData;
 }
 
 export default function ProfileClient(){
- const[profile,setProfile]=useState<Profile|null>(null);
- const[loading,setLoading]=useState(true);
- const[editing,setEditing]=useState(false);
- const[saving,setSaving]=useState(false);
- const[message,setMessage]=useState('Loading profile…');
- const[name,setName]=useState('');
- const[phone,setPhone]=useState('');
-
+ const[profile,setProfile]=useState<Profile|null>(null);const[providerData,setProviderData]=useState<ProviderData|null>(null);const[loading,setLoading]=useState(true);const[editing,setEditing]=useState(false);const[saving,setSaving]=useState(false);const[message,setMessage]=useState('Loading profile…');const[name,setName]=useState('');const[phone,setPhone]=useState('');
  useEffect(()=>{void load();},[]);
-
- async function load(){
-  setLoading(true);
-  setMessage('Loading profile…');
-  try{
-   const next=await profileRequest();
-   const normalized={...next,phone_number:localPhone(next.phone_number)};
-   setProfile(normalized);
-   setName(normalized.full_name||'');
-   setPhone(normalized.phone_number||'');
-   setMessage('Profile is up to date.');
-  }catch(error:any){
-   if(error?.status===401){window.location.replace('/login?next=%2Fprofile');return;}
-   const timedOut=error instanceof Error&&(error.name==='AbortError'||error.name==='TimeoutError');
-   setMessage(timedOut?'Profile service is taking longer than expected. Tap Refresh Profile to retry.':error instanceof Error?error.message:'Unable to load profile details.');
-  }finally{setLoading(false);}
- }
-
- async function save(e:FormEvent){
-  e.preventDefault();
-  setSaving(true);
-  setMessage('Saving profile…');
-  try{
-   const form=new FormData();
-   form.set('fullName',name.trim());
-   if(phone.trim())form.set('phoneNumber',phone.trim());
-   const response=await fetch('/api/user/profile',{method:'PUT',body:form,credentials:'same-origin'});
-   const payload=await response.json().catch(()=>({}));
-   if(response.status===401){window.location.replace('/login?next=%2Fprofile');return;}
-   if(!response.ok)throw new Error(payload?.error||'Unable to update profile.');
-   setEditing(false);
-   await load();
-   setMessage('Profile updated.');
-  }catch(error){setMessage(error instanceof Error?error.message:'Unable to update profile.');}
-  finally{setSaving(false);}
- }
-
- async function signOut(){
-  await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin'}).catch(()=>{});
-  window.location.href='/login';
- }
-
- const initial=(profile?.full_name||profile?.email||'U').slice(0,1).toUpperCase();
- const a=profile?.primaryAddress||{line1:profile?.address_line1,line2:profile?.address_line2,city:profile?.city,stateRegion:profile?.state_region,postalCode:profile?.postal_code,country:profile?.country||'Maldives'};
- const providerAddress=profile?.providerAddress;
- const serviceAddresses=profile?.serviceAddresses||[];
-
+ async function load(){setLoading(true);setMessage('Loading profile…');try{const next=await profileRequest();const normalized={...next,phone_number:localPhone(next.phone_number)};setProfile(normalized);setName(normalized.full_name||'');setPhone(normalized.phone_number||'');if(normalized.role==='PROVIDER')setProviderData(await providerRequest());else setProviderData(null);setMessage('Profile is up to date.');}catch(error:any){if(error?.status===401){window.location.replace('/login?next=%2Fprofile');return;}const timedOut=error instanceof Error&&(error.name==='AbortError'||error.name==='TimeoutError');setMessage(timedOut?'Profile service is taking longer than expected. Tap Refresh Profile to retry.':error instanceof Error?error.message:'Unable to load profile details.');}finally{setLoading(false);}}
+ async function save(e:FormEvent){e.preventDefault();setSaving(true);setMessage('Saving profile…');try{const form=new FormData();form.set('fullName',name.trim());if(phone.trim())form.set('phoneNumber',phone.trim());const response=await fetch('/api/user/profile',{method:'PUT',body:form,credentials:'same-origin'});const payload=await response.json().catch(()=>({}));if(response.status===401){window.location.replace('/login?next=%2Fprofile');return;}if(!response.ok)throw new Error(payload?.error||'Unable to update profile.');setEditing(false);await load();setMessage('Profile updated.');}catch(error){setMessage(error instanceof Error?error.message:'Unable to update profile.');}finally{setSaving(false);}}
+ async function signOut(){await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin'}).catch(()=>{});window.location.href='/login';}
+ const initial=(profile?.full_name||profile?.email||'U').slice(0,1).toUpperCase();const a=profile?.primaryAddress||{line1:profile?.address_line1,line2:profile?.address_line2,city:profile?.city,stateRegion:profile?.state_region,postalCode:profile?.postal_code,country:profile?.country||'Maldives'};const providerAddress=profile?.providerAddress;const serviceAddresses=profile?.serviceAddresses||[];
+ const pp=providerData?.profile;const selectedNames=(providerData?.categories||[]).filter(c=>(providerData?.selectedCategoryIds||[]).includes(c.id)).map(c=>c.name);const areas=providerData?.serviceAreas||[];const hours=providerData?.hours||[];const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
  return <main className="shell accountApp">
-  <section className="profileHeroCard"><div className="profileIdentity">{profile?.profile_photo_url?<img className="profileAvatar" src={profile.profile_photo_url} alt="Profile"/>:<div className="profileAvatar">{initial}</div>}<div className="profileIdentityCopy"><h2>{loading?'Loading…':profile?.full_name||'Your FixIt profile'}</h2><p>{loading?'Loading account…':profile?.email||'Email not provided'}</p><div className="profileBadges">{profile?.role?<span className="profileBadge">{profile.role}</span>:null}{profile?.role==='PROVIDER'?<span className="profileBadge">{profile.provider_approved?'Approved Provider':'Provider Pending'}</span>:null}</div></div></div><button className="secondary profileEditButton" type="button" disabled={!profile||loading} onClick={()=>setEditing(v=>!v)}>{editing?'Close':'Edit Profile'}</button></section>
-
+  <section className="profileHeroCard"><div className="profileIdentity">{profile?.profile_photo_url?<img className="profileAvatar" src={profile.profile_photo_url} alt="Profile"/>:<div className="profileAvatar">{initial}</div>}<div className="profileIdentityCopy"><h2>{loading?'Loading…':profile?.full_name||'Your FixIt profile'}</h2><p>{loading?'Loading account…':profile?.email||'Email not provided'}</p><div className="profileBadges">{profile?.role?<span className="profileBadge">{profile.role}</span>:null}{profile?.account_status?<span className="profileBadge">{pretty(profile.account_status)}</span>:null}{profile?.role==='PROVIDER'?<span className="profileBadge">{profile.provider_approved?'Approved Provider':'Provider Pending'}</span>:null}</div></div></div><button className="secondary profileEditButton" type="button" disabled={!profile||loading} onClick={()=>setEditing(v=>!v)}>{editing?'Close':'Edit Profile'}</button></section>
   {editing?<section className="profileSection"><form className="authForm" onSubmit={save}><label>Full name<input value={name} onChange={e=>setName(e.target.value)} required/></label><label>Phone number<input type="tel" inputMode="tel" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="7XXXXXX"/></label><button className="primary" disabled={saving}>{saving?'Saving…':'Save Profile'}</button></form></section>:null}
-
   <section className="profileSection"><div className="profileSectionHeader"><div><h3>Personal information</h3><p className="sectionLead">Your main FixIt account details.</p></div></div><div className="profileDetailList">
-   <div className="profileDetailRow"><span>Full name</span><strong>{loading?'Loading…':value(profile?.full_name)}</strong></div>
-   <div className="profileDetailRow"><span>Email address</span><strong>{loading?'Loading…':value(profile?.email)}</strong></div>
-   <div className="profileDetailRow"><span>Phone number</span><strong>{loading?'Loading…':value(profile?.phone_number)}</strong></div>
-   <div className="profileDetailRow"><span>Phone verification</span><strong className={profile?.is_phone_verified?'positiveText':'warningText'}>{loading?'Loading…':profile?.phone_number?(profile.is_phone_verified?'Verified':'Not verified'):'Not applicable'}</strong></div>
-   <div className="profileDetailRow"><span>Account type</span><strong>{loading?'Loading…':profile?.role||'Not available'}</strong></div>
-   {profile?.role==='PROVIDER'?<div className="profileDetailRow"><span>Provider status</span><strong className={profile.provider_approved?'positiveText':'warningText'}>{profile.provider_approved?'Approved':'Pending approval'}</strong></div>:null}
-   {profile?.created_at?<div className="profileDetailRow"><span>Member since</span><strong>{new Date(profile.created_at).toLocaleDateString(undefined,{day:'2-digit',month:'long',year:'numeric'})}</strong></div>:null}
+   <div className="profileDetailRow"><span>Full name</span><strong>{loading?'Loading…':value(profile?.full_name)}</strong></div><div className="profileDetailRow"><span>Email address</span><strong>{loading?'Loading…':value(profile?.email)}</strong></div><div className="profileDetailRow"><span>Phone number</span><strong>{loading?'Loading…':value(profile?.phone_number)}</strong></div><div className="profileDetailRow"><span>Phone verification</span><strong className={profile?.is_phone_verified?'positiveText':'warningText'}>{loading?'Loading…':profile?.phone_number?(profile.is_phone_verified?'Verified':'Not verified'):'Not applicable'}</strong></div><div className="profileDetailRow"><span>Account type</span><strong>{loading?'Loading…':profile?.role||'Not available'}</strong></div><div className="profileDetailRow"><span>Account status</span><strong>{loading?'Loading…':pretty(profile?.account_status)}</strong></div>{profile?.created_at?<div className="profileDetailRow"><span>Joined</span><strong>{dateTime(profile.created_at)}</strong></div>:null}{profile?.last_active_at?<div className="profileDetailRow"><span>Last active</span><strong>{dateTime(profile.last_active_at)}</strong></div>:null}{profile?.updated_at?<div className="profileDetailRow"><span>Profile last updated</span><strong>{dateTime(profile.updated_at)}</strong></div>:null}
   </div></section>
-
-  <section className="profileSection"><div className="profileSectionHeader"><div><h3>Primary address</h3><p className="sectionLead">The address linked to your account.</p></div></div><div className="profileDetailList">
-   <div className="profileDetailRow"><span>House / building</span><strong>{loading?'Loading…':value(a?.line1)}</strong></div>
-   <div className="profileDetailRow"><span>Street / additional address</span><strong>{loading?'Loading…':value(a?.line2)}</strong></div>
-   <div className="profileDetailRow"><span>City / island</span><strong>{loading?'Loading…':value(a?.city)}</strong></div>
-   <div className="profileDetailRow"><span>Atoll / region</span><strong>{loading?'Loading…':value(a?.stateRegion)}</strong></div>
-   <div className="profileDetailRow"><span>Postal code</span><strong>{loading?'Loading…':value(a?.postalCode)}</strong></div>
-   <div className="profileDetailRow"><span>Country</span><strong>{loading?'Loading…':value(a?.country||'Maldives')}</strong></div>
-   <div className="profileDetailRow"><span>Full address</span><strong>{loading?'Loading…':addressLine(a)}</strong></div>
-  </div></section>
-
-  {profile?.role==='PROVIDER'?<section className="profileSection"><div className="profileSectionHeader"><div><h3>Provider information</h3><p className="sectionLead">Service location information for your provider account.</p></div></div><div className="profileDetailList">
-   <div className="profileDetailRow"><span>Provider address</span><strong>{loading?'Loading…':addressLine(providerAddress)}</strong></div>
-   <div className="profileDetailRow"><span>Service addresses</span><strong>{loading?'Loading…':String(serviceAddresses.length)}</strong></div>
-  </div>{serviceAddresses.length?<div className="profileDetailList" style={{marginTop:12}}>{serviceAddresses.map((s,i)=><div className="profileDetailRow" key={s.id||i}><span>{s.label||`Service location ${i+1}`}{s.is_default?' · Default':''}</span><strong>{[s.address_line1,s.address_line2,s.city,s.state_region,s.postal_code,s.country||'Maldives'].filter(Boolean).join(', ')||'Not provided'}</strong></div>)}</div>:null}</section>:null}
-
-  <button className="profileSignOut" type="button" onClick={signOut}>Sign Out</button>
-  <p className="muted accountStatusText" role="status">{message}</p>
-  <button className="secondary" type="button" onClick={()=>void load()} disabled={loading} style={{width:'100%',marginTop:8}}>{loading?'Loading…':'Refresh Profile'}</button>
+  <section className="profileSection"><div className="profileSectionHeader"><div><h3>Primary address</h3><p className="sectionLead">The address linked to your account.</p></div></div><div className="profileDetailList"><div className="profileDetailRow"><span>House / building</span><strong>{loading?'Loading…':value(a?.line1)}</strong></div><div className="profileDetailRow"><span>Street / additional address</span><strong>{loading?'Loading…':value(a?.line2)}</strong></div><div className="profileDetailRow"><span>City / island</span><strong>{loading?'Loading…':value(a?.city)}</strong></div><div className="profileDetailRow"><span>Atoll / region</span><strong>{loading?'Loading…':value(a?.stateRegion)}</strong></div><div className="profileDetailRow"><span>Postal code</span><strong>{loading?'Loading…':value(a?.postalCode)}</strong></div><div className="profileDetailRow"><span>Country</span><strong>{loading?'Loading…':value(a?.country||'Maldives')}</strong></div><div className="profileDetailRow"><span>Full address</span><strong>{loading?'Loading…':addressLine(a)}</strong></div></div></section>
+  {profile?.role==='PROVIDER'?<>
+   <section className="profileSection"><div className="profileSectionHeader"><div><h3>Provider profile</h3><p className="sectionLead">Your public provider and approval information.</p></div></div><div className="profileDetailList"><div className="profileDetailRow"><span>Provider type</span><strong>{pretty(pp?.provider_type)}</strong></div><div className="profileDetailRow"><span>Public name</span><strong>{value(pp?.public_name)}</strong></div><div className="profileDetailRow"><span>Business name</span><strong>{value(pp?.business_name)}</strong></div><div className="profileDetailRow"><span>Experience</span><strong>{pp?.experience_years!=null?`${pp.experience_years} year(s)`:'Not provided'}</strong></div><div className="profileDetailRow"><span>Description</span><strong>{value(pp?.description)}</strong></div><div className="profileDetailRow"><span>Availability</span><strong>{pretty(pp?.availability_status)}</strong></div><div className="profileDetailRow"><span>Accepting leads</span><strong>{pp?.accepting_leads?'Yes':'No'}</strong></div><div className="profileDetailRow"><span>Onboarding status</span><strong>{pretty(pp?.onboarding_status)}</strong></div><div className="profileDetailRow"><span>Provider approval</span><strong className={profile.provider_approved?'positiveText':'warningText'}>{profile.provider_approved?'Approved':'Pending approval'}</strong></div></div></section>
+   <section className="profileSection"><div className="profileSectionHeader"><div><h3>Services provided</h3><p className="sectionLead">Service categories customers can request from you.</p></div></div><div className="profileDetailList"><div className="profileDetailRow"><span>Selected services</span><strong>{selectedNames.length?selectedNames.join(', '):'Not provided'}</strong></div><div className="profileDetailRow"><span>Service area summary</span><strong>{value(pp?.service_area_text)}</strong></div></div></section>
+   <section className="profileSection"><div className="profileSectionHeader"><div><h3>Provider location & availability</h3><p className="sectionLead">Where you work and when you are available.</p></div></div><div className="profileDetailList"><div className="profileDetailRow"><span>Provider address</span><strong>{addressLine(providerAddress)}</strong></div><div className="profileDetailRow"><span>Saved service addresses</span><strong>{String(serviceAddresses.length)}</strong></div><div className="profileDetailRow"><span>Provider service areas</span><strong>{areas.length?areas.map(x=>[x.islandName,x.locationUnitName].filter(Boolean).join(' — ')).join(', '):'Not provided'}</strong></div></div>{hours.length?<div className="profileDetailList" style={{marginTop:12}}>{hours.map(h=><div className="profileDetailRow" key={h.day_of_week}><span>{days[h.day_of_week-1]||`Day ${h.day_of_week}`}</span><strong>{h.is_working?`${(h.start_time||'').slice(0,5)} – ${(h.end_time||'').slice(0,5)}`:'Not working'}</strong></div>)}</div>:null}{serviceAddresses.length?<div className="profileDetailList" style={{marginTop:12}}>{serviceAddresses.map((s,i)=><div className="profileDetailRow" key={s.id||i}><span>{s.label||`Service location ${i+1}`}{s.is_default?' · Default':''}</span><strong>{[s.address_line1,s.address_line2,s.city,s.state_region,s.postal_code,s.country||'Maldives'].filter(Boolean).join(', ')||'Not provided'}</strong></div>)}</div>:null}</section>
+  </>:null}
+  <button className="profileSignOut" type="button" onClick={signOut}>Sign Out</button><p className="muted accountStatusText" role="status">{message}</p><button className="secondary" type="button" onClick={()=>void load()} disabled={loading} style={{width:'100%',marginTop:8}}>{loading?'Loading…':'Refresh Profile'}</button>
  </main>;
 }
