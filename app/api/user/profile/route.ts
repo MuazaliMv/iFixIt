@@ -11,6 +11,11 @@ function normalizeProfilePhone(value:unknown){
  return raw;
 }
 
+function localProfilePhone(value:unknown){
+ const raw=String(value??'').trim();
+ return /^\+960\d{7}$/.test(raw)?raw.slice(4):raw;
+}
+
 function forceMaldivesAddress(value:unknown){
  if(!value)return value;
  try{
@@ -33,6 +38,7 @@ export async function GET(request:NextRequest){
  const authorization=request.headers.get('authorization')||'';
  const response=await fetch(AUTH_API,{method:'POST',headers:{'Content-Type':'application/json',Authorization:authorization},body:JSON.stringify({action:'profile_get'})});
  const payload=await response.json().catch(()=>({error:'Unable to load profile.'}));
+ if(response.ok&&payload?.profile?.phone_number)payload.profile.phone_number=localProfilePhone(payload.profile.phone_number);
  return NextResponse.json(payload,{status:response.status});
 }
 
