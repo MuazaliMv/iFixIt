@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import CustomerHeader from '../components/customer/CustomerHeader';
 import '../customer-v3.css';
 
 type Role='CUSTOMER'|'PROVIDER'|'ADMIN';
@@ -24,9 +23,8 @@ export default function NotificationsPage(){
  async function markAllRead(){const unreadRows=items.filter(n=>!n.read_at);if(!unreadRows.length){setModal({title:'All caught up',message:'All notifications are already marked as read.'});return;}setBusy(true);try{const s=await session();if(!s)return;const now=new Date().toISOString();const{error}=await supabase.from('user_notifications').update({read_at:now}).eq('user_id',s.user.id).is('read_at',null);if(error)throw error;setItems(v=>v.map(n=>n.read_at?n:{...n,read_at:now}));setMessage('');setModal({title:'All read',message:'All notifications have been marked as read.'});}catch(e){setMessage(e instanceof Error?e.message:'Unable to mark all notifications as read.');}finally{setBusy(false);}}
  const unread=useMemo(()=>items.filter(n=>!n.read_at).length,[items]);
  const filtered=useMemo(()=>items.filter(n=>filter==='all'?true:filter==='unread'?!n.read_at:isAlert(n.notification_type)),[items,filter]);
- const backHref=role==='ADMIN'?'/admin':role==='PROVIDER'?'/provider/jobs':'/';
  const audience=role==='ADMIN'?'Admin alerts and escalations':role==='PROVIDER'?'Service offers and job updates':'Request and account updates';
- return <main className="c3Page"><CustomerHeader title="Notifications" backHref={backHref}/><div className="c3Shell notifShell">
+ return <main className="c3Page"><div className="c3Shell notifShell">
   <section className="notifPanel">
    <div className="notifHeader"><div><div className="notifTitleRow"><h1>Notifications</h1><span className="notifCounter">{unread}</span></div><p>{unread?`${unread} unread update${unread===1?'':'s'} · ${audience}`:`You’re all caught up · ${audience}`}</p></div><div className="notifActions"><button type="button" onClick={()=>void load()} disabled={busy}>↻ <span>{busy?'Refreshing…':'Refresh'}</span></button><button type="button" onClick={()=>void markAllRead()} disabled={busy}>✓ <span>Mark all read</span></button></div></div>
 
