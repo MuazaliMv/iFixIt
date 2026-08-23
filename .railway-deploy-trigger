@@ -1,9 +1,10 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-23T05:29:00+05:00
-Reason: deploy visible User Management Rights & Privileges section.
+Created: 2026-08-23T23:14:00+05:00
+Reason: deploy provider preferred visit times display and validation fix.
 Required production behavior:
-- User Management has visible sub-navigation for Users, Providers, and Rights & Privileges.
-- /admin/users/rights-privileges shows Customer, Provider, and Admin rights.
-- Individual user cards continue to show privilege level.
-- Opening a user shows effective permissions based on role, approval, and suspension status.
-Target application commit includes: e95b6f75a41edb7ee8be2a7274f824b94ed8ed71
+- Provider job details show the customer's preferred visit times.
+- Provider can choose one of the customer's preferred times when scheduling the visit.
+- Preferred times are limited to a maximum of three.
+- Preferred times must be unique.
+- Preferred times must be valid future date/time values.
+Target application commit includes: d2753e86448ee5037d1fee715b5f3b3d55b366c7
