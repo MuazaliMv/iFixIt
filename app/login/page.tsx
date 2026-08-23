@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import './login.css';
 
 type Mode='login'|'register';
@@ -25,6 +25,8 @@ export default function LoginPage(){
  const[capsLock,setCapsLock]=useState(false);
  const[touched,setTouched]=useState({email:false,password:false,phone:false,fullName:false});
 
+ useEffect(()=>{try{const saved=localStorage.getItem('ifixmv-login-email');if(saved){setEmail(saved);setRememberMe(true);}}catch{}},[]);
+
  async function routeUser(){
   const requested=new URLSearchParams(window.location.search).get('next');
   if(requested&&requested.startsWith('/')&&!requested.startsWith('//')){window.location.replace(requested);return;}
@@ -42,7 +44,8 @@ export default function LoginPage(){
  }
 
  const isLogin=mode==='login';
- const emailValid=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+ const emailTrimmed=email.trim();
+ const emailValid=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed);
  const passwordValid=password.length>=8;
  const phoneValid=!phone||(/^\d{7}$/.test(phone)&&countryCode==='+960');
  const nameValid=Boolean(fullName.trim());
@@ -54,14 +57,14 @@ export default function LoginPage(){
   try{
    if(mode==='register'){
     const phoneNumber=phone?`${countryCode}${phone}`:'';
-    const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName:fullName.trim(),email:email.trim(),password,role,phoneNumber})});
+    const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName:fullName.trim(),email:emailTrimmed,password,role,phoneNumber})});
     const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to create account.');
     setMessage('Account created. You can now sign in.');setMode('login');setPassword('');setTouched({email:false,password:false,phone:false,fullName:false});
    }else{
-    const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({email:email.trim(),password})});
+    const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({email:emailTrimmed,password})});
     const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to sign in.');
     if(!p?.session?.access_token)throw new Error('Unable to open session.');
-    try{if(rememberMe)localStorage.setItem('ifixmv-login-email',email.trim());else localStorage.removeItem('ifixmv-login-email');}catch{}
+    try{if(rememberMe)localStorage.setItem('ifixmv-login-email',emailTrimmed);else localStorage.removeItem('ifixmv-login-email');}catch{}
     await routeUser();
    }
   }catch(e){setMessage(e instanceof Error?e.message:'Unable to continue.');}finally{setBusy(false);}
@@ -75,7 +78,7 @@ export default function LoginPage(){
    <div className="authIntro"><h1>{isLogin?'Welcome back':'Create your account'}</h1><p>{isLogin?'Sign in with your email to continue to iFixMV.':'Enter your details to get started with iFixMV.'}</p></div>
    <form onSubmit={submit} className="authFormClean" noValidate>
     {!isLogin?<><label>Full name<input value={fullName} onBlur={()=>setTouched(v=>({...v,fullName:true}))} onChange={e=>setFullName(e.target.value)} placeholder="Your name" autoComplete="name" aria-invalid={touched.fullName&&!nameValid}/>{touched.fullName&&!nameValid?<span className="fieldError">Enter your full name.</span>:null}</label><label>Account type<select value={role} onChange={e=>setRole(e.target.value as Role)}><option value="CUSTOMER">User</option><option value="PROVIDER">Service Provider</option></select></label><label>Phone number <span className="optionalLabel">Optional</span><div className="phoneField"><select className="countryCode" value={countryCode} onChange={e=>setCountryCode(e.target.value)} aria-label="Country code"><option value="+960">🇲🇻 +960</option></select><input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onBlur={()=>setTouched(v=>({...v,phone:true}))} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} aria-invalid={touched.phone&&!phoneValid}/></div><span className="fieldHelp">Enter the 7-digit local number only.</span>{touched.phone&&!phoneValid?<span className="fieldError">Enter a valid 7-digit Maldives number.</span>:null}</label></>:null}
-    <label>Email address<input type="email" inputMode="email" autoComplete="email" value={email} onBlur={()=>setTouched(v=>({...v,email:true}))} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" aria-invalid={touched.email&&!emailValid}/>{touched.email&&!emailValid?<span className="fieldError">Enter a valid email address.</span>:null}</label>
+    <label>Email address<input type="email" inputMode="email" autoComplete="email" value={email} onBlur={()=>setTouched(v=>({...v,email:true}))} onChange={e=>{setEmail(e.target.value);if(touched.email)setTouched(v=>({...v,email:false}));}} placeholder="you@example.com" aria-invalid={touched.email&&!emailValid}/>{touched.email&&!emailValid?<span className="fieldError">{emailTrimmed?'Enter a valid email address.':'Enter your email address.'}</span>:null}</label>
     <label>Password<div className="passwordField"><input type={showPassword?'text':'password'} autoComplete={isLogin?'current-password':'new-password'} value={password} onBlur={()=>setTouched(v=>({...v,password:true}))} onKeyUp={e=>setCapsLock(e.getModifierState('CapsLock'))} onKeyDown={e=>setCapsLock(e.getModifierState('CapsLock'))} onChange={e=>setPassword(e.target.value)} minLength={8} aria-invalid={touched.password&&!passwordValid}/><button type="button" className="passwordToggle" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'} title={showPassword?'Hide password':'Show password'}><EyeIcon off={showPassword}/></button></div>{capsLock?<span className="capsWarning">Caps Lock is on.</span>:null}{!isLogin?<span className="fieldHelp">Use at least 8 characters.</span>:null}{touched.password&&!passwordValid?<span className="fieldError">Password must be at least 8 characters.</span>:null}</label>
     {isLogin?<div className="authUtility"><label className="rememberMe"><input type="checkbox" checked={rememberMe} onChange={e=>setRememberMe(e.target.checked)}/><span>Remember me</span></label><a href="/forgot-password">Forgot password?</a></div>:null}
     <button className="primary authSubmit" disabled={busy||!formValid} aria-busy={busy}>{busy?<><span className="buttonSpinner" aria-hidden="true"/>{isLogin?'Signing in…':'Creating account…'}</>:isLogin?'Sign In':'Create Account'}</button>
