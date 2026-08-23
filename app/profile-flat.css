@@ -1,18 +1,329 @@
-/* Profile should use the same flat page treatment as the other account screens. */
-.profileHeroCard,
-.profileSection {
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
+/* Unified profile UI for CUSTOMER, PROVIDER and ADMIN.
+   The shared /profile page is reused by every role, so these styles apply globally. */
+
+.accountApp {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 18px 16px 120px;
+  background: #f1f5f9;
+}
+
+.accountApp .profileHeroCard,
+.accountApp .profileSection {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05) !important;
+}
+
+.accountApp .profileHeroCard {
+  padding: 18px !important;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.accountApp .profileIdentity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.accountApp .profileIdentityCopy {
+  min-width: 0;
+}
+
+.accountApp .profileIdentityCopy h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.accountApp .profileIdentityCopy > p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.accountApp .profileAvatar {
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 999px !important;
+  object-fit: cover;
+  border: 2px solid #e2e8f0;
+  background: #eff6ff;
+  color: #2563eb;
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+.accountApp .profileBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.accountApp .profileBadge,
+.accountApp .pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 26px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid #dbeafe;
+}
+
+.accountApp .profileBadge.verified {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.accountApp .profileBadge.warning {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #fed7aa;
+}
+
+.accountApp .profileEditButton,
+.accountApp button.secondary,
+.accountApp a.secondary,
+.accountApp label.secondary {
+  border: 1px solid #dbe3ef !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  color: #334155 !important;
+  min-height: 40px;
+  padding: 9px 13px !important;
+  font-weight: 700;
+  font-size: 0.82rem;
+  box-shadow: none !important;
+  transition: border-color .18s ease, color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.accountApp .profileEditButton:hover,
+.accountApp button.secondary:hover,
+.accountApp a.secondary:hover,
+.accountApp label.secondary:hover {
+  border-color: #3b82f6 !important;
+  color: #2563eb !important;
+  background: #eff6ff !important;
+}
+
+.accountApp .profileSection {
+  padding: 20px !important;
+  margin: 0 0 16px;
+}
+
+.accountApp .profileSectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 13px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.accountApp .profileSectionHeader h3,
+.accountApp .profileSection h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.accountApp .sectionLead,
+.accountApp .muted {
+  color: #64748b !important;
+  font-size: 0.8rem;
+}
+
+.accountApp .authForm {
+  display: grid;
+  gap: 16px;
+}
+
+.accountApp .authForm > label,
+.accountApp fieldset label {
+  display: grid;
+  gap: 6px;
+  color: #475569;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.accountApp input,
+.accountApp select,
+.accountApp textarea {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 12px !important;
+  border: 1px solid #dbe3ef !important;
+  background: #f8fafc !important;
+  color: #1e293b !important;
+  padding: 10px 12px !important;
+  font: inherit;
+  font-size: 0.86rem !important;
+  outline: none;
+  box-shadow: none !important;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.accountApp input:focus,
+.accountApp select:focus,
+.accountApp textarea:focus {
+  background: #ffffff !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, .14) !important;
+}
+
+.accountApp input[readonly],
+.accountApp input:disabled,
+.accountApp select:disabled {
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  cursor: not-allowed;
+}
+
+.accountApp fieldset.panel {
+  min-width: 0;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  padding: 16px !important;
+  display: grid;
+  gap: 13px;
+}
+
+.accountApp fieldset.panel legend {
+  padding: 0 6px;
+  color: #475569;
+  font-size: 0.78rem;
+}
+
+.accountApp .scheduleGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.accountApp fieldset.panel .profileSection {
+  padding: 14px !important;
+  margin: 10px 0 !important;
+  border-radius: 16px !important;
+  background: #f8fafc !important;
   box-shadow: none !important;
 }
 
-.profileHeroCard {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
+.accountApp .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.profileSection {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
+.accountApp .formMessage {
+  margin: 8px 0 0;
+  padding: 11px 13px;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.accountApp button[type="submit"] {
+  width: 100%;
+  min-height: 48px;
+  border: 0 !important;
+  border-radius: 13px !important;
+  background: #2563eb !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  font-size: 0.9rem !important;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, .22) !important;
+  transition: background .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.accountApp button[type="submit"]:hover {
+  background: #1d4ed8 !important;
+  box-shadow: 0 10px 22px rgba(37, 99, 235, .28) !important;
+}
+
+.accountApp button[type="submit"]:active {
+  transform: scale(.985);
+}
+
+.accountApp button:disabled {
+  opacity: .62;
+  cursor: wait;
+}
+
+/* Error states from the live API remain easy to scan. */
+.accountApp [aria-invalid="true"],
+.accountApp input.error,
+.accountApp select.error {
+  border-color: #fca5a5 !important;
+  background: #fff7f7 !important;
+}
+
+/* Mobile-first layout matching the supplied profile concept. */
+@media (max-width: 640px) {
+  .accountApp {
+    padding: 12px 12px 110px;
+  }
+
+  .accountApp .profileHeroCard {
+    padding: 15px !important;
+    align-items: flex-start;
+  }
+
+  .accountApp .profileAvatar {
+    width: 50px !important;
+    height: 50px !important;
+  }
+
+  .accountApp .profileHeroCard {
+    flex-wrap: wrap;
+  }
+
+  .accountApp .profileEditButton {
+    width: 100%;
+  }
+
+  .accountApp .profileSection {
+    padding: 16px !important;
+    border-radius: 18px !important;
+  }
+
+  .accountApp .scheduleGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .accountApp .profileSectionHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .accountApp .profileSectionHeader .actions {
+    width: 100%;
+  }
 }
