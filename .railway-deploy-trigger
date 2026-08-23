@@ -1,10 +1,10 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-24T02:07:00+05:00
-Reason: deploy latest authentication UI cleanup.
+Created: 2026-08-24T02:24:00+05:00
+Reason: deploy corrected iPhone/Safari Use my location flow.
 Required production behavior:
-- Remove the top Sign in tab from the login view.
-- Keep only the Create account shortcut for new users.
-- Keep the global shell and hamburger menu visible.
-- Main login submit action reads Continue.
-- Do not duplicate Sign in/Create account in the global menu.
-Target application commit includes: 39d9c632ff8fa7aa09f5eb05f6b6c24a25966c68
+- Do not auto-request geolocation in the background.
+- Request geolocation only after the user taps Use my location.
+- On success, populate Atoll and Island/City from the resolved GPS location.
+- Show specific permission, unavailable, and timeout guidance only after an actual location attempt.
+- Keep manual Atoll and Island/City selection available as fallback.
+Target application commit includes: 7a54ac2b2e09ac95c4b9e51840077a39d964b7c5
