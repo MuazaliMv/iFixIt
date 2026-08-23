@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import './login.css';
 
@@ -14,9 +14,11 @@ export default function LoginPage(){
  const[email,setEmail]=useState('');
  const[password,setPassword]=useState('');
  const[phone,setPhone]=useState('');
+ const[countryCode,setCountryCode]=useState('+960');
  const[message,setMessage]=useState('');
  const[busy,setBusy]=useState(false);
  const[showPassword,setShowPassword]=useState(false);
+ const[touched,setTouched]=useState({email:false,password:false,phone:false,fullName:false});
 
  async function routeUser(userId:string){
   const{data:profile}=await supabase.from('auth_profiles').select('role').eq('user_id',userId).maybeSingle();
@@ -36,19 +38,31 @@ export default function LoginPage(){
   setMessage('');
   setPassword('');
   setShowPassword(false);
+  setTouched({email:false,password:false,phone:false,fullName:false});
  }
 
+ const isLogin=mode==='login';
+ const emailValid=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+ const passwordValid=password.length>=8;
+ const phoneValid=!phone||(/^\d{7}$/.test(phone)&&countryCode==='+960');
+ const nameValid=Boolean(fullName.trim());
+ const formValid=useMemo(()=>isLogin?(emailValid&&passwordValid):(nameValid&&emailValid&&passwordValid&&phoneValid),[isLogin,emailValid,passwordValid,nameValid,phoneValid]);
+
  async function submit(event:FormEvent){
-  event.preventDefault();setBusy(true);setMessage('');
+  event.preventDefault();
+  setTouched({email:true,password:true,phone:true,fullName:true});
+  if(!formValid)return;
+  setBusy(true);setMessage('');
   try{
    if(mode==='register'){
-    if(!fullName.trim())throw new Error('Enter your name.');
-    const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName:fullName.trim(),email:email.trim(),password,role,phoneNumber:phone.trim()})});
+    const phoneNumber=phone?`${countryCode}${phone}`:'';
+    const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName:fullName.trim(),email:email.trim(),password,role,phoneNumber})});
     const p=await r.json();
     if(!r.ok)throw new Error(p?.error||'Unable to create account.');
     setMessage('Account created. You can now sign in.');
     setMode('login');
     setPassword('');
+    setTouched({email:false,password:false,phone:false,fullName:false});
    }else{
     const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email.trim(),password})});
     const p=await r.json();
@@ -61,43 +75,55 @@ export default function LoginPage(){
   finally{setBusy(false);}
  }
 
- const isLogin=mode==='login';
-
  return <main className="authPage">
   <section className="authCardClean">
-   <a className="authBrand" href="/">FixIt</a>
+   <div className="authTopbar"><a className="authBrand" href="/">iFixMV</a><span className="authSecure">Secure account access</span></div>
+
+   <div className="authModeTabs" role="tablist" aria-label="Account access">
+    <button type="button" role="tab" aria-selected={isLogin} className={isLogin?'active':''} onClick={()=>switchMode('login')}>Sign in</button>
+    <button type="button" role="tab" aria-selected={!isLogin} className={!isLogin?'active':''} onClick={()=>switchMode('register')}>Create account</button>
+   </div>
 
    <div className="authIntro">
     <h1>{isLogin?'Welcome back':'Create your account'}</h1>
-    <p>{isLogin?'Sign in to continue to FixIt.':'Set up your FixIt account in a few steps.'}</p>
+    <p>{isLogin?'Sign in with your email to continue to iFixMV.':'Enter your details to get started with iFixMV.'}</p>
    </div>
 
-   <form onSubmit={submit} className="authFormClean">
+   <form onSubmit={submit} className="authFormClean" noValidate>
     {!isLogin?<>
-     <label>Full name<input value={fullName} onChange={e=>setFullName(e.target.value)} placeholder="Your name" autoComplete="name" required/></label>
+     <label>Full name<input value={fullName} onBlur={()=>setTouched(v=>({...v,fullName:true}))} onChange={e=>setFullName(e.target.value)} placeholder="Your name" autoComplete="name" aria-invalid={touched.fullName&&!nameValid}/>{touched.fullName&&!nameValid?<span className="fieldError">Enter your full name.</span>:null}</label>
      <label>Account type<select value={role} onChange={e=>setRole(e.target.value as Role)}><option value="CUSTOMER">User</option><option value="PROVIDER">Service Provider</option></select></label>
-     <label>Maldives phone number <span className="optionalLabel">Optional</span><input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7}/></label>
+     <label>Phone number <span className="optionalLabel">Optional</span>
+      <div className="phoneField">
+       <select className="countryCode" value={countryCode} onChange={e=>setCountryCode(e.target.value)} aria-label="Country code"><option value="+960">🇲🇻 +960</option></select>
+       <input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onBlur={()=>setTouched(v=>({...v,phone:true}))} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} aria-invalid={touched.phone&&!phoneValid}/>
+      </div>
+      <span className="fieldHelp">Enter the 7-digit local number only.</span>
+      {touched.phone&&!phoneValid?<span className="fieldError">Enter a valid 7-digit Maldives number.</span>:null}
+     </label>
     </>:null}
 
-    <label>Email<input type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" required/></label>
+    <label>Email address<input type="email" inputMode="email" autoComplete="email" value={email} onBlur={()=>setTouched(v=>({...v,email:true}))} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" aria-invalid={touched.email&&!emailValid}/>{touched.email&&!emailValid?<span className="fieldError">Enter a valid email address.</span>:null}</label>
 
     <label>Password
      <div className="passwordField">
-      <input type={showPassword?'text':'password'} autoComplete={isLogin?'current-password':'new-password'} value={password} onChange={e=>setPassword(e.target.value)} minLength={8} required/>
-      <button type="button" className="passwordToggle" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'}>{showPassword?'Hide':'Show'}</button>
+      <input type={showPassword?'text':'password'} autoComplete={isLogin?'current-password':'new-password'} value={password} onBlur={()=>setTouched(v=>({...v,password:true}))} onChange={e=>setPassword(e.target.value)} minLength={8} aria-invalid={touched.password&&!passwordValid}/>
+      <button type="button" className="passwordToggle" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'} title={showPassword?'Hide password':'Show password'}>{showPassword?'◉':'◌'}</button>
      </div>
+     {!isLogin?<span className="fieldHelp">Use at least 8 characters.</span>:null}
+     {touched.password&&!passwordValid?<span className="fieldError">Password must be at least 8 characters.</span>:null}
     </label>
 
-    {isLogin?<div className="authUtility"><a href="/forgot-password">Forgot password?</a></div>:null}
+    {isLogin?<div className="authUtility"><span className="authEmailHint">Email sign in</span><a href="/forgot-password">Forgot password?</a></div>:null}
 
-    <button className="primary authSubmit" disabled={busy}>{busy?'Please wait…':isLogin?'Sign In':'Create Account'}</button>
+    <button className="primary authSubmit" disabled={busy||!formValid} aria-busy={busy}>{busy?<><span className="buttonSpinner" aria-hidden="true"/>Signing in…</>:isLogin?'Sign In':'Create Account'}</button>
    </form>
 
    {message?<p className="formMessage" role="status">{message}</p>:null}
 
    {!isLogin&&role==='PROVIDER'?<p className="authHint">Service Provider accounts require Admin approval before receiving service requests.</p>:null}
 
-   <p className="authSwitch">{isLogin?'New to FixIt?':'Already have an account?'} <button type="button" onClick={()=>switchMode(isLogin?'register':'login')}>{isLogin?'Create account':'Sign in'}</button></p>
+   <p className="authSwitch">{isLogin?'New to iFixMV?':'Already have an account?'} <button type="button" onClick={()=>switchMode(isLogin?'register':'login')}>{isLogin?'Create account':'Sign in'}</button></p>
   </section>
  </main>;
 }
