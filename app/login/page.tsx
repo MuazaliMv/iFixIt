@@ -25,7 +25,14 @@ export default function LoginPage(){
  const[shellMenuOpen,setShellMenuOpen]=useState(false);
  const[touched,setTouched]=useState({email:false,password:false,phone:false,fullName:false});
 
- useEffect(()=>{try{const saved=localStorage.getItem('ifixmv-login-email');if(saved){setEmail(saved);setRememberMe(true);}}catch{}},[]);
+ useEffect(()=>{
+  try{
+   const requestedMode=new URLSearchParams(window.location.search).get('mode');
+   if(requestedMode==='register')setMode('register');
+   const saved=localStorage.getItem('ifixmv-login-email');
+   if(saved){setEmail(saved);setRememberMe(true);}
+  }catch{}
+ },[]);
 
  async function routeUser(){
   const requested=new URLSearchParams(window.location.search).get('next');
@@ -41,6 +48,11 @@ export default function LoginPage(){
  function switchMode(next:Mode){
   setMode(next);setMessage('');setPassword('');setShowPassword(false);setCapsLock(false);setShellMenuOpen(false);
   setTouched({email:false,password:false,phone:false,fullName:false});
+  try{
+   const url=new URL(window.location.href);
+   if(next==='register')url.searchParams.set('mode','register');else url.searchParams.delete('mode');
+   window.history.replaceState({},'',url.toString());
+  }catch{}
  }
 
  const isLogin=mode==='login';
@@ -59,7 +71,7 @@ export default function LoginPage(){
     const phoneNumber=phone?`${countryCode}${phone}`:'';
     const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName:fullName.trim(),email:emailTrimmed,password,phoneNumber})});
     const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to create account.');
-    setMessage('Account created. You can now sign in.');setMode('login');setPassword('');setTouched({email:false,password:false,phone:false,fullName:false});
+    setMessage('Account created. You can now sign in.');switchMode('login');
    }else{
     const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({email:emailTrimmed,password})});
     const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to sign in.');
@@ -81,13 +93,13 @@ export default function LoginPage(){
      <button className="globalMenuToggle" type="button" aria-label={shellMenuOpen?'Close menu':'Open menu'} aria-expanded={shellMenuOpen} onClick={()=>setShellMenuOpen(v=>!v)}>{shellMenuOpen?<span className="globalMenuClose">×</span>:<span className="globalMenuBars"><i/><i/><i/></span>}</button>
     </div>
    </header>
-   {shellMenuOpen?<nav className="authShellMenu" aria-label="Public navigation"><a href="/">Home</a><button type="button" onClick={()=>switchMode('login')}>Sign in</button><button type="button" onClick={()=>switchMode('register')}>Create account</button></nav>:null}
+   {shellMenuOpen?<nav className="authShellMenu" aria-label="Public navigation"><a href="/">Home</a></nav>:null}
   </div>
 
   <main className="authPage">
    <section className="authCardClean">
     <div className="authModeTabs" role="tablist" aria-label="Account access"><button type="button" role="tab" aria-selected={isLogin} className={isLogin?'active':''} onClick={()=>switchMode('login')}>Sign in</button><button type="button" role="tab" aria-selected={!isLogin} className={!isLogin?'active':''} onClick={()=>switchMode('register')}>Create account</button></div>
-    <div className="authIntro"><h1>{isLogin?'Welcome back':'Create your account'}</h1><p>{isLogin?'Sign in with your email to continue to iFixMV.':'Enter your details to get started with iFixMV.'}</p></div>
+    <div className="authIntro"><h1>{isLogin?'Welcome back':'Create your account'}</h1><p>{isLogin?'Sign in to continue to iFixMV.':'Register to start requesting services with iFixMV.'}</p></div>
     <form onSubmit={submit} className="authFormClean" noValidate>
      {!isLogin?<><label>Full name<input value={fullName} onBlur={()=>setTouched(v=>({...v,fullName:true}))} onChange={e=>setFullName(e.target.value)} placeholder="Your name" autoComplete="name" aria-invalid={touched.fullName&&!nameValid}/>{touched.fullName&&!nameValid?<span className="fieldError">Enter your full name.</span>:null}</label><label>Phone number <span className="optionalLabel">Optional</span><div className="phoneField"><select className="countryCode" value={countryCode} onChange={e=>setCountryCode(e.target.value)} aria-label="Country code"><option value="+960">🇲🇻 +960</option></select><input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onBlur={()=>setTouched(v=>({...v,phone:true}))} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} aria-invalid={touched.phone&&!phoneValid}/></div><span className="fieldHelp">Enter the 7-digit local number only.</span>{touched.phone&&!phoneValid?<span className="fieldError">Enter a valid 7-digit Maldives number.</span>:null}</label></>:null}
      <label>Email address<input type="email" inputMode="email" autoComplete="email" value={email} onBlur={()=>setTouched(v=>({...v,email:true}))} onChange={e=>{setEmail(e.target.value);if(touched.email)setTouched(v=>({...v,email:false}));}} placeholder="you@example.com" aria-invalid={touched.email&&!emailValid}/>{touched.email&&!emailValid?<span className="fieldError">{emailTrimmed?'Enter a valid email address.':'Enter your email address.'}</span>:null}</label>
