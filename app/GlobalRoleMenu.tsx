@@ -21,7 +21,6 @@ const menus:Record<Role,RoleMenu>={
     secondary:{href:'/messages',label:'Messages'},
     items:[
       {href:'/profile',label:'My Profile'},
-      {href:'/provider/setup',label:'Become a Provider'},
       {href:'/requests',label:'Service Requests'},
       {href:'/messages',label:'Messages'},
     ],
@@ -34,7 +33,7 @@ const menus:Record<Role,RoleMenu>={
       {href:'/provider/jobs',label:'My Jobs'},
       {href:'/provider/calendar',label:'Schedule'},
       {href:'/provider/messages',label:'Messages'},
-      {href:'/provider/setup',label:'Service Settings'},
+      {href:'/provider/services',label:'Service Settings'},
     ],
   },
   admin:{
@@ -54,7 +53,6 @@ const menus:Record<Role,RoleMenu>={
 };
 
 function routeRole(path:string):Role|null{
-  if(path==='/provider/setup'||path.startsWith('/provider/setup/'))return null;
   if(path.startsWith('/admin'))return 'admin';
   if(path.startsWith('/provider'))return 'provider';
   if(path==='/'||path==='/requests'||path.startsWith('/requests/')||path==='/messages'||path.startsWith('/messages/')||path==='/profile')return null;
