@@ -1,10 +1,10 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-23T23:24:00+05:00
-Reason: expose provider Work Done action and enforce valid future visit scheduling.
+Created: 2026-08-23T23:31:00+05:00
+Reason: fix provider Next action controls so they work immediately after confirmation.
 Required production behavior:
-- Expired and duplicate customer preferred times are not selectable.
-- Provider can enter a valid future visit time and save it.
-- Once a visit is scheduled, provider sees both Start Work and Work Done.
-- Work Done can complete a scheduled or already in-progress job.
-- Customer then receives the completion for confirmation.
-Target application commit includes: 4f2fd5bcecb001f8753ce694c3d25c33c0521af3
+- Confirmed provider can Start Work Now without first scheduling a visit.
+- Confirmed provider can use Work Done when the work is finished.
+- Visit scheduling remains optional and only accepts future times.
+- Expired preferred customer times are not selectable.
+- Backend supports completing accepted, scheduled, or in-progress jobs safely.
+Target application commit includes: b89f76f5adb8b23aff7cc04c1cbf583be89f1731
