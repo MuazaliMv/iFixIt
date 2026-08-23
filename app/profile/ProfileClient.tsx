@@ -13,11 +13,12 @@ function addressLine(a?:Address|null){if(!a)return'Not provided';return [a.line1
 
 async function profileRequest(){
  const controller=new AbortController();
- const timer=setTimeout(()=>controller.abort(),7000);
+ const timer=setTimeout(()=>controller.abort(),20000);
  try{
   const response=await fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store',signal:controller.signal});
   const payload=await response.json().catch(()=>({}));
   if(!response.ok)throw Object.assign(new Error(payload?.error||'Unable to load profile.'),{status:response.status});
+  if(!payload?.profile)throw new Error('Profile data was not returned.');
   return payload.profile as Profile;
  }finally{clearTimeout(timer);}
 }
@@ -46,7 +47,7 @@ export default function ProfileClient(){
   }catch(error:any){
    if(error?.status===401){window.location.replace('/login?next=%2Fprofile');return;}
    const timedOut=error instanceof Error&&(error.name==='AbortError'||error.name==='TimeoutError');
-   setMessage(timedOut?'Profile took too long to load. Tap Refresh Profile to try again.':error instanceof Error?error.message:'Unable to load profile details.');
+   setMessage(timedOut?'Profile service is taking longer than expected. Tap Refresh Profile to retry.':error instanceof Error?error.message:'Unable to load profile details.');
   }finally{setLoading(false);}
  }
 
