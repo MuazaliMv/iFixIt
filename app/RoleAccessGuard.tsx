@@ -2,11 +2,10 @@
 
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { supabase } from '../lib/supabaseClient';
 
 type AccountRole='CUSTOMER'|'PROVIDER'|'ADMIN';
 
-function destination(role:AccountRole,path:string){
+function destination(role:AccountRole){
   if(role==='ADMIN')return '/admin';
   if(role==='PROVIDER')return '/provider/jobs';
   return '/';
@@ -27,10 +26,10 @@ export default function RoleAccessGuard(){
       if(!roleControlled)return;
 
       try{
-        const{data}=await supabase.auth.getSession();
-        if(!data.session||!active)return;
-        const r=await fetch('/api/user/profile',{headers:{Authorization:`Bearer ${data.session.access_token}`}});
-        if(!r.ok||!active)return;
+        const r=await fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store'});
+        if(!active)return;
+        if(r.status===401){router.replace(`/login?next=${encodeURIComponent(path)}`);return;}
+        if(!r.ok)return;
         const p=await r.json();
         const raw=String(p?.profile?.role||'CUSTOMER').toUpperCase();
         const role:AccountRole=raw==='ADMIN'?'ADMIN':raw==='PROVIDER'?'PROVIDER':'CUSTOMER';
@@ -48,7 +47,7 @@ export default function RoleAccessGuard(){
           (role==='PROVIDER'&&adminRoute)||
           (role==='CUSTOMER'&&(providerRoute||adminRoute));
 
-        if(wrongRoute&&active)router.replace(destination(role,path));
+        if(wrongRoute&&active)router.replace(destination(role));
       }catch{}
     }
 
