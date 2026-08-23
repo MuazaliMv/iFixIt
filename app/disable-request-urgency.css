@@ -1,0 +1,8 @@
+/* Standard is the only active customer request type. */
+.c3WizardCard > .c3Question:first-child + .c3Urgency{
+  grid-template-columns:1fr!important;
+}
+.c3WizardCard > .c3Question:first-child + .c3Urgency > button:first-child,
+.c3WizardCard > .c3Question:first-child + .c3Urgency > button:nth-child(3){
+  display:none!important;
+}
