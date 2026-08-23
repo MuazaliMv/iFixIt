@@ -24,6 +24,7 @@ import './global-role-menu.css';
 import './profile-flat.css';
 import './customer-home-cleanup.css';
 import './landing-blue.css';
+import './mobile-portrait-header-fix.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
