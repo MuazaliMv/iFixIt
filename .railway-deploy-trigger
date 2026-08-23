@@ -1,10 +1,9 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-23T23:14:00+05:00
-Reason: deploy provider preferred visit times display and validation fix.
+Created: 2026-08-23T23:15:00+05:00
+Reason: deploy provider confirmation action and preferred-time scheduling flow.
 Required production behavior:
-- Provider job details show the customer's preferred visit times.
-- Provider can choose one of the customer's preferred times when scheduling the visit.
-- Preferred times are limited to a maximum of three.
-- Preferred times must be unique.
-- Preferred times must be valid future date/time values.
-Target application commit includes: d2753e86448ee5037d1fee715b5f3b3d55b366c7
+- Selected provider sees a clear Confirm Job action.
+- After confirmation, provider sees customer preferred visit times.
+- Provider can choose a preferred time or set another agreed visit time.
+- Provider can save visit time and continue the job flow.
+Target application commit includes: 8cf861bdf2a69738ca4283d745da6e6b7f87ac56
