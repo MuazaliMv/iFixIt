@@ -1,10 +1,11 @@
 Trigger Railway deployment from current main head.
 Created: 2026-08-24T02:24:00+05:00
-Reason: deploy corrected iPhone/Safari Use my location flow.
+Reason: remove the legacy automatic location flow and deploy manual-tap-only geolocation.
 Required production behavior:
-- Do not auto-request geolocation in the background.
+- Remove the old background/automatic location attempt entirely.
+- Keep only the current Use my location button flow.
 - Request geolocation only after the user taps Use my location.
 - On success, populate Atoll and Island/City from the resolved GPS location.
-- Show specific permission, unavailable, and timeout guidance only after an actual location attempt.
+- Show location errors only after an actual user-initiated attempt.
 - Keep manual Atoll and Island/City selection available as fallback.
-Target application commit includes: 7a54ac2b2e09ac95c4b9e51840077a39d964b7c5
+Target application commit includes: 0215b19cfaac2c2b796d643b7e8288378bf5f0a2
