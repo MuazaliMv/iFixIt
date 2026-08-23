@@ -27,6 +27,8 @@ export default function LoginPage(){
  const[touched,setTouched]=useState({email:false,password:false,phone:false,fullName:false});
 
  async function routeUser(userId:string){
+  const requested=new URLSearchParams(window.location.search).get('next');
+  if(requested&&requested.startsWith('/')&&!requested.startsWith('//')){window.location.href=requested;return;}
   const{data:profile}=await supabase.from('auth_profiles').select('role').eq('user_id',userId).maybeSingle();
   if(profile?.role==='PROVIDER')window.location.href='/provider';
   else if(profile?.role==='ADMIN')window.location.href='/admin';
