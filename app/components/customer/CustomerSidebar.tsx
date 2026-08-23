@@ -15,7 +15,7 @@ export default function CustomerSidebar({language,setLanguage,profileName,onNewR
   <div className="c4Lang" role="group" aria-label="Language"><button className={language==='en'?'active':''} onClick={()=>setLanguage('en')}>EN</button><button className={language==='dv'?'active':''} onClick={()=>setLanguage('dv')}>ދިވެހި</button></div>
   <div className="c4NavLabel">{l('main')}</div>
   <nav className="c4Nav">
-   <a className="active" href="/"><span>⌂</span>{l('home')}</a>
+   <a className="active" href="/home"><span>⌂</span>{l('home')}</a>
    <a href="/requests"><span>▤</span>{l('requests')}</a>
    <button onClick={onNewRequest}><span>＋</span>{l('newRequest')}</button>
   </nav>
