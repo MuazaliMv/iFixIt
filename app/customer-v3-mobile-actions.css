@@ -1,0 +1,27 @@
+@media(max-width:760px){
+  .c3Page{padding-bottom:160px}
+  .c3ActionDock{
+    position:fixed;
+    left:12px;
+    right:12px;
+    bottom:max(10px,env(safe-area-inset-bottom));
+    z-index:70;
+    margin:0;
+    padding:10px 10px 8px;
+    border:1px solid var(--c3-line);
+    border-radius:20px;
+    background:rgba(255,255,255,.96);
+    box-shadow:0 16px 36px rgba(30,55,90,.16);
+    backdrop-filter:blur(16px);
+  }
+  .c3ActionInner{grid-template-columns:96px 1fr;gap:8px}
+  .c3ActionInner .c3Primary,.c3ActionInner .c3Secondary{min-height:48px;border-radius:14px}
+  .c3ActionDock>button{
+    display:block;
+    width:auto;
+    margin:6px auto 0;
+    padding:4px 10px!important;
+    font-size:12px;
+    line-height:1.2;
+  }
+}
