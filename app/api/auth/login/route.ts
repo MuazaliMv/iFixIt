@@ -3,7 +3,17 @@ import { ACCESS_COOKIE, REFRESH_COOKIE } from '../../../../lib/serverAuth';
 
 const AUTH_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/auth-security';
 
-function sameOrigin(request:NextRequest){const origin=request.headers.get('origin');return !origin||origin===request.nextUrl.origin;}
+function sameOrigin(request:NextRequest){
+ const origin=request.headers.get('origin');
+ if(!origin)return true;
+ try{
+  const parsed=new URL(origin);
+  const forwardedHost=(request.headers.get('x-forwarded-host')||request.headers.get('host')||'').split(',')[0].trim();
+  const forwardedProto=(request.headers.get('x-forwarded-proto')||'https').split(',')[0].trim();
+  if(forwardedHost&&parsed.host===forwardedHost&&parsed.protocol===`${forwardedProto}:`)return true;
+  return parsed.origin===request.nextUrl.origin;
+ }catch{return false;}
+}
 
 export async function POST(request:NextRequest){
  if(!sameOrigin(request))return NextResponse.json({error:'Invalid request origin.'},{status:403});
