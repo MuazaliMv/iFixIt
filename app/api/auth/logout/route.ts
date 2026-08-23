@@ -1,11 +1,25 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { clearAuthCookies, resolveServerAuth } from '../../../../lib/serverAuth';
 
-const ACCESS_COOKIE='ifixmv_access_token';
-const REFRESH_COOKIE='ifixmv_refresh_token';
+const SUPABASE_URL='https://yzlhlilxiszefneshatm.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_1sZEZgz9k2JACE_WzHtbCw_reiQEik6';
 
-export async function POST(){
- const response=NextResponse.json({ok:true});
- response.cookies.set(ACCESS_COOKIE,'',{httpOnly:true,secure:true,sameSite:'lax',path:'/',maxAge:0});
- response.cookies.set(REFRESH_COOKIE,'',{httpOnly:true,secure:true,sameSite:'lax',path:'/',maxAge:0});
- return response;
+function sameOrigin(request:NextRequest){
+ const origin=request.headers.get('origin');
+ return !origin||origin===request.nextUrl.origin;
+}
+
+export async function POST(request:NextRequest){
+ if(!sameOrigin(request))return NextResponse.json({error:'Invalid request origin.'},{status:403});
+ const auth=await resolveServerAuth(request);
+ if(auth){
+  try{
+   await fetch(`${SUPABASE_URL}/auth/v1/logout?scope=global`,{
+    method:'POST',
+    headers:{apikey:SUPABASE_PUBLISHABLE_KEY,Authorization:auth.authorization},
+    signal:AbortSignal.timeout(7000),cache:'no-store',
+   });
+  }catch{}
+ }
+ return clearAuthCookies(NextResponse.json({ok:true}));
 }
