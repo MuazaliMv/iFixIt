@@ -27,7 +27,7 @@ export default function DispatchLivePanel(){
  const title=state==='AWAITING_CUSTOMER'?`Choose a provider · ${count}/5`:waiting?'Your request is still broadcasting to service providers':count>0?`Your request is broadcasting to service providers · ${count} responded`:'Your request is broadcasting to service providers';
  const subtitle=state==='AWAITING_CUSTOMER'?'Select a provider before the response window closes.':waiting?'We are notifying more matching providers now.':count>0?'Matching providers are being notified now. You can select a provider as soon as you are ready.':'We are notifying matching providers now. You’ll be notified as soon as one responds.';
  if(['EXHAUSTED','CUSTOMER_TIMEOUT','CANCELLED','NOT_REQUIRED','SECURED'].includes(String(state)))return null;
- return <aside className="dispatchLive" aria-live="polite">
+ return <aside className="dispatchLive" aria-label="Live Dispatch" aria-live="polite">
   <div className="dispatchLiveIcon" aria-hidden="true">📣</div>
   <div className="dispatchLiveBody"><span className="dispatchLiveEyebrow">Live provider broadcast</span><strong>{title}</strong><small>{subtitle}</small>{note?<small className="dispatchLiveNote">{note}</small>:null}<div className="dispatchLiveTimer"><span>Responding in</span><b>{timerValue}</b></div></div>
   <div className="dispatchLiveActions">{canWait?<button type="button" onClick={()=>void waitMore()} disabled={busy}>{busy?'Updating…':'Wait for More'}</button>:null}{waiting?<button type="button" disabled>Waiting for More</button>:null}{count>0?<button className="primary" type="button" onClick={()=>document.querySelector('.providerGrid')?.scrollIntoView({behavior:'smooth',block:'center'})}>Select Now</button>:null}</div>
