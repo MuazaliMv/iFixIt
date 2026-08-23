@@ -1,8 +1,10 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-24T02:35:00+05:00
-Reason: deploy mobile request-wizard tile visibility fix.
+Created: 2026-08-24T02:41:00+05:00
+Reason: disable Urgent and Scheduled request modes.
 Required production behavior:
-- Keep the fixed Back/Continue action dock at the safe-area bottom on iPhone.
-- Do not let the action dock cover the On-site contact choice tiles or other lower wizard content.
-- Add enough bottom scroll space so the final tile can move fully above the dock.
-Target application commit includes: 881f6f982daf9888e6139b3f342e2649530d9f7a
+- Show Standard as the only request type in Step 4.
+- Hide Urgent and Scheduled choices.
+- Keep preferred date selection.
+- New requests must be stored as STANDARD even if an old client sends another urgency value.
+Target application commits include: 06e666990b578e5c224b10a8eb97c0e74855992b, e2e51598d9987d59f66d77b60ed62a8103ffe20a, 4ac3ab40f1ec480901d44bee0c3f39cabd5acec9
+Supabase submit-request function version: 12
