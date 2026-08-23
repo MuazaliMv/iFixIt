@@ -22,6 +22,7 @@ const menus:Record<Role,RoleMenu>={
     items:[
       {href:'/profile',label:'My Profile'},
       {href:'/change-password',label:'Change Password'},
+      {href:'/notifications',label:'Notifications'},
       {href:'/requests',label:'Service Requests'},
       {href:'/messages',label:'Messages'},
     ],
