@@ -22,6 +22,7 @@ export default function LoginPage(){
  const[showPassword,setShowPassword]=useState(false);
  const[rememberMe,setRememberMe]=useState(true);
  const[capsLock,setCapsLock]=useState(false);
+ const[shellMenuOpen,setShellMenuOpen]=useState(false);
  const[touched,setTouched]=useState({email:false,password:false,phone:false,fullName:false});
 
  useEffect(()=>{try{const saved=localStorage.getItem('ifixmv-login-email');if(saved){setEmail(saved);setRememberMe(true);}}catch{}},[]);
@@ -38,7 +39,7 @@ export default function LoginPage(){
  }
 
  function switchMode(next:Mode){
-  setMode(next);setMessage('');setPassword('');setShowPassword(false);setCapsLock(false);
+  setMode(next);setMessage('');setPassword('');setShowPassword(false);setCapsLock(false);setShellMenuOpen(false);
   setTouched({email:false,password:false,phone:false,fullName:false});
  }
 
@@ -72,21 +73,31 @@ export default function LoginPage(){
   }catch(e){setMessage(e instanceof Error?e.message:'Unable to continue.');}finally{setBusy(false);}
  }
 
- return <main className="authPage">
-  <section className="authCardClean">
-   <a className="backHome" href="/" aria-label="Back to iFixMV home">← Back to iFixMV</a>
-   <div className="authLogoWrap"><div className="authLogoMark" aria-hidden="true">iF</div><div><a className="authBrand" href="/">iFixMV</a><div className="authSecure">🔒 Secure account access</div></div></div>
-   <div className="authModeTabs" role="tablist" aria-label="Account access"><button type="button" role="tab" aria-selected={isLogin} className={isLogin?'active':''} onClick={()=>switchMode('login')}>Sign in</button><button type="button" role="tab" aria-selected={!isLogin} className={!isLogin?'active':''} onClick={()=>switchMode('register')}>Create account</button></div>
-   <div className="authIntro"><h1>{isLogin?'Welcome back':'Create your account'}</h1><p>{isLogin?'Sign in with your email to continue to iFixMV.':'Enter your details to get started with iFixMV.'}</p></div>
-   <form onSubmit={submit} className="authFormClean" noValidate>
-    {!isLogin?<><label>Full name<input value={fullName} onBlur={()=>setTouched(v=>({...v,fullName:true}))} onChange={e=>setFullName(e.target.value)} placeholder="Your name" autoComplete="name" aria-invalid={touched.fullName&&!nameValid}/>{touched.fullName&&!nameValid?<span className="fieldError">Enter your full name.</span>:null}</label><label>Phone number <span className="optionalLabel">Optional</span><div className="phoneField"><select className="countryCode" value={countryCode} onChange={e=>setCountryCode(e.target.value)} aria-label="Country code"><option value="+960">🇲🇻 +960</option></select><input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onBlur={()=>setTouched(v=>({...v,phone:true}))} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} aria-invalid={touched.phone&&!phoneValid}/></div><span className="fieldHelp">Enter the 7-digit local number only.</span>{touched.phone&&!phoneValid?<span className="fieldError">Enter a valid 7-digit Maldives number.</span>:null}</label></>:null}
-    <label>Email address<input type="email" inputMode="email" autoComplete="email" value={email} onBlur={()=>setTouched(v=>({...v,email:true}))} onChange={e=>{setEmail(e.target.value);if(touched.email)setTouched(v=>({...v,email:false}));}} placeholder="you@example.com" aria-invalid={touched.email&&!emailValid}/>{touched.email&&!emailValid?<span className="fieldError">{emailTrimmed?'Enter a valid email address.':'Enter your email address.'}</span>:null}</label>
-    <label>Password<div className="passwordField"><input type={showPassword?'text':'password'} autoComplete={isLogin?'current-password':'new-password'} value={password} onBlur={()=>setTouched(v=>({...v,password:true}))} onKeyUp={e=>setCapsLock(e.getModifierState('CapsLock'))} onKeyDown={e=>setCapsLock(e.getModifierState('CapsLock'))} onChange={e=>setPassword(e.target.value)} minLength={8} aria-invalid={touched.password&&!passwordValid}/><button type="button" className="passwordToggle" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'} title={showPassword?'Hide password':'Show password'}><EyeIcon off={showPassword}/></button></div>{capsLock?<span className="capsWarning">Caps Lock is on.</span>:null}{!isLogin?<span className="fieldHelp">Use at least 8 characters.</span>:null}{touched.password&&!passwordValid?<span className="fieldError">Password must be at least 8 characters.</span>:null}</label>
-    {isLogin?<div className="authUtility"><label className="rememberMe"><input type="checkbox" checked={rememberMe} onChange={e=>setRememberMe(e.target.checked)}/><span>Remember me</span></label><a href="/forgot-password">Forgot password?</a></div>:null}
-    <button className="primary authSubmit" disabled={busy||!formValid} aria-busy={busy}>{busy?<><span className="buttonSpinner" aria-hidden="true"/>{isLogin?'Signing in…':'Creating account…'}</>:isLogin?'Sign In':'Create Account'}</button>
-   </form>
-   {message?<p className="formMessage" role="status">{message}</p>:null}
-   <p className="authSwitch">{isLogin?'New to iFixMV?':'Already have an account?'} <button type="button" onClick={()=>switchMode(isLogin?'register':'login')}>{isLogin?'Create account':'Sign in'}</button></p>
-  </section>
- </main>;
+ return <div className="authShell">
+  <div className="globalMenuHeaderWrap authShellHeaderWrap">
+   <header className="globalMenuHeader" aria-label="iFixMV navigation">
+    <a href="/" className="globalMenuBrand"><span className="globalMenuBrandMark">F</span><span>FixIt</span></a>
+    <div className="globalMenuHeaderActions">
+     <button className="globalMenuToggle" type="button" aria-label={shellMenuOpen?'Close menu':'Open menu'} aria-expanded={shellMenuOpen} onClick={()=>setShellMenuOpen(v=>!v)}>{shellMenuOpen?<span className="globalMenuClose">×</span>:<span className="globalMenuBars"><i/><i/><i/></span>}</button>
+    </div>
+   </header>
+   {shellMenuOpen?<nav className="authShellMenu" aria-label="Public navigation"><a href="/">Home</a><button type="button" onClick={()=>switchMode('login')}>Sign in</button><button type="button" onClick={()=>switchMode('register')}>Create account</button></nav>:null}
+  </div>
+
+  <main className="authPage">
+   <section className="authCardClean">
+    <div className="authModeTabs" role="tablist" aria-label="Account access"><button type="button" role="tab" aria-selected={isLogin} className={isLogin?'active':''} onClick={()=>switchMode('login')}>Sign in</button><button type="button" role="tab" aria-selected={!isLogin} className={!isLogin?'active':''} onClick={()=>switchMode('register')}>Create account</button></div>
+    <div className="authIntro"><h1>{isLogin?'Welcome back':'Create your account'}</h1><p>{isLogin?'Sign in with your email to continue to iFixMV.':'Enter your details to get started with iFixMV.'}</p></div>
+    <form onSubmit={submit} className="authFormClean" noValidate>
+     {!isLogin?<><label>Full name<input value={fullName} onBlur={()=>setTouched(v=>({...v,fullName:true}))} onChange={e=>setFullName(e.target.value)} placeholder="Your name" autoComplete="name" aria-invalid={touched.fullName&&!nameValid}/>{touched.fullName&&!nameValid?<span className="fieldError">Enter your full name.</span>:null}</label><label>Phone number <span className="optionalLabel">Optional</span><div className="phoneField"><select className="countryCode" value={countryCode} onChange={e=>setCountryCode(e.target.value)} aria-label="Country code"><option value="+960">🇲🇻 +960</option></select><input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onBlur={()=>setTouched(v=>({...v,phone:true}))} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} aria-invalid={touched.phone&&!phoneValid}/></div><span className="fieldHelp">Enter the 7-digit local number only.</span>{touched.phone&&!phoneValid?<span className="fieldError">Enter a valid 7-digit Maldives number.</span>:null}</label></>:null}
+     <label>Email address<input type="email" inputMode="email" autoComplete="email" value={email} onBlur={()=>setTouched(v=>({...v,email:true}))} onChange={e=>{setEmail(e.target.value);if(touched.email)setTouched(v=>({...v,email:false}));}} placeholder="you@example.com" aria-invalid={touched.email&&!emailValid}/>{touched.email&&!emailValid?<span className="fieldError">{emailTrimmed?'Enter a valid email address.':'Enter your email address.'}</span>:null}</label>
+     <label>Password<div className="passwordField"><input type={showPassword?'text':'password'} autoComplete={isLogin?'current-password':'new-password'} value={password} onBlur={()=>setTouched(v=>({...v,password:true}))} onKeyUp={e=>setCapsLock(e.getModifierState('CapsLock'))} onKeyDown={e=>setCapsLock(e.getModifierState('CapsLock'))} onChange={e=>setPassword(e.target.value)} minLength={8} aria-invalid={touched.password&&!passwordValid}/><button type="button" className="passwordToggle" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'} title={showPassword?'Hide password':'Show password'}><EyeIcon off={showPassword}/></button></div>{capsLock?<span className="capsWarning">Caps Lock is on.</span>:null}{!isLogin?<span className="fieldHelp">Use at least 8 characters.</span>:null}{touched.password&&!passwordValid?<span className="fieldError">Password must be at least 8 characters.</span>:null}</label>
+     {isLogin?<div className="authUtility"><label className="rememberMe"><input type="checkbox" checked={rememberMe} onChange={e=>setRememberMe(e.target.checked)}/><span>Remember me</span></label><a href="/forgot-password">Forgot password?</a></div>:null}
+     <button className="primary authSubmit" disabled={busy||!formValid} aria-busy={busy}>{busy?<><span className="buttonSpinner" aria-hidden="true"/>{isLogin?'Signing in…':'Creating account…'}</>:isLogin?'Sign In':'Create Account'}</button>
+    </form>
+    {message?<p className="formMessage" role="status">{message}</p>:null}
+    <p className="authSwitch">{isLogin?'New to iFixMV?':'Already have an account?'} <button type="button" onClick={()=>switchMode(isLogin?'register':'login')}>{isLogin?'Create account':'Sign in'}</button></p>
+   </section>
+  </main>
+ </div>;
 }
