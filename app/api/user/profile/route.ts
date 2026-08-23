@@ -4,7 +4,14 @@ const SUPABASE_URL='https://yzlhlilxiszefneshatm.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_1sZEZgz9k2JACE_WzHtbCw_reiQEik6';
 const AUTH_API=`${SUPABASE_URL}/functions/v1/auth-account`;
 const FIXED_COUNTRY='Maldives';
+const ACCESS_COOKIE='ifixmv_access_token';
 
+function authorizationFor(request:NextRequest){
+ const header=request.headers.get('authorization')||'';
+ if(header.toLowerCase().startsWith('bearer '))return header;
+ const token=request.cookies.get(ACCESS_COOKIE)?.value||'';
+ return token?`Bearer ${token}`:'';
+}
 function normalizeProfilePhone(value:unknown){
  const raw=String(value??'').trim().replace(/[\s()-]/g,'');
  if(!raw)return '';
@@ -25,8 +32,8 @@ async function rest(path:string,authorization:string,timeoutMs=5000){
 }
 
 export async function GET(request:NextRequest){
- const authorization=request.headers.get('authorization')||'';
- if(!authorization.toLowerCase().startsWith('bearer '))return NextResponse.json({error:'Authentication required.'},{status:401});
+ const authorization=authorizationFor(request);
+ if(!authorization)return NextResponse.json({error:'Authentication required.'},{status:401});
  try{
   const profileUrl='auth_profiles?select=user_id,email,full_name,role,provider_approved,phone_number,is_phone_verified,profile_photo_url,address_line1,address_line2,city,state_region,postal_code,country,provider_address_line1,provider_address_line2,provider_city,provider_state_region,provider_postal_code,provider_country,created_at&limit=1';
   const profileResponse=await rest(profileUrl,authorization,5000);
@@ -64,7 +71,8 @@ export async function GET(request:NextRequest){
 }
 
 export async function PUT(request:NextRequest){
- const authorization=request.headers.get('authorization')||'';
+ const authorization=authorizationFor(request);
+ if(!authorization)return NextResponse.json({error:'Authentication required.'},{status:401});
  const contentType=request.headers.get('content-type')||'';
  let response:Response;
  try{
