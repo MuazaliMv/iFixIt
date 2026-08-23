@@ -62,6 +62,20 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
+  /* Keep the fixed Back/Continue dock from covering the last choice tiles. */
+  .c4App .c3ActionDock {
+    bottom: max(8px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .c4App.c3Page,
+  .c4App .c3Page {
+    padding-bottom: 190px !important;
+  }
+
+  .c4App .c3Wizard {
+    padding-bottom: 110px !important;
+  }
 }
 
 @media (max-width: 360px) and (orientation: portrait) {
