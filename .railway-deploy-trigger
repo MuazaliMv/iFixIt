@@ -1,9 +1,10 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-24T01:41:00+05:00
-Reason: add English / Dhivehi language switching to the public landing page.
+Created: 2026-08-24T01:47:00+05:00
+Reason: remove duplicate hero CTA and deploy single-button landing hero.
 Required production behavior:
-- EN / ދިވެހި language selector visible in the public header.
-- Dhivehi content renders right-to-left.
-- User language choice is remembered locally.
-- Blue iFixMV landing theme remains the only active landing theme.
-Target commits include: ec063f47f5b90fec485d091ef9374cb8a4326622, d2521550d7d87c5844e4ef435c793695e0636442
+- Hero shows only one primary button: Request a service.
+- Become a provider must not appear as a second hero button.
+- Provider onboarding remains available in the dedicated provider section lower on the page.
+- English / Dhivehi language switching remains active.
+- Blue iFixMV landing theme remains active.
+Target application commit includes: b5a6f92e4d2af890af11944dd999cd3a320264b2
