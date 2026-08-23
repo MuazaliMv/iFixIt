@@ -1,11 +1,4 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import CustomerPortal from './CustomerPortal';
 import './landing.css';
-
-type SessionState = 'loading' | 'signed-in' | 'signed-out';
 
 const services = [
   { icon: '🔧', title: 'General repairs', text: 'Everyday fixes and maintenance' },
@@ -25,33 +18,7 @@ const steps = [
   ['04', 'Get it fixed', 'Confirm the provider, complete the work and leave a rating.'],
 ];
 
-export default function HomePage() {
-  const [sessionState, setSessionState] = useState<SessionState>('loading');
-
-  useEffect(() => {
-    let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (mounted) setSessionState(data.session ? 'signed-in' : 'signed-out');
-    });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mounted) setSessionState(session ? 'signed-in' : 'signed-out');
-    });
-    return () => {
-      mounted = false;
-      listener.subscription.unsubscribe();
-    };
-  }, []);
-
-  if (sessionState === 'signed-in') return <CustomerPortal />;
-
-  if (sessionState === 'loading') {
-    return (
-      <div className="landingLoading" aria-label="Loading iFix">
-        <div className="landingMark">i<span>Fix</span></div>
-      </div>
-    );
-  }
-
+export default function IndexPage() {
   return (
     <div className="landingPage">
       <header className="landingHeader">
@@ -75,16 +42,16 @@ export default function HomePage() {
           <div className="landingHeroGlow" />
           <div className="landingHeroInner">
             <div className="landingHeroCopy">
-              <div className="landingEyebrow"><span /> Local services, made simple</div>
-              <h1>Find trusted help.<br/><em>Get it fixed.</em></h1>
-              <p>Connect with local service providers across the Maldives for repairs, maintenance and everyday jobs — all from one place.</p>
+              <div className="landingEyebrow"><span /> Maldives service marketplace</div>
+              <h1>Find trusted local help.<br/><em>Get it fixed.</em></h1>
+              <p>Find service providers across the Maldives for repairs, maintenance and everyday jobs — all from one simple place.</p>
               <div className="landingHeroActions">
                 <a className="landingPrimary" href="/login">Request a service <span>→</span></a>
                 <a className="landingSecondary" href="#providers">Become a provider</a>
               </div>
               <div className="landingTrustRow">
                 <span><b>✓</b> Verified providers</span>
-                <span><b>✓</b> Local matching</span>
+                <span><b>✓</b> Location matching</span>
                 <span><b>✓</b> Ratings & reviews</span>
               </div>
             </div>
