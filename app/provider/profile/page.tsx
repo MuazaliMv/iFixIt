@@ -2,7 +2,6 @@
 
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
-import ProfilePage from '../../profile/page';
 
 const ONBOARDING_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-onboarding';
 const SETUP_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-setup-data';
@@ -39,31 +38,28 @@ export default function ProviderProfilePage(){
 
  function DocumentField({type,label,description,doc}:{type:DocumentType;label:string;description:string;doc?:VerificationDocument}){const status=doc?.review_status||'NOT_SUBMITTED';return <div style={{border:'1px solid #e5e7eb',borderRadius:16,padding:16,display:'grid',gap:10,background:'#fff'}}><div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'flex-start'}}><div><strong style={{fontSize:16}}>{label}</strong><p className="muted" style={{margin:'5px 0 0'}}>{description}</p></div><span className="pill">{pretty(status)}</span></div>{doc?.review_note?<div className="formMessage">Admin note: {doc.review_note}</div>:null}<label className="secondary" style={{cursor:uploading?'wait':'pointer',width:'fit-content',minHeight:42,display:'inline-flex',alignItems:'center',justifyContent:'center'}}>{uploading===type?'Uploading…':doc?'Replace / Re-upload':'Upload'}<input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" disabled={Boolean(uploading)} onChange={e=>pick(type,e)} style={{display:'none'}}/></label><small className="muted">PDF, JPG, PNG or WebP • maximum 10 MB</small></div>}
 
- return <>
-  <main className="shell accountApp">
-   <section className="profileSection">
-    <div className="profileSectionHeader">
-     <div>
-      <h3>Subscription</h3>
-      <p className="sectionLead">Manage your provider subscription, renewal and payment history.</p>
-     </div>
-     <a className="secondary" href="/provider/subscription">Manage Subscription</a>
+ return <main className="shell accountApp">
+  <section className="profileSection">
+   <div className="profileSectionHeader">
+    <div>
+     <h3>Subscription</h3>
+     <p className="sectionLead">Manage your provider subscription, renewal and payment history.</p>
     </div>
-   </section>
+    <a className="secondary" href="/provider/subscription">Manage Subscription</a>
+   </div>
+  </section>
 
-   <section className="profileSection">
-    <div className="profileSectionHeader">
-     <div>
-      <h3>Verification Documents</h3>
-      <p className="sectionLead">Documents required before your provider account can be approved.</p>
-     </div>
-     <span className={ready?'profileBadge verified':'profileBadge warning'}>{ready?'Requirements Complete':'Action Required'}</span>
+  <section className="profileSection">
+   <div className="profileSectionHeader">
+    <div>
+     <h3>Verification Documents</h3>
+     <p className="sectionLead">Documents required before your provider account can be approved.</p>
     </div>
-    <div style={{marginBottom:14,padding:12,borderRadius:14,background:'#f8fafc',border:'1px solid #e5e7eb'}}><strong>Provider type: {pretty(providerType)}</strong><p className="muted" style={{margin:'5px 0 0'}}>{providerType==='BUSINESS'?'Required: approved ID Card and approved Business Permit.':'Required: approved ID Card.'}</p></div>
-    {loadingDocs?<p className="formMessage">Loading verification documents…</p>:<div style={{display:'grid',gap:12}}><DocumentField type="ID_CARD" label="ID Card" description={providerType==='BUSINESS'?'ID Card of the business owner or authorized person.':'Your government-issued ID Card.'} doc={idCard}/>{providerType==='BUSINESS'?<DocumentField type="BUSINESS_LICENSE" label="Business Permit" description="Valid business permit / registration document." doc={businessPermit}/>:null}</div>}
-    {docMessage?<p className="formMessage" role="status" style={{marginTop:12}}>{docMessage}</p>:null}
-   </section>
-  </main>
-  <ProfilePage/>
- </>;
+    <span className={ready?'profileBadge verified':'profileBadge warning'}>{ready?'Requirements Complete':'Action Required'}</span>
+   </div>
+   <div style={{marginBottom:14,padding:12,borderRadius:14,background:'#f8fafc',border:'1px solid #e5e7eb'}}><strong>Provider type: {pretty(providerType)}</strong><p className="muted" style={{margin:'5px 0 0'}}>{providerType==='BUSINESS'?'Required: approved ID Card and approved Business Permit.':'Required: approved ID Card.'}</p></div>
+   {loadingDocs?<p className="formMessage">Loading verification documents…</p>:<div style={{display:'grid',gap:12}}><DocumentField type="ID_CARD" label="ID Card" description={providerType==='BUSINESS'?'ID Card of the business owner or authorized person.':'Your government-issued ID Card.'} doc={idCard}/>{providerType==='BUSINESS'?<DocumentField type="BUSINESS_LICENSE" label="Business Permit" description="Valid business permit / registration document." doc={businessPermit}/>:null}</div>}
+   {docMessage?<p className="formMessage" role="status" style={{marginTop:12}}>{docMessage}</p>:null}
+  </section>
+ </main>;
 }
