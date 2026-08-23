@@ -1,9 +1,10 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-23T00:57:00+05:00
-Reason: deploy provider profile subscription visibility fix.
+Created: 2026-08-23T05:05:00+05:00
+Reason: deploy User Management rights and privileges UI.
 Required production behavior:
-- Manage Subscription is shown inside the provider profile.
-- Manage Subscription is not shown as a separate provider menu item.
-- Customer and admin profiles do not receive provider subscription controls.
-- Provider profile remains visible even while subscription status is loading.
-Target application commit includes: 4f2a2773c577f1961f339e419ebd85b76a284e9c
+- User Management shows each user's role and privilege level on the user card.
+- Opening a user shows a USER RIGHTS & PRIVILEGES section with effective permissions.
+- Rights reflect role, provider approval, and suspension status.
+- Search includes rights and privilege terms.
+- Page title is User Management.
+Target application commit includes: caed45bd059a5f84562db2a219cdfe062d8fd815
