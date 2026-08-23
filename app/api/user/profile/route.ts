@@ -6,6 +6,7 @@ const SUPABASE_PUBLISHABLE_KEY='sb_publishable_1sZEZgz9k2JACE_WzHtbCw_reiQEik6';
 const AUTH_API=`${SUPABASE_URL}/functions/v1/auth-account`;
 const FIXED_COUNTRY='Maldives';
 
+function sameOrigin(request:NextRequest){const origin=request.headers.get('origin');return !origin||origin===request.nextUrl.origin;}
 function normalizeProfilePhone(value:unknown){
  const raw=String(value??'').trim().replace(/[\s()-]/g,'');
  if(!raw)return '';
@@ -35,6 +36,7 @@ export async function GET(request:NextRequest){
 }
 
 export async function PUT(request:NextRequest){
+ if(!sameOrigin(request))return NextResponse.json({error:'Invalid request origin.'},{status:403});
  const auth=await resolveServerAuth(request);
  if(!auth)return NextResponse.json({error:'Authentication required.'},{status:401});
  const contentType=request.headers.get('content-type')||'';
