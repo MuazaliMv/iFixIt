@@ -1,10 +1,10 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-24T02:47:00+05:00
-Reason: show any running customer request timer globally.
+Created: 2026-08-24T02:55:00+05:00
+Reason: deploy improved live provider broadcast banner.
 Required production behavior:
-- If a customer has an active provider-search or provider-selection countdown, show it visibly on every authenticated customer page.
-- Update the countdown every second.
-- Poll dispatch state every 15 seconds.
-- Hide the indicator automatically when no timer is running.
-- Tapping the timer opens the related service request.
-Target application commits include: 5eec7122c8a7ce01ba48d8c44663e525aafd22b7, 032a6f04ab6c183f1636ee21941e6820edb7e0aa
+- Show the banner on the active customer request detail page while provider broadcast/response timers are running.
+- Headline: Your request is broadcasting to service providers.
+- Tell the customer that matching providers are being notified and they will be notified when one responds.
+- Show the live countdown prominently.
+- Use the approved attractive blue design with a red rounded border.
+Target application commits include: 0178ed83d393db437c614178faf51b7056eb353a, 1aa1dad9f53ca99e1a34bf2f7258e8bab0a12008
