@@ -1,9 +1,9 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-23T23:15:00+05:00
-Reason: deploy provider confirmation action and preferred-time scheduling flow.
+Created: 2026-08-23T23:18:00+05:00
+Reason: enable provider action flow in production now.
 Required production behavior:
-- Selected provider sees a clear Confirm Job action.
-- After confirmation, provider sees customer preferred visit times.
-- Provider can choose a preferred time or set another agreed visit time.
-- Provider can save visit time and continue the job flow.
+- Selected provider sees and can use Confirm Job.
+- Confirm Job calls provider-marketplace confirm_selection.
+- After provider confirmation, customer preferred times are visible and selectable.
+- Provider can save visit time, start work, and mark complete.
 Target application commit includes: 8cf861bdf2a69738ca4283d745da6e6b7f87ac56
