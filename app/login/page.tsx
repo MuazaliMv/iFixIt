@@ -4,7 +4,6 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import './login.css';
 
 type Mode='login'|'register';
-type Role='CUSTOMER'|'PROVIDER';
 const SUPABASE_STORAGE_KEY='sb-yzlhlilxiszefneshatm-auth-token';
 
 function EyeIcon({off=false}:{off?:boolean}){
@@ -13,7 +12,6 @@ function EyeIcon({off=false}:{off?:boolean}){
 
 export default function LoginPage(){
  const[mode,setMode]=useState<Mode>('login');
- const[role,setRole]=useState<Role>('CUSTOMER');
  const[fullName,setFullName]=useState('');
  const[email,setEmail]=useState('');
  const[password,setPassword]=useState('');
@@ -58,7 +56,7 @@ export default function LoginPage(){
   try{
    if(mode==='register'){
     const phoneNumber=phone?`${countryCode}${phone}`:'';
-    const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName:fullName.trim(),email:emailTrimmed,password,role,phoneNumber})});
+    const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName:fullName.trim(),email:emailTrimmed,password,phoneNumber})});
     const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to create account.');
     setMessage('Account created. You can now sign in.');setMode('login');setPassword('');setTouched({email:false,password:false,phone:false,fullName:false});
    }else{
@@ -81,14 +79,13 @@ export default function LoginPage(){
    <div className="authModeTabs" role="tablist" aria-label="Account access"><button type="button" role="tab" aria-selected={isLogin} className={isLogin?'active':''} onClick={()=>switchMode('login')}>Sign in</button><button type="button" role="tab" aria-selected={!isLogin} className={!isLogin?'active':''} onClick={()=>switchMode('register')}>Create account</button></div>
    <div className="authIntro"><h1>{isLogin?'Welcome back':'Create your account'}</h1><p>{isLogin?'Sign in with your email to continue to iFixMV.':'Enter your details to get started with iFixMV.'}</p></div>
    <form onSubmit={submit} className="authFormClean" noValidate>
-    {!isLogin?<><label>Full name<input value={fullName} onBlur={()=>setTouched(v=>({...v,fullName:true}))} onChange={e=>setFullName(e.target.value)} placeholder="Your name" autoComplete="name" aria-invalid={touched.fullName&&!nameValid}/>{touched.fullName&&!nameValid?<span className="fieldError">Enter your full name.</span>:null}</label><label>Account type<select value={role} onChange={e=>setRole(e.target.value as Role)}><option value="CUSTOMER">User</option><option value="PROVIDER">Service Provider</option></select></label><label>Phone number <span className="optionalLabel">Optional</span><div className="phoneField"><select className="countryCode" value={countryCode} onChange={e=>setCountryCode(e.target.value)} aria-label="Country code"><option value="+960">🇲🇻 +960</option></select><input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onBlur={()=>setTouched(v=>({...v,phone:true}))} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} aria-invalid={touched.phone&&!phoneValid}/></div><span className="fieldHelp">Enter the 7-digit local number only.</span>{touched.phone&&!phoneValid?<span className="fieldError">Enter a valid 7-digit Maldives number.</span>:null}</label></>:null}
+    {!isLogin?<><label>Full name<input value={fullName} onBlur={()=>setTouched(v=>({...v,fullName:true}))} onChange={e=>setFullName(e.target.value)} placeholder="Your name" autoComplete="name" aria-invalid={touched.fullName&&!nameValid}/>{touched.fullName&&!nameValid?<span className="fieldError">Enter your full name.</span>:null}</label><label>Phone number <span className="optionalLabel">Optional</span><div className="phoneField"><select className="countryCode" value={countryCode} onChange={e=>setCountryCode(e.target.value)} aria-label="Country code"><option value="+960">🇲🇻 +960</option></select><input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onBlur={()=>setTouched(v=>({...v,phone:true}))} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} aria-invalid={touched.phone&&!phoneValid}/></div><span className="fieldHelp">Enter the 7-digit local number only.</span>{touched.phone&&!phoneValid?<span className="fieldError">Enter a valid 7-digit Maldives number.</span>:null}</label></>:null}
     <label>Email address<input type="email" inputMode="email" autoComplete="email" value={email} onBlur={()=>setTouched(v=>({...v,email:true}))} onChange={e=>{setEmail(e.target.value);if(touched.email)setTouched(v=>({...v,email:false}));}} placeholder="you@example.com" aria-invalid={touched.email&&!emailValid}/>{touched.email&&!emailValid?<span className="fieldError">{emailTrimmed?'Enter a valid email address.':'Enter your email address.'}</span>:null}</label>
     <label>Password<div className="passwordField"><input type={showPassword?'text':'password'} autoComplete={isLogin?'current-password':'new-password'} value={password} onBlur={()=>setTouched(v=>({...v,password:true}))} onKeyUp={e=>setCapsLock(e.getModifierState('CapsLock'))} onKeyDown={e=>setCapsLock(e.getModifierState('CapsLock'))} onChange={e=>setPassword(e.target.value)} minLength={8} aria-invalid={touched.password&&!passwordValid}/><button type="button" className="passwordToggle" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'} title={showPassword?'Hide password':'Show password'}><EyeIcon off={showPassword}/></button></div>{capsLock?<span className="capsWarning">Caps Lock is on.</span>:null}{!isLogin?<span className="fieldHelp">Use at least 8 characters.</span>:null}{touched.password&&!passwordValid?<span className="fieldError">Password must be at least 8 characters.</span>:null}</label>
     {isLogin?<div className="authUtility"><label className="rememberMe"><input type="checkbox" checked={rememberMe} onChange={e=>setRememberMe(e.target.checked)}/><span>Remember me</span></label><a href="/forgot-password">Forgot password?</a></div>:null}
     <button className="primary authSubmit" disabled={busy||!formValid} aria-busy={busy}>{busy?<><span className="buttonSpinner" aria-hidden="true"/>{isLogin?'Signing in…':'Creating account…'}</>:isLogin?'Sign In':'Create Account'}</button>
    </form>
    {message?<p className="formMessage" role="status">{message}</p>:null}
-   {!isLogin&&role==='PROVIDER'?<p className="authHint">Service Provider accounts require Admin approval before receiving service requests.</p>:null}
    <p className="authSwitch">{isLogin?'New to iFixMV?':'Already have an account?'} <button type="button" onClick={()=>switchMode(isLogin?'register':'login')}>{isLogin?'Create account':'Sign in'}</button></p>
   </section>
  </main>;
