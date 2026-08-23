@@ -32,7 +32,6 @@ import ResponsiveRuntime from './ResponsiveRuntime';
 import RoleAccessGuard from './RoleAccessGuard';
 import GlobalRoleMenu from './GlobalRoleMenu';
 import GlobalCardPagination from './GlobalCardPagination';
-import ProfilePhoneDisplay from './ProfilePhoneDisplay';
 import MobileDateInputRuntime from './MobileDateInputRuntime';
 
 export const metadata: Metadata = {
@@ -43,7 +42,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/><ResponsiveRuntime/><RoleAccessGuard/><GlobalRoleMenu/><GlobalCardPagination/><ProfilePhoneDisplay/><MobileDateInputRuntime/>{children}<ModeToast/></body>
+      <body><ThemeRuntime/><ResponsiveRuntime/><RoleAccessGuard/><GlobalRoleMenu/><GlobalCardPagination/><MobileDateInputRuntime/>{children}<ModeToast/></body>
     </html>
   );
 }
