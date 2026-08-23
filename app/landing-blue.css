@@ -1,0 +1,11 @@
+:root{--landing-green:#3157d5;--landing-green-2:#2447ba;--landing-mint:#eef3ff;--landing-line:#dbe4f8;--landing-bg:#f7f9ff;--landing-ink:#14203a;--landing-muted:#667085}
+.landingLoading{background:#f7f9ff}.landingMark{box-shadow:0 18px 60px rgba(49,87,213,.20)}
+.landingHeader{border-bottom-color:#e9eef9}.landingHeaderCta{box-shadow:0 8px 24px rgba(49,87,213,.18)}
+.landingHero{background:linear-gradient(135deg,#f8faff 0%,#eef3ff 55%,#fbfcff 100%)}.landingHeroGlow{background:radial-gradient(circle,rgba(49,87,213,.16),rgba(49,87,213,0) 68%)}.landingEyebrow span{background:#6f8df0}.landingPrimary{box-shadow:0 12px 34px rgba(49,87,213,.19)}
+.landingHeroCard{border-color:#dce4f7;box-shadow:0 28px 80px rgba(38,66,145,.12),0 2px 8px rgba(38,66,145,.05)}.landingHeroCard:before{border-color:#e1e7f5}.landingStatusDot{color:#3157d5;background:#eef3ff}.landingFakeInput{border-color:#dce4f4;background:#fbfcff}.landingMiniCards>div{background:#f4f7ff}
+.landingServiceCard:hover{border-color:#aebff2;box-shadow:0 12px 30px rgba(49,87,213,.08)}
+.landingHow{background:#142a63}.landingSectionHead.light small{color:#8fa7ff}.landingSectionHead.light>p{color:#c2cdf0}.landingSteps{background:#38508f;border-color:#38508f}.landingStep{background:#1b3472}.landingStep>span{background:#29488e;color:#a9baff}.landingStep p{color:#c4cdec}
+.landingSafetyCard{background:#f3f6ff}.landingSafetyVisual{background:linear-gradient(150deg,#3157d5,#203d94);box-shadow:0 20px 60px rgba(49,87,213,.16)}.landingSafetyVisual small{color:#d3dcff}.landingFeatureList b{background:#e3e9ff}
+.landingProvider{background:#f8f9fd;border-top-color:#e7ebf5}.landingProviderGraphic:before{background:#e2e8fb}.landingProviderCard{border-color:#dce4f7;box-shadow:0 20px 50px rgba(49,87,213,.12)}.landingProviderCard.second span{color:#3157d5}
+.landingFinalCta{background:#3157d5}.landingFinalCta small{color:#d9e1ff}.landingFinalCta p{color:#e0e6ff}.landingFinalCta>a{color:#3157d5!important}.landingFooter{border-top-color:#e4e8f2}
+@media(max-width:600px){.landingSignIn{border-color:#dce3f3}}
