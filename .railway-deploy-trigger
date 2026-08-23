@@ -1,8 +1,9 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-24T01:39:00+05:00
-Reason: deploy the blue iFixMV landing theme and global-shell auth updates to production.
+Created: 2026-08-24T01:41:00+05:00
+Reason: add English / Dhivehi language switching to the public landing page.
 Required production behavior:
-- Landing page uses blue iFixMV branding, not green.
-- Hero, CTA buttons, accents, status badges, request card and provider sections use the blue palette.
-- Login/create-account stays inside the global iFixMV shell.
-Target application commit includes: c9d17ff54d2bc947108d26f9ae0f6fb536f44ea3
+- EN / ދިވެހި language selector visible in the public header.
+- Dhivehi content renders right-to-left.
+- User language choice is remembered locally.
+- Blue iFixMV landing theme remains the only active landing theme.
+Target commits include: ec063f47f5b90fec485d091ef9374cb8a4326622, d2521550d7d87c5844e4ef435c793695e0636442
