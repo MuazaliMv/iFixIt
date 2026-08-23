@@ -88,6 +88,10 @@ export default function GlobalRoleMenu(){
         if(!r.ok){if(active)setRole(null);return;}
         const p=await r.json();
         const raw=String(p?.profile?.role||'CUSTOMER').toUpperCase();
+        if(raw==='PROVIDER'&&path==='/profile'){
+          window.location.replace('/provider/profile');
+          return;
+        }
         if(active)setRole(raw==='ADMIN'?'admin':raw==='PROVIDER'?'provider':'customer');
       }catch{if(active)setRole(null);}
     }
