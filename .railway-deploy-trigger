@@ -1,10 +1,10 @@
 Trigger Railway deployment from current main head.
-Created: 2026-08-24T01:47:00+05:00
-Reason: remove duplicate hero CTA and deploy single-button landing hero.
+Created: 2026-08-24T02:07:00+05:00
+Reason: deploy latest authentication UI cleanup.
 Required production behavior:
-- Hero shows only one primary button: Request a service.
-- Become a provider must not appear as a second hero button.
-- Provider onboarding remains available in the dedicated provider section lower on the page.
-- English / Dhivehi language switching remains active.
-- Blue iFixMV landing theme remains active.
-Target application commit includes: b5a6f92e4d2af890af11944dd999cd3a320264b2
+- Remove the top Sign in tab from the login view.
+- Keep only the Create account shortcut for new users.
+- Keep the global shell and hamburger menu visible.
+- Main login submit action reads Continue.
+- Do not duplicate Sign in/Create account in the global menu.
+Target application commit includes: 39d9c632ff8fa7aa09f5eb05f6b6c24a25966c68
