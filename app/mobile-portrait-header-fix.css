@@ -1,0 +1,86 @@
+/* Keep customer header actions visible on narrow portrait phones. */
+@media (max-width: 520px) and (orientation: portrait) {
+  .c4App .c3Header {
+    grid-template-columns: 44px minmax(0, 1fr) 116px !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    column-gap: 4px;
+  }
+
+  .c4App .c3HeaderSide {
+    min-width: 0;
+  }
+
+  .c4App .c3HeaderRight {
+    width: 116px;
+    justify-self: end;
+    justify-content: flex-end;
+    overflow: visible;
+  }
+
+  .c4App .c4HeaderActions {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .c4App .c4LangCompact {
+    flex: 0 0 auto;
+    padding: 2px;
+    gap: 1px;
+  }
+
+  .c4App .c4LangCompact button {
+    min-width: 28px;
+    min-height: 32px;
+    padding: 0 5px;
+    font-size: 12px;
+  }
+
+  .c4App .c3Avatar,
+  .c4App .c3HeaderRight .c3IconButton {
+    flex: 0 0 40px;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px;
+    min-height: 40px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .c4App .c3Logo {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .c4App .c3Logo small {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 360px) and (orientation: portrait) {
+  .c4App .c3Header {
+    grid-template-columns: 42px minmax(0, 1fr) 108px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .c4App .c3HeaderRight {
+    width: 108px;
+  }
+
+  .c4App .c4LangCompact button {
+    min-width: 26px;
+    padding: 0 4px;
+  }
+
+  .c4App .c3Logo {
+    font-size: 21px !important;
+  }
+}
