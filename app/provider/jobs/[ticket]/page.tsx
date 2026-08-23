@@ -35,7 +35,8 @@ function label(job:Job){
 }
 
 function slotDate(value:string){
- const d=new Date(value.length===16?`${value}:00`:value);
+ const normalized=value.includes('T')?value:value.replace(' ','T');
+ const d=new Date(normalized.length===16?`${normalized}:00`:normalized);
  return Number.isNaN(d.getTime())?null:d;
 }
 function formatPreferredSlot(value:string){
@@ -43,8 +44,9 @@ function formatPreferredSlot(value:string){
  return d?d.toLocaleString():value;
 }
 function toDateTimeLocal(value:string){
- if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value))return value;
- const d=new Date(value);
+ const normalized=value.includes('T')?value:value.replace(' ','T');
+ if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(normalized))return normalized;
+ const d=new Date(normalized);
  if(Number.isNaN(d.getTime()))return'';
  const pad=(n:number)=>String(n).padStart(2,'0');
  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -66,22 +68,23 @@ export default function ProviderJobDetailPage(){
  async function session(){const{data}=await supabase.auth.getSession();if(!data.session){window.location.href='/login';return null;}return data.session;}
  async function load(){setBusy(true);try{const s=await session();if(!s)return;const headers={'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`};const mr=await fetch(MARKET_URL,{method:'POST',headers,body:JSON.stringify({action:'dashboard'})});const mp=await mr.json();if(!mr.ok)throw new Error(mp?.error||'Unable to load job');const found=(mp.requests||[]).find((x:Job)=>x.ticket_number===ticket&&['ACCEPTED','INSPECTION_SCHEDULED','IN_PROGRESS','COMPLETED'].includes(x.status));if(!found)throw new Error('This customer job is not assigned to you.');setJob(found);setMessage('');}catch(e){setJob(null);setMessage(e instanceof Error?e.message:'Unable to load customer job.');}finally{setBusy(false);}}
  async function confirmJob(){setBusy(true);try{const s=await session();if(!s)return;const r=await fetch(MARKET_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`},body:JSON.stringify({action:'confirm_selection',ticketNumber:ticket})});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to confirm this job');setMessage('Job confirmed. Choose a valid future visit time.');await load();}catch(e){setMessage(e instanceof Error?e.message:'Unable to confirm this job.');}finally{setBusy(false);}}
- async function act(action:'schedule'|'start'|'complete'){setBusy(true);try{const s=await session();if(!s)return;const r=await fetch(FLOW_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`},body:JSON.stringify({action,ticketNumber:ticket,scheduledStart:schedule||undefined})});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to update job');setMessage(action==='schedule'?'Visit time saved. Start Work is now available.':action==='start'?'Work started. Work Done is now available.':'Work marked done. Waiting for customer confirmation.');await load();}catch(e){setMessage(e instanceof Error?e.message:'Unable to update job.');}finally{setBusy(false);}}
+ async function act(action:'schedule'|'start'|'complete',scheduledOverride?:string){setBusy(true);try{const s=await session();if(!s)return;const scheduledStart=scheduledOverride||schedule||undefined;const r=await fetch(FLOW_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`},body:JSON.stringify({action,ticketNumber:ticket,scheduledStart})});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to update job');setMessage(action==='schedule'?'Visit time confirmed. Start Work is now available.':action==='start'?'Work started. Work Done is now available.':'Work marked done. Waiting for customer confirmation.');await load();}catch(e){setMessage(e instanceof Error?e.message:'Unable to update job.');}finally{setBusy(false);}}
  if(mode.loading||busy&&!job)return <main className="providerModePage"><div className="providerModeShell"><div className="providerModeCard">Loading customer job…</div></div></main>;
  const stage=job?label(job):'';const index=Math.max(0,stages.indexOf(stage));const contactUnlocked=Boolean(job?.contactUnlocked);const scheduledInternal=job?.status==='INSPECTION_SCHEDULED';const workingInternal=job?.status==='IN_PROGRESS';const closed=stage==='CUSTOMER CONFIRMED';
  const preferredSlots=Array.from(new Set((job?.inspection?.preferred_slots||[]).filter(Boolean)));
  const futureSlots=preferredSlots.filter(slot=>{const d=slotDate(slot);return Boolean(d&&d.getTime()>Date.now());});
  const expiredSlots=preferredSlots.filter(slot=>!futureSlots.includes(slot));
- const scheduleValid=Boolean(schedule&&Date.parse(schedule)>Date.now());
+ const scheduleDate=slotDate(schedule);
+ const scheduleValid=Boolean(scheduleDate&&scheduleDate.getTime()>Date.now());
  const directions=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job?.service_location_text||'')}`;
  return <main className="providerModePage"><div className="providerModeShell"><header className="providerModeTop"><div><span className="modeBadge provider"><span className="modeDot provider"/>Provider</span><h1>{job?.service_name||'Customer Job'}</h1><p>{ticket}</p></div><AppModeSwitch mode="provider" compact/></header>{job?<>
   <section className="providerModeCard providerJobHero"><div><span className="modeBadge provider">{stage}</span><h2>{job.service_name}</h2><p>{job.service_location_text}</p></div><a className="secondary" href="/provider/jobs?tab=active">Back to jobs</a></section>
   <section className="providerModeCard"><div className="providerProgressCompact">{stages.map((item,i)=><div className={i<index?'done':i===index?'current':''} key={item}><span>{i<index?'✓':i+1}</span><small>{item}</small></div>)}</div></section>
-  <section className="providerModeCard providerNextAction"><div className="providerSectionHead"><div><h2>{closed?'Job closed':'Next action'}</h2><p>{stage==='ACCEPTED'?'The customer selected you. Confirm this job to continue.':stage==='CONFIRMED'?'Choose a valid future visit time, then save it. Start Work becomes available next.':stage==='IN PROGRESS'&&scheduledInternal?'The visit is scheduled. Start Work when you begin the job.':stage==='IN PROGRESS'&&workingInternal?'Work is active. Use Work Done when finished.':stage==='COMPLETED'?'Work is complete. Waiting for the customer to confirm completion.':'No further provider action is required.'}</p></div></div>
+  <section className="providerModeCard providerNextAction"><div className="providerSectionHead"><div><h2>{closed?'Job closed':'Next action'}</h2><p>{stage==='ACCEPTED'?'The customer selected you. Confirm this job to continue.':stage==='CONFIRMED'?'Tap a customer preferred time to confirm it immediately, or choose another future visit time.':stage==='IN PROGRESS'&&scheduledInternal?'The visit is scheduled. Start Work when you begin the job.':stage==='IN PROGRESS'&&workingInternal?'Work is active. Use Work Done when finished.':stage==='COMPLETED'?'Work is complete. Waiting for the customer to confirm completion.':'No further provider action is required.'}</p></div></div>
    {stage==='ACCEPTED'?<button className="primary providerPrimaryAction" disabled={busy} onClick={()=>void confirmJob()}>{busy?'Confirming…':'Confirm Job'}</button>:null}
-   {stage==='CONFIRMED'&&futureSlots.length?<div style={{marginBottom:16}}><strong>Customer preferred times</strong><div className="providerActionRow" style={{marginTop:10,flexWrap:'wrap'}}>{futureSlots.map((slot,i)=><button key={`${slot}-${i}`} type="button" className="secondary" onClick={()=>setSchedule(toDateTimeLocal(slot))}>{formatPreferredSlot(slot)}</button>)}</div></div>:null}
-   {stage==='CONFIRMED'&&expiredSlots.length?<p className="statusNotice">Expired or duplicate preferred times were removed. Enter another agreed future visit time.</p>:null}
-   {stage==='CONFIRMED'?<><div className="providerActionRow"><input aria-label="Visit time" type="datetime-local" min={localNowMin()} value={schedule} onChange={e=>setSchedule(e.target.value)}/><button className="primary" disabled={busy||!scheduleValid} onClick={()=>void act('schedule')}>Save Visit Time</button></div><div className="providerActionRow" style={{marginTop:12}}><button className="primary providerPrimaryAction" disabled>Start Work — save visit time first</button><button className="success providerPrimaryAction" disabled>Work Done — start work first</button></div></>:null}
+   {stage==='CONFIRMED'&&futureSlots.length?<div style={{marginBottom:16}}><strong>Customer preferred times</strong><div className="providerActionRow" style={{marginTop:10,flexWrap:'wrap'}}>{futureSlots.map((slot,i)=>{const local=toDateTimeLocal(slot);return <button key={`${slot}-${i}`} type="button" className="primary" disabled={busy||!local} onClick={()=>{setSchedule(local);void act('schedule',local);}}>{busy?'Saving…':`Confirm ${formatPreferredSlot(slot)}`}</button>;})}</div></div>:null}
+   {stage==='CONFIRMED'&&expiredSlots.length?<p className="statusNotice">One or more customer preferred times have already passed. Choose another future visit time below.</p>:null}
+   {stage==='CONFIRMED'?<><div className="providerActionRow"><input aria-label="Visit time" type="datetime-local" min={localNowMin()} value={schedule} onChange={e=>setSchedule(e.target.value)}/><button className="primary" disabled={busy||!scheduleValid} onClick={()=>void act('schedule')}>{busy?'Saving…':'Confirm Visit Time'}</button></div><p className="muted" style={{marginTop:10}}>After the visit time is confirmed, Start Work becomes available.</p></>:null}
    {stage==='IN PROGRESS'&&scheduledInternal?<button className="primary providerPrimaryAction" disabled={busy} onClick={()=>void act('start')}>{busy?'Starting…':'Start Work'}</button>:null}
    {stage==='IN PROGRESS'&&workingInternal?<button className="success providerPrimaryAction" disabled={busy} onClick={()=>void act('complete')}>{busy?'Updating…':'Work Done'}</button>:null}
    {stage==='COMPLETED'?<span className="modeBadge customer">Waiting for Customer</span>:null}{closed?<span className="modeBadge customer">Closed</span>:null}
