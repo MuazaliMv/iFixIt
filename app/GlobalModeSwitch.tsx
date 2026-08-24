@@ -26,6 +26,7 @@ export default function GlobalModeSwitch(){
  const[accountRole,setAccountRole]=useState<AccountRole>('CUSTOMER');
  const[providerApproved,setProviderApproved]=useState(false);
  const[open,setOpen]=useState(false);
+ const[loggingOut,setLoggingOut]=useState(false);
  const wrapRef=useRef<HTMLDivElement|null>(null);
 
  useEffect(()=>{
@@ -88,6 +89,23 @@ export default function GlobalModeSwitch(){
   setOpen(false);
  }
 
+ async function signOut(){
+  if(loggingOut)return;
+  setLoggingOut(true);
+  try{
+   setOpen(false);
+   try{
+    localStorage.removeItem('fixit:mobile-nav-role');
+    localStorage.removeItem('fixit:app-mode');
+    sessionStorage.removeItem('fixit:mode-toast');
+   }catch{}
+   await supabase.auth.signOut();
+   window.location.assign('/login');
+  }finally{
+   setLoggingOut(false);
+  }
+ }
+
  return <>
   <div className="airAccount" ref={wrapRef}>
    <button
@@ -131,6 +149,20 @@ export default function GlobalModeSwitch(){
     </>:mode!=='admin'?<div className="airModeRow" role="none">
      <AppModeSwitch mode={mode}/>
     </div>:null}
+
+    <div className="airMenuDivider"/>
+    <button
+     type="button"
+     className="airLogoutItem"
+     role="menuitem"
+     onClick={()=>void signOut()}
+     disabled={loggingOut}
+    >
+     <span className="airLogoutIcon" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/></svg>
+     </span>
+     <span className="airLogoutText"><strong>{loggingOut?'Logging out…':'Logout'}</strong><small>Sign out of this account</small></span>
+    </button>
    </div>:null}
   </div>
 
@@ -155,6 +187,13 @@ export default function GlobalModeSwitch(){
    .airModeRow .modeSwitch{width:100%;min-height:56px;justify-content:flex-start!important;padding:13px 14px!important;border:0!important;border-radius:12px!important;background:transparent!important;color:#222!important;box-shadow:none!important;font-size:15px!important;font-weight:700!important;text-align:left;white-space:normal!important;line-height:1.3!important}
    .airModeRow .modeSwitch:hover{background:#f7f7f7!important}
    .airModeRow .modeDot{width:9px!important;height:9px!important;flex:0 0 9px}
+   .airLogoutItem{width:100%;display:flex;align-items:center;gap:14px;min-height:64px;padding:12px 20px;border:0;background:#fff;color:#222;text-align:left;cursor:pointer}
+   .airLogoutItem:hover{background:#f7f7f7}
+   .airLogoutItem:disabled{cursor:default;opacity:.6}
+   .airLogoutIcon{display:grid;place-items:center;flex:0 0 20px;color:#222}
+   .airLogoutText{display:flex;min-width:0;flex-direction:column;gap:2px}
+   .airLogoutText strong{font-size:16px;font-weight:700;line-height:1.2}
+   .airLogoutText small{color:#717171;font-size:13px;font-weight:500;line-height:1.35}
    @media(max-width:520px){
     .airAccount{right:max(12px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top))}
     .airAccountTrigger{min-width:72px;min-height:46px}
@@ -168,6 +207,9 @@ export default function GlobalModeSwitch(){
     .airMenuItemMain small,.airWorkspaceText small{font-size:14px}
     .airModeRow{padding:8px 10px 12px}
     .airModeRow .modeSwitch{min-height:60px;font-size:16px!important;padding:14px 16px!important}
+    .airLogoutItem{min-height:68px;padding:14px 20px}
+    .airLogoutText strong{font-size:17px}
+    .airLogoutText small{font-size:14px}
    }
   `}</style>
  </>;
