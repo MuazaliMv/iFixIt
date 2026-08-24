@@ -6,13 +6,15 @@ import { usePathname } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
 import AppModeSwitch from './AppModeSwitch';
 
-type Mode='customer'|'provider';
+type Mode='customer'|'provider'|'admin';
+type AccountRole='CUSTOMER'|'PROVIDER'|'ADMIN';
 
 function isHiddenRoute(path:string){
  return path.startsWith('/login')||path.startsWith('/register')||path.startsWith('/auth')||path.startsWith('/api/')||path.startsWith('/onboarding');
 }
 
 function routeMode(path:string):Mode{
+ if(path.startsWith('/admin'))return 'admin';
  if(path.startsWith('/provider')&&!path.startsWith('/provider/onboarding'))return 'provider';
  return 'customer';
 }
@@ -21,6 +23,8 @@ export default function GlobalModeSwitch(){
  const path=usePathname();
  const[mode,setMode]=useState<Mode>(()=>routeMode(path));
  const[signedIn,setSignedIn]=useState(false);
+ const[accountRole,setAccountRole]=useState<AccountRole>('CUSTOMER');
+ const[providerApproved,setProviderApproved]=useState(false);
  const[open,setOpen]=useState(false);
  const wrapRef=useRef<HTMLDivElement|null>(null);
 
@@ -30,7 +34,18 @@ export default function GlobalModeSwitch(){
   let active=true;
   void(async()=>{
    const{data}=await supabase.auth.getSession();
-   if(active)setSignedIn(Boolean(data.session));
+   if(!active)return;
+   const hasSession=Boolean(data.session);
+   setSignedIn(hasSession);
+   if(!hasSession)return;
+   try{
+    const r=await fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store'});
+    if(!r.ok||!active)return;
+    const p=await r.json().catch(()=>({}));
+    const raw=String(p?.profile?.role||'CUSTOMER').toUpperCase();
+    setAccountRole(raw==='ADMIN'?'ADMIN':raw==='PROVIDER'?'PROVIDER':'CUSTOMER');
+    setProviderApproved(p?.profile?.provider_approved===true||raw==='PROVIDER');
+   }catch{}
   })();
   const{data:listener}=supabase.auth.onAuthStateChange((_event,session)=>{
    if(active)setSignedIn(Boolean(session));
@@ -58,9 +73,17 @@ export default function GlobalModeSwitch(){
 
  if(isHiddenRoute(path)||!signedIn)return null;
 
- const isAdmin=path.startsWith('/admin');
  const profileHref=mode==='provider'?'/provider/profile':'/profile';
- const workspaceLabel=mode==='provider'?'Service Provider':'Customer';
+ const workspaceLabel=mode==='admin'?'Admin':mode==='provider'?'Service Provider':'Customer';
+ const isAdminAccount=accountRole==='ADMIN';
+
+ function rememberWorkspace(next:Mode){
+  try{
+   localStorage.setItem('fixit:mobile-nav-role',next);
+   localStorage.setItem('fixit:app-mode',next);
+  }catch{}
+  setOpen(false);
+ }
 
  return <>
   <div className="airAccount" ref={wrapRef}>
@@ -90,7 +113,19 @@ export default function GlobalModeSwitch(){
      <span className="airMenuItemMain"><span className="airMenuItemTitle">Profile</span><small>View and manage your account</small></span>
      <span aria-hidden="true">›</span>
     </Link>
-    {!isAdmin?<div className="airModeRow" role="none">
+
+    {isAdminAccount?<>
+     <div className="airMenuDivider"/>
+     {mode!=='admin'?<Link className="airWorkspaceItem" href="/admin" role="menuitem" onClick={()=>rememberWorkspace('admin')}>
+      <span className="airWorkspaceText"><strong>Switch to Admin</strong><small>Manage users, requests and system settings</small></span><span aria-hidden="true">›</span>
+     </Link>:null}
+     {mode!=='customer'?<Link className="airWorkspaceItem" href="/home" role="menuitem" onClick={()=>rememberWorkspace('customer')}>
+      <span className="airWorkspaceText"><strong>Switch to Customer</strong><small>Request and manage services as a customer</small></span><span aria-hidden="true">›</span>
+     </Link>:null}
+     {providerApproved&&mode!=='provider'?<Link className="airWorkspaceItem" href="/provider/today" role="menuitem" onClick={()=>rememberWorkspace('provider')}>
+      <span className="airWorkspaceText"><strong>Switch to Service Provider</strong><small>Open your provider workspace</small></span><span aria-hidden="true">›</span>
+     </Link>:null}
+    </>:mode!=='admin'?<div className="airModeRow" role="none">
      <AppModeSwitch mode={mode}/>
     </div>:null}
    </div>:null}
@@ -103,16 +138,16 @@ export default function GlobalModeSwitch(){
    .airAccountTrigger:active{transform:scale(.98)}
    .airMenuIcon{display:grid;place-items:center;color:#222}
    .airAvatar{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#717171;color:#fff}
-   .airAccountMenu{position:absolute;right:0;top:56px;width:min(360px,calc(100vw - 24px));padding:10px 0;border:1px solid #e6e6e6;border-radius:16px;background:#fff;box-shadow:0 10px 32px rgba(0,0,0,.18);overflow:hidden}
+   .airAccountMenu{position:absolute;right:0;top:56px;width:min(380px,calc(100vw - 24px));padding:10px 0;border:1px solid #e6e6e6;border-radius:16px;background:#fff;box-shadow:0 10px 32px rgba(0,0,0,.18);overflow:hidden}
    .airMenuCurrent{padding:16px 20px 14px;color:#222}
    .airMenuCurrentLabel{display:block;margin-bottom:4px;color:#717171;font-size:13px;font-weight:600}
    .airMenuCurrent strong{display:block;font-size:18px;line-height:1.25}
    .airMenuDivider{height:1px;background:#ededed;margin:4px 0}
-   .airMenuItem{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:58px;padding:12px 20px;color:#222;text-decoration:none;font-size:15px;font-weight:650}
-   .airMenuItem:hover{background:#f7f7f7}
-   .airMenuItemMain{display:flex;min-width:0;flex-direction:column;gap:2px}
-   .airMenuItemTitle{font-size:16px;font-weight:700;line-height:1.2}
-   .airMenuItemMain small{color:#717171;font-size:13px;font-weight:500;line-height:1.35;white-space:normal}
+   .airMenuItem,.airWorkspaceItem{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:58px;padding:12px 20px;color:#222;text-decoration:none;font-size:15px;font-weight:650}
+   .airMenuItem:hover,.airWorkspaceItem:hover{background:#f7f7f7}
+   .airMenuItemMain,.airWorkspaceText{display:flex;min-width:0;flex-direction:column;gap:2px}
+   .airMenuItemTitle,.airWorkspaceText strong{font-size:16px;font-weight:700;line-height:1.2}
+   .airMenuItemMain small,.airWorkspaceText small{color:#717171;font-size:13px;font-weight:500;line-height:1.35;white-space:normal}
    .airModeRow{padding:6px 10px 10px}
    .airModeRow .modeSwitch{width:100%;min-height:56px;justify-content:flex-start!important;padding:13px 14px!important;border:0!important;border-radius:12px!important;background:transparent!important;color:#222!important;box-shadow:none!important;font-size:15px!important;font-weight:700!important;text-align:left;white-space:normal!important;line-height:1.3!important}
    .airModeRow .modeSwitch:hover{background:#f7f7f7!important}
@@ -125,9 +160,9 @@ export default function GlobalModeSwitch(){
     .airMenuCurrent{padding:18px 20px 16px}
     .airMenuCurrentLabel{font-size:13px}
     .airMenuCurrent strong{font-size:20px}
-    .airMenuItem{min-height:64px;padding:14px 20px}
-    .airMenuItemTitle{font-size:17px}
-    .airMenuItemMain small{font-size:14px}
+    .airMenuItem,.airWorkspaceItem{min-height:64px;padding:14px 20px}
+    .airMenuItemTitle,.airWorkspaceText strong{font-size:17px}
+    .airMenuItemMain small,.airWorkspaceText small{font-size:14px}
     .airModeRow{padding:8px 10px 12px}
     .airModeRow .modeSwitch{min-height:60px;font-size:16px!important;padding:14px 16px!important}
    }
