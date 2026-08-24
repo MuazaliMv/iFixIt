@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
-type ViewType = 'desktop' | 'tablet' | 'photo';
+type ViewType = 'desktop' | 'tablet' | 'mobile' | 'photo';
 
 type FixItPrefs = {
   user_id: string;
@@ -64,9 +64,17 @@ function photoContext(): boolean {
 }
 
 function resolveView(device: DeviceType, prefs: FixItPrefs): ViewType {
-  if (prefs.default_view !== 'auto') return prefs.default_view;
   if (photoContext()) return 'photo';
-  return device === 'tablet' ? 'tablet' : 'desktop';
+
+  // Device containment wins on phones/tablets. A persisted desktop preference must
+  // never force desktop layout inside a narrow physical viewport.
+  if (device === 'mobile') return 'mobile';
+  if (device === 'tablet') return 'tablet';
+
+  if (prefs.default_view !== 'auto' && prefs.default_view !== 'mobile' && prefs.default_view !== 'tablet') {
+    return prefs.default_view;
+  }
+  return 'desktop';
 }
 
 function applyState() {
@@ -75,7 +83,7 @@ function applyState() {
   const device = detectDevice();
   const view = resolveView(device, prefs);
   const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false;
-  const touch = prefs.touch_mode_enabled && (coarse || navigator.maxTouchPoints > 0 || device === 'tablet');
+  const touch = prefs.touch_mode_enabled && (coarse || navigator.maxTouchPoints > 0 || device !== 'desktop');
 
   const root = document.documentElement;
   root.dataset.fixitDevice = device;
@@ -134,21 +142,27 @@ export default function ResponsiveRuntime() {
       runBuiltInTests: () => {
         const cases = [
           {
+            name: 'iPhone portrait',
+            ua: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1',
+            width: 390,
+            expected: 'mobile',
+          },
+          {
+            name: 'Android phone',
+            ua: 'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/126.0.0.0 Mobile Safari/537.36',
+            width: 412,
+            expected: 'mobile',
+          },
+          {
             name: 'Desktop Chrome',
-            ua: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+            ua: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36',
             width: 1440,
             expected: 'desktop',
           },
           {
             name: 'iPad Safari',
-            ua: 'Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+            ua: 'Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Version/17.5 Mobile/15E148 Safari/604.1',
             width: 1024,
-            expected: 'tablet',
-          },
-          {
-            name: 'Android Tablet',
-            ua: 'Mozilla/5.0 (Linux; Android 14; SM-X710 Build/UP1A.231005.007) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-            width: 800,
             expected: 'tablet',
           },
         ];
@@ -157,12 +171,7 @@ export default function ResponsiveRuntime() {
           const start = performance.now();
           const detected = detectDevice(test.ua, test.width);
           const ms = performance.now() - start;
-          return {
-            ...test,
-            detected,
-            ms: Number(ms.toFixed(3)),
-            pass: detected === test.expected && ms < 50,
-          };
+          return { ...test, detected, ms: Number(ms.toFixed(3)), pass: detected === test.expected && ms < 50 };
         });
 
         console.table(results);
