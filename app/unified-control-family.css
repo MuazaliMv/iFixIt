@@ -1,0 +1,114 @@
+:root{
+  --control-family-height:48px;
+  --control-family-radius:12px;
+  --control-family-font-size:15px;
+  --control-family-font-weight:700;
+  --control-family-gap:8px;
+  --control-family-pad-x:18px;
+  --control-family-label-size:13px;
+  --control-family-label-weight:700;
+  --control-family-caption-size:12px;
+}
+
+/* One typography and geometry family for all interactive controls. */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+a.primary,
+a.secondary,
+a.danger,
+.c3Primary,
+.c3Secondary,
+.c3Danger{
+  font-family:var(--fx-font-family,var(--air-font,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif));
+  font-size:var(--control-family-font-size);
+  font-weight:var(--control-family-font-weight);
+  letter-spacing:0;
+}
+
+.primary,
+.secondary,
+.danger,
+.c3Primary,
+.c3Secondary,
+.c3Danger,
+button.primary,
+button.secondary,
+button.danger,
+a.primary,
+a.secondary,
+a.danger{
+  min-height:var(--control-family-height)!important;
+  border-radius:var(--control-family-radius)!important;
+  padding-inline:var(--control-family-pad-x)!important;
+  gap:var(--control-family-gap)!important;
+}
+
+/* Form labels and small metadata labels use the same hierarchy everywhere. */
+label,
+.smallLabel,
+.eyebrow,
+.c3FieldLabel,
+.c3RequestMeta small,
+.c3NextPanel small,
+.providerFact span,
+.airWorkspaceHead span{
+  font-family:var(--fx-font-family,var(--air-font,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif));
+  font-size:var(--control-family-label-size);
+  font-weight:var(--control-family-label-weight);
+  line-height:1.35;
+}
+
+/* Status labels/chips belong to the same family; color communicates meaning only. */
+.badge,
+.pill,
+.fx-status,
+.c3Status,
+.completedLabel,
+.selfTag,
+.airMenuStatusPill,
+.airWorkspaceAction{
+  font-family:var(--fx-font-family,var(--air-font,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif));
+  font-weight:var(--control-family-label-weight);
+  letter-spacing:0;
+}
+
+/* Consistent disabled behavior: unavailable controls should never look busy/clickable. */
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled,
+[role="button"][aria-disabled="true"]{
+  cursor:not-allowed!important;
+  opacity:.5!important;
+  transform:none!important;
+}
+
+/* Keep compact controls compact while retaining the same visual language and touch target. */
+.compactButton,
+.actions button,
+.profileEditButton,
+.c3Filters button,
+.messageFilters button{
+  min-height:44px!important;
+  border-radius:10px!important;
+  font-size:14px!important;
+  font-weight:var(--control-family-font-weight)!important;
+}
+
+@media(max-width:760px){
+  :root{
+    --control-family-height:50px;
+    --control-family-pad-x:16px;
+  }
+
+  .primary,
+  .secondary,
+  .danger,
+  .c3Primary,
+  .c3Secondary,
+  .c3Danger{
+    width:auto;
+  }
+}

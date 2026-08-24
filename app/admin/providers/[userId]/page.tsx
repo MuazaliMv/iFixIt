@@ -135,6 +135,7 @@ export default function AdminProviderDetailPage(){
   const subscription=summary?.subscription;
   const activeAreas=summary?.serviceAreas.filter(a=>a.is_active)||[];
   const status=p?.onboarding_status||(detail.account.provider_approved?'APPROVED':'PENDING');
+  const statusBusy=busyStatus!==null;
 
   return <main className="shell adminProviderDetail">
     <header className="topbar"><div><a className="brand" href="/admin">FixIt</a><p className="tagline">Admin • Providers</p></div></header>
@@ -147,10 +148,10 @@ export default function AdminProviderDetailPage(){
       </div>
       <p className="providerMessage" role="status" aria-live="polite">{message}</p>
       <div className="providerActions">
-        <button type="button" className="primary" disabled={busyStatus==='APPROVED'} onClick={()=>void setStatus('APPROVED')}>{busyStatus==='APPROVED'?'Approving…':status==='APPROVED'?'Approved':'Approve Provider'}</button>
-        <button type="button" className="secondary" disabled={busyStatus==='SUBMITTED'} onClick={()=>void setStatus('SUBMITTED')}>{busyStatus==='SUBMITTED'?'Saving…':'Mark Submitted'}</button>
-        <button type="button" className="secondary rejectAction" disabled={busyStatus==='REJECTED'} onClick={()=>void setStatus('REJECTED')}>{busyStatus==='REJECTED'?'Rejecting…':'Reject'}</button>
-        <button type="button" className="secondary suspendAction" disabled={busyStatus==='SUSPENDED'} onClick={()=>void setStatus('SUSPENDED')}>{busyStatus==='SUSPENDED'?'Suspending…':'Suspend'}</button>
+        <button type="button" className="primary" disabled={statusBusy||status==='APPROVED'} onClick={()=>void setStatus('APPROVED')}>{busyStatus==='APPROVED'?'Approving…':status==='APPROVED'?'Approved':'Approve Provider'}</button>
+        <button type="button" className="secondary" disabled={statusBusy||status==='SUBMITTED'} onClick={()=>void setStatus('SUBMITTED')}>{busyStatus==='SUBMITTED'?'Saving…':status==='SUBMITTED'?'Submitted':'Mark Submitted'}</button>
+        <button type="button" className="secondary rejectAction" disabled={statusBusy||status==='REJECTED'} onClick={()=>void setStatus('REJECTED')}>{busyStatus==='REJECTED'?'Rejecting…':status==='REJECTED'?'Rejected':'Reject'}</button>
+        <button type="button" className="secondary suspendAction" disabled={statusBusy||status==='SUSPENDED'} onClick={()=>void setStatus('SUSPENDED')}>{busyStatus==='SUSPENDED'?'Suspending…':status==='SUSPENDED'?'Suspended':'Suspend'}</button>
       </div>
     </section>
 

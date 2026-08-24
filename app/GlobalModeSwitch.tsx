@@ -31,6 +31,7 @@ export default function GlobalModeSwitch(){
  const[mode,setMode]=useState<Mode>(()=>routeMode(path));
  const[signedIn,setSignedIn]=useState(false);
  const[accountRole,setAccountRole]=useState<AccountRole>('CUSTOMER');
+ const[providerApproved,setProviderApproved]=useState(false);
  const[open,setOpen]=useState(false);
  const[loggingOut,setLoggingOut]=useState(false);
  const wrapRef=useRef<HTMLDivElement|null>(null);
@@ -40,8 +41,6 @@ export default function GlobalModeSwitch(){
   setOpen(false);
   let active=true;
 
-  // The secure server session/profile is authoritative. This avoids hiding the
-  // menu simply because an older browser-only Supabase session is unavailable.
   void(async()=>{
    try{
     const response=await apiFetch('/api/user/profile',{cache:'no-store'});
@@ -50,6 +49,7 @@ export default function GlobalModeSwitch(){
     if(!response.ok){setSignedIn(false);return;}
     const payload=await response.json().catch(()=>({}));
     setAccountRole(normalizeAccountRole(payload?.profile?.role));
+    setProviderApproved(Boolean(payload?.profile?.provider_approved));
     setSignedIn(true);
    }catch{
     if(active)setSignedIn(false);
@@ -83,11 +83,11 @@ export default function GlobalModeSwitch(){
  if(isHiddenRoute(path)||!signedIn)return null;
 
  const profileHref=mode==='provider'?'/provider/profile':'/profile';
- const canUseProvider=canAccessPortal(accountRole,'provider');
- const canUseAdmin=canAccessPortal(accountRole,'admin');
+ const canUseProvider=canAccessPortal(accountRole,'provider',providerApproved);
+ const canUseAdmin=canAccessPortal(accountRole,'admin',providerApproved);
 
  function rememberWorkspace(next:Mode,message?:string){
-  if(!canAccessPortal(accountRole,next))return;
+  if(!canAccessPortal(accountRole,next,providerApproved))return;
   try{
    localStorage.setItem('fixit:mobile-nav-role',next);
    localStorage.setItem('fixit:app-mode',next);
@@ -134,7 +134,7 @@ export default function GlobalModeSwitch(){
     <div className="airMenuIntro"><h2>Welcome</h2><p>Open a workspace available to your account.</p></div>
 
     <section className="airWorkspaceChooser" aria-label="Choose workspace">
-     <div className="airWorkspaceHead"><span>Open workspace</span><small>Only portals allowed for your account role are shown</small></div>
+     <div className="airWorkspaceHead"><span>Open workspace</span><small>Only workspaces available to this account are shown</small></div>
 
      {canUseProvider?<Link
       className={`airWorkspaceOption provider${mode==='provider'?' selected':''}`}
@@ -145,7 +145,16 @@ export default function GlobalModeSwitch(){
       <span className="airWorkspaceIcon"><WorkspaceIcon name="provider"/></span>
       <span className="airWorkspaceCopy"><strong>Service Provider Portal</strong><small>Manage jobs, services and availability</small></span>
       <span className="airWorkspaceAction">{mode==='provider'?'Current':'Open'}</span>
-     </Link>:null}
+     </Link>:<Link
+      className="airWorkspaceOption provider application"
+      href="/provider/onboarding"
+      role="menuitem"
+      onClick={()=>setOpen(false)}
+     >
+      <span className="airWorkspaceIcon"><WorkspaceIcon name="provider"/></span>
+      <span className="airWorkspaceCopy"><strong>Become a Service Provider</strong><small>Apply to offer services through FixIt</small></span>
+      <span className="airWorkspaceAction">Apply</span>
+     </Link>}
 
      <Link
       className={`airWorkspaceOption customer${mode==='customer'?' selected':''}`}
@@ -198,7 +207,7 @@ export default function GlobalModeSwitch(){
    .airWorkspaceOption{width:100%;display:grid;grid-template-columns:40px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:62px;padding:10px;border:1px solid transparent;border-radius:16px;background:#fff;color:inherit;text-decoration:none;text-align:left;font:inherit;cursor:pointer;transition:background .15s ease,border-color .15s ease,transform .15s ease}.airWorkspaceOption:hover{background:#f8fafc}.airWorkspaceOption:active{transform:scale(.995)}
    .airWorkspaceIcon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center}.airWorkspaceIcon svg{width:18px;height:18px}.airWorkspaceCopy{min-width:0}.airWorkspaceCopy strong{display:block;color:#1e293b;font-size:13px;font-weight:850}.airWorkspaceCopy small{display:block;margin-top:3px;color:#64748b;font-size:11px;font-weight:550;line-height:1.3}.airWorkspaceAction{padding:5px 8px;border:1px solid #e2e8f0;border-radius:9px;background:#f8fafc;color:#64748b;font-size:10px;font-weight:850;white-space:nowrap}
    .airWorkspaceOption.provider .airWorkspaceIcon{background:#fffbeb;border:1px solid #fde68a;color:#d97706}.airWorkspaceOption.customer .airWorkspaceIcon{background:#faf5ff;border:1px solid #e9d5ff;color:#9333ea}.airWorkspaceOption.admin .airWorkspaceIcon{background:#eff6ff;border:1px solid #bfdbfe;color:#2563eb}
-   .airWorkspaceOption.provider.selected{border-color:#fcd34d;background:#fffdf5}.airWorkspaceOption.provider.selected .airWorkspaceAction{border-color:#fde68a;background:#fffbeb;color:#b45309}.airWorkspaceOption.customer.selected{border-color:#d8b4fe;background:#fdfaff}.airWorkspaceOption.customer.selected .airWorkspaceAction{border-color:#e9d5ff;background:#faf5ff;color:#7e22ce}.airWorkspaceOption.admin.selected{border-color:#93c5fd;background:#f7fbff}.airWorkspaceOption.admin.selected .airWorkspaceAction{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}
+   .airWorkspaceOption.provider.selected{border-color:#fcd34d;background:#fffdf5}.airWorkspaceOption.provider.selected .airWorkspaceAction{border-color:#fde68a;background:#fffbeb;color:#b45309}.airWorkspaceOption.provider.application{border-color:#fde68a;background:#fffdf5}.airWorkspaceOption.provider.application .airWorkspaceAction{border-color:#fde68a;background:#fffbeb;color:#b45309}.airWorkspaceOption.customer.selected{border-color:#d8b4fe;background:#fdfaff}.airWorkspaceOption.customer.selected .airWorkspaceAction{border-color:#e9d5ff;background:#faf5ff;color:#7e22ce}.airWorkspaceOption.admin.selected{border-color:#93c5fd;background:#f7fbff}.airWorkspaceOption.admin.selected .airWorkspaceAction{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}
    .airAccountActions{display:grid;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0}.airProfileAction,.airLogoutAction{width:100%;display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:58px;padding:9px 10px;border:0;border-radius:16px;background:#fff;color:inherit;text-decoration:none;text-align:left;font:inherit;cursor:pointer}.airProfileAction:hover,.airLogoutAction:hover{background:#f8fafc}.airLogoutAction{grid-template-columns:38px minmax(0,1fr)}.airLogoutAction:disabled{opacity:.55;cursor:default}.airActionIcon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#f8fafc;border:1px solid #e2e8f0;color:#475569}.airActionIcon svg{width:18px;height:18px}.airActionCopy{min-width:0}.airActionCopy strong{display:block;color:#1e293b;font-size:13px;font-weight:850}.airActionCopy small{display:block;margin-top:3px;color:#64748b;font-size:11px;line-height:1.3}.airActionArrow{color:#94a3b8;font-size:22px}
    @media(max-width:520px){.airAccount{right:max(12px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top))}.airAccountMenu{position:fixed;left:12px;right:12px;top:max(64px,calc(env(safe-area-inset-top) + 54px));bottom:auto;width:auto;max-height:calc(100dvh - 76px);overflow:auto;padding:17px;border-radius:24px}.airMenuIntro h2{font-size:28px}.airWorkspaceOption{grid-template-columns:38px minmax(0,1fr) auto;padding:9px 8px}.airWorkspaceCopy small{font-size:10.5px}}
    @media(max-width:380px){.airWorkspaceOption{grid-template-columns:38px minmax(0,1fr)}.airWorkspaceAction{grid-column:2;justify-self:start;margin-top:-2px}.airAccountMenu{left:8px;right:8px}}

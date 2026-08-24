@@ -22,3 +22,35 @@ test('client sign-out events clear the server session too',async()=>{
  assert.match(source,/\/api\/auth\/logout/);
  assert.match(source,/credentials:'same-origin'/);
 });
+
+test('customers get a provider application route instead of a blocked provider switch',async()=>{
+ const source=await read('app/GlobalModeSwitch.tsx');
+ assert.match(source,/Become a Service Provider/);
+ assert.match(source,/href="\/provider\/onboarding"/);
+ assert.match(source,/canUseProvider\?<Link/);
+ assert.doesNotMatch(source,/href="\/login"[^>]*>\s*<span[^>]*>[^<]*Service Provider/s);
+});
+
+test('cancelled requests stay out of normal customer request views and counters',async()=>{
+ const source=await read('app/requests/page.tsx');
+ assert.match(source,/!\['COMPLETED','CANCELLED'\]\.includes\(r\.status\)/);
+ assert.match(source,/requests\.filter\(r=>!\['COMPLETED','CANCELLED'\]\.includes\(r\.status\)\)\.length/);
+});
+
+test('provider status actions disable the current state and lock during saves',async()=>{
+ const source=await read('app/admin/providers/[userId]/page.tsx');
+ assert.match(source,/const statusBusy=busyStatus!==null/);
+ assert.match(source,/disabled=\{statusBusy\|\|status==='APPROVED'\}/);
+ assert.match(source,/disabled=\{statusBusy\|\|status==='SUSPENDED'\}/);
+ assert.match(source,/status==='APPROVED'\?'Approved':'Approve Provider'/);
+});
+
+test('unified control family is loaded after page-specific styles',async()=>{
+ const layout=await read('app/layout.tsx');
+ const styles=await read('app/unified-control-family.css');
+ assert.match(layout,/import '\.\/unified-control-family\.css';/);
+ assert.match(styles,/--control-family-height:48px/);
+ assert.match(styles,/button:disabled/);
+ assert.match(styles,/\.badge,/);
+ assert.match(styles,/\.pill,/);
+});
