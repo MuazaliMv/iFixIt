@@ -62,20 +62,15 @@ export default function RoleAccessGuard(){
 
         const payload=await response.json().catch(()=>({}));
         const role=normalizeAccountRole(payload?.profile?.role);
+        const providerApproved=Boolean(payload?.profile?.provider_approved);
 
-        // Portal permission is derived only from the permanent account role.
-        // CUSTOMER => Customer only
-        // PROVIDER => Customer + Provider
-        // ADMIN    => Customer + Provider + Admin
         let selected=readSelectedWorkspace(role);
-        if(!canAccessPortal(role,selected))selected='customer';
+        if(!canAccessPortal(role,selected,providerApproved))selected='customer';
         saveSelectedWorkspace(selected,role);
 
-        // Provider onboarding is an application flow, not Provider Portal access.
-        // Standard customers may use it without receiving Provider workspace rights.
         if(providerApplicationRoute){
-          if(canAccessPortal(role,'provider')){
-            if(active)router.replace(workspaceDestination(selected));
+          if(canAccessPortal(role,'provider',providerApproved)){
+            if(active)router.replace(workspaceDestination(selected==='customer'?'provider':selected));
             return;
           }
           if(selected!=='customer'){
@@ -85,13 +80,13 @@ export default function RoleAccessGuard(){
           return;
         }
 
-        if(adminRoute&&!canAccessPortal(role,'admin')){
+        if(adminRoute&&!canAccessPortal(role,'admin',providerApproved)){
           saveSelectedWorkspace('customer',role);
           if(active)router.replace('/home');
           return;
         }
 
-        if(providerRoute&&!canAccessPortal(role,'provider')){
+        if(providerRoute&&!canAccessPortal(role,'provider',providerApproved)){
           saveSelectedWorkspace('customer',role);
           if(active)router.replace('/home');
           return;
