@@ -27,7 +27,7 @@ const dayNames=['','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'
 const pretty=(value:string)=>value.replaceAll('_',' ').toLowerCase().replace(/(^|\s)\S/g,s=>s.toUpperCase());
 const when=(value?:string|null)=>value?new Date(value).toLocaleString():'—';
 
-function Fact({label,value}:{label:string;value:string|number}) {
+function Fact({label,value}:{label:string;value:string|number}){
   return <div className="providerFact"><span>{label}</span><strong>{value}</strong></div>;
 }
 
@@ -49,16 +49,11 @@ export default function AdminProviderDetailPage(){
   }
 
   async function call(url:string,body:Record<string,unknown>){
-    const t=await jwt();
+    const token=await jwt();
     const controller=new AbortController();
     const timeout=window.setTimeout(()=>controller.abort(),REQUEST_TIMEOUT_MS);
     try{
-      const response=await fetch(url,{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},
-        body:JSON.stringify(body),
-        signal:controller.signal
-      });
+      const response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify(body),signal:controller.signal});
       const text=await response.text();
       let payload:any={};
       try{payload=text?JSON.parse(text):{};}catch{payload={error:text||'Admin request failed'};}
@@ -72,16 +67,19 @@ export default function AdminProviderDetailPage(){
     }
   }
 
+  async function refreshDetail(){
+    const d=await call(ADMIN_URL,{action:'provider_detail',providerUserId:userId});
+    setDetail(d as Detail);
+  }
+
   async function load(){
     try{
-      const d=await call(ADMIN_URL,{action:'provider_detail',providerUserId:userId});
-      setDetail(d as Detail);
+      await refreshDetail();
       setMessage('Provider record loaded.');
     }catch(error){
       setMessage(error instanceof Error?error.message:'Unable to load provider.');
       return;
     }
-
     try{
       const s=await call(SUMMARY_URL,{providerUserId:userId});
       setSummary((s||{serviceAreas:[],subscription:null,requests:[],history:[]}) as Summary);
@@ -97,17 +95,13 @@ export default function AdminProviderDetailPage(){
   const documentsReady=idApproved&&businessApproved;
 
   async function setStatus(status:ProviderStatus){
-    if(busyStatus)return;
-    if(status==='APPROVED'&&!documentsReady){
-      setMessage('Approve the ID Card and Business Permit before approving this provider.');
-      return;
-    }
+    if(busyStatus){setMessage(`${pretty(busyStatus)} is still being saved. Please wait a moment.`);return;}
+    if(status==='APPROVED'&&!documentsReady){setMessage('Approve the ID Card and Business Permit before approving this provider.');return;}
     setBusyStatus(status);
     setMessage(`${pretty(status)} action in progress…`);
     try{
       await call(ADMIN_URL,{action:'set_provider_onboarding_status',providerUserId:userId,status});
-      const d=await call(ADMIN_URL,{action:'provider_detail',providerUserId:userId});
-      setDetail(d as Detail);
+      await refreshDetail();
       setMessage(`Provider status changed to ${pretty(status)}.`);
     }catch(error){
       setMessage(error instanceof Error?error.message:'Unable to update provider status.');
@@ -117,31 +111,19 @@ export default function AdminProviderDetailPage(){
   }
 
   async function reviewDocument(doc:DocumentRow,status:'APPROVED'|'REJECTED'){
-    if(busyDoc)return;
-
+    if(busyDoc){setMessage('Another document review is still being saved. Please wait a moment.');return;}
     let note='';
     if(status==='REJECTED'){
       const reason=window.prompt('Reason for rejecting this document:');
       if(reason===null)return;
       note=reason.trim();
-      if(!note){
-        setMessage('A rejection reason is required.');
-        return;
-      }
+      if(!note){setMessage('A rejection reason is required.');return;}
     }
-
     setBusyDoc(doc.id);
     setMessage(status==='APPROVED'?'Approving document…':'Rejecting document…');
     try{
-      await call(ADMIN_URL,{
-        action:'review_provider_document',
-        providerUserId:userId,
-        documentId:doc.id,
-        status,
-        note
-      });
-      const d=await call(ADMIN_URL,{action:'provider_detail',providerUserId:userId});
-      setDetail(d as Detail);
+      await call(ADMIN_URL,{action:'review_provider_document',providerUserId:userId,documentId:doc.id,status,note});
+      await refreshDetail();
       setMessage(`${doc.document_label||pretty(doc.document_type)} ${status==='APPROVED'?'approved':'rejected'} successfully.`);
     }catch(error){
       setMessage(error instanceof Error?error.message:'Unable to review document.');
@@ -151,11 +133,7 @@ export default function AdminProviderDetailPage(){
   }
 
   if(!detail){
-    return <main className="shell adminProviderDetail">
-      <header className="topbar"><div><a className="brand" href="/admin">FixIt</a><p className="tagline">Admin • Providers</p></div></header>
-      <AdminNav/>
-      <section className="providerSection"><p className="formMessage">{message}</p></section>
-    </main>;
+    return <main className="shell adminProviderDetail"><header className="topbar"><div><a className="brand" href="/admin">FixIt</a><p className="tagline">Admin • Providers</p></div></header><AdminNav/><section className="providerSection"><p className="formMessage">{message}</p></section></main>;
   }
 
   const p=detail.onboarding;
@@ -173,12 +151,12 @@ export default function AdminProviderDetailPage(){
         <div className="providerBadges"><span className="pill">{pretty(status)}</span>{subscription?<span className="pill">Subscription: {pretty(subscription.status)}</span>:null}</div>
       </div>
       <p className="providerMessage" role="status" aria-live="polite">{message}</p>
-      {!documentsReady&&status!=='APPROVED'?<p className="muted">Provider approval unlocks after both the ID Card and Business Permit are approved.</p>:null}
+      {!documentsReady&&status!=='APPROVED'?<p className="muted">Provider approval requires both the ID Card and Business Permit to be approved.</p>:null}
       <div className="providerActions">
-        <button type="button" className="primary" disabled={Boolean(busyStatus)||status==='APPROVED'||!documentsReady} onClick={()=>void setStatus('APPROVED')}>{busyStatus==='APPROVED'?'Approving…':status==='APPROVED'?'Approved':'Approve Provider'}</button>
-        <button type="button" className="secondary" disabled={Boolean(busyStatus)||status==='SUBMITTED'} onClick={()=>void setStatus('SUBMITTED')}>{busyStatus==='SUBMITTED'?'Saving…':'Mark Submitted'}</button>
-        <button type="button" className="secondary rejectAction" disabled={Boolean(busyStatus)||status==='REJECTED'} onClick={()=>void setStatus('REJECTED')}>{busyStatus==='REJECTED'?'Rejecting…':'Reject'}</button>
-        <button type="button" className="secondary suspendAction" disabled={Boolean(busyStatus)||status==='SUSPENDED'} onClick={()=>void setStatus('SUSPENDED')}>{busyStatus==='SUSPENDED'?'Suspending…':'Suspend'}</button>
+        <button type="button" className="primary" disabled={busyStatus==='APPROVED'} onClick={()=>void setStatus('APPROVED')}>{busyStatus==='APPROVED'?'Approving…':status==='APPROVED'?'Approved':'Approve Provider'}</button>
+        <button type="button" className="secondary" disabled={busyStatus==='SUBMITTED'} onClick={()=>void setStatus('SUBMITTED')}>{busyStatus==='SUBMITTED'?'Saving…':'Mark Submitted'}</button>
+        <button type="button" className="secondary rejectAction" disabled={busyStatus==='REJECTED'} onClick={()=>void setStatus('REJECTED')}>{busyStatus==='REJECTED'?'Rejecting…':'Reject'}</button>
+        <button type="button" className="secondary suspendAction" disabled={busyStatus==='SUSPENDED'} onClick={()=>void setStatus('SUSPENDED')}>{busyStatus==='SUSPENDED'?'Suspending…':'Suspend'}</button>
       </div>
     </section>
 
@@ -203,50 +181,20 @@ export default function AdminProviderDetailPage(){
     </section>
 
     <section className="providerSection">
-      <div className="providerSectionHeader">
-        <div><p className="eyebrow">DOCUMENTS</p><h2>Verification Documents</h2><p className="muted">Validate each required document before approving the provider.</p></div>
-        <div className="documentActions"><span className="pill">{docs.length} documents</span>{docs.length?<a className="secondary" href={`/admin/providers/${userId}/documents`}>Review Documents</a>:null}</div>
-      </div>
-
+      <div className="providerSectionHeader"><div><p className="eyebrow">DOCUMENTS</p><h2>Verification Documents</h2><p className="muted">Validate each required document before approving the provider.</p></div><div className="documentActions"><span className="pill">{docs.length} documents</span>{docs.length?<a className="secondary" href={`/admin/providers/${userId}/documents`}>Review Documents</a>:null}</div></div>
       <div className="jobList">
         {docs.map(d=><article className="jobCard" key={d.id}>
-          <div className="jobTop">
-            <div><strong>{d.document_label||pretty(d.document_type)}</strong><div className="muted">Submitted {when(d.submitted_at)}</div></div>
-            <span className="pill">{pretty(d.review_status)}</span>
-          </div>
-
+          <div className="jobTop"><div><strong>{d.document_label||pretty(d.document_type)}</strong><div className="muted">Submitted {when(d.submitted_at)}</div></div><span className="pill">{pretty(d.review_status)}</span></div>
           {d.review_note?<p className="jobDescription">{d.review_note}</p>:null}
-
+          <div className="actions">{d.signed_url?<a className="secondary" href={d.signed_url} target="_blank" rel="noreferrer">View Document</a>:<span className="muted">File unavailable</span>}</div>
           <div className="actions">
-            {d.signed_url?<a className="secondary" href={d.signed_url} target="_blank" rel="noreferrer">View Document</a>:<span className="muted">File unavailable</span>}
-          </div>
-
-          <div className="actions">
-            <button
-              className="primary"
-              type="button"
-              disabled={Boolean(busyDoc)||d.review_status==='APPROVED'}
-              onClick={()=>void reviewDocument(d,'APPROVED')}
-            >
-              {busyDoc===d.id?'Saving…':d.review_status==='APPROVED'?'Approved':'Approve'}
-            </button>
-            <button
-              className="secondary rejectAction"
-              type="button"
-              disabled={Boolean(busyDoc)||d.review_status==='REJECTED'}
-              onClick={()=>void reviewDocument(d,'REJECTED')}
-            >
-              {busyDoc===d.id?'Saving…':d.review_status==='REJECTED'?'Rejected':'Reject'}
-            </button>
+            <button className="primary" type="button" disabled={busyDoc===d.id} onClick={()=>void reviewDocument(d,'APPROVED')}>{busyDoc===d.id?'Saving…':d.review_status==='APPROVED'?'Approve Again':'Approve'}</button>
+            <button className="secondary rejectAction" type="button" disabled={busyDoc===d.id} onClick={()=>void reviewDocument(d,'REJECTED')}>{busyDoc===d.id?'Saving…':d.review_status==='REJECTED'?'Reject Again':'Reject'}</button>
           </div>
         </article>)}
         {!docs.length?<div className="emptyQueue">No verification documents submitted.</div>:null}
       </div>
-
-      <div className="providerFacts" style={{marginTop:16}}>
-        <Fact label="ID Card" value={idApproved?'Approved':'Pending validation'}/>
-        <Fact label="Business Permit" value={businessApproved?'Approved':'Pending validation'}/>
-      </div>
+      <div className="providerFacts" style={{marginTop:16}}><Fact label="ID Card" value={idApproved?'Approved':'Pending validation'}/><Fact label="Business Permit" value={businessApproved?'Approved':'Pending validation'}/></div>
     </section>
 
     <section className="providerSection">
