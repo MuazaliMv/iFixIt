@@ -3,9 +3,9 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { apiFetch } from '../lib/apiClient';
+import { canAccessPortal, normalizeAccountRole, type AccountRole, type PortalRole } from '../lib/roleAccess';
 
-type AccountRole='CUSTOMER'|'PROVIDER'|'ADMIN';
-type WorkspaceRole='customer'|'provider'|'admin';
+type WorkspaceRole=PortalRole;
 
 function workspaceDestination(workspace:WorkspaceRole){
   if(workspace==='admin')return '/admin';
@@ -55,29 +55,26 @@ export default function RoleAccessGuard(){
       if(!roleControlled)return;
 
       try{
-        const r=await apiFetch('/api/user/profile');
+        const response=await apiFetch('/api/user/profile');
         if(!active)return;
-        if(r.status===401){router.replace(`/login?next=${encodeURIComponent(path)}`);return;}
-        if(!r.ok)return;
-        const p=await r.json();
-        const raw=String(p?.profile?.role||'CUSTOMER').toUpperCase();
-        const role:AccountRole=raw==='ADMIN'?'ADMIN':raw==='PROVIDER'?'PROVIDER':'CUSTOMER';
-        const providerApproved=p?.profile?.provider_approved===true;
+        if(response.status===401){router.replace(`/login?next=${encodeURIComponent(path)}`);return;}
+        if(!response.ok)return;
 
-        // Permanent account role controls which workspaces may be selected.
-        // The selected workspace controls which guard rules are active.
-        const canUseProviderWorkspace=role==='ADMIN'||role==='PROVIDER'||providerApproved;
-        const canUseAdminWorkspace=role==='ADMIN';
+        const payload=await response.json().catch(()=>({}));
+        const role=normalizeAccountRole(payload?.profile?.role);
 
+        // Portal permission is derived only from the permanent account role.
+        // CUSTOMER => Customer only
+        // PROVIDER => Customer + Provider
+        // ADMIN    => Customer + Provider + Admin
         let selected=readSelectedWorkspace(role);
-        if(selected==='admin'&&!canUseAdminWorkspace)selected='customer';
-        if(selected==='provider'&&!canUseProviderWorkspace)selected='customer';
+        if(!canAccessPortal(role,selected))selected='customer';
         saveSelectedWorkspace(selected,role);
 
-        // Provider onboarding is a Customer-mode application flow for accounts
-        // that do not yet have Provider workspace access.
+        // Provider onboarding is an application flow, not Provider Portal access.
+        // Standard customers may use it without receiving Provider workspace rights.
         if(providerApplicationRoute){
-          if(canUseProviderWorkspace){
+          if(canAccessPortal(role,'provider')){
             if(active)router.replace(workspaceDestination(selected));
             return;
           }
@@ -85,6 +82,18 @@ export default function RoleAccessGuard(){
             selected='customer';
             saveSelectedWorkspace(selected,role);
           }
+          return;
+        }
+
+        if(adminRoute&&!canAccessPortal(role,'admin')){
+          saveSelectedWorkspace('customer',role);
+          if(active)router.replace('/home');
+          return;
+        }
+
+        if(providerRoute&&!canAccessPortal(role,'provider')){
+          saveSelectedWorkspace('customer',role);
+          if(active)router.replace('/home');
           return;
         }
 
