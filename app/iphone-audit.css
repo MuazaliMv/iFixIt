@@ -7,8 +7,8 @@ input,textarea,select{font-size:16px}
  body{padding-top:env(safe-area-inset-top);-webkit-text-size-adjust:100%}
  .shell{padding-left:14px;padding-right:14px;padding-bottom:calc(104px + env(safe-area-inset-bottom))}
  .topbar{top:env(safe-area-inset-top);min-height:68px;padding:9px 14px;margin-bottom:12px}
- .topbar .actions{gap:6px;flex-wrap:nowrap}
- .topbar .actions .secondary,.topbar .actions .primary{min-height:42px;padding:9px 11px;font-size:12px}
+ .topbar .actions{gap:6px;flex-wrap:wrap}
+ .topbar .actions .secondary,.topbar .actions .primary{min-height:42px;padding:9px 11px;font-size:12px;display:inline-flex!important;visibility:visible!important;opacity:1!important}
  .topbar .brand{font-size:29px;line-height:1}
 
  .panel,.marketHeroCard,.providerHeroCard,.providerSideCard,.providerJobsPanel,.providerDetailDrawer,.providerJourneyCard,.providerJobCard,.requestAppCard{margin-left:0;margin-right:0}
@@ -29,10 +29,10 @@ input,textarea,select{font-size:16px}
  .providerProblem{font-size:14px;line-height:1.45}
  .providerJobMeta{gap:6px}.providerMetaItem{padding:8px 9px}.providerMetaItem strong{font-size:12px}
  .providerTabs{margin-left:-3px;margin-right:-3px;scroll-snap-type:x proximity}.providerTab{scroll-snap-align:start;min-height:45px}
- .providerJobActions{gap:7px!important}.providerJobActions>*{min-height:48px!important}
+ .providerJobActions{gap:7px!important}.providerJobActions>*{min-height:48px!important;display:flex!important;visibility:visible!important;opacity:1!important}
 
  .requestAppPanel{padding:14px!important}.requestAppHeading h1{font-size:23px}.requestAppHeading p{font-size:13px}
- .requestTabs{margin-top:12px;gap:16px;scroll-snap-type:x proximity}.requestTabs button{min-height:46px;scroll-snap-align:start}
+ .requestTabs{margin-top:12px;gap:16px;scroll-snap-type:x proximity}.requestTabs button{min-height:46px;scroll-snap-align:start;display:flex!important;visibility:visible!important;opacity:1!important}
  .requestAppCard{padding:12px;gap:10px;border-radius:15px}.requestCardIcon{width:48px;height:48px;font-size:23px}
  .requestCardTop h2{font-size:18px;line-height:1.2}.requestCardTop p{font-size:13px;line-height:1.4}
  .requestCardId{font-size:12px}.requestInfoGrid{gap:6px;margin-top:10px}.requestInfoGrid div{padding:9px 10px}
@@ -42,7 +42,7 @@ input,textarea,select{font-size:16px}
  .timelineCard{gap:7px}.nextStep{padding:10px;gap:9px}.nextStepIcon{width:28px;height:28px}.nextStep strong{font-size:13px}.nextStep small{font-size:11px}
  .stageStrip{overflow-x:auto;display:flex;padding-bottom:2px;scrollbar-width:none}.stageStrip::-webkit-scrollbar{display:none}.stagePill{min-width:108px;flex:0 0 auto}
 
- .actions{display:flex;flex-wrap:wrap}.actions>.primary,.actions>.secondary,.actions>.danger{flex:1 1 140px}
+ .actions{display:flex;flex-wrap:wrap}.actions>.primary,.actions>.secondary,.actions>.danger{flex:1 1 140px;display:flex!important;visibility:visible!important;opacity:1!important}
  .stickyActions{position:static;margin-top:12px;padding:0;border:0;box-shadow:none;background:transparent;backdrop-filter:none}
  .satisfactionRow{display:grid;grid-template-columns:1fr;gap:8px}.ratingStars{justify-content:center}.starButton{width:44px;height:44px}
  .chatList{max-height:52vh}.chatBubble{max-width:90%;font-size:14px}
@@ -71,7 +71,8 @@ input,textarea,select{font-size:16px}
 
 @media(max-width:390px){
  .topbar .brand{font-size:27px}
- .topbar .actions .secondary:not(:first-child){display:none}
+ .topbar .actions{flex-wrap:wrap!important}
+ .topbar .actions .secondary,.topbar .actions .primary{display:inline-flex!important;visibility:visible!important;opacity:1!important}
  .requestTabs,.providerTabs{gap:12px}
  .mobileNav a{font-size:9px}.mobileNav a .navIcon{font-size:20px}
 }
