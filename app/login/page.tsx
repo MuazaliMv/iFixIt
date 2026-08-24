@@ -1,10 +1,10 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { supabase } from '../../lib/supabaseClient';
 import './login.css';
 
 type Mode='login'|'register';
-const SUPABASE_STORAGE_KEY='sb-yzlhlilxiszefneshatm-auth-token';
 
 function EyeIcon({off=false}:{off?:boolean}){
  return <svg viewBox="0 0 24 24" aria-hidden="true" className="eyeIcon"><path d="M2.3 12s3.5-5.5 9.7-5.5S21.7 12 21.7 12 18.2 17.5 12 17.5 2.3 12 2.3 12Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8"/>{off?<path d="M4 4l16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>:null}</svg>;
@@ -75,9 +75,15 @@ export default function LoginPage(){
    }else{
     const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({email:emailTrimmed,password})});
     const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to sign in.');
-    if(!p?.session?.access_token)throw new Error('Unable to open session.');
+    if(!p?.session?.access_token||!p?.session?.refresh_token)throw new Error('Unable to open session.');
+
+    const {error:sessionError}=await supabase.auth.setSession({
+      access_token:p.session.access_token,
+      refresh_token:p.session.refresh_token,
+    });
+    if(sessionError)throw new Error(sessionError.message||'Unable to open session.');
+
     try{
-      localStorage.setItem(SUPABASE_STORAGE_KEY,JSON.stringify(p.session));
       if(rememberMe)localStorage.setItem('ifixmv-login-email',emailTrimmed);else localStorage.removeItem('ifixmv-login-email');
     }catch{}
     await routeUser();
