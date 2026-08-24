@@ -42,9 +42,12 @@ export default function RoleAccessGuard(){
         const p=await r.json();
         const raw=String(p?.profile?.role||'CUSTOMER').toUpperCase();
         const role:AccountRole=raw==='ADMIN'?'ADMIN':raw==='PROVIDER'?'PROVIDER':'CUSTOMER';
+        const providerApproved=p?.profile?.provider_approved===true;
+        const canUseProviderWorkspace=role==='PROVIDER'||providerApproved;
+        const canUseCustomerWorkspace=role!=='ADMIN';
 
         try{
-          const navRole=role==='ADMIN'?'admin':providerRoute&&role==='PROVIDER'?'provider':'customer';
+          const navRole=role==='ADMIN'?'admin':providerRoute&&canUseProviderWorkspace?'provider':'customer';
           localStorage.setItem('fixit:account-role',role.toLowerCase());
           localStorage.setItem('fixit:mobile-nav-role',navRole);
           if(role!=='ADMIN')localStorage.setItem('fixit:app-mode',navRole);
@@ -53,10 +56,17 @@ export default function RoleAccessGuard(){
 
         const wrongRoute=
           (role==='ADMIN'&&(customerRoute||providerRoute))||
-          (role==='PROVIDER'&&(customerRoute||adminRoute))||
-          (role==='CUSTOMER'&&(providerRoute||adminRoute));
+          (providerRoute&&!canUseProviderWorkspace)||
+          (customerRoute&&!canUseCustomerWorkspace)||
+          (adminRoute&&role!=='ADMIN');
 
-        if(wrongRoute&&active)router.replace(destination(role));
+        if(wrongRoute&&active){
+          if(providerRoute&&!canUseProviderWorkspace){
+            router.replace('/provider/onboarding');
+            return;
+          }
+          router.replace(destination(role));
+        }
       }catch{}
     }
 
