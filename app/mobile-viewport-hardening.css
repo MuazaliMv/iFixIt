@@ -1,16 +1,23 @@
 /* Final mobile containment layer. Keep this import LAST in layout.tsx. */
-html,body{width:100%;max-width:100%;min-width:0;overflow-x:clip;-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{min-height:100vh;min-height:100dvh}
+html,body{width:100%;max-width:100%;min-width:0;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html{min-height:100%;overflow-x:clip;overflow-y:auto;overscroll-behavior-y:auto;scrollbar-gutter:auto}
+body{min-height:100vh;min-height:100svh;min-height:100dvh;height:auto;overflow-x:clip;overflow-y:visible;touch-action:pan-x pan-y pinch-zoom;-webkit-overflow-scrolling:touch}
 *,*::before,*::after{box-sizing:border-box}
 img,video,canvas,svg,iframe{max-width:100%;height:auto}
 main,header,footer,section,article,aside,nav,form,fieldset,div{min-width:0}
 
 @supports not (overflow:clip){html,body{overflow-x:hidden}}
 
+/* Android/Samsung browser bars and virtual keyboards can resize the visual viewport
+   independently of the layout viewport. Never lock the document to a stale 100vh. */
+@supports(height:100svh){body{min-height:100svh}}
+@supports(height:100dvh){body{min-height:100dvh}}
+
 @media(max-width:767px){
   :root{--fixit-touch-target:48px}
 
-  body{width:100%;max-width:100%;overflow-x:clip}
+  html{height:auto!important;min-height:100%!important;overflow-y:auto!important}
+  body{width:100%;max-width:100%;height:auto!important;min-height:100vh!important;min-height:100svh!important;min-height:100dvh!important;overflow-x:clip;overflow-y:visible!important;position:static!important}
 
   /* Never allow desktop-sized shells to survive on a phone. */
   main,.shell,.page-shell,.dashboard-shell,.content-shell,.content-container,.container,.page,.dashboard,.panel,.card,.hero,.wizardShell,.customerShell,.providerShell,.adminShell{
@@ -63,14 +70,26 @@ main,header,footer,section,article,aside,nav,form,fieldset,div{min-width:0}
     width:100%!important;
     max-width:100%!important;
     overflow-x:auto!important;
+    overflow-y:visible!important;
     overscroll-behavior-inline:contain;
     -webkit-overflow-scrolling:touch;
   }
 
-  /* Fixed overlays cannot exceed the phone viewport. */
+  /* Fixed overlays cannot exceed the phone viewport. Use svh as a stable Android
+     fallback and dvh when the browser exposes the current visual viewport. */
   [role='dialog'],.modal,.lightbox,.image-viewer,.fixitModalMenu{
     max-width:calc(100vw - 24px)!important;
+    max-height:calc(100vh - 24px)!important;
+    max-height:calc(100svh - 24px)!important;
     max-height:calc(100dvh - 24px)!important;
+  }
+
+  .fixitModalScroll,.modal-scroll,.dialog-scroll,[data-scroll-region]{
+    min-height:0!important;
+    overflow-y:auto!important;
+    overscroll-behavior-y:contain;
+    touch-action:pan-y pinch-zoom;
+    -webkit-overflow-scrolling:touch;
   }
 
   /* Keep fixed bottom UI inside iPhone/Android safe areas. */
@@ -98,5 +117,9 @@ main,header,footer,section,article,aside,nav,form,fieldset,div{min-width:0}
 }
 
 @media(max-width:767px) and (orientation:landscape){
-  [role='dialog'],.modal,.lightbox,.image-viewer,.fixitModalMenu{max-height:calc(100dvh - 12px)!important}
+  [role='dialog'],.modal,.lightbox,.image-viewer,.fixitModalMenu{
+    max-height:calc(100vh - 12px)!important;
+    max-height:calc(100svh - 12px)!important;
+    max-height:calc(100dvh - 12px)!important;
+  }
 }
