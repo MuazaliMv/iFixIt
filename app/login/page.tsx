@@ -179,7 +179,7 @@ export default function LoginPage(){
 
     <section className="authCardClean">
      <div className="authStatusPill"><span aria-hidden="true"/>{isLogin?'Secure account access':'New iFixMV account'}</div>
-     <div className="authIntro"><h1>{isLogin?'Welcome back':'Create your account'}</h1><p>{isLogin?'Sign in once, then open the workspace you need.':'Create one account for requesting services and, when approved, providing services.'}</p></div>
+     <div className="authIntro"><h1>{isLogin?'Welcome':'Create your account'}</h1><p>{isLogin?'Sign in once, then open the workspace you need.':'Create one account for requesting services and, when approved, providing services.'}</p></div>
 
      <form onSubmit={submit} className="authFormClean" noValidate>
       {!isLogin?<>
