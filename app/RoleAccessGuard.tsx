@@ -5,11 +5,34 @@ import { usePathname, useRouter } from 'next/navigation';
 import { apiFetch } from '../lib/apiClient';
 
 type AccountRole='CUSTOMER'|'PROVIDER'|'ADMIN';
+type WorkspaceRole='customer'|'provider'|'admin';
 
-function destination(role:AccountRole){
-  if(role==='ADMIN')return '/admin';
-  if(role==='PROVIDER')return '/provider/jobs';
+function workspaceDestination(workspace:WorkspaceRole){
+  if(workspace==='admin')return '/admin';
+  if(workspace==='provider')return '/provider/today';
   return '/home';
+}
+
+function defaultWorkspace(role:AccountRole):WorkspaceRole{
+  if(role==='ADMIN')return 'admin';
+  if(role==='PROVIDER')return 'provider';
+  return 'customer';
+}
+
+function readSelectedWorkspace(role:AccountRole):WorkspaceRole{
+  try{
+    const stored=String(localStorage.getItem('fixit:app-mode')||localStorage.getItem('fixit:mobile-nav-role')||'').toLowerCase();
+    if(stored==='admin'||stored==='provider'||stored==='customer')return stored;
+  }catch{}
+  return defaultWorkspace(role);
+}
+
+function saveSelectedWorkspace(workspace:WorkspaceRole,role:AccountRole){
+  try{
+    localStorage.setItem('fixit:account-role',role.toLowerCase());
+    localStorage.setItem('fixit:mobile-nav-role',workspace);
+    localStorage.setItem('fixit:app-mode',workspace);
+  }catch{}
 }
 
 function isProviderApplicationRoute(path:string){
@@ -25,10 +48,10 @@ export default function RoleAccessGuard(){
 
     async function enforce(){
       const providerApplicationRoute=isProviderApplicationRoute(path);
-      const customerRoute=path==='/home'||path==='/requests'||path.startsWith('/requests/')||path==='/messages'||path.startsWith('/messages/')||providerApplicationRoute;
+      const customerRoute=path==='/home'||path==='/requests'||path.startsWith('/requests/')||path==='/messages'||path.startsWith('/messages/');
       const providerRoute=!providerApplicationRoute&&(path==='/provider'||path.startsWith('/provider/'));
       const adminRoute=path==='/admin'||path.startsWith('/admin/');
-      const roleControlled=customerRoute||providerRoute||adminRoute;
+      const roleControlled=customerRoute||providerRoute||adminRoute||providerApplicationRoute;
       if(!roleControlled)return;
 
       try{
@@ -41,32 +64,37 @@ export default function RoleAccessGuard(){
         const role:AccountRole=raw==='ADMIN'?'ADMIN':raw==='PROVIDER'?'PROVIDER':'CUSTOMER';
         const providerApproved=p?.profile?.provider_approved===true;
 
-        // Workspace access is separate from permanent account identity.
-        // Admin includes all three workspaces by default. Provider accounts
-        // and approved customer accounts can use Provider mode. Every signed-in
-        // account can use Customer mode. Only Admin accounts can use Admin mode.
-        const canUseCustomerWorkspace=true;
+        // Permanent account role controls which workspaces may be selected.
+        // The selected workspace controls which guard rules are active.
         const canUseProviderWorkspace=role==='ADMIN'||role==='PROVIDER'||providerApproved;
         const canUseAdminWorkspace=role==='ADMIN';
 
-        try{
-          const navRole=adminRoute&&canUseAdminWorkspace?'admin':providerRoute&&canUseProviderWorkspace?'provider':'customer';
-          localStorage.setItem('fixit:account-role',role.toLowerCase());
-          localStorage.setItem('fixit:mobile-nav-role',navRole);
-          localStorage.setItem('fixit:app-mode',navRole);
-        }catch{}
+        let selected=readSelectedWorkspace(role);
+        if(selected==='admin'&&!canUseAdminWorkspace)selected='customer';
+        if(selected==='provider'&&!canUseProviderWorkspace)selected='customer';
+        saveSelectedWorkspace(selected,role);
 
-        const wrongRoute=
-          (providerRoute&&!canUseProviderWorkspace)||
-          (customerRoute&&!canUseCustomerWorkspace)||
-          (adminRoute&&!canUseAdminWorkspace);
-
-        if(wrongRoute&&active){
-          if(providerRoute&&!canUseProviderWorkspace){
-            router.replace('/provider/onboarding');
+        // Provider onboarding is a Customer-mode application flow for accounts
+        // that do not yet have Provider workspace access.
+        if(providerApplicationRoute){
+          if(canUseProviderWorkspace){
+            if(active)router.replace(workspaceDestination(selected));
             return;
           }
-          router.replace(destination(role));
+          if(selected!=='customer'){
+            selected='customer';
+            saveSelectedWorkspace(selected,role);
+          }
+          return;
+        }
+
+        const routeMatchesSelected=
+          (selected==='customer'&&customerRoute)||
+          (selected==='provider'&&providerRoute)||
+          (selected==='admin'&&adminRoute);
+
+        if(!routeMatchesSelected&&active){
+          router.replace(workspaceDestination(selected));
         }
       }catch{}
     }
