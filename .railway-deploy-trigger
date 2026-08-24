@@ -1,10 +1,16 @@
-Trigger Railway deployment from current main head.
-Created: 2026-08-24T02:55:00+05:00
-Reason: deploy improved live provider broadcast banner.
+Trigger Railway deployment from the latest main head only.
+Updated: 2026-08-24T17:23:00+05:00
+Reason: force production to rebuild and deploy the current main branch; do not reuse or promote an older deployment.
+
 Required production behavior:
-- Show the banner on the active customer request detail page while provider broadcast/response timers are running.
-- Headline: Your request is broadcasting to service providers.
-- Tell the customer that matching providers are being notified and they will be notified when one responds.
-- Show the live countdown prominently.
-- Use the approved attractive blue design with a red rounded border.
-Target application commits include: 0178ed83d393db437c614178faf51b7056eb353a, 1aa1dad9f53ca99e1a34bf2f7258e8bab0a12008
+- Production source of truth is GitHub branch: main.
+- Every production deployment must build from the current main HEAD.
+- Do not roll back, redeploy, promote, or pin an older deployment unless explicitly requested by the project owner.
+- Build a fresh Next.js production bundle from the selected commit.
+- ifixmv.com must point to the newest successful production deployment.
+
+Current target main HEAD at time of this trigger:
+- bcd1f3c08bab6bf3443513cf186de16d4464e48d
+- Make request action taps work through mobile overlays
+
+This trigger intentionally changes on main so the hosting integration performs a new production build from the latest source.
