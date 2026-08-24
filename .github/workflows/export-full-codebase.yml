@@ -1,0 +1,88 @@
+name: Export Full Codebase
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.codebase-export-trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Build single-file codebase export
+        shell: python
+        run: |
+          from pathlib import Path
+          import os
+          import subprocess
+
+          root = Path('.')
+          output = root / 'FULL_CODEBASE.txt'
+          skip_dirs = {'.git', 'node_modules', '.next', '.bootstrap'}
+          skip_files = {'FULL_CODEBASE.txt'}
+
+          commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+
+          paths = []
+          for path in root.rglob('*'):
+              if not path.is_file():
+                  continue
+              rel = path.relative_to(root)
+              if any(part in skip_dirs for part in rel.parts):
+                  continue
+              if rel.as_posix() in skip_files:
+                  continue
+              paths.append(rel)
+
+          paths.sort(key=lambda p: p.as_posix().lower())
+
+          with output.open('w', encoding='utf-8', newline='\n') as out:
+              out.write('iFixMV / iFixIt - FULL CODEBASE SINGLE-FILE EXPORT\n')
+              out.write(f'Source commit: {commit}\n')
+              out.write('Repository: MuazaliMv/iFixIt\n')
+              out.write('Note: binary assets are listed but not embedded; .bootstrap is excluded as a legacy archive.\n')
+              out.write('=' * 100 + '\n\n')
+
+              for rel in paths:
+                  path = root / rel
+                  raw = path.read_bytes()
+                  out.write('\n' + '=' * 100 + '\n')
+                  out.write(f'FILE: {rel.as_posix()}\n')
+                  out.write(f'SIZE: {len(raw)} bytes\n')
+                  out.write('=' * 100 + '\n')
+
+                  try:
+                      text = raw.decode('utf-8')
+                      if '\x00' in text:
+                          raise UnicodeDecodeError('utf-8', raw, 0, 1, 'binary data')
+                      out.write(text)
+                      if text and not text.endswith('\n'):
+                          out.write('\n')
+                  except UnicodeDecodeError:
+                      out.write(f'[BINARY FILE OMITTED FROM TEXT EXPORT: {len(raw)} bytes]\n')
+
+          print(f'Created {output} with {len(paths)} repository files represented.')
+
+      - name: Commit export
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add FULL_CODEBASE.txt
+          if git diff --cached --quiet; then
+            echo 'No export changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Export full codebase to one file'
+          git push origin main
