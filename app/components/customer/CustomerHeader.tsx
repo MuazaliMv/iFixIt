@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 type Props={title?:string;backHref?:string;right?:ReactNode};
 
 const featherStyles=`
@@ -23,4 +23,13 @@ button,a,input,select,textarea{transition:border-color .15s ease,background-colo
 @media(max-width:760px){.c3Shell{width:min(100% - 20px,660px)!important}.c3Home{padding-top:14px!important;gap:14px!important}.c3Welcome{padding:22px!important;border-radius:18px!important}.c3Welcome h1{font-size:30px!important}.c3Section{padding:17px!important;border-radius:16px!important}.c3ServiceGrid{gap:10px!important}.c3ServiceTile{min-height:110px!important;border-radius:14px!important;padding:14px!important}.c3WizardCard{padding:18px!important;border-radius:16px!important;box-shadow:none!important}.c3Header{height:64px!important}.c3Logo{font-size:23px!important}.c4LangCompact{display:flex}}
 `;
 
-export default function CustomerHeader({title,backHref,right}:Props){return <><style>{featherStyles}</style><header className="c3Header"><div className="c3HeaderSide">{backHref?<a className="c3IconButton" href={backHref} aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></a>:<span/>}</div><a className="c3Logo" href="/" aria-label="FixIt home"><span>Fix</span><b>It</b>{title?<small>{title}</small>:null}</a><div className="c3HeaderSide c3HeaderRight">{right}</div></header></>}
+function handleBackClick(event:MouseEvent<HTMLAnchorElement>,backHref:string){
+ if(typeof window==='undefined')return;
+ const currentPath=window.location.pathname.replace(/\/$/,'')||'/';
+ const targetPath=new URL(backHref,window.location.origin).pathname.replace(/\/$/,'')||'/';
+ if(currentPath!==targetPath)return;
+ const wizardBack=document.querySelector<HTMLButtonElement>('.c3ActionDock .c3Secondary');
+ if(wizardBack){event.preventDefault();wizardBack.click();}
+}
+
+export default function CustomerHeader({title,backHref,right}:Props){return <><style>{featherStyles}</style><header className="c3Header"><div className="c3HeaderSide">{backHref?<a className="c3IconButton" href={backHref} onClick={event=>handleBackClick(event,backHref)} aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></a>:<span/>}</div><a className="c3Logo" href="/" aria-label="FixIt home"><span>Fix</span><b>It</b>{title?<small>{title}</small>:null}</a><div className="c3HeaderSide c3HeaderRight">{right}</div></header></>}
