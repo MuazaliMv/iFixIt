@@ -45,6 +45,7 @@ import NewRequestRuntime from './NewRequestRuntime';
 import PreferredDateRuntime from './PreferredDateRuntime';
 import SendRequestTapRuntime from './SendRequestTapRuntime';
 import WorkspaceThemeRuntime from './WorkspaceThemeRuntime';
+import ServerSessionSignOutSync from './ServerSessionSignOutSync';
 
 export const metadata: Metadata = {
   title: 'FixIt Maldives',
@@ -60,7 +61,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/><ResponsiveRuntime/><MobileKeyboardRuntime/><WorkspaceThemeRuntime/><SendRequestTapRuntime/><RoleAccessGuard/><NewRequestRuntime/><PreferredDateRuntime/><GlobalRoleMenu/><GlobalModeSwitch/><GlobalCardPagination/><MobileDateInputRuntime/>{children}<ModeToast/></body>
+      <body><ThemeRuntime/><ResponsiveRuntime/><MobileKeyboardRuntime/><WorkspaceThemeRuntime/><ServerSessionSignOutSync/><SendRequestTapRuntime/><RoleAccessGuard/><NewRequestRuntime/><PreferredDateRuntime/><GlobalRoleMenu/><GlobalModeSwitch/><GlobalCardPagination/><MobileDateInputRuntime/>{children}<ModeToast/></body>
     </html>
   );
 }

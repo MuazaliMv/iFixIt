@@ -1,0 +1,6 @@
+#profile,#service-addresses{scroll-margin-top:104px}
+.profileSettingsNav a{min-height:48px}
+.profileSettingsNav a:focus-visible,.profileFormActions button:focus-visible,.profileSecurityActions a:focus-visible,.profileSecurityActions button:focus-visible{outline:3px solid var(--ws-primary-ring,rgba(37,99,235,.18));outline-offset:2px}
+.profileFormGrid input{font-size:16px}
+.profileSaveState{min-height:18px}
+@media(max-width:640px){.profileSettingsNav a{min-height:48px}.profileRedesignTitlebar>div>p:last-child{line-height:1.5}.profileFormActions{gap:8px}}
