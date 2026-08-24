@@ -30,14 +30,28 @@ export default function AppModeSwitch({mode,compact=false,className=''}:Props){
    try{
     const{data}=await supabase.auth.getSession();
     if(!data.session){if(active)setProviderReady(false);return;}
+
+    // Primary source: account profile. An approved provider keeps CUSTOMER as the
+    // permanent base role, so provider_approved must drive workspace access.
+    const profileResponse=await fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store'});
+    if(profileResponse.ok){
+     const payload=await profileResponse.json().catch(()=>({}));
+     if(payload?.profile?.provider_approved===true){
+      if(active)setProviderReady(true);
+      return;
+     }
+    }
+
+    // Fallback to onboarding status for older sessions / transitional records.
     const r=await fetch(ONBOARDING_URL,{
      method:'POST',
      headers:{'Content-Type':'application/json','Authorization':`Bearer ${data.session.access_token}`},
-     body:JSON.stringify({action:'get'})
+     body:JSON.stringify({action:'get'}),
+     cache:'no-store'
     });
     if(!r.ok){if(active)setProviderReady(false);return;}
     const p=await r.json();
-    if(active)setProviderReady(Boolean(p?.authProfile?.provider_approved&&p?.profile?.onboarding_status==='APPROVED'));
+    if(active)setProviderReady(Boolean(p?.authProfile?.provider_approved||p?.profile?.onboarding_status==='APPROVED'));
    }catch{
     if(active)setProviderReady(false);
    }
@@ -63,18 +77,18 @@ export default function AppModeSwitch({mode,compact=false,className=''}:Props){
    if(mode==='provider'){
     if(data.session)await logMode(data.session.access_token,'customer');
     remember('customer',"You're now viewing as Customer.");
-    window.location.href='/';
+    window.location.assign('/');
     return;
    }
-   if(!data.session){window.location.href='/login';return;}
+   if(!data.session){window.location.assign('/login');return;}
    if(providerReady!==true){
     remember('customer','Complete your Service Provider application to request approval.');
-    window.location.href='/provider/onboarding';
+    window.location.assign('/provider/onboarding');
     return;
    }
    await logMode(data.session.access_token,'provider');
    remember('provider',"You're now viewing as Service Provider.");
-   window.location.href='/provider/today';
+   window.location.assign('/provider/today');
   }finally{
    setBusy(false);
   }
@@ -101,6 +115,6 @@ export default function AppModeSwitch({mode,compact=false,className=''}:Props){
   title={isChecking?'Checking Service Provider approval':text}
  >
   <span className={`modeDot ${mode}`}/>
-  {isChecking?'Checking…':compact?compactText:text}
+  {busy?'Switching…':isChecking?'Checking…':compact?compactText:text}
  </button>;
 }
