@@ -31,6 +31,7 @@ export default function GlobalModeSwitch(){
  const[mode,setMode]=useState<Mode>(()=>routeMode(path));
  const[signedIn,setSignedIn]=useState(false);
  const[accountRole,setAccountRole]=useState<AccountRole>('CUSTOMER');
+ const[providerApproved,setProviderApproved]=useState(false);
  const[open,setOpen]=useState(false);
  const[loggingOut,setLoggingOut]=useState(false);
  const wrapRef=useRef<HTMLDivElement|null>(null);
@@ -40,8 +41,6 @@ export default function GlobalModeSwitch(){
   setOpen(false);
   let active=true;
 
-  // The secure server session/profile is authoritative. This avoids hiding the
-  // menu simply because an older browser-only Supabase session is unavailable.
   void(async()=>{
    try{
     const response=await apiFetch('/api/user/profile',{cache:'no-store'});
@@ -50,6 +49,7 @@ export default function GlobalModeSwitch(){
     if(!response.ok){setSignedIn(false);return;}
     const payload=await response.json().catch(()=>({}));
     setAccountRole(normalizeAccountRole(payload?.profile?.role));
+    setProviderApproved(Boolean(payload?.profile?.provider_approved));
     setSignedIn(true);
    }catch{
     if(active)setSignedIn(false);
@@ -83,11 +83,11 @@ export default function GlobalModeSwitch(){
  if(isHiddenRoute(path)||!signedIn)return null;
 
  const profileHref=mode==='provider'?'/provider/profile':'/profile';
- const canUseProvider=canAccessPortal(accountRole,'provider');
- const canUseAdmin=canAccessPortal(accountRole,'admin');
+ const canUseProvider=canAccessPortal(accountRole,'provider',providerApproved);
+ const canUseAdmin=canAccessPortal(accountRole,'admin',providerApproved);
 
  function rememberWorkspace(next:Mode,message?:string){
-  if(!canAccessPortal(accountRole,next))return;
+  if(!canAccessPortal(accountRole,next,providerApproved))return;
   try{
    localStorage.setItem('fixit:mobile-nav-role',next);
    localStorage.setItem('fixit:app-mode',next);
@@ -134,7 +134,7 @@ export default function GlobalModeSwitch(){
     <div className="airMenuIntro"><h2>Welcome</h2><p>Open a workspace available to your account.</p></div>
 
     <section className="airWorkspaceChooser" aria-label="Choose workspace">
-     <div className="airWorkspaceHead"><span>Open workspace</span><small>Only portals allowed for your account role are shown</small></div>
+     <div className="airWorkspaceHead"><span>Open workspace</span><small>Only workspaces available to this account are shown</small></div>
 
      {canUseProvider?<Link
       className={`airWorkspaceOption provider${mode==='provider'?' selected':''}`}
