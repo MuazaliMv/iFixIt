@@ -1,0 +1,47 @@
+name: Remove Provider Subapproval Labels Once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/remove-provider-subapproval-labels-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove document approval wording
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('app/provider/onboarding/page.tsx')
+          s=p.read_text()
+          s=s.replace("setMessage(`${type==='ID_CARD'?'ID Card':'Business Permit'} uploaded successfully and sent for Admin review.`);", "setMessage(`${type==='ID_CARD'?'ID Card':'Business Permit'} uploaded as an optional supporting document.`);")
+          s=s.replace("setMessage(submit?'Provider application submitted for Admin approval. Verification documents will be reviewed before approval.':'Draft saved.');", "setMessage(submit?'Provider application submitted for Admin approval.':'Draft saved.');")
+          s=s.replace("const docStatus=doc?.review_status||'NOT_SUBMITTED';return <div", "return <div")
+          s=s.replace("<span className=\"pill\">{pretty(docStatus)}</span>", "<span className=\"pill\">{doc?'Uploaded':'Optional'}</span>")
+          p.write_text(s)
+
+          p=Path('app/admin/providers/[userId]/page.tsx')
+          s=p.read_text()
+          s=s.replace('>Review Documents</a>', '>View Documents</a>')
+          s=s.replace('<span className="pill">{pretty(d.review_status)}</span>', '<span className="pill">Optional</span>')
+          p.write_text(s)
+
+          p=Path('app/admin/providers/[userId]/documents/page.tsx')
+          s=p.read_text()
+          s=s.replace('<span className="pill">{doc.review_status.replaceAll(\'_\',\' \')}</span>', '<span className="pill">Optional</span>')
+          p.write_text(s)
+          PY
+      - name: Commit approval wording cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/provider/onboarding/page.tsx app/admin/providers/[userId]/page.tsx app/admin/providers/[userId]/documents/page.tsx
+          git commit -m "Remove provider document sub-approval wording"
+          git push
