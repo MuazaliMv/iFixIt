@@ -33,6 +33,7 @@ import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
 import RoleAccessGuard from './RoleAccessGuard';
 import GlobalRoleMenu from './GlobalRoleMenu';
+import GlobalModeSwitch from './GlobalModeSwitch';
 import GlobalCardPagination from './GlobalCardPagination';
 import MobileDateInputRuntime from './MobileDateInputRuntime';
 import MobileKeyboardRuntime from './MobileKeyboardRuntime';
@@ -54,7 +55,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/><ResponsiveRuntime/><MobileKeyboardRuntime/><SendRequestTapRuntime/><RoleAccessGuard/><NewRequestRuntime/><PreferredDateRuntime/><GlobalRoleMenu/><GlobalCardPagination/><MobileDateInputRuntime/>{children}<ModeToast/></body>
+      <body><ThemeRuntime/><ResponsiveRuntime/><MobileKeyboardRuntime/><SendRequestTapRuntime/><RoleAccessGuard/><NewRequestRuntime/><PreferredDateRuntime/><GlobalRoleMenu/><GlobalModeSwitch/><GlobalCardPagination/><MobileDateInputRuntime/>{children}<ModeToast/></body>
     </html>
   );
 }
