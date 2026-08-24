@@ -29,6 +29,7 @@ import './mobile-viewport-hardening.css';
 import './mobile-keyboard-hardening.css';
 import './mobile-compliance-v2.css';
 import './mobile-compliance-v3.css';
+import './apple-request-wizard.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
