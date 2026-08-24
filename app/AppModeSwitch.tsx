@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { apiFetch } from '../lib/apiClient';
 
 const ONBOARDING_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-onboarding';
 const SETUP_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-setup-data';
@@ -28,23 +29,25 @@ export default function AppModeSwitch({mode,compact=false,className=''}:Props){
   let active=true;
   void(async()=>{
    try{
-    const{data}=await supabase.auth.getSession();
-    if(!data.session){if(active)setProviderReady(false);return;}
-
-    // Any account whose permanent role is PROVIDER, or whose provider approval
-    // flag is active, must retain access to both Customer and Service Provider
-    // workspaces. This is the global dual-mode rule for service providers.
-    const profileResponse=await fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store'});
+    // The secure server session is authoritative. Do not treat a missing
+    // legacy browser Supabase session as a logout.
+    const profileResponse=await apiFetch('/api/user/profile');
     if(profileResponse.ok){
      const payload=await profileResponse.json().catch(()=>({}));
      const role=String(payload?.profile?.role||'').toUpperCase();
-     if(role==='PROVIDER'||payload?.profile?.provider_approved===true){
+     if(role==='ADMIN'||role==='PROVIDER'||payload?.profile?.provider_approved===true){
       if(active)setProviderReady(true);
       return;
      }
+    }else if(profileResponse.status===401){
+     if(active)setProviderReady(false);
+     return;
     }
 
-    // Fallback to onboarding status for older sessions / transitional records.
+    // Transitional fallback for older provider records. This is optional and
+    // must never force the user back through login when the server session is valid.
+    const{data}=await supabase.auth.getSession();
+    if(!data.session){if(active)setProviderReady(false);return;}
     const r=await fetch(ONBOARDING_URL,{
      method:'POST',
      headers:{'Content-Type':'application/json','Authorization':`Bearer ${data.session.access_token}`},
@@ -87,13 +90,14 @@ export default function AppModeSwitch({mode,compact=false,className=''}:Props){
     window.location.assign('/home');
     return;
    }
-   if(!data.session){window.location.assign('/login');return;}
    if(providerReady!==true){
     remember('customer','Complete your Service Provider application to request approval.');
     window.location.assign('/provider/onboarding');
     return;
    }
-   await logMode(data.session.access_token,'provider');
+   // Mode-event logging is best-effort. Workspace switching itself is authorized
+   // by the server-side RoleAccessGuard and must not require another login.
+   if(data.session)await logMode(data.session.access_token,'provider');
    remember('provider',"You're now viewing as Service Provider.");
    window.location.assign('/provider/today');
   }finally{
