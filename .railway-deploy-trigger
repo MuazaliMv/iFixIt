@@ -1,6 +1,6 @@
 Trigger Railway deployment from the latest main head only.
-Updated: 2026-08-24T17:24:00+05:00
-Reason: deploy the request submission fix after preferred-date behavior was changed.
+Updated: 2026-08-24T18:04:00+05:00
+Reason: deploy the iOS Send Request tap fix that stops the mobile fallback from cancelling the native React click.
 
 Required production behavior:
 - Production source of truth is GitHub branch: main.
@@ -10,7 +10,7 @@ Required production behavior:
 - ifixmv.com must point to the newest successful production deployment.
 
 Current target main HEAD at time of this trigger:
-- bbfd3b4658089b4b5c6f653453561653f4616a39
-- Fix request submission after preferred date removal
+- b2a5a5c85b33ec1de723af78e96853d966e4897d
+- Stop mobile tap fallback from blocking Send Request
 
 This trigger intentionally changes on main so the hosting integration performs a new production build from the latest source.
