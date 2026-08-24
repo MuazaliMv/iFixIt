@@ -1,0 +1,180 @@
+/* Request detail mobile usability overrides */
+
+.requestAppPanel{
+  width:min(760px,calc(100% - 24px))!important;
+  margin:0 auto!important;
+  padding-top:16px!important;
+  padding-bottom:32px!important;
+}
+
+.requestAppHeading{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:12px!important;
+  align-items:start!important;
+  margin-bottom:12px!important;
+}
+
+.requestAppHeading h1{
+  margin:4px 0 4px!important;
+  line-height:1.12!important;
+}
+
+.requestAppHeading>div>p:last-child{
+  margin:0!important;
+}
+
+.requestAppHeading>.secondary{
+  width:44px!important;
+  min-width:44px!important;
+  height:44px!important;
+  min-height:44px!important;
+  padding:0!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+  text-indent:-9999px!important;
+  position:relative!important;
+  border-radius:12px!important;
+}
+
+.requestAppHeading>.secondary::after{
+  content:'↻';
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  text-indent:0;
+  font-size:22px;
+  font-weight:800;
+}
+
+.requestAppPanel>.danger{
+  width:auto!important;
+  min-height:42px!important;
+  margin:0 0 14px!important;
+  padding:0 14px!important;
+  font-size:14px!important;
+  border-radius:10px!important;
+}
+
+.requestTabs{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:4px!important;
+  width:100%!important;
+  margin:0 0 12px!important;
+  padding:4px!important;
+  border-radius:12px!important;
+  overflow:visible!important;
+}
+
+.requestTabs button{
+  min-width:0!important;
+  min-height:42px!important;
+  padding:8px 6px!important;
+  font-size:14px!important;
+  white-space:normal!important;
+  line-height:1.2!important;
+}
+
+.statusNotice{
+  margin:8px 0 12px!important;
+  padding:8px 10px!important;
+  min-height:0!important;
+  font-size:13px!important;
+  line-height:1.35!important;
+  border-radius:9px!important;
+}
+
+.progressCard,
+.screenCard,
+.providerSummaryCard{
+  margin-top:12px!important;
+  border-radius:14px!important;
+}
+
+.progressCard{
+  padding:16px!important;
+}
+
+.progressTrack{
+  grid-template-columns:1fr!important;
+  gap:0!important;
+  margin-top:12px!important;
+}
+
+.progressTrack::before{
+  display:none!important;
+}
+
+.progressStep{
+  grid-template-columns:34px minmax(0,1fr)!important;
+  justify-items:start!important;
+  align-items:center!important;
+  text-align:left!important;
+  gap:10px!important;
+  min-height:48px!important;
+  padding:4px 0!important;
+  position:relative!important;
+}
+
+.progressStep:not(:last-child)::after{
+  content:'';
+  position:absolute;
+  left:16px;
+  top:38px;
+  bottom:-10px;
+  width:2px;
+  background:#e2e8f0;
+}
+
+.progressDot{
+  width:34px!important;
+  height:34px!important;
+  grid-column:1!important;
+  grid-row:1 / span 2!important;
+}
+
+.progressStep strong{
+  font-size:14px!important;
+  line-height:1.25!important;
+}
+
+.progressStep small{
+  font-size:12px!important;
+  line-height:1.3!important;
+  margin-top:-2px!important;
+}
+
+.timelineFab{
+  position:static!important;
+  width:min(760px,calc(100% - 24px))!important;
+  margin:0 auto 28px!important;
+  min-height:46px!important;
+  display:flex!important;
+  justify-content:center!important;
+  border-radius:12px!important;
+  box-shadow:none!important;
+  background:#fff!important;
+  color:#0f172a!important;
+  border:1px solid #dbe3ee!important;
+}
+
+.timelineFab b{
+  background:#eef2f7!important;
+  color:#334155!important;
+}
+
+@media(max-width:640px){
+  .ifixPage{padding-bottom:24px!important;}
+  .requestAppPanel{width:calc(100% - 20px)!important;padding-top:12px!important;}
+  .requestAppHeading{grid-template-columns:minmax(0,1fr) 44px!important;}
+  .requestAppHeading h1{font-size:30px!important;}
+  .requestTabs{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  .requestTabs button:nth-child(3){grid-column:1 / -1!important;}
+  .screenCard{padding:16px!important;}
+  .providerSummaryCard{padding:16px!important;display:block!important;}
+  .providerProfileMain{gap:14px!important;align-items:flex-start!important;}
+  .providerPhoto{width:72px!important;height:72px!important;}
+  .timelineFab{width:calc(100% - 20px)!important;margin-bottom:20px!important;}
+}
