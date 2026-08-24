@@ -12,6 +12,10 @@ function destination(role:AccountRole){
   return '/';
 }
 
+function isProviderApplicationRoute(path:string){
+  return path==='/provider/onboarding'||path.startsWith('/provider/onboarding/');
+}
+
 export default function RoleAccessGuard(){
   const path=usePathname();
   const router=useRouter();
@@ -20,8 +24,9 @@ export default function RoleAccessGuard(){
     let active=true;
 
     async function enforce(){
-      const customerRoute=path==='/'||path==='/requests'||path.startsWith('/requests/')||path==='/messages'||path.startsWith('/messages/');
-      const providerRoute=path==='/provider'||path.startsWith('/provider/');
+      const providerApplicationRoute=isProviderApplicationRoute(path);
+      const customerRoute=path==='/'||path==='/requests'||path.startsWith('/requests/')||path==='/messages'||path.startsWith('/messages/')||providerApplicationRoute;
+      const providerRoute=!providerApplicationRoute&&(path==='/provider'||path.startsWith('/provider/'));
       const adminRoute=path==='/admin'||path.startsWith('/admin/');
       const roleControlled=customerRoute||providerRoute||adminRoute;
       if(!roleControlled)return;
