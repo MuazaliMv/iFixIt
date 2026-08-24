@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import './adminManagement.css';
 
 export default function AdminNav(){
  const path=usePathname();
@@ -13,7 +14,7 @@ export default function AdminNav(){
   {href:'/admin/users/rights-privileges',label:'Rights & Privileges'},
   {href:'/admin/users/reset-password',label:'Reset Password'},
  ];
- return <nav aria-label="Admin management sections" style={{display:'flex',gap:10,flexWrap:'wrap',margin:'0 0 18px'}}>
+ return <nav className="adminManagementNav" aria-label="Admin management sections">
   {items.map(item=>{const active=item.href==='/admin/users'?path==='/admin/users':path.startsWith(item.href);return <a key={item.href} href={item.href} className={active?'primary compactButton':'secondary compactButton'}>{item.label}</a>;})}
  </nav>;
 }
