@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
-import DispatchLivePanel from './DispatchLivePanel';
 
 type Role='customer'|'provider'|'admin';
 type IconName='profile'|'key'|'bell'|'settings'|'requests'|'alert'|'location'|'users'|'reports'|'audit'|'jobs'|'calendar'|'services'|'messages';
@@ -106,7 +105,6 @@ export default function GlobalRoleMenu(){
  const menu=menus[role];
 
  return <>
-  {role==='customer'&&path.startsWith('/requests/')?<DispatchLivePanel/>:null}
   <div className="globalMenuHeaderWrap"><header className="globalMenuHeader" aria-label={`${menu.label} navigation`}><Link href={menu.home} className="globalMenuBrand" onClick={()=>setOpen(false)}><span className="globalMenuBrandMark">F</span><span>FixIt</span></Link><div className="globalMenuHeaderActions"><Link className="globalMenuSecondary" href={menu.secondary.href}>{menu.secondary.label}</Link><button className="globalMenuToggle" type="button" aria-label={open?'Close menu':'Open menu'} aria-expanded={open} onClick={()=>setOpen(v=>!v)}>{open?<span className="globalMenuClose">×</span>:<span className="globalMenuBars"><i/><i/><i/></span>}</button></div></header></div>
 
   {open?<div className="fixitModalBackdrop" role="presentation" onMouseDown={e=>{if(e.currentTarget===e.target)setOpen(false);}}>
