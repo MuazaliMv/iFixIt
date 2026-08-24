@@ -1,6 +1,6 @@
 Trigger Railway deployment from the latest main head only.
-Updated: 2026-08-25T02:57:00+05:00
-Reason: deploy the latest production main build, including the simplified Admin navigation and current customer/provider portal updates.
+Updated: 2026-08-25T03:24:00+05:00
+Reason: deploy the unified production design system across Admin, Service Provider, and Customer workspaces, including the latest Provider and Customer design-system merge.
 
 Required production behavior:
 - Production source of truth is GitHub branch: main.
@@ -10,13 +10,13 @@ Required production behavior:
 - ifixmv.com must point to the newest successful production deployment.
 
 Current target main HEAD at time of this trigger:
-- d3f1fdec8719c8ec882e6ed77bec12be559f4524
-- Deploy unified customer and provider portal preview
+- bf27675a077fc2c2ed48698ca87eb91453a73296
+- Includes PR #69 Admin design system and PR #70 Provider + Customer design system.
 
-Expected Admin navigation behavior:
-- Five primary groups: Dashboard, Requests, Users & Providers, Services & Locations, Reports & System.
-- Relevant submenus appear in the secondary navigation row.
-- Existing Admin permissions and route protection remain enforced.
-- Mobile navigation remains touch-friendly and horizontally scrollable where required.
+Expected production UI behavior:
+- Admin keeps the simplified five-group navigation with submenus and scoped light/dark design system.
+- Customer and Service Provider workspaces use the same login-aligned semantic design language, responsive surfaces, rounded controls/cards, 48px touch targets, and scoped light/dark appearance.
+- Existing live Supabase-backed customer requests, provider jobs/offers, admin operations, role checks, permissions, and route protection remain unchanged.
+- Mobile-first behavior remains enabled across all workspaces.
 
 This trigger intentionally changes on main so the Railway hosting integration performs a new production build from the latest source.
