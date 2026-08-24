@@ -1,6 +1,6 @@
 Trigger Railway deployment from the latest main head only.
-Updated: 2026-08-24T17:23:00+05:00
-Reason: force production to rebuild and deploy the current main branch; do not reuse or promote an older deployment.
+Updated: 2026-08-24T17:24:00+05:00
+Reason: deploy the request submission fix after preferred-date behavior was changed.
 
 Required production behavior:
 - Production source of truth is GitHub branch: main.
@@ -10,7 +10,7 @@ Required production behavior:
 - ifixmv.com must point to the newest successful production deployment.
 
 Current target main HEAD at time of this trigger:
-- bcd1f3c08bab6bf3443513cf186de16d4464e48d
-- Make request action taps work through mobile overlays
+- bbfd3b4658089b4b5c6f653453561653f4616a39
+- Fix request submission after preferred date removal
 
 This trigger intentionally changes on main so the hosting integration performs a new production build from the latest source.
