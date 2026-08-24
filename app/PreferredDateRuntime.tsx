@@ -2,47 +2,67 @@
 
 import { useEffect } from 'react';
 
-function selectedRequestType(){
-  const selected=[...document.querySelectorAll<HTMLButtonElement>('.c3Urgency button.selected')]
-    .find(button=>/^(urgent|standard|scheduled)/i.test((button.textContent||'').trim()));
-  const text=(selected?.textContent||'').toUpperCase();
-  if(text.includes('SCHEDULED'))return'SCHEDULE';
-  if(text.includes('URGENT'))return'URGENT';
-  if(text.includes('STANDARD'))return'STANDARD';
-  return null;
+const DRAFT_KEY='fixit:create-draft';
+
+function normalizeSavedDraft(){
+  try{
+    const raw=localStorage.getItem(DRAFT_KEY);
+    if(!raw)return;
+    const draft=JSON.parse(raw);
+    let changed=false;
+
+    if(String(draft?.urgency||'').toUpperCase()==='SCHEDULE'){
+      draft.urgency='STANDARD';
+      changed=true;
+    }
+
+    if('preferredDate' in draft){
+      delete draft.preferredDate;
+      changed=true;
+    }
+
+    if(changed)localStorage.setItem(DRAFT_KEY,JSON.stringify(draft));
+  }catch{
+    // A corrupt local draft should never block a new request.
+    localStorage.removeItem(DRAFT_KEY);
+  }
 }
 
-function syncPreferredDateVisibility(){
-  const requestType=selectedRequestType();
+function removeObsoleteScheduleUi(){
+  document.querySelectorAll<HTMLButtonElement>('.c3Urgency button').forEach(button=>{
+    const text=(button.textContent||'').trim().toUpperCase();
+    if(text.includes('SCHEDULE')){
+      button.disabled=true;
+      button.hidden=true;
+      button.setAttribute('aria-hidden','true');
+      button.tabIndex=-1;
+    }
+  });
 
   document.querySelectorAll<HTMLInputElement>(".c3Field input[type='date']").forEach(input=>{
     const field=input.closest<HTMLElement>('.c3Field');
-    if(!field)return;
-
-    const show=requestType==='SCHEDULE';
-    field.hidden=!show;
-    if(show){
-      field.removeAttribute('aria-hidden');
-      input.required=true;
-      input.disabled=false;
-    }else{
+    input.required=false;
+    input.disabled=true;
+    input.value='';
+    if(field){
+      field.hidden=true;
       field.setAttribute('aria-hidden','true');
-      input.required=false;
-      input.disabled=true;
     }
   });
 
   document.querySelectorAll<HTMLElement>('.c3ReviewRow').forEach(row=>{
     const label=(row.querySelector('span')?.textContent||'').trim().toLowerCase();
-    if(label.includes('preferred')&&label.includes('date')){
-      row.hidden=requestType!=='SCHEDULE';
+    if((label.includes('preferred')&&label.includes('date'))||label.includes('scheduled date')){
+      row.hidden=true;
     }
   });
 }
 
 export default function PreferredDateRuntime(){
   useEffect(()=>{
-    const sync=()=>syncPreferredDateVisibility();
+    normalizeSavedDraft();
+
+    const sync=()=>removeObsoleteScheduleUi();
     sync();
 
     const observer=new MutationObserver(sync);
