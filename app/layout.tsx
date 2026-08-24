@@ -26,6 +26,7 @@ import './remove-save-draft.css';
 import './disable-request-urgency.css';
 import './mobile-viewport-hardening.css';
 import './mobile-keyboard-hardening.css';
+import './mobile-compliance-v2.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
