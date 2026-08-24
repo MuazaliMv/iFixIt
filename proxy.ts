@@ -5,6 +5,8 @@ import { canAccessPortal, normalizeAccountRole, type AccountRole } from './lib/r
 const SUPABASE_URL='https://yzlhlilxiszefneshatm.supabase.co';
 const AUTH_API=`${SUPABASE_URL}/functions/v1/auth-account`;
 
+type AccessProfile={role:AccountRole;providerApproved:boolean};
+
 function isProviderApplicationRoute(path:string){
  return path==='/provider/onboarding'||path.startsWith('/provider/onboarding/');
 }
@@ -19,7 +21,7 @@ function apiError(message:string,status:number){
  return NextResponse.json({error:message},{status});
 }
 
-async function resolveRole(authorization:string):Promise<AccountRole|null>{
+async function resolveAccessProfile(authorization:string):Promise<AccessProfile|null>{
  try{
   const response=await fetch(AUTH_API,{
    method:'POST',
@@ -30,7 +32,10 @@ async function resolveRole(authorization:string):Promise<AccountRole|null>{
   });
   if(!response.ok)return null;
   const payload=await response.json().catch(()=>null);
-  return normalizeAccountRole(payload?.profile?.role);
+  return {
+   role:normalizeAccountRole(payload?.profile?.role),
+   providerApproved:Boolean(payload?.profile?.provider_approved),
+  };
  }catch{
   return null;
  }
@@ -53,24 +58,22 @@ export default async function proxy(request:NextRequest){
   return NextResponse.redirect(loginUrl(request));
  }
 
- // Customer Portal and provider application/onboarding are available to every
- // authenticated account. Onboarding does not grant Provider Portal access.
  if(customerRoute||providerApplicationRoute){
   return applyAuthCookies(NextResponse.next(),auth);
  }
 
- const role=await resolveRole(auth.authorization);
- if(!role){
+ const access=await resolveAccessProfile(auth.authorization);
+ if(!access){
   if(adminApi||providerApi)return applyAuthCookies(apiError('Unable to verify account permissions.',503),auth);
   return applyAuthCookies(NextResponse.redirect(new URL('/home',request.url)),auth);
  }
 
- if((adminRoute||adminApi)&&!canAccessPortal(role,'admin')){
+ if((adminRoute||adminApi)&&!canAccessPortal(access.role,'admin',access.providerApproved)){
   if(adminApi)return applyAuthCookies(apiError('Admin permission required.',403),auth);
   return applyAuthCookies(NextResponse.redirect(new URL('/home',request.url)),auth);
  }
 
- if((providerRoute||providerApi)&&!canAccessPortal(role,'provider')){
+ if((providerRoute||providerApi)&&!canAccessPortal(access.role,'provider',access.providerApproved)){
   if(providerApi)return applyAuthCookies(apiError('Service Provider permission required.',403),auth);
   return applyAuthCookies(NextResponse.redirect(new URL('/home',request.url)),auth);
  }
