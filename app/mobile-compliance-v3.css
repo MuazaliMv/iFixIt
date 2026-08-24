@@ -1,0 +1,127 @@
+/* Mobile compliance v3: targeted fixes for remaining phone edge cases. Imported after v2. */
+@media(max-width:767px){
+  /* Use the visible viewport on modern mobile browsers without locking document scrolling. */
+  html,body{width:100%;max-width:100%;min-width:0}
+  body{min-height:100dvh;overflow-x:clip}
+
+  /* Never let a child or intrinsic-width control widen its parent. */
+  main,section,article,aside,nav,header,footer,form,fieldset,
+  .screenCard,.providerSummaryCard,.progressCard,.workDoneCard,.satisfactionCard,.feedbackCard,
+  .requestAppPanel,.requestAppHeading,.requestInfoGrid,.estimateMoneyGrid,.messageComposer,
+  .c3Wizard,.c3WizardCard,.c3Form,.c3Field,.c3Urgency,.c3Review,.c3RequestCard,.c3RequestMain{
+    min-width:0!important;
+    max-width:100%!important;
+  }
+
+  /* Phone-safe typography: headings scale down instead of forcing wrapping/overflow. */
+  h1{font-size:clamp(26px,8vw,38px)!important;line-height:1.08!important}
+  h2{font-size:clamp(20px,6vw,30px)!important;line-height:1.15!important}
+
+  /* Mobile forms: controls fit exactly and remain easy to tap. */
+  input,select,textarea{max-inline-size:100%!important}
+  input[type='date'],input[type='time'],input[type='datetime-local']{
+    min-width:0!important;
+    width:100%!important;
+    font-size:16px!important;
+    line-height:1.2!important;
+  }
+  input[type='file']{font-size:16px!important}
+
+  /* Keep paired action buttons usable on narrow screens. */
+  .actions,.buttonRow,.button-row,.formActions,.form-actions,.requestActions,.request-actions,
+  .messageComposer,.providerActions,.jobActions,.adminActions{
+    display:flex!important;
+    flex-wrap:wrap!important;
+    gap:10px!important;
+    min-width:0!important;
+  }
+  .actions>* ,.buttonRow>* ,.button-row>* ,.formActions>* ,.form-actions>* ,.requestActions>* ,.request-actions>* ,
+  .providerActions>* ,.jobActions>* ,.adminActions>*{
+    flex:1 1 140px!important;
+    min-width:0!important;
+  }
+
+  /* The request wizard footer stays usable without covering the last fields. */
+  .c3Wizard{padding-bottom:8px!important}
+  .c3WizardCard{padding-bottom:24px!important}
+  .c3ActionDock{max-height:none!important}
+  .c3ActionInner{width:100%!important;max-width:100%!important}
+  .c3ActionInner button{white-space:normal!important;line-height:1.15!important}
+
+  /* Request detail screen: stack dense summary rows and money/info grids. */
+  .requestInfoGrid,.estimateMoneyGrid,.completionMediaGrid{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:10px!important;
+  }
+  .providerProfileMain,.providerTitleRow,.ratingLine,.completedJobsLine{
+    min-width:0!important;
+    max-width:100%!important;
+  }
+  .providerProfileMain{align-items:flex-start!important}
+
+  /* Chat composer must not create a horizontal strip on small devices. */
+  .messageComposer input{flex:1 1 100%!important}
+  .messageComposer button{flex:1 1 100%!important;width:100%!important}
+
+  /* Admin/provider filters and search controls should stack rather than squeeze. */
+  .toolbar input,.toolbar select,.filterRow input,.filterRow select,.filters input,.filters select,
+  .adminFilters input,.adminFilters select,.providerFilters input,.providerFilters select{
+    flex:1 1 100%!important;
+    width:100%!important;
+  }
+
+  /* Avoid clipped photos and media cards. */
+  .requestPhotoRow,.c3PhotoGrid{width:100%!important;overflow:visible!important}
+  .requestPhoto,.c3Photo{max-width:100%!important}
+  .requestPhoto{height:auto!important;object-fit:cover!important}
+
+  /* Any wide code/log content scrolls locally instead of shifting the page. */
+  pre,.logViewer,.log-viewer,.jsonViewer,.json-viewer{
+    width:100%!important;
+    max-width:100%!important;
+    overflow:auto!important;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* Full-screen menu remains scrollable on short landscape phones. */
+  .globalMenuBackdrop{height:100dvh!important;max-height:100dvh!important}
+  .globalMenuSheet{min-height:100dvh!important;height:auto!important;overflow-y:auto!important}
+  .globalMenuFooter{padding-bottom:max(12px,env(safe-area-inset-bottom))!important}
+
+  /* Sticky/fixed elements must not block focused fields when the keyboard is visible. */
+  html.app-editing .c3ActionDock,html.app-keyboard-open .c3ActionDock,
+  html.app-editing .mobileNav,html.app-keyboard-open .mobileNav{
+    display:none!important;
+  }
+}
+
+@media(max-width:430px){
+  /* On narrow phones, review rows read better stacked than two squeezed columns. */
+  .c3ReviewRow{display:block!important}
+  .c3ReviewRow span,.c3ReviewRow strong{display:block!important;max-width:100%!important;text-align:left!important}
+  .c3ReviewRow strong{margin-top:4px!important}
+
+  .requestAppHeading,.sectionHeading,.c3SectionHead,.c3RequestsTop{
+    display:block!important;
+  }
+  .requestAppHeading>button,.sectionHeading>button,.c3SectionHead>a,.c3RequestsTop>a{
+    width:100%!important;
+    margin-top:10px!important;
+  }
+
+  /* Keep three photo thumbnails usable without shrinking below tap-safe size. */
+  .c3PhotoGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+
+@media(max-width:360px){
+  .c3PhotoGrid{grid-template-columns:minmax(0,1fr)!important}
+  .c3ActionInner{grid-template-columns:minmax(72px,.32fr) minmax(0,1fr)!important}
+  .c3ActionInner button{font-size:13px!important;padding-inline:8px!important}
+}
+
+@media(max-width:767px) and (orientation:landscape){
+  .globalMenuSheet{min-height:100dvh!important}
+  .c3ActionDock{padding-block:6px!important}
+  .c3ActionInner .c3Primary,.c3ActionInner .c3Secondary{min-height:42px!important}
+}
