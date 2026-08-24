@@ -1,0 +1,169 @@
+.adminAppSurface{
+ --admin-primary:var(--fx-color-primary,#2563eb);
+ --admin-primary-hover:var(--fx-color-primary-hover,#1d4ed8);
+ --admin-primary-soft:var(--fx-color-primary-soft,#eff6ff);
+ --admin-bg:#f8fafc;
+ --admin-surface:#ffffff;
+ --admin-surface-alt:#f8fafc;
+ --admin-surface-hover:#f1f5f9;
+ --admin-text:#0f172a;
+ --admin-text-soft:#334155;
+ --admin-muted:#64748b;
+ --admin-border:#e2e8f0;
+ --admin-border-strong:#cbd5e1;
+ --admin-success:#16a34a;
+ --admin-success-soft:#ecfdf5;
+ --admin-warning:#b45309;
+ --admin-warning-soft:#fffbeb;
+ --admin-error:#dc2626;
+ --admin-error-soft:#fef2f2;
+ --admin-info:#2563eb;
+ --admin-info-soft:#eff6ff;
+ --admin-radius-control:14px;
+ --admin-radius-card:22px;
+ --admin-radius-panel:24px;
+ --admin-radius-pill:999px;
+ --admin-shadow-card:0 18px 46px rgba(15,23,42,.08),0 2px 8px rgba(15,23,42,.04);
+ --admin-shadow-soft:0 8px 24px rgba(15,23,42,.05);
+ --admin-focus:0 0 0 3px rgba(37,99,235,.12);
+ min-height:100dvh;
+ background:radial-gradient(circle at 50% 0,rgba(37,99,235,.065),transparent 30%),var(--admin-bg);
+ color:var(--admin-text);
+ font-family:var(--fx-font-family,Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);
+ transition:background .18s ease,color .18s ease;
+}
+
+html[data-admin-theme="dark"] .adminAppSurface{
+ --admin-bg:#0b1220;
+ --admin-surface:#111827;
+ --admin-surface-alt:#172033;
+ --admin-surface-hover:#1e293b;
+ --admin-text:#f8fafc;
+ --admin-text-soft:#dbe4f0;
+ --admin-muted:#94a3b8;
+ --admin-border:#263449;
+ --admin-border-strong:#3b4b61;
+ --admin-primary-soft:#14254a;
+ --admin-success-soft:#0e2c22;
+ --admin-warning-soft:#33230c;
+ --admin-error-soft:#351519;
+ --admin-info-soft:#14254a;
+ --admin-shadow-card:0 18px 48px rgba(0,0,0,.28),0 2px 8px rgba(0,0,0,.18);
+ --admin-shadow-soft:0 8px 24px rgba(0,0,0,.18);
+ color-scheme:dark;
+}
+
+.adminAppSurface *{box-sizing:border-box}
+.adminAppSurface .shell{width:min(100%,1180px);margin:0 auto;padding:clamp(12px,2.2vw,26px);color:var(--admin-text)}
+.adminAppSurface .topbar,.adminAppSurface .panel,.adminAppSurface .requestToolbarPanel,.adminAppSurface .usersToolbarPanel,.adminAppSurface .inlineRequestDetail,.adminAppSurface .inlineUserDetail,.adminAppSurface .permissionPanel{
+ border:1px solid var(--admin-border)!important;
+ background:var(--admin-surface)!important;
+ color:var(--admin-text)!important;
+ border-radius:var(--admin-radius-card)!important;
+ box-shadow:var(--admin-shadow-soft)!important;
+}
+.adminAppSurface .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:clamp(16px,2.2vw,24px);margin-bottom:12px}
+.adminAppSurface .panel,.adminAppSurface .requestToolbarPanel,.adminAppSurface .usersToolbarPanel{padding:clamp(16px,2.4vw,24px);margin:0 0 14px}
+.adminAppSurface .panelHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.adminAppSurface .pageTitle,.adminAppSurface h1,.adminAppSurface h2,.adminAppSurface h3{color:var(--admin-text);letter-spacing:-.025em}
+.adminAppSurface .pageTitle{margin:2px 0 4px;font-size:clamp(26px,4.4vw,36px);line-height:1.06;font-weight:850}
+.adminAppSurface h2{font-weight:850}
+.adminAppSurface .tagline,.adminAppSurface .muted,.adminAppSurface .jobDescription{color:var(--admin-muted)!important}
+.adminAppSurface .eyebrow{margin:0 0 5px;color:var(--admin-primary)!important;font-size:10px;font-weight:850;letter-spacing:.12em;text-transform:uppercase}
+.adminAppSurface a{color:inherit}
+
+.adminAppSurface button,.adminAppSurface input,.adminAppSurface select,.adminAppSurface textarea{font:inherit}
+.adminAppSurface button,.adminAppSurface .button,.adminAppSurface .compactButton,.adminAppSurface a.primary,.adminAppSurface a.secondary{min-height:48px;border-radius:var(--admin-radius-control)!important;font-weight:800;transition:background .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease,transform .15s ease}
+.adminAppSurface button.primary,.adminAppSurface .primary{border:1px solid var(--admin-primary)!important;background:var(--admin-primary)!important;color:#fff!important;box-shadow:0 8px 20px rgba(37,99,235,.16)}
+.adminAppSurface button.primary:hover:not(:disabled),.adminAppSurface .primary:hover:not(:disabled){background:var(--admin-primary-hover)!important;border-color:var(--admin-primary-hover)!important}
+.adminAppSurface button.secondary,.adminAppSurface .secondary{border:1px solid var(--admin-border)!important;background:var(--admin-surface)!important;color:var(--admin-text-soft)!important;box-shadow:none!important}
+.adminAppSurface button.secondary:hover:not(:disabled),.adminAppSurface .secondary:hover:not(:disabled){border-color:#93c5fd!important;background:var(--admin-primary-soft)!important;color:var(--admin-primary)!important}
+.adminAppSurface button.danger,.adminAppSurface .danger{border:1px solid #fecaca!important;background:var(--admin-error-soft)!important;color:var(--admin-error)!important}
+.adminAppSurface button:disabled{opacity:.5;cursor:not-allowed}
+.adminAppSurface button:active:not(:disabled){transform:translateY(1px)}
+.adminAppSurface button:focus-visible,.adminAppSurface a:focus-visible,.adminAppSurface input:focus-visible,.adminAppSurface select:focus-visible,.adminAppSurface textarea:focus-visible{outline:0!important;box-shadow:var(--admin-focus)!important}
+
+.adminAppSurface input,.adminAppSurface select,.adminAppSurface textarea{
+ min-height:48px;
+ border:1px solid var(--admin-border-strong)!important;
+ border-radius:var(--admin-radius-control)!important;
+ background:var(--admin-surface)!important;
+ color:var(--admin-text)!important;
+}
+.adminAppSurface input::placeholder,.adminAppSurface textarea::placeholder{color:var(--admin-muted)}
+.adminAppSurface input:focus,.adminAppSurface select:focus,.adminAppSurface textarea:focus{border-color:var(--admin-primary)!important;outline:0;box-shadow:var(--admin-focus)!important}
+
+.adminAppSurface .formMessage,.adminAppSurface .localNotice,.adminAppSurface .requestStatusBar,.adminAppSurface .usersStatusBar{
+ border:1px solid #bfdbfe!important;
+ border-radius:var(--admin-radius-control)!important;
+ background:var(--admin-info-soft)!important;
+ color:var(--admin-text-soft)!important;
+}
+.adminAppSurface .statusCheck{color:var(--admin-success)!important}
+
+.adminAppSurface .adminStats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.adminAppSurface .statCard,.adminAppSurface .jobCard,.adminAppSurface .adminPlatformCard{
+ border:1px solid var(--admin-border)!important;
+ border-radius:18px!important;
+ background:var(--admin-surface)!important;
+ color:var(--admin-text)!important;
+ box-shadow:0 5px 18px rgba(15,23,42,.045)!important;
+ transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease,background .15s ease;
+}
+html[data-admin-theme="dark"] .adminAppSurface .statCard,html[data-admin-theme="dark"] .adminAppSurface .jobCard,html[data-admin-theme="dark"] .adminAppSurface .adminPlatformCard{box-shadow:0 5px 18px rgba(0,0,0,.14)!important}
+.adminAppSurface .statCard:hover,.adminAppSurface .jobCard:hover,.adminAppSurface .adminPlatformCard:hover{border-color:#bfdbfe!important;box-shadow:var(--admin-shadow-soft)!important}
+.adminAppSurface .statCard{text-decoration:none}
+.adminAppSurface .statCard strong,.adminAppSurface .adminPlatformCopy strong{color:var(--admin-primary)!important}
+.adminAppSurface .jobMeta,.adminAppSurface .detailFact,.adminAppSurface .permissionRow{color:var(--admin-text-soft)}
+
+.adminAppSurface .requestSearchBox,.adminAppSurface .usersSearchBox{border-color:var(--admin-border-strong)!important;background:var(--admin-surface)!important;border-radius:var(--admin-radius-control)!important}
+.adminAppSurface .requestSearchBox:focus-within,.adminAppSurface .usersSearchBox:focus-within{border-color:var(--admin-primary)!important;box-shadow:var(--admin-focus)!important}
+.adminAppSurface .filterRow,.adminAppSurface .usersFilterRow{gap:7px}
+.adminAppSurface .statusFilter,.adminAppSurface .userFilter{min-height:44px;border:1px solid var(--admin-border)!important;border-radius:var(--admin-radius-pill)!important;background:var(--admin-surface)!important;color:var(--admin-muted)!important}
+.adminAppSurface .statusFilter.active,.adminAppSurface .userFilter.active{border-color:#bfdbfe!important;background:var(--admin-primary-soft)!important;color:var(--admin-primary)!important}
+.adminAppSurface .paginationBar{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding-top:16px}
+
+.adminAppSurface table{width:100%;border-collapse:separate;border-spacing:0;color:var(--admin-text);background:var(--admin-surface)}
+.adminAppSurface th{background:var(--admin-surface-alt);color:var(--admin-text-soft);font-size:12px;font-weight:850;text-align:left}
+.adminAppSurface th,.adminAppSurface td{padding:13px 14px;border-bottom:1px solid var(--admin-border)}
+.adminAppSurface tr:hover td{background:var(--admin-surface-hover)}
+.adminAppSurface .tableWrap,.adminAppSurface [class*="tableWrap"],.adminAppSurface [class*="TableWrap"]{overflow:auto;border:1px solid var(--admin-border);border-radius:18px;background:var(--admin-surface);-webkit-overflow-scrolling:touch}
+
+.adminAppSurface .adminMarketPanel,.adminAppSurface .adminMarketPeriod,.adminAppSurface .adminCustomRange,.adminAppSurface .adminRangeSelect,.adminAppSurface .adminPlatformCard{background:var(--admin-surface)!important;color:var(--admin-text)!important;border-color:var(--admin-border)!important}
+.adminAppSurface .adminCustomRange{background:var(--admin-surface-alt)!important}
+.adminAppSurface .adminMarketHeroCopy strong,.adminAppSurface .adminPlatformTitle,.adminAppSurface .adminMarketMetricLabel{color:var(--admin-text)!important}
+.adminAppSurface .adminMarketHeroCopy span,.adminAppSurface .adminRangeSummary,.adminAppSurface .adminMarketMetric small,.adminAppSurface .adminPlatformCopy span,.adminAppSurface .adminPlatformArrow{color:var(--admin-muted)!important}
+.adminAppSurface .adminMarketTotal,.adminAppSurface .adminMarketLink,.adminAppSurface .adminPlatformIcon{color:var(--admin-primary)!important}
+.adminAppSurface .adminPlatformIcon{background:var(--admin-primary-soft)!important}
+.adminAppSurface .adminMarketBreakdown,.adminAppSurface .adminMarketMetric{border-color:var(--admin-border)!important}
+.adminAppSurface .adminMarketBar{background:var(--admin-border)!important}
+
+.adminAppSurface .permissionPanel{box-shadow:none!important;margin-top:16px}
+.adminAppSurface .permissionRow{border-color:var(--admin-border)!important;background:var(--admin-surface)!important}
+.adminAppSurface .permissionRow.enabled{background:color-mix(in srgb,var(--admin-success-soft) 55%,var(--admin-surface))!important}
+.adminAppSurface .permissionRow.disabled{background:var(--admin-surface-alt)!important}
+.adminAppSurface .permissionState.enabled{color:var(--admin-success)!important}
+.adminAppSurface .permissionState.disabled{color:var(--admin-muted)!important}
+
+.adminAppSurface .footer{color:var(--admin-muted)!important;border-color:var(--admin-border)!important}
+
+@media(max-width:800px){
+ .adminAppSurface .shell{padding:10px}
+ .adminAppSurface .topbar{align-items:flex-start;padding:16px;border-radius:18px!important}
+ .adminAppSurface .topbar>button{flex:0 0 auto}
+ .adminAppSurface .adminStats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .adminAppSurface .panel,.adminAppSurface .requestToolbarPanel,.adminAppSurface .usersToolbarPanel{padding:16px;border-radius:18px!important}
+}
+
+@media(max-width:520px){
+ .adminAppSurface .topbar{gap:10px}
+ .adminAppSurface .pageTitle{font-size:26px}
+ .adminAppSurface .tagline{font-size:12px}
+ .adminAppSurface .refreshAction{width:48px;min-width:48px;padding:0!important;font-size:0}
+ .adminAppSurface .refreshAction span{font-size:20px}
+ .adminAppSurface .panelHeader{gap:10px}
+ .adminAppSurface .adminStats{grid-template-columns:1fr 1fr;gap:8px}
+ .adminAppSurface .paginationBar{justify-content:space-between}
+}
+
+@media(prefers-reduced-motion:reduce){.adminAppSurface *{scroll-behavior:auto!important;transition:none!important;animation-duration:.01ms!important}}
