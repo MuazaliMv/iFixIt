@@ -1,5 +1,4 @@
 /* Desktop-first admin management shell: compact, mouse-friendly, mobile-safe */
-.adminManagementMobileNav{display:none}
 .adminManagementNav{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-card)}
 .adminManagementNav a{flex:0 0 auto!important;width:auto!important;max-width:none!important;min-width:max-content;min-height:42px;padding:10px 14px;border-radius:10px;white-space:nowrap;overflow:visible;text-overflow:clip}
 
@@ -76,10 +75,8 @@ body:has(.servicePanel) .adminManagementNav + .panel:not(.servicePanel){display:
 }
 
 @media(max-width:760px){
+ /* The mobile header already provides the admin menu. Remove this duplicate tab bar entirely. */
  .adminManagementNav{display:none!important}
- .adminManagementMobileNav{display:grid;gap:6px;margin:0 0 14px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-card)}
- .adminManagementMobileNav label{font-size:11px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
- .adminManagementMobileNav select{width:100%;min-height:48px;margin:0;padding:0 42px 0 14px;border:1px solid #d8e0ec;border-radius:12px;background-color:#fff;color:var(--text);font-size:16px;font-weight:800;line-height:1.2}
  .serviceHeading{padding:20px 18px;align-items:flex-start}
  .serviceHeading h2{font-size:24px}
  .serviceIntro{font-size:14px}
