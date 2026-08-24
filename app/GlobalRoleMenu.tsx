@@ -64,11 +64,14 @@ const menus:Record<Role,RoleMenu>={
         {href:'/requests',label:'Service Requests',icon:'requests'},
         {href:'/messages',label:'Messages',icon:'messages'},
       ]},
+      {title:'PROVIDER',items:[
+        {href:'/provider/onboarding',label:'Become a Provider',icon:'services'},
+      ]},
     ],
   },
 };
 
-function routeRole(path:string):Role|null{if(path.startsWith('/admin'))return 'admin';if(path.startsWith('/provider'))return 'provider';return null;}
+function routeRole(path:string):Role|null{if(path==='/provider/onboarding'||path.startsWith('/provider/onboarding/'))return null;if(path.startsWith('/admin'))return 'admin';if(path.startsWith('/provider'))return 'provider';return null;}
 function isPublicOrAuth(path:string){return path.startsWith('/login')||path.startsWith('/register')||path.startsWith('/auth')||path.startsWith('/api/')||path.startsWith('/onboarding');}
 function itemIsActive(path:string,href:string){if(href==='/')return path==='/';if(href==='/admin/users')return path.startsWith('/admin/users')||path.startsWith('/admin/providers')||path.startsWith('/admin/services');return path===href||path.startsWith(href+'/');}
 
