@@ -33,7 +33,8 @@ export default function AppModeSwitch({mode,compact=false,className=''}:Props){
     if(!response.ok){setCanUseProvider(false);return;}
     const payload=await response.json().catch(()=>({}));
     const role=normalizeAccountRole(payload?.profile?.role);
-    setCanUseProvider(canAccessPortal(role,'provider'));
+    const providerApproved=Boolean(payload?.profile?.provider_approved);
+    setCanUseProvider(canAccessPortal(role,'provider',providerApproved));
    }catch{
     if(active)setCanUseProvider(false);
    }
@@ -59,8 +60,6 @@ export default function AppModeSwitch({mode,compact=false,className=''}:Props){
   }
  }
 
- // Fail closed: Standard Users never see a Provider Portal switch.
- // Provider onboarding remains a separate application flow elsewhere in the Customer UI.
  if(mode==='customer'&&canUseProvider!==true)return null;
 
  const text=mode==='provider'?'Switch to Customer':'Switch to Service Provider';
