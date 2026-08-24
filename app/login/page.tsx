@@ -7,9 +7,18 @@ import './login.css';
 
 type Mode='login'|'register';
 type ExistingProfile={role?:string|null};
+type FieldIconName='mail'|'lock'|'user'|'phone';
 
 function EyeIcon({off=false}:{off?:boolean}){
  return <svg viewBox="0 0 24 24" aria-hidden="true" className="eyeIcon"><path d="M2.3 12s3.5-5.5 9.7-5.5S21.7 12 21.7 12 18.2 17.5 12 17.5 2.3 12 2.3 12Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8"/>{off?<path d="M4 4l16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>:null}</svg>;
+}
+
+function FieldIcon({name}:{name:FieldIconName}){
+ const p={viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,'aria-hidden':true};
+ if(name==='mail')return <svg {...p}><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>;
+ if(name==='lock')return <svg {...p}><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg>;
+ if(name==='phone')return <svg {...p}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.29 1.73.5 2.63.62A2 2 0 0 1 22 16.92Z"/></svg>;
+ return <svg {...p}><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>;
 }
 
 export default function LoginPage(){
@@ -36,9 +45,6 @@ export default function LoginPage(){
    if(saved){setEmail(saved);setRememberMe(true);}
   }catch{}
 
-  // A visit to /login must not ask for credentials again when the secure
-  // application session is still valid. apiFetch also performs the one-time
-  // compatibility recovery for older browser sessions before we show the form.
   void(async()=>{
    try{
     const response=await apiFetch('/api/user/profile');
@@ -118,29 +124,40 @@ export default function LoginPage(){
   }catch(e){setMessage(e instanceof Error?e.message:'Unable to continue.');}finally{setBusy(false);}
  }
 
- if(checkingSession)return <div className="authShell"><main className="authPage"><section className="authCardClean" aria-live="polite" aria-busy="true"><div className="authIntro"><h1>Opening iFixMV…</h1><p>Checking your existing session.</p></div></section></main></div>;
+ if(checkingSession)return <div className="authShell"><main className="authPage"><div className="authStage"><a className="authBrand" href="/" aria-label="iFix Maldives home"><span className="authBrandMark">iF</span><span><strong>iFix</strong><small>Maldives</small></span></a><section className="authCardClean authChecking" aria-live="polite" aria-busy="true"><span className="authLargeSpinner" aria-hidden="true"/><div className="authIntro"><h1>Opening iFixMV…</h1><p>Checking your existing secure session.</p></div></section></div></main></div>;
 
  return <div className="authShell">
-  <div className="globalMenuHeaderWrap authShellHeaderWrap">
-   <header className="globalMenuHeader" aria-label="iFixMV navigation">
-    <a href="/" className="globalMenuBrand" aria-label="Go to iFixMV home"><span className="globalMenuBrandMark">F</span><span>FixIt</span></a>
-   </header>
-  </div>
-
   <main className="authPage">
-   <section className="authCardClean">
-    {isLogin?<div className="authModeTabs authModeTabsSingle"><button type="button" onClick={()=>switchMode('register')}>Create account</button></div>:null}
-    <div className="authIntro"><h1>{isLogin?'Welcome back':'Create your account'}</h1><p>{isLogin?'Sign in to continue to iFixMV.':'Register to start requesting services with iFixMV.'}</p></div>
-    <form onSubmit={submit} className="authFormClean" noValidate>
-     {!isLogin?<><label>Full name<input value={fullName} onBlur={()=>setTouched(v=>({...v,fullName:true}))} onChange={e=>setFullName(e.target.value)} placeholder="Your name" autoComplete="name" aria-invalid={touched.fullName&&!nameValid}/>{touched.fullName&&!nameValid?<span className="fieldError">Enter your full name.</span>:null}</label><label>Phone number <span className="optionalLabel">Optional</span><div className="phoneField"><select className="countryCode" value={countryCode} onChange={e=>setCountryCode(e.target.value)} aria-label="Country code"><option value="+960">🇲🇻 +960</option></select><input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onBlur={()=>setTouched(v=>({...v,phone:true}))} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} aria-invalid={touched.phone&&!phoneValid}/></div><span className="fieldHelp">Enter the 7-digit local number only.</span>{touched.phone&&!phoneValid?<span className="fieldError">Enter a valid 7-digit Maldives number.</span>:null}</label></>:null}
-     <label>Email address<input type="email" inputMode="email" autoComplete="email" value={email} onBlur={()=>setTouched(v=>({...v,email:true}))} onChange={e=>{setEmail(e.target.value);if(touched.email)setTouched(v=>({...v,email:false}));}} placeholder="you@example.com" aria-invalid={touched.email&&!emailValid}/>{touched.email&&!emailValid?<span className="fieldError">{emailTrimmed?'Enter a valid email address.':'Enter your email address.'}</span>:null}</label>
-     <label>Password<div className="passwordField"><input type={showPassword?'text':'password'} autoComplete={isLogin?'current-password':'new-password'} value={password} onBlur={()=>setTouched(v=>({...v,password:true}))} onKeyUp={e=>setCapsLock(e.getModifierState('CapsLock'))} onKeyDown={e=>setCapsLock(e.getModifierState('CapsLock'))} onChange={e=>setPassword(e.target.value)} minLength={8} aria-invalid={touched.password&&!passwordValid}/><button type="button" className="passwordToggle" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'} title={showPassword?'Hide password':'Show password'}><EyeIcon off={showPassword}/></button></div>{capsLock?<span className="capsWarning">Caps Lock is on.</span>:null}{!isLogin?<span className="fieldHelp">Use at least 8 characters.</span>:null}{touched.password&&!passwordValid?<span className="fieldError">Password must be at least 8 characters.</span>:null}</label>
-     {isLogin?<div className="authUtility"><label className="rememberMe"><input type="checkbox" checked={rememberMe} onChange={e=>setRememberMe(e.target.checked)}/><span>Remember me</span></label><a href="/forgot-password">Forgot password?</a></div>:null}
-     <button className="primary authSubmit" disabled={busy||!formValid} aria-busy={busy}>{busy?<><span className="buttonSpinner" aria-hidden="true"/>{isLogin?'Signing in…':'Creating account…'}</>:isLogin?'Continue':'Create Account'}</button>
-    </form>
-    {message?<p className="formMessage" role="status">{message}</p>:null}
-    <p className="authSwitch">{isLogin?'New to iFixMV?':'Already have an account?'} <button type="button" onClick={()=>switchMode(isLogin?'register':'login')}>{isLogin?'Create account':'Sign in'}</button></p>
-   </section>
+   <div className="authStage">
+    <a className="authBrand" href="/" aria-label="iFix Maldives home"><span className="authBrandMark">iF</span><span><strong>iFix</strong><small>Maldives</small></span></a>
+
+    <section className="authCardClean">
+     <div className="authStatusPill"><span aria-hidden="true"/>{isLogin?'Secure account access':'New iFixMV account'}</div>
+     <div className="authIntro"><h1>{isLogin?'Welcome back':'Create your account'}</h1><p>{isLogin?'Sign in once to continue to your iFixMV workspace.':'Create one account for requesting services and, when approved, providing services.'}</p></div>
+
+     <form onSubmit={submit} className="authFormClean" noValidate>
+      {!isLogin?<>
+       <label className="authField"><span className="authFieldLabel">Full name</span><div className={`authInputWrap${touched.fullName&&!nameValid?' invalid':''}`}><span className="authInputIcon"><FieldIcon name="user"/></span><input value={fullName} onBlur={()=>setTouched(v=>({...v,fullName:true}))} onChange={e=>setFullName(e.target.value)} placeholder="Your name" autoComplete="name" aria-invalid={touched.fullName&&!nameValid}/></div>{touched.fullName&&!nameValid?<span className="fieldError">Enter your full name.</span>:null}</label>
+       <label className="authField"><span className="authFieldLabel">Phone number <em>Optional</em></span><div className={`phoneField${touched.phone&&!phoneValid?' invalid':''}`}><span className="authPhoneIcon"><FieldIcon name="phone"/></span><select className="countryCode" value={countryCode} onChange={e=>setCountryCode(e.target.value)} aria-label="Country code"><option value="+960">🇲🇻 +960</option></select><input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onBlur={()=>setTouched(v=>({...v,phone:true}))} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} aria-invalid={touched.phone&&!phoneValid}/></div><span className="fieldHelp">Enter the 7-digit Maldives number only.</span>{touched.phone&&!phoneValid?<span className="fieldError">Enter a valid 7-digit Maldives number.</span>:null}</label>
+      </>:null}
+
+      <label className="authField"><span className="authFieldLabel">Email address</span><div className={`authInputWrap${touched.email&&!emailValid?' invalid':''}`}><span className="authInputIcon"><FieldIcon name="mail"/></span><input type="email" inputMode="email" autoComplete="email" value={email} onBlur={()=>setTouched(v=>({...v,email:true}))} onChange={e=>{setEmail(e.target.value);if(touched.email)setTouched(v=>({...v,email:false}));}} placeholder="you@example.com" aria-invalid={touched.email&&!emailValid}/></div>{touched.email&&!emailValid?<span className="fieldError">{emailTrimmed?'Enter a valid email address.':'Enter your email address.'}</span>:null}</label>
+
+      <label className="authField"><span className="authFieldLabel">Password</span><div className={`authInputWrap passwordField${touched.password&&!passwordValid?' invalid':''}`}><span className="authInputIcon"><FieldIcon name="lock"/></span><input type={showPassword?'text':'password'} autoComplete={isLogin?'current-password':'new-password'} value={password} onBlur={()=>setTouched(v=>({...v,password:true}))} onKeyUp={e=>setCapsLock(e.getModifierState('CapsLock'))} onKeyDown={e=>setCapsLock(e.getModifierState('CapsLock'))} onChange={e=>setPassword(e.target.value)} minLength={8} aria-invalid={touched.password&&!passwordValid}/><button type="button" className="passwordToggle" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'} title={showPassword?'Hide password':'Show password'}><EyeIcon off={showPassword}/></button></div>{capsLock?<span className="capsWarning">Caps Lock is on.</span>:null}{!isLogin?<span className="fieldHelp">Use at least 8 characters.</span>:null}{touched.password&&!passwordValid?<span className="fieldError">Password must be at least 8 characters.</span>:null}</label>
+
+      {isLogin?<div className="authUtility"><label className="rememberMe"><input type="checkbox" checked={rememberMe} onChange={e=>setRememberMe(e.target.checked)}/><span>Remember me</span></label><a href="/forgot-password">Forgot password?</a></div>:null}
+
+      <button className="authSubmit" disabled={busy||!formValid} aria-busy={busy}>{busy?<><span className="buttonSpinner" aria-hidden="true"/>{isLogin?'Signing in…':'Creating account…'}</>:<>{isLogin?'Continue':'Create Account'}<span className="authSubmitArrow" aria-hidden="true">→</span></>}</button>
+     </form>
+
+     {message?<p className="formMessage" role="status">{message}</p>:null}
+
+     <div className="authDivider"><span>{isLogin?'New to iFixMV?':'Already registered?'}</span></div>
+     <button type="button" className="authSecondaryAction" onClick={()=>switchMode(isLogin?'register':'login')}>{isLogin?'Create an account':'Sign in instead'}</button>
+    </section>
+
+    <p className="authFootnote"><span aria-hidden="true">✓</span> One account · Customer and Service Provider workspaces</p>
+   </div>
   </main>
  </div>;
 }
