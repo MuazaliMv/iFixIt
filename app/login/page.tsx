@@ -6,7 +6,7 @@ import { apiFetch } from '../../lib/apiClient';
 import './login.css';
 
 type Mode='login'|'register';
-type WorkspaceChoice='customer'|'provider';
+type WorkspaceChoice='customer'|'provider'|'admin';
 type ExistingProfile={role?:string|null;provider_approved?:boolean|null};
 type FieldIconName='mail'|'lock'|'user'|'phone';
 
@@ -25,6 +25,7 @@ function FieldIcon({name}:{name:FieldIconName}){
 function WorkspaceIcon({name}:{name:WorkspaceChoice}){
  const p={viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,'aria-hidden':true};
  if(name==='provider')return <svg {...p}><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"/></svg>;
+ if(name==='admin')return <svg {...p}><path d="M12 3 20 6v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3Z"/><path d="M9 12l2 2 4-4"/></svg>;
  return <svg {...p}><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>;
 }
 
@@ -52,7 +53,7 @@ export default function LoginPage(){
    const saved=localStorage.getItem('ifixmv-login-email');
    if(saved){setEmail(saved);setRememberMe(true);}
    const savedWorkspace=localStorage.getItem('ifixmv-login-workspace');
-   if(savedWorkspace==='provider'||savedWorkspace==='customer')setWorkspace(savedWorkspace);
+   if(savedWorkspace==='provider'||savedWorkspace==='customer'||savedWorkspace==='admin')setWorkspace(savedWorkspace);
   }catch{}
 
   void(async()=>{
@@ -96,7 +97,18 @@ export default function LoginPage(){
   const providerReady=role==='PROVIDER'||role==='ADMIN'||profile?.provider_approved===true;
 
   if(useWorkspaceChoice){
-   if(role==='ADMIN'){window.location.replace('/admin');return;}
+   if(workspace==='admin'){
+    if(role==='ADMIN'){
+     rememberWorkspace('admin');
+     window.location.replace('/admin');
+     return;
+    }
+    try{sessionStorage.setItem('fixit:mode-toast','Admin Portal is available only to administrator accounts.');}catch{}
+    rememberWorkspace('customer');
+    window.location.replace('/home');
+    return;
+   }
+
    rememberWorkspace(workspace);
    if(workspace==='provider'){
     window.location.replace(providerReady?'/provider/today':'/provider/onboarding');
@@ -182,12 +194,15 @@ export default function LoginPage(){
       {isLogin?<>
        <div className="authUtility"><label className="rememberMe"><input type="checkbox" checked={rememberMe} onChange={e=>setRememberMe(e.target.checked)}/><span>Remember me</span></label><a href="/forgot-password">Forgot password?</a></div>
        <section className="authWorkspaceChooser" aria-label="Choose workspace after sign in">
-        <div className="authWorkspaceHead"><span>Open after sign in</span><small>Use one account across your workspaces</small></div>
+        <div className="authWorkspaceHead"><span>Open after sign in</span><small>Use one account across the workspaces you are allowed to access</small></div>
         <button type="button" className={`authWorkspaceOption provider${workspace==='provider'?' selected':''}`} onClick={()=>setWorkspace('provider')} aria-pressed={workspace==='provider'}>
          <span className="authWorkspaceIcon"><WorkspaceIcon name="provider"/></span><span className="authWorkspaceCopy"><strong>Service Provider</strong><small>Manage jobs, services and availability</small></span><span className="authWorkspaceAction">{workspace==='provider'?'Selected':'Choose'}</span>
         </button>
         <button type="button" className={`authWorkspaceOption customer${workspace==='customer'?' selected':''}`} onClick={()=>setWorkspace('customer')} aria-pressed={workspace==='customer'}>
          <span className="authWorkspaceIcon"><WorkspaceIcon name="customer"/></span><span className="authWorkspaceCopy"><strong>Customer Portal</strong><small>Request services and track your requests</small></span><span className="authWorkspaceAction">{workspace==='customer'?'Selected':'Choose'}</span>
+        </button>
+        <button type="button" className={`authWorkspaceOption admin${workspace==='admin'?' selected':''}`} onClick={()=>setWorkspace('admin')} aria-pressed={workspace==='admin'}>
+         <span className="authWorkspaceIcon"><WorkspaceIcon name="admin"/></span><span className="authWorkspaceCopy"><strong>Admin Portal</strong><small>System administration and platform controls · Administrators only</small></span><span className="authWorkspaceAction">{workspace==='admin'?'Selected':'Choose'}</span>
         </button>
        </section>
       </>:null}
@@ -198,7 +213,7 @@ export default function LoginPage(){
      {message?<p className="formMessage" role="status">{message}</p>:null}
     </section>
 
-    <p className="authFootnote"><span aria-hidden="true">✓</span> One account · Customer and Service Provider workspaces</p>
+    <p className="authFootnote"><span aria-hidden="true">✓</span> One account · Role-based workspace access</p>
    </div>
   </main>
  </div>;
