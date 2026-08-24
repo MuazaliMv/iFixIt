@@ -1,0 +1,114 @@
+html[data-workspace-mode]{
+ --ws-primary:#2563eb;--ws-primary-hover:#1d4ed8;--ws-primary-soft:#eff6ff;--ws-primary-ring:rgba(37,99,235,.14);
+ --ws-bg:#f8fafc;--ws-surface:#fff;--ws-surface-alt:#f8fafc;--ws-surface-hover:#f1f5f9;
+ --ws-text:#0f172a;--ws-text-soft:#334155;--ws-muted:#64748b;--ws-border:#e2e8f0;--ws-border-strong:#cbd5e1;
+ --ws-success:#168451;--ws-success-soft:#ecfdf5;--ws-warning:#a15c00;--ws-warning-soft:#fff7ed;--ws-danger:#b42318;--ws-danger-soft:#fef2f2;
+ --ws-radius-control:14px;--ws-radius-card:22px;--ws-radius-pill:999px;
+ --ws-shadow-card:0 18px 46px rgba(15,23,42,.08),0 2px 8px rgba(15,23,42,.04);
+ --ws-shadow-soft:0 8px 24px rgba(15,23,42,.05);
+ --ws-font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+ color-scheme:light;
+}
+html[data-workspace-mode][data-workspace-appearance="dark"]{
+ --ws-bg:#0b1220;--ws-surface:#111827;--ws-surface-alt:#172033;--ws-surface-hover:#1f2937;
+ --ws-text:#f8fafc;--ws-text-soft:#e2e8f0;--ws-muted:#94a3b8;--ws-border:#263244;--ws-border-strong:#3a475b;
+ --ws-primary:#60a5fa;--ws-primary-hover:#93c5fd;--ws-primary-soft:#10213e;--ws-primary-ring:rgba(96,165,250,.18);
+ --ws-success:#4ade80;--ws-success-soft:#0f2d22;--ws-warning:#fbbf24;--ws-warning-soft:#33240d;--ws-danger:#f87171;--ws-danger-soft:#351516;
+ --ws-shadow-card:0 18px 46px rgba(0,0,0,.28),0 2px 8px rgba(0,0,0,.18);--ws-shadow-soft:0 8px 24px rgba(0,0,0,.2);
+ color-scheme:dark;
+}
+html[data-workspace-mode] body{background:var(--ws-bg);color:var(--ws-text);font-family:var(--ws-font)}
+html[data-workspace-mode] .workspaceThemeToggle{position:fixed;z-index:940;top:max(15px,env(safe-area-inset-top));right:max(102px,calc(env(safe-area-inset-right) + 102px));width:46px;height:46px;display:grid;place-items:center;border:1px solid var(--ws-border);border-radius:999px;background:var(--ws-surface);color:var(--ws-text-soft);box-shadow:var(--ws-shadow-soft);cursor:pointer;transition:.16s ease}
+html[data-workspace-mode] .workspaceThemeToggle:hover{border-color:#93c5fd;color:var(--ws-primary);transform:translateY(-1px)}
+html[data-workspace-mode] .workspaceThemeToggle:active{transform:scale(.97)}
+html[data-workspace-mode] .workspaceThemeToggle svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+html[data-workspace-mode] .shell{width:min(calc(100% - 24px),1120px);margin:0 auto;padding:84px 0 max(28px,env(safe-area-inset-bottom));color:var(--ws-text)}
+html[data-workspace-mode] .topbar,html[data-workspace-mode] .panel,html[data-workspace-mode] .jobCard,html[data-workspace-mode] .requestToolbarPanel,html[data-workspace-mode] .usersToolbarPanel{background:var(--ws-surface);border-color:var(--ws-border);color:var(--ws-text);box-shadow:var(--ws-shadow-soft)}
+html[data-workspace-mode] .panel,html[data-workspace-mode] .jobCard,html[data-workspace-mode] .requestToolbarPanel,html[data-workspace-mode] .usersToolbarPanel{border-radius:var(--ws-radius-card)}
+html[data-workspace-mode] .pageTitle,html[data-workspace-mode] h1,html[data-workspace-mode] h2,html[data-workspace-mode] h3,html[data-workspace-mode] strong{color:var(--ws-text)}
+html[data-workspace-mode] .muted,html[data-workspace-mode] .tagline,html[data-workspace-mode] small{color:var(--ws-muted)}
+html[data-workspace-mode] .eyebrow{color:var(--ws-primary);font-weight:850;letter-spacing:.085em}
+html[data-workspace-mode] .primary,html[data-workspace-mode] button.primary,html[data-workspace-mode] a.primary{min-height:48px;border:1px solid var(--ws-primary);border-radius:var(--ws-radius-control);background:var(--ws-primary);color:#fff;box-shadow:0 8px 20px var(--ws-primary-ring);font-weight:800}
+html[data-workspace-mode] .primary:hover,html[data-workspace-mode] button.primary:hover,html[data-workspace-mode] a.primary:hover{background:var(--ws-primary-hover);border-color:var(--ws-primary-hover)}
+html[data-workspace-mode] .secondary,html[data-workspace-mode] button.secondary,html[data-workspace-mode] a.secondary{min-height:48px;border:1px solid var(--ws-border);border-radius:var(--ws-radius-control);background:var(--ws-surface);color:var(--ws-text-soft);font-weight:750}
+html[data-workspace-mode] .secondary:hover,html[data-workspace-mode] button.secondary:hover,html[data-workspace-mode] a.secondary:hover{background:var(--ws-surface-hover);border-color:var(--ws-border-strong);color:var(--ws-primary)}
+html[data-workspace-mode] input,html[data-workspace-mode] select,html[data-workspace-mode] textarea{border-color:var(--ws-border)!important;background:var(--ws-surface)!important;color:var(--ws-text)!important;border-radius:var(--ws-radius-control)!important;min-height:48px}
+html[data-workspace-mode] input:focus,html[data-workspace-mode] select:focus,html[data-workspace-mode] textarea:focus{border-color:var(--ws-primary)!important;box-shadow:0 0 0 3px var(--ws-primary-ring)!important;outline:0!important}
+html[data-workspace-mode] input::placeholder,html[data-workspace-mode] textarea::placeholder{color:var(--ws-muted)}
+html[data-workspace-mode] .formMessage{border-color:#bfdbfe;background:var(--ws-primary-soft);color:var(--ws-primary);border-radius:12px}
+html[data-workspace-mode] .pill,html[data-workspace-mode] .requestStatus,html[data-workspace-mode] .completedLabel{border-radius:var(--ws-radius-pill)}
+
+/* Provider workspace: same login schema, preserving provider-specific live workflow components. */
+html[data-workspace-mode="provider"] .providerModePage{min-height:100dvh;background:radial-gradient(circle at 50% 0,var(--ws-primary-soft),transparent 34%),var(--ws-bg);color:var(--ws-text)}
+html[data-workspace-mode="provider"] .providerModeShell{width:min(calc(100% - 24px),1120px);margin:0 auto;padding:84px 0 max(30px,env(safe-area-inset-bottom))}
+html[data-workspace-mode="provider"] .providerModeTop{padding:20px 22px;border:1px solid var(--ws-border);border-radius:var(--ws-radius-card);background:var(--ws-surface);box-shadow:var(--ws-shadow-soft)}
+html[data-workspace-mode="provider"] .providerModeTop h1{margin-top:12px;letter-spacing:-.7px}
+html[data-workspace-mode="provider"] .providerModeTop p{color:var(--ws-muted)}
+html[data-workspace-mode="provider"] .modeBadge.provider{border:1px solid #bfdbfe;background:var(--ws-primary-soft);color:var(--ws-primary);border-radius:var(--ws-radius-pill)}
+html[data-workspace-mode="provider"] .modeDot.provider{background:var(--ws-success)}
+html[data-workspace-mode="provider"] .providerPipelineGrid{gap:10px}
+html[data-workspace-mode="provider"] .pipelineCard,html[data-workspace-mode="provider"] .providerHeroCard,html[data-workspace-mode="provider"] .providerSideCard,html[data-workspace-mode="provider"] .providerJobsPanel,html[data-workspace-mode="provider"] .providerMessages,html[data-workspace-mode="provider"] .providerJobCard,html[data-workspace-mode="provider"] .providerMessage,html[data-workspace-mode="provider"] .providerModeCard{border:1px solid var(--ws-border);border-radius:var(--ws-radius-card);background:var(--ws-surface);color:var(--ws-text);box-shadow:var(--ws-shadow-soft)}
+html[data-workspace-mode="provider"] .pipelineCard{min-height:104px;padding:18px;text-decoration:none}
+html[data-workspace-mode="provider"] .pipelineCard span{color:var(--ws-muted)}
+html[data-workspace-mode="provider"] .pipelineCard strong{color:var(--ws-primary)}
+html[data-workspace-mode="provider"] .pipelineCard.active{border-color:#93c5fd;background:var(--ws-primary-soft)}
+html[data-workspace-mode="provider"] .providerHero{gap:14px}
+html[data-workspace-mode="provider"] .providerHeroCard,html[data-workspace-mode="provider"] .providerSideCard,html[data-workspace-mode="provider"] .providerJobsPanel,html[data-workspace-mode="provider"] .providerMessages{padding:20px}
+html[data-workspace-mode="provider"] .providerJobCard{padding:16px;text-decoration:none}
+html[data-workspace-mode="provider"] .providerJobCard:hover,html[data-workspace-mode="provider"] .providerMessage:hover{border-color:#93c5fd;box-shadow:var(--ws-shadow-card)}
+html[data-workspace-mode="provider"] .providerJobTitle small,html[data-workspace-mode="provider"] .providerMetaItem span,html[data-workspace-mode="provider"] .providerProblem,html[data-workspace-mode="provider"] .providerMessage p{color:var(--ws-muted)}
+html[data-workspace-mode="provider"] .providerStatusChip{border:1px solid #bfdbfe;background:var(--ws-primary-soft);color:var(--ws-primary);border-radius:var(--ws-radius-pill)}
+html[data-workspace-mode="provider"] .providerStatusChip.processing{border-color:#fde68a;background:var(--ws-warning-soft);color:var(--ws-warning)}
+html[data-workspace-mode="provider"] .providerStatusChip.accepted{border-color:#bbf7d0;background:var(--ws-success-soft);color:var(--ws-success)}
+html[data-workspace-mode="provider"] .providerEmpty{border-color:var(--ws-border);background:var(--ws-surface-alt);color:var(--ws-muted);border-radius:var(--ws-radius-card)}
+html[data-workspace-mode="provider"] .providerSideRow{border-color:var(--ws-border)}
+html[data-workspace-mode="provider"] .providerSideRow span{color:var(--ws-muted)}
+html[data-workspace-mode="provider"] .providerQuickActions .primary,html[data-workspace-mode="provider"] .providerQuickActions .secondary,html[data-workspace-mode="provider"] .providerToolbar .secondary,html[data-workspace-mode="provider"] .providerJobsHeader .secondary,html[data-workspace-mode="provider"] .providerJobActions button{min-height:48px;border-radius:var(--ws-radius-control)}
+
+/* Customer workspace: restyles the current service portal and shared account/request screens without changing data flow. */
+html[data-workspace-mode="customer"] .c4App,html[data-workspace-mode="customer"] .c4Main,html[data-workspace-mode="customer"] .c3Page{background:var(--ws-bg);color:var(--ws-text)}
+html[data-workspace-mode="customer"] .c3Shell{width:min(calc(100% - 20px),1080px)}
+html[data-workspace-mode="customer"] .c3Welcome,html[data-workspace-mode="customer"] .c3Section,html[data-workspace-mode="customer"] .c3WizardCard,html[data-workspace-mode="customer"] .c3Notice,html[data-workspace-mode="customer"] .c3ServiceTile,html[data-workspace-mode="customer"] .c3SubOption,html[data-workspace-mode="customer"] .c3PhotoDrop{background:var(--ws-surface);border-color:var(--ws-border);color:var(--ws-text);box-shadow:var(--ws-shadow-soft)}
+html[data-workspace-mode="customer"] .c3Welcome,html[data-workspace-mode="customer"] .c3Section,html[data-workspace-mode="customer"] .c3WizardCard{border-radius:var(--ws-radius-card)}
+html[data-workspace-mode="customer"] .c3Welcome small,html[data-workspace-mode="customer"] .c3Welcome p,html[data-workspace-mode="customer"] .c3SectionHead p,html[data-workspace-mode="customer"] .c3Question p{color:var(--ws-muted)}
+html[data-workspace-mode="customer"] .c3Welcome h1,html[data-workspace-mode="customer"] .c3SectionHead h2,html[data-workspace-mode="customer"] .c3Question h1,html[data-workspace-mode="customer"] .c3Question h2{color:var(--ws-text)}
+html[data-workspace-mode="customer"] .c3Primary{min-height:48px;border:1px solid var(--ws-primary)!important;border-radius:var(--ws-radius-control)!important;background:var(--ws-primary)!important;color:#fff!important;box-shadow:0 8px 20px var(--ws-primary-ring)!important}
+html[data-workspace-mode="customer"] .c3Primary:hover{background:var(--ws-primary-hover)!important}
+html[data-workspace-mode="customer"] .c3Secondary{min-height:48px;border:1px solid var(--ws-border)!important;border-radius:var(--ws-radius-control)!important;background:var(--ws-surface)!important;color:var(--ws-text-soft)!important}
+html[data-workspace-mode="customer"] .c3ServiceTile{min-height:76px;border-radius:16px}
+html[data-workspace-mode="customer"] .c3ServiceTile:hover,html[data-workspace-mode="customer"] .c3ServiceTile.selected,html[data-workspace-mode="customer"] .c3SubOption.selected{border-color:#93c5fd;background:var(--ws-primary-soft);color:var(--ws-primary)}
+html[data-workspace-mode="customer"] .c3Wizard .c3ServiceTile{background:var(--ws-surface);border-color:var(--ws-border);color:var(--ws-text)}
+html[data-workspace-mode="customer"] .c3Wizard .c3ServiceTile.selected{border-color:var(--ws-primary);background:var(--ws-primary-soft);box-shadow:0 0 0 2px var(--ws-primary-ring)}
+html[data-workspace-mode="customer"] .c3Wizard .c3ServiceTile.selected::after{background:var(--ws-primary);border-color:var(--ws-primary)}
+html[data-workspace-mode="customer"] .c3WizardCard:has(.appleServiceToolbar){background:var(--ws-surface-alt);border-color:var(--ws-border)}
+html[data-workspace-mode="customer"] .appleServiceSearch input,html[data-workspace-mode="customer"] .appleServiceFilters button{background:var(--ws-surface)!important;border-color:var(--ws-border)!important;color:var(--ws-text)!important}
+html[data-workspace-mode="customer"] .appleServiceFilters button.active{background:var(--ws-primary)!important;border-color:var(--ws-primary)!important;color:#fff!important}
+html[data-workspace-mode="customer"] .c3ActionDock{background:color-mix(in srgb,var(--ws-bg) 88%,transparent);border-color:var(--ws-border)}
+html[data-workspace-mode="customer"] .c3Field input,html[data-workspace-mode="customer"] .c3Field select,html[data-workspace-mode="customer"] .c3Field textarea{border-color:var(--ws-border);background:var(--ws-surface);color:var(--ws-text)}
+
+/* Shared account/workspace menu follows the same semantic palette on Provider and Customer screens. */
+html[data-workspace-mode] .airAccountTrigger,html[data-workspace-mode] .airAccountMenu,html[data-workspace-mode] .airWorkspaceChooser,html[data-workspace-mode] .airWorkspaceOption,html[data-workspace-mode] .airProfileAction,html[data-workspace-mode] .airLogoutAction{background:var(--ws-surface);border-color:var(--ws-border);color:var(--ws-text)}
+html[data-workspace-mode] .airAccountMenu{box-shadow:var(--ws-shadow-card)}
+html[data-workspace-mode] .airMenuIntro h2,html[data-workspace-mode] .airWorkspaceCopy strong,html[data-workspace-mode] .airActionCopy strong{color:var(--ws-text)}
+html[data-workspace-mode] .airMenuIntro p,html[data-workspace-mode] .airWorkspaceCopy small,html[data-workspace-mode] .airActionCopy small,html[data-workspace-mode] .airWorkspaceHead small{color:var(--ws-muted)}
+html[data-workspace-mode] .airWorkspaceOption:hover,html[data-workspace-mode] .airProfileAction:hover,html[data-workspace-mode] .airLogoutAction:hover{background:var(--ws-surface-hover)}
+html[data-workspace-mode] .airMenuStatusPill{border-color:#bfdbfe;background:var(--ws-primary-soft);color:var(--ws-primary)}
+
+@media(max-width:760px){
+ html[data-workspace-mode] .shell{width:min(calc(100% - 16px),720px);padding-top:76px}
+ html[data-workspace-mode] .workspaceThemeToggle{width:44px;height:44px;right:max(92px,calc(env(safe-area-inset-right) + 92px));top:max(15px,env(safe-area-inset-top))}
+ html[data-workspace-mode="provider"] .providerModeShell{width:min(calc(100% - 16px),720px);padding-top:76px}
+ html[data-workspace-mode="provider"] .providerModeTop,html[data-workspace-mode="provider"] .providerHeroCard,html[data-workspace-mode="provider"] .providerSideCard,html[data-workspace-mode="provider"] .providerJobsPanel,html[data-workspace-mode="provider"] .providerMessages{padding:16px;border-radius:18px}
+ html[data-workspace-mode="provider"] .providerPipelineGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ html[data-workspace-mode="provider"] .pipelineCard{min-height:88px;padding:14px;border-radius:18px}
+ html[data-workspace-mode="provider"] .providerHero{grid-template-columns:1fr}
+ html[data-workspace-mode="provider"] .providerJobActions{grid-template-columns:1fr 1fr}
+ html[data-workspace-mode="customer"] .c3Shell{width:min(calc(100% - 16px),620px)}
+ html[data-workspace-mode="customer"] .c3Welcome,html[data-workspace-mode="customer"] .c3Section,html[data-workspace-mode="customer"] .c3WizardCard{border-radius:18px;box-shadow:none}
+}
+@media(max-width:390px){
+ html[data-workspace-mode] .workspaceThemeToggle{right:max(88px,calc(env(safe-area-inset-right) + 88px))}
+ html[data-workspace-mode="provider"] .providerPipelineGrid{grid-template-columns:1fr 1fr}
+ html[data-workspace-mode="provider"] .providerJobActions{grid-template-columns:1fr}
+}
