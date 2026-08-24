@@ -1,0 +1,66 @@
+/* Minimal, mobile-first service request UI.
+   Keeps each screen focused on one decision and reduces decorative weight. */
+.c3Home{gap:12px;padding-top:12px}
+.c3Welcome{background:#fff;color:var(--c3-text);border:1px solid var(--c3-line);border-radius:20px;padding:18px;box-shadow:none;grid-template-columns:1fr auto}
+.c3Welcome small{color:var(--c3-muted);opacity:1}
+.c3Welcome h1{font-size:clamp(24px,5vw,34px);letter-spacing:-.8px;margin:5px 0 6px}
+.c3Welcome p{color:var(--c3-muted);font-size:14px}
+.c3Welcome .c3Primary{background:var(--c3-blue);color:#fff}
+.c3Section{border:1px solid var(--c3-line);border-radius:20px;box-shadow:none;padding:18px}
+.c3SectionHead{margin-bottom:12px}
+.c3SectionHead small{display:none}
+.c3SectionHead h2{font-size:20px;margin:0}
+.c3SectionHead p{font-size:13px;margin-top:4px}
+.c3ServiceGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.c3ServiceTile{min-height:84px;border:1px solid var(--c3-line);background:#fff;border-radius:16px;padding:12px;display:grid;grid-template-columns:28px 1fr;align-items:center;justify-content:initial;gap:10px;text-align:left}
+.c3ServiceTile:hover,.c3ServiceTile.selected{background:#f7faff;border-color:#a9cdf6;color:var(--c3-blue)}
+.c3ServiceTile .c3ServiceIcon{width:26px;height:26px}
+.c3ServiceTile strong{font-size:14px}
+.c3ServiceTile span{display:none}
+.c3Wizard{padding-top:10px;max-width:720px;margin:0 auto}
+.c3WizardTop{margin-bottom:10px}
+.c3StepDots{flex:1;gap:5px}
+.c3StepDot{height:3px;flex:1;width:auto;background:#e5e9ef}
+.c3WizardTop .c3Status{background:transparent;padding:0;color:var(--c3-muted);font-weight:700}
+.c3WizardCard{border:1px solid var(--c3-line);border-radius:20px;box-shadow:none;padding:22px;min-height:0}
+.c3Question small{display:none}
+.c3Question h1{font-size:clamp(25px,5vw,34px);letter-spacing:-.7px;margin:0 0 6px}
+.c3Question h2{font-size:20px;margin:0 0 5px}
+.c3Question p{font-size:14px}
+.c3SubList{display:grid;gap:8px;margin-top:18px}
+.c3SubOption{width:100%;min-height:54px;border:1px solid var(--c3-line);border-radius:14px;background:#fff;padding:0 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;color:var(--c3-text);font-weight:800;font-size:15px;cursor:pointer}
+.c3SubOption::after{content:'›';font-size:24px;line-height:1;color:#98a2b3;font-weight:400}
+.c3SubOption.selected{background:#f7faff;border-color:#a9cdf6;color:var(--c3-blue)}
+.c3SubOption.selected::after{content:'✓';font-size:15px;color:var(--c3-blue);font-weight:900}
+.c3Form{gap:10px;margin-top:16px}
+.c3Field{font-size:12px;gap:6px}
+.c3Field input,.c3Field select,.c3Field textarea{min-height:50px;border-radius:13px;padding:11px 13px}
+.c3Field textarea{min-height:112px}
+.c3Urgency{gap:8px;margin-top:16px}
+.c3Urgency button{min-height:70px;border-radius:14px;background:#fff}
+.c3PhotoDrop{border:1px solid var(--c3-line);background:#fff;border-radius:16px;padding:14px;margin-top:14px;text-align:left}
+.c3Review{margin-top:12px}
+.c3ReviewRow{padding:10px 0}
+.c3ActionDock{background:transparent;backdrop-filter:none}
+.c3ActionInner{max-width:720px;margin:0 auto}
+.c3Primary,.c3Secondary{min-height:48px;border-radius:14px;box-shadow:none}
+@media(max-width:760px){
+ .c3Shell{width:min(100% - 20px,620px)}
+ .c3Home{padding-top:10px}
+ .c3Welcome{grid-template-columns:1fr;padding:16px}
+ .c3Welcome p{display:none}
+ .c3Welcome .c3Primary{width:100%}
+ .c3Section{padding:14px;border-radius:18px}
+ .c3ServiceGrid{grid-template-columns:1fr 1fr;gap:8px}
+ .c3ServiceTile{min-height:64px;padding:10px;border-radius:14px;grid-template-columns:24px 1fr;gap:8px}
+ .c3ServiceTile .c3ServiceIcon{width:22px;height:22px}
+ .c3WizardCard{padding:18px 16px;border-radius:18px}
+ .c3WizardTop .c3Status{font-size:10px}
+ .c3ActionDock{left:10px;right:10px;padding:7px;border-radius:15px}
+ .c3ActionInner{grid-template-columns:82px 1fr}
+ .c3Urgency{grid-template-columns:1fr}
+}
+@media(max-width:390px){
+ .c3ServiceGrid{grid-template-columns:1fr}
+ .c3ServiceTile{min-height:58px}
+}
