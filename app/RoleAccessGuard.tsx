@@ -43,22 +43,25 @@ export default function RoleAccessGuard(){
         const raw=String(p?.profile?.role||'CUSTOMER').toUpperCase();
         const role:AccountRole=raw==='ADMIN'?'ADMIN':raw==='PROVIDER'?'PROVIDER':'CUSTOMER';
         const providerApproved=p?.profile?.provider_approved===true;
+
+        // Workspace access is separate from permanent account identity.
+        // Every signed-in account can use Customer mode. Approved providers
+        // (including admins) can use Provider mode. Only ADMIN can use Admin.
+        const canUseCustomerWorkspace=true;
         const canUseProviderWorkspace=role==='PROVIDER'||providerApproved;
-        const canUseCustomerWorkspace=role!=='ADMIN';
+        const canUseAdminWorkspace=role==='ADMIN';
 
         try{
-          const navRole=role==='ADMIN'?'admin':providerRoute&&canUseProviderWorkspace?'provider':'customer';
+          const navRole=adminRoute&&canUseAdminWorkspace?'admin':providerRoute&&canUseProviderWorkspace?'provider':'customer';
           localStorage.setItem('fixit:account-role',role.toLowerCase());
           localStorage.setItem('fixit:mobile-nav-role',navRole);
-          if(role!=='ADMIN')localStorage.setItem('fixit:app-mode',navRole);
-          else localStorage.removeItem('fixit:app-mode');
+          localStorage.setItem('fixit:app-mode',navRole);
         }catch{}
 
         const wrongRoute=
-          (role==='ADMIN'&&(customerRoute||providerRoute))||
           (providerRoute&&!canUseProviderWorkspace)||
           (customerRoute&&!canUseCustomerWorkspace)||
-          (adminRoute&&role!=='ADMIN');
+          (adminRoute&&!canUseAdminWorkspace);
 
         if(wrongRoute&&active){
           if(providerRoute&&!canUseProviderWorkspace){
