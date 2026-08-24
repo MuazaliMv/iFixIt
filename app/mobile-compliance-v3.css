@@ -89,8 +89,10 @@
   .globalMenuSheet{min-height:100dvh!important;height:auto!important;overflow-y:auto!important}
   .globalMenuFooter{padding-bottom:max(12px,env(safe-area-inset-bottom))!important}
 
-  /* Sticky/fixed elements must not block focused fields when the keyboard is visible. */
-  html.app-editing .c3ActionDock,html.app-keyboard-open .c3ActionDock,
+  /* Keep global navigation clear of the mobile keyboard, but never hide the
+     request wizard action dock. Native select controls (including Ward/Area)
+     can temporarily set app-editing/app-keyboard-open; hiding the dock here
+     made Continue disappear after a ward selection. */
   html.app-editing .mobileNav,html.app-keyboard-open .mobileNav{
     display:none!important;
   }
