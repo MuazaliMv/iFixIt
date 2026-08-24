@@ -1,6 +1,6 @@
 Trigger Railway deployment from the latest main head only.
-Updated: 2026-08-25T03:32:00+05:00
-Reason: deploy the Service Provider workspace routing fix so selecting Service Provider never falls back to the public marketing homepage.
+Updated: 2026-08-25T03:50:00+05:00
+Reason: deploy the verified pre-production usability hardening, including the unified account profile, separate Provider verification flow, improved profile accessibility/mobile behavior, and server/client logout synchronization.
 
 Required production behavior:
 - Production source of truth is GitHub branch: main.
@@ -10,19 +10,20 @@ Required production behavior:
 - ifixmv.com must point to the newest successful production deployment.
 
 Current target main HEAD at time of this trigger:
-- 8b2d2a6a50a28e79001ea4948f94dc347ceff662
-- Includes PR #71 Provider workspace routing fix on top of the unified Admin, Provider, and Customer design systems.
+- f84d63872f308b7f5388c545b7738f8d78621407
+- Includes PR #72 unified profile/settings redesign and PR #73 pre-deploy usability hardening.
 
-Expected production routing behavior:
-- Selecting Service Provider from the authenticated account/workspace menu opens the Provider workspace.
-- An account authorised for Provider access must not be redirected to the public `/` marketing landing page because onboarding/approval metadata is incomplete or temporarily unavailable.
-- Server-side role access in proxy.ts remains authoritative.
-- Subscription routing to `/provider/subscription` remains supported when applicable.
-- Customer and Admin routing and permissions remain unchanged.
+Expected production usability behavior:
+- Customer, Provider, and Admin accounts use one real account profile/settings experience at `/profile`.
+- `/provider/profile` remains a compatibility route and opens the unified account profile instead of a verification-only screen.
+- Provider verification documents and subscription controls remain available separately at `/provider/verification` and `/provider/subscription`.
+- Profile forms use mobile-safe 16px inputs, 48px touch targets, improved autofill, keyboard focus visibility, anchor offsets, and live save-status feedback.
+- Client-side sign out also clears the HttpOnly server session through `/api/auth/logout`.
+- Existing role protection, Provider workspace routing, customer requests, provider jobs, and Admin operations remain unchanged.
 
-Validation before merge:
-- Regression test for Provider routing passed.
-- iFixIt CI passed tests, lint, and production build.
-- Separate Build workflow passed.
+Validation before deployment:
+- PR #73 iFixIt CI passed tests, lint, and production build.
+- PR #73 separate Build workflow passed.
+- Regression tests cover Provider profile routing, Provider verification access, and server-session logout synchronization.
 
-This trigger intentionally changes on main so the Railway hosting integration performs a new production build from the latest source.
+This trigger intentionally changes on main so the Railway hosting integration performs a new production build from the latest verified source.
