@@ -1,0 +1,193 @@
+/*
+ * iFixMV Apple-inspired global interface layer
+ * Visual system only: no business logic, permissions, routing, or request lifecycle changes.
+ */
+:root{
+  color-scheme:light;
+  --brand:#3457e6;
+  --brand-soft:#eef3ff;
+  --page-bg:#f5f5f7;
+  --surface:#ffffff;
+  --surface-alt:#f9f9fb;
+  --text:#1d1d1f;
+  --muted:#6e6e73;
+  --line:#e5e5ea;
+  --success:#248a3d;
+  --warning:#b25000;
+  --danger:#d70015;
+  --radius-sm:12px;
+  --radius-md:18px;
+  --radius-lg:24px;
+  --shadow-card:0 1px 2px rgba(0,0,0,.03),0 10px 30px rgba(0,0,0,.045);
+  --shadow-float:0 14px 36px rgba(0,0,0,.11);
+  --content-max:1180px;
+  --touch-min:48px;
+  --apple-blue:#3457e6;
+  --apple-gray:#f5f5f7;
+  --apple-separator:rgba(60,60,67,.14);
+}
+
+html{background:var(--page-bg)}
+body{
+  background:var(--page-bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Arial,sans-serif;
+  letter-spacing:-.01em;
+}
+::selection{background:rgba(52,87,230,.18)}
+
+h1,h2,h3,h4,h5,h6{color:var(--text);font-weight:750;letter-spacing:-.035em}
+h1{line-height:1.04} h2{line-height:1.1} h3{line-height:1.18}
+p{color:inherit}
+.muted,.tagline{color:var(--muted)}
+.eyebrow,.smallLabel{font-size:12px;font-weight:750;letter-spacing:.11em;color:var(--brand)}
+
+/* Controls */
+button,.primary,.secondary,.c3Primary,.c3Secondary,.addNew{
+  border-radius:14px;
+  font-weight:700;
+  letter-spacing:-.01em;
+  transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .12s ease,opacity .16s ease;
+}
+button:active:not(:disabled),.primary:active,.secondary:active,.c3Primary:active,.c3Secondary:active{transform:scale(.985)}
+.primary,.c3Primary,.addNew{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:none}
+.primary:hover:not(:disabled),.c3Primary:hover:not(:disabled),.addNew:hover{box-shadow:0 6px 16px rgba(52,87,230,.20);transform:none}
+.secondary,.c3Secondary{background:#fff;border:1px solid var(--apple-separator);color:var(--text);box-shadow:none}
+.secondary:hover:not(:disabled),.c3Secondary:hover:not(:disabled){background:#f8f8fa;border-color:rgba(60,60,67,.22)}
+button:disabled{opacity:.42;cursor:not-allowed}
+
+input,textarea,select{
+  min-height:52px;
+  border:1px solid rgba(60,60,67,.20);
+  border-radius:14px;
+  background:#fff;
+  color:var(--text);
+  padding:13px 14px;
+  font-size:16px;
+  box-shadow:inset 0 1px 0 rgba(0,0,0,.015);
+}
+textarea{line-height:1.45}
+input::placeholder,textarea::placeholder{color:#98989d}
+input:focus,textarea:focus,select:focus{border-color:var(--brand);box-shadow:0 0 0 4px rgba(52,87,230,.10)}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid rgba(52,87,230,.28);outline-offset:2px}
+label{font-weight:650;color:var(--text)}
+
+/* Global layout and cards */
+.shell{width:min(var(--content-max),calc(100% - 32px));padding-top:24px}
+.panel,.infoCard,.statCard,.hero>div,.screenCard,.providerSummaryCard,.progressCard,.workDoneCard,.satisfactionCard,.feedbackCard{
+  border:1px solid var(--apple-separator);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+  box-shadow:var(--shadow-card);
+}
+.panel{padding:26px}
+.hero>div:first-child{background:#fff}
+.hero h1{font-weight:780;letter-spacing:-.045em}
+.badge,.pill,.c3Status{background:var(--brand-soft);color:var(--brand);font-weight:700}
+
+/* Header/navigation: quiet, translucent, content-first */
+.c3Header,.ifixHeader,.topbar{
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  backdrop-filter:saturate(180%) blur(20px);
+}
+.c3Header{background:rgba(250,250,252,.88);border-bottom:1px solid var(--apple-separator);box-shadow:none}
+.c3Logo{font-weight:780;letter-spacing:-.04em}
+.c3IconButton,.c3Avatar{box-shadow:0 1px 3px rgba(0,0,0,.05)}
+
+/* Customer home */
+.c3Page{background:var(--page-bg)}
+.c3Home{gap:16px}
+.c3Welcome{
+  color:var(--text);
+  background:#fff;
+  border:1px solid var(--apple-separator);
+  border-radius:26px;
+  box-shadow:var(--shadow-card);
+}
+.c3Welcome small{color:var(--brand);opacity:1}
+.c3Welcome p{color:var(--muted);opacity:1}
+.c3Welcome .c3Primary{background:var(--brand);color:#fff}
+.c3Section{border:1px solid var(--apple-separator);border-radius:24px;box-shadow:var(--shadow-card)}
+.c3SectionHead small{font-weight:750}
+.c3ServiceGrid{gap:12px}
+.c3ServiceTile{background:#fff;border:1px solid var(--apple-separator);border-radius:20px;box-shadow:none}
+.c3ServiceTile:hover,.c3ServiceTile.selected{background:var(--brand-soft);border-color:rgba(52,87,230,.35);color:var(--brand)}
+.c3ActiveCard{border-color:var(--apple-separator);border-radius:18px}
+
+/* Requests and detail cards */
+.c3RequestCard{border:1px solid var(--apple-separator);border-radius:22px;box-shadow:var(--shadow-card)}
+.c3RequestIcon{border-radius:15px;background:var(--brand-soft)}
+.c3Filters button{background:#e9e9ee;color:#55565b}
+.c3Filters button.active{background:var(--text);color:#fff}
+.c3Detail .activeHero,.c3Detail .successBanner{border:1px solid var(--apple-separator);box-shadow:var(--shadow-card)}
+
+/* Generic legacy grids/lists */
+.serviceCard,.jobCard,.miniTimeline,.requestSummary,.emptyQueue{border-color:var(--apple-separator);border-radius:18px;background:#fff}
+.serviceCard.selected{background:var(--brand-soft);box-shadow:0 0 0 2px rgba(52,87,230,.10)}
+.filterChip{background:#fff;border-color:var(--apple-separator)}
+.filterChip.active{background:var(--brand-soft);border-color:rgba(52,87,230,.28);color:var(--brand)}
+
+/* Admin */
+.adminManagementNav{background:rgba(255,255,255,.92);border-color:var(--apple-separator);box-shadow:none}
+.adminManagementNav a{border-radius:12px}
+.servicePanel,.subPanel{border-radius:22px!important}
+.serviceHeading{border-bottom-color:var(--apple-separator)}
+.serviceToolbar{background:#fafafa;border-bottom-color:var(--apple-separator)}
+.searchBox{border-color:var(--apple-separator);border-radius:13px}
+.serviceCard{border-bottom-color:var(--apple-separator)}
+.serviceCard:hover{background:#fafaff}
+.serviceCard.selected{background:#f5f7ff;box-shadow:inset 3px 0 0 var(--brand)}
+.serviceCard .serviceIcon{border-radius:12px;background:var(--brand-soft)}
+.statusBadge{border-radius:999px}
+.serviceActions button{border-color:var(--apple-separator);border-radius:12px;background:#fff}
+.userTableWrap{border-color:var(--apple-separator);border-radius:18px;box-shadow:var(--shadow-card)}
+.userTable th{background:#f7f7f9;color:#6e6e73;font-weight:700}
+.userTable th,.userTable td{border-bottom-color:var(--apple-separator)}
+
+/* Mobile bottom actions */
+.c3ActionDock{
+  background:rgba(248,248,250,.88);
+  -webkit-backdrop-filter:saturate(180%) blur(22px);
+  backdrop-filter:saturate(180%) blur(22px);
+}
+
+/* Motion and accessibility */
+@media (hover:hover){
+  .panel,.infoCard,.statCard,.c3Section,.c3RequestCard{transition:box-shadow .18s ease,border-color .18s ease}
+}
+
+@media(min-width:1050px){
+  body:has(.adminManagementNav){background:var(--page-bg)}
+  .adminManagementNav{background:rgba(255,255,255,.94);border-right:1px solid var(--apple-separator)}
+  .adminManagementNav::before{font-weight:780;letter-spacing:-.04em}
+  .adminManagementNav a.primary{box-shadow:none}
+}
+
+@media(max-width:820px){
+  .shell{width:min(calc(100% - 20px),var(--content-max));padding-top:14px}
+  .panel{padding:20px 17px;border-radius:22px;box-shadow:none}
+  .hero>div,.infoCard,.statCard{box-shadow:none}
+  .c3Section,.c3RequestCard{box-shadow:none}
+  .userTable tr{border-color:var(--apple-separator);border-radius:18px;box-shadow:none}
+}
+
+@media(max-width:760px){
+  :root{--touch-min:48px}
+  .c3Page{padding-bottom:118px}
+  .c3Header{background:rgba(250,250,252,.92)}
+  .c3Welcome{padding:22px 20px;border-radius:23px;box-shadow:none}
+  .c3Welcome h1{font-size:34px;letter-spacing:-.045em}
+  .c3Section{border-radius:22px}
+  .c3ServiceTile{border-radius:18px}
+  .c3ActionDock{border-top:1px solid var(--apple-separator)}
+}
+
+@media(max-width:480px){
+  .shell{width:calc(100% - 16px)}
+  .panel{padding:18px 15px}
+  h1{letter-spacing:-.04em}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
