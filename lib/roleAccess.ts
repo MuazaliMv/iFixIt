@@ -8,8 +8,8 @@ export function normalizeAccountRole(value:unknown):AccountRole{
  return 'CUSTOMER';
 }
 
-export function canAccessPortal(role:AccountRole,portal:PortalRole):boolean{
+export function canAccessPortal(role:AccountRole,portal:PortalRole,providerApproved=false):boolean{
  if(portal==='customer')return true;
- if(portal==='provider')return role==='PROVIDER'||role==='ADMIN';
+ if(portal==='provider')return role==='PROVIDER'||role==='ADMIN'||providerApproved;
  return role==='ADMIN';
 }
