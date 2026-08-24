@@ -89,14 +89,9 @@ export default function AdminProviderDetailPage(){
   }
 
   const docs=detail?.documents||[];
-  const approvedType=(type:string)=>docs.some(d=>d.document_type===type&&d.review_status==='APPROVED');
-  const idApproved=approvedType('ID_CARD');
-  const businessApproved=approvedType('BUSINESS_LICENSE');
-  const documentsReady=idApproved&&businessApproved;
 
   async function setStatus(status:ProviderStatus){
     if(busyStatus){setMessage(`${pretty(busyStatus)} is still being saved. Please wait a moment.`);return;}
-    if(status==='APPROVED'&&!documentsReady){setMessage('Approve the ID Card and Business Permit before approving this provider.');return;}
     setBusyStatus(status);
     setMessage(`${pretty(status)} action in progress…`);
     try{
@@ -151,7 +146,6 @@ export default function AdminProviderDetailPage(){
         <div className="providerBadges"><span className="pill">{pretty(status)}</span>{subscription?<span className="pill">Subscription: {pretty(subscription.status)}</span>:null}</div>
       </div>
       <p className="providerMessage" role="status" aria-live="polite">{message}</p>
-      {!documentsReady&&status!=='APPROVED'?<p className="muted">Provider approval requires both the ID Card and Business Permit to be approved.</p>:null}
       <div className="providerActions">
         <button type="button" className="primary" disabled={busyStatus==='APPROVED'} onClick={()=>void setStatus('APPROVED')}>{busyStatus==='APPROVED'?'Approving…':status==='APPROVED'?'Approved':'Approve Provider'}</button>
         <button type="button" className="secondary" disabled={busyStatus==='SUBMITTED'} onClick={()=>void setStatus('SUBMITTED')}>{busyStatus==='SUBMITTED'?'Saving…':'Mark Submitted'}</button>
@@ -181,20 +175,15 @@ export default function AdminProviderDetailPage(){
     </section>
 
     <section className="providerSection">
-      <div className="providerSectionHeader"><div><p className="eyebrow">DOCUMENTS</p><h2>Verification Documents</h2><p className="muted">Validate each required document before approving the provider.</p></div><div className="documentActions"><span className="pill">{docs.length} documents</span>{docs.length?<a className="secondary" href={`/admin/providers/${userId}/documents`}>Review Documents</a>:null}</div></div>
+      <div className="providerSectionHeader"><div><p className="eyebrow">SUPPORTING DOCUMENTS</p><h2>Optional Documents</h2><p className="muted">Documents are optional reference material and do not block the main provider approval.</p></div><div className="documentActions"><span className="pill">{docs.length} documents</span>{docs.length?<a className="secondary" href={`/admin/providers/${userId}/documents`}>Review Documents</a>:null}</div></div>
       <div className="jobList">
         {docs.map(d=><article className="jobCard" key={d.id}>
           <div className="jobTop"><div><strong>{d.document_label||pretty(d.document_type)}</strong><div className="muted">Submitted {when(d.submitted_at)}</div></div><span className="pill">{pretty(d.review_status)}</span></div>
           {d.review_note?<p className="jobDescription">{d.review_note}</p>:null}
           <div className="actions">{d.signed_url?<a className="secondary" href={d.signed_url} target="_blank" rel="noreferrer">View Document</a>:<span className="muted">File unavailable</span>}</div>
-          <div className="actions">
-            <button className="primary" type="button" disabled={busyDoc===d.id} onClick={()=>void reviewDocument(d,'APPROVED')}>{busyDoc===d.id?'Saving…':d.review_status==='APPROVED'?'Approve Again':'Approve'}</button>
-            <button className="secondary rejectAction" type="button" disabled={busyDoc===d.id} onClick={()=>void reviewDocument(d,'REJECTED')}>{busyDoc===d.id?'Saving…':d.review_status==='REJECTED'?'Reject Again':'Reject'}</button>
-          </div>
         </article>)}
         {!docs.length?<div className="emptyQueue">No verification documents submitted.</div>:null}
       </div>
-      <div className="providerFacts" style={{marginTop:16}}><Fact label="ID Card" value={idApproved?'Approved':'Pending validation'}/><Fact label="Business Permit" value={businessApproved?'Approved':'Pending validation'}/></div>
     </section>
 
     <section className="providerSection">
