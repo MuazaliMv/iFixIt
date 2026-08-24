@@ -43,8 +43,11 @@ export default function GlobalModeSwitch(){
     if(!r.ok||!active)return;
     const p=await r.json().catch(()=>({}));
     const raw=String(p?.profile?.role||'CUSTOMER').toUpperCase();
-    setAccountRole(raw==='ADMIN'?'ADMIN':raw==='PROVIDER'?'PROVIDER':'CUSTOMER');
-    setProviderApproved(p?.profile?.provider_approved===true||raw==='PROVIDER');
+    const role:AccountRole=raw==='ADMIN'?'ADMIN':raw==='PROVIDER'?'PROVIDER':'CUSTOMER';
+    setAccountRole(role);
+    // Admin inherently has all three workspaces. Provider approval is only
+    // relevant to non-admin customer/provider accounts.
+    setProviderApproved(role==='ADMIN'||role==='PROVIDER'||p?.profile?.provider_approved===true);
    }catch{}
   })();
   const{data:listener}=supabase.auth.onAuthStateChange((_event,session)=>{
@@ -119,11 +122,11 @@ export default function GlobalModeSwitch(){
      {mode!=='admin'?<Link className="airWorkspaceItem" href="/admin" role="menuitem" onClick={()=>rememberWorkspace('admin')}>
       <span className="airWorkspaceText"><strong>Switch to Admin</strong><small>Manage users, requests and system settings</small></span><span aria-hidden="true">›</span>
      </Link>:null}
+     {mode!=='provider'?<Link className="airWorkspaceItem" href="/provider/today" role="menuitem" onClick={()=>rememberWorkspace('provider')}>
+      <span className="airWorkspaceText"><strong>Switch to Service Provider</strong><small>Open the provider workspace</small></span><span aria-hidden="true">›</span>
+     </Link>:null}
      {mode!=='customer'?<Link className="airWorkspaceItem" href="/home" role="menuitem" onClick={()=>rememberWorkspace('customer')}>
       <span className="airWorkspaceText"><strong>Switch to Customer</strong><small>Request and manage services as a customer</small></span><span aria-hidden="true">›</span>
-     </Link>:null}
-     {providerApproved&&mode!=='provider'?<Link className="airWorkspaceItem" href="/provider/today" role="menuitem" onClick={()=>rememberWorkspace('provider')}>
-      <span className="airWorkspaceText"><strong>Switch to Service Provider</strong><small>Open your provider workspace</small></span><span aria-hidden="true">›</span>
      </Link>:null}
     </>:mode!=='admin'?<div className="airModeRow" role="none">
      <AppModeSwitch mode={mode}/>
