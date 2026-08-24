@@ -1,6 +1,6 @@
 Trigger Railway deployment from the latest main head only.
-Updated: 2026-08-25T03:24:00+05:00
-Reason: deploy the unified production design system across Admin, Service Provider, and Customer workspaces, including the latest Provider and Customer design-system merge.
+Updated: 2026-08-25T03:32:00+05:00
+Reason: deploy the Service Provider workspace routing fix so selecting Service Provider never falls back to the public marketing homepage.
 
 Required production behavior:
 - Production source of truth is GitHub branch: main.
@@ -10,13 +10,19 @@ Required production behavior:
 - ifixmv.com must point to the newest successful production deployment.
 
 Current target main HEAD at time of this trigger:
-- bf27675a077fc2c2ed48698ca87eb91453a73296
-- Includes PR #69 Admin design system and PR #70 Provider + Customer design system.
+- 8b2d2a6a50a28e79001ea4948f94dc347ceff662
+- Includes PR #71 Provider workspace routing fix on top of the unified Admin, Provider, and Customer design systems.
 
-Expected production UI behavior:
-- Admin keeps the simplified five-group navigation with submenus and scoped light/dark design system.
-- Customer and Service Provider workspaces use the same login-aligned semantic design language, responsive surfaces, rounded controls/cards, 48px touch targets, and scoped light/dark appearance.
-- Existing live Supabase-backed customer requests, provider jobs/offers, admin operations, role checks, permissions, and route protection remain unchanged.
-- Mobile-first behavior remains enabled across all workspaces.
+Expected production routing behavior:
+- Selecting Service Provider from the authenticated account/workspace menu opens the Provider workspace.
+- An account authorised for Provider access must not be redirected to the public `/` marketing landing page because onboarding/approval metadata is incomplete or temporarily unavailable.
+- Server-side role access in proxy.ts remains authoritative.
+- Subscription routing to `/provider/subscription` remains supported when applicable.
+- Customer and Admin routing and permissions remain unchanged.
+
+Validation before merge:
+- Regression test for Provider routing passed.
+- iFixIt CI passed tests, lint, and production build.
+- Separate Build workflow passed.
 
 This trigger intentionally changes on main so the Railway hosting integration performs a new production build from the latest source.
