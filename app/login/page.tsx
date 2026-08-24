@@ -6,9 +6,10 @@ import { apiFetch } from '../../lib/apiClient';
 import './login.css';
 
 type Mode='login'|'register';
-type WorkspaceChoice='customer'|'provider'|'admin';
-type ExistingProfile={role?:string|null;provider_approved?:boolean|null};
+type ExistingProfile={role?:string|null};
 type FieldIconName='mail'|'lock'|'user'|'phone';
+type AccountRole='CUSTOMER'|'PROVIDER'|'ADMIN';
+type Workspace='customer'|'provider'|'admin';
 
 function EyeIcon({off=false}:{off?:boolean}){
  return <svg viewBox="0 0 24 24" aria-hidden="true" className="eyeIcon"><path d="M2.3 12s3.5-5.5 9.7-5.5S21.7 12 21.7 12 18.2 17.5 12 17.5 2.3 12 2.3 12Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8"/>{off?<path d="M4 4l16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>:null}</svg>;
@@ -22,16 +23,36 @@ function FieldIcon({name}:{name:FieldIconName}){
  return <svg {...p}><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>;
 }
 
-function WorkspaceIcon({name}:{name:WorkspaceChoice}){
- const p={viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,'aria-hidden':true};
- if(name==='provider')return <svg {...p}><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"/></svg>;
- if(name==='admin')return <svg {...p}><path d="M12 3 20 6v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3Z"/><path d="M9 12l2 2 4-4"/></svg>;
- return <svg {...p}><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>;
+function normalizeRole(value:unknown):AccountRole{
+ const role=String(value||'CUSTOMER').toUpperCase();
+ if(role==='ADMIN')return 'ADMIN';
+ if(role==='PROVIDER')return 'PROVIDER';
+ return 'CUSTOMER';
+}
+
+function defaultWorkspace(role:AccountRole):Workspace{
+ if(role==='ADMIN')return 'admin';
+ if(role==='PROVIDER')return 'provider';
+ return 'customer';
+}
+
+function workspaceDestination(workspace:Workspace){
+ if(workspace==='admin')return '/admin';
+ if(workspace==='provider')return '/provider/today';
+ return '/home';
+}
+
+function rememberWorkspace(workspace:Workspace,role:AccountRole){
+ try{
+  localStorage.setItem('ifixmv-login-workspace',workspace);
+  localStorage.setItem('fixit:mobile-nav-role',workspace);
+  localStorage.setItem('fixit:app-mode',workspace);
+  localStorage.setItem('fixit:account-role',role.toLowerCase());
+ }catch{}
 }
 
 export default function LoginPage(){
  const[mode,setMode]=useState<Mode>('login');
- const[workspace,setWorkspace]=useState<WorkspaceChoice>('customer');
  const[fullName,setFullName]=useState('');
  const[email,setEmail]=useState('');
  const[password,setPassword]=useState('');
@@ -52,8 +73,6 @@ export default function LoginPage(){
    if(requestedMode==='register')setMode('register');
    const saved=localStorage.getItem('ifixmv-login-email');
    if(saved){setEmail(saved);setRememberMe(true);}
-   const savedWorkspace=localStorage.getItem('ifixmv-login-workspace');
-   if(savedWorkspace==='provider'||savedWorkspace==='customer'||savedWorkspace==='admin')setWorkspace(savedWorkspace);
   }catch{}
 
   void(async()=>{
@@ -62,7 +81,7 @@ export default function LoginPage(){
     if(!active)return;
     if(response.ok){
      const payload=await response.json().catch(()=>({}));
-     await routeUser(payload?.profile as ExistingProfile|undefined,false);
+     await routeUser(payload?.profile as ExistingProfile|undefined);
      return;
     }
    }catch{}
@@ -72,59 +91,40 @@ export default function LoginPage(){
   return()=>{active=false;};
  },[]);
 
- function rememberWorkspace(next:WorkspaceChoice){
-  try{
-   localStorage.setItem('ifixmv-login-workspace',next);
-   localStorage.setItem('fixit:mobile-nav-role',next);
-   localStorage.setItem('fixit:app-mode',next);
-  }catch{}
- }
-
- async function routeUser(knownProfile?:ExistingProfile,useWorkspaceChoice=false){
-  const requested=new URLSearchParams(window.location.search).get('next');
-  if(requested&&requested.startsWith('/')&&!requested.startsWith('//')){window.location.replace(requested);return;}
-
+ async function routeUser(knownProfile?:ExistingProfile){
   let profile=knownProfile;
   if(!profile?.role){
    try{
-    const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),5000);
-    const response=await apiFetch('/api/user/profile',{signal:controller.signal});clearTimeout(timer);
-    if(response.ok){const payload=await response.json();profile=payload?.profile as ExistingProfile|undefined;}
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),5000);
+    const response=await apiFetch('/api/user/profile',{signal:controller.signal});
+    clearTimeout(timer);
+    if(response.ok){
+     const payload=await response.json();
+     profile=payload?.profile as ExistingProfile|undefined;
+    }
    }catch{}
   }
 
-  const role=String(profile?.role||'CUSTOMER').toUpperCase();
-  const providerReady=role==='PROVIDER'||role==='ADMIN'||profile?.provider_approved===true;
+  const role=normalizeRole(profile?.role);
+  const workspace=defaultWorkspace(role);
+  rememberWorkspace(workspace,role);
 
-  if(useWorkspaceChoice){
-   if(workspace==='admin'){
-    if(role==='ADMIN'){
-     rememberWorkspace('admin');
-     window.location.replace('/admin');
-     return;
-    }
-    try{sessionStorage.setItem('fixit:mode-toast','Admin Portal is available only to administrator accounts.');}catch{}
-    rememberWorkspace('customer');
-    window.location.replace('/home');
-    return;
-   }
-
-   rememberWorkspace(workspace);
-   if(workspace==='provider'){
-    window.location.replace(providerReady?'/provider/today':'/provider/onboarding');
-    return;
-   }
-   window.location.replace('/home');
+  const requested=new URLSearchParams(window.location.search).get('next');
+  if(requested&&requested.startsWith('/')&&!requested.startsWith('//')){
+   window.location.replace(requested);
    return;
   }
 
-  if(role==='PROVIDER'){window.location.replace('/provider');return;}
-  if(role==='ADMIN'){window.location.replace('/admin');return;}
-  window.location.replace('/home');
+  window.location.replace(workspaceDestination(workspace));
  }
 
  function switchMode(next:Mode){
-  setMode(next);setMessage('');setPassword('');setShowPassword(false);setCapsLock(false);
+  setMode(next);
+  setMessage('');
+  setPassword('');
+  setShowPassword(false);
+  setCapsLock(false);
   setTouched({email:false,password:false,phone:false,fullName:false});
   try{
    const url=new URL(window.location.href);
@@ -142,31 +142,45 @@ export default function LoginPage(){
  const formValid=useMemo(()=>isLogin?(emailValid&&passwordValid):(nameValid&&emailValid&&passwordValid&&phoneValid),[isLogin,emailValid,passwordValid,nameValid,phoneValid]);
 
  async function submit(event:FormEvent){
-  event.preventDefault();setTouched({email:true,password:true,phone:true,fullName:true});if(!formValid)return;
-  setBusy(true);setMessage('');
+  event.preventDefault();
+  setTouched({email:true,password:true,phone:true,fullName:true});
+  if(!formValid)return;
+
+  setBusy(true);
+  setMessage('');
   try{
    if(mode==='register'){
     const phoneNumber=phone?`${countryCode}${phone}`:'';
     const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName:fullName.trim(),email:emailTrimmed,password,phoneNumber})});
-    const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to create account.');
-    setMessage('Account created. You can now sign in.');switchMode('login');
+    const p=await r.json();
+    if(!r.ok)throw new Error(p?.error||'Unable to create account.');
+    switchMode('login');
+    setMessage('Account created. You can now sign in.');
    }else{
     const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({email:emailTrimmed,password})});
-    const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to sign in.');
+    const p=await r.json();
+    if(!r.ok)throw new Error(p?.error||'Unable to sign in.');
     if(!p?.session?.access_token||!p?.session?.refresh_token)throw new Error('Unable to open session.');
 
-    const {error:sessionError}=await supabase.auth.setSession({access_token:p.session.access_token,refresh_token:p.session.refresh_token});
+    const{error:sessionError}=await supabase.auth.setSession({access_token:p.session.access_token,refresh_token:p.session.refresh_token});
     if(sessionError)throw new Error(sessionError.message||'Unable to open session.');
 
-    try{if(rememberMe)localStorage.setItem('ifixmv-login-email',emailTrimmed);else localStorage.removeItem('ifixmv-login-email');}catch{}
-    await routeUser(p?.profile as ExistingProfile|undefined,true);
+    try{
+     if(rememberMe)localStorage.setItem('ifixmv-login-email',emailTrimmed);
+     else localStorage.removeItem('ifixmv-login-email');
+    }catch{}
+    await routeUser(p?.profile as ExistingProfile|undefined);
    }
-  }catch(e){setMessage(e instanceof Error?e.message:'Unable to continue.');}finally{setBusy(false);}
+  }catch(e){
+   setMessage(e instanceof Error?e.message:'Unable to continue.');
+  }finally{
+   setBusy(false);
+  }
  }
 
- if(checkingSession)return <div className="authShell"><main className="authPage"><div className="authStage"><div className="authNav authNavChecking"><a className="authBrand" href="/" aria-label="iFix Maldives home"><span className="authBrandMark">iF</span><span><strong>iFix</strong><small>Maldives</small></span></a></div><section className="authCardClean authChecking" aria-live="polite" aria-busy="true"><span className="authLargeSpinner" aria-hidden="true"/><div className="authIntro"><h1>Opening iFixMV…</h1><p>Checking your existing secure session.</p></div></section></div></main></div>;
+ if(checkingSession)return <div className="authShell"><main className="authPage"><div className="authStage"><div className="authNav authNavChecking"><a className="authBrand" href="/" aria-label="iFix Maldives home"><span className="authBrandMark">iF</span><span><strong>iFix</strong><small>Maldives</small></span></a></div><section className="authCardClean authChecking" aria-live="polite" aria-busy="true"><span className="authLargeSpinner" aria-hidden="true"/><div className="authIntro"><h1>Opening iFixMV…</h1><p>Checking your secure session.</p></div></section></div></main></div>;
 
- return <div className="authShell">
+ return <div className={`authShell ${isLogin?'authLoginMode':'authRegisterMode'}`}>
   <main className="authPage">
    <div className="authStage">
     <div className="authNav">
@@ -179,41 +193,27 @@ export default function LoginPage(){
 
     <section className="authCardClean">
      <div className="authStatusPill"><span aria-hidden="true"/>{isLogin?'Secure account access':'New iFixMV account'}</div>
-     <div className="authIntro"><h1>{isLogin?'Welcome':'Create your account'}</h1><p>{isLogin?'Sign in once, then open the workspace you need.':'Create one account for requesting services and, when approved, providing services.'}</p></div>
+     <div className="authIntro"><h1>{isLogin?'Welcome back':'Create your account'}</h1><p>{isLogin?'Sign in to continue to iFixMV.':'Create one account. Your available portals are shown after sign in based on your role.'}</p></div>
 
      <form onSubmit={submit} className="authFormClean" noValidate>
       {!isLogin?<>
        <label className="authField"><span className="authFieldLabel">Full name</span><div className={`authInputWrap${touched.fullName&&!nameValid?' invalid':''}`}><span className="authInputIcon"><FieldIcon name="user"/></span><input value={fullName} onBlur={()=>setTouched(v=>({...v,fullName:true}))} onChange={e=>setFullName(e.target.value)} placeholder="Your name" autoComplete="name" aria-invalid={touched.fullName&&!nameValid}/></div>{touched.fullName&&!nameValid?<span className="fieldError">Enter your full name.</span>:null}</label>
-       <label className="authField"><span className="authFieldLabel">Phone number <em>Optional</em></span><div className={`phoneField${touched.phone&&!phoneValid?' invalid':''}`}><span className="authPhoneIcon"><FieldIcon name="phone"/></span><select className="countryCode" value={countryCode} onChange={e=>setCountryCode(e.target.value)} aria-label="Country code"><option value="+960">🇲🇻 +960</option></select><input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onBlur={()=>setTouched(v=>({...v,phone:true}))} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} aria-invalid={touched.phone&&!phoneValid}/></div><span className="fieldHelp">Enter the 7-digit Maldives number only.</span>{touched.phone&&!phoneValid?<span className="fieldError">Enter a valid 7-digit Maldives number.</span>:null}</label>
+       <label className="authField"><span className="authFieldLabel">Phone number <em>Optional</em></span><div className={`phoneField${touched.phone&&!phoneValid?' invalid':''}`}><span className="authPhoneIcon"><FieldIcon name="phone"/></span><select className="countryCode" value={countryCode} onChange={e=>setCountryCode(e.target.value)} aria-label="Country code"><option value="+960">🇲🇻 +960</option></select><input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onBlur={()=>setTouched(v=>({...v,phone:true}))} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} aria-invalid={touched.phone&&!phoneValid}/></div><span className="fieldHelp">7-digit Maldives number</span>{touched.phone&&!phoneValid?<span className="fieldError">Enter a valid 7-digit Maldives number.</span>:null}</label>
       </>:null}
 
-      <label className="authField"><span className="authFieldLabel">Email address</span><div className={`authInputWrap${touched.email&&!emailValid?' invalid':''}`}><span className="authInputIcon"><FieldIcon name="mail"/></span><input type="email" inputMode="email" autoComplete="email" value={email} onBlur={()=>setTouched(v=>({...v,email:true}))} onChange={e=>{setEmail(e.target.value);if(touched.email)setTouched(v=>({...v,email:false}));}} placeholder="you@example.com" aria-invalid={touched.email&&!emailValid}/></div>{touched.email&&!emailValid?<span className="fieldError">{emailTrimmed?'Enter a valid email address.':'Enter your email address.'}</span>:null}</label>
+      <label className="authField"><span className="authFieldLabel">Email address</span><div className={`authInputWrap${touched.email&&!emailValid?' invalid':''}`}><span className="authInputIcon"><FieldIcon name="mail"/></span><input type="email" inputMode="email" autoComplete="email" enterKeyHint="next" value={email} onBlur={()=>setTouched(v=>({...v,email:true}))} onChange={e=>{setEmail(e.target.value);if(touched.email)setTouched(v=>({...v,email:false}));}} placeholder="you@example.com" aria-invalid={touched.email&&!emailValid}/></div>{touched.email&&!emailValid?<span className="fieldError">{emailTrimmed?'Enter a valid email address.':'Enter your email address.'}</span>:null}</label>
 
-      <label className="authField"><span className="authFieldLabel">Password</span><div className={`authInputWrap passwordField${touched.password&&!passwordValid?' invalid':''}`}><span className="authInputIcon"><FieldIcon name="lock"/></span><input type={showPassword?'text':'password'} autoComplete={isLogin?'current-password':'new-password'} value={password} onBlur={()=>setTouched(v=>({...v,password:true}))} onKeyUp={e=>setCapsLock(e.getModifierState('CapsLock'))} onKeyDown={e=>setCapsLock(e.getModifierState('CapsLock'))} onChange={e=>setPassword(e.target.value)} minLength={8} aria-invalid={touched.password&&!passwordValid}/><button type="button" className="passwordToggle" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'} title={showPassword?'Hide password':'Show password'}><EyeIcon off={showPassword}/></button></div>{capsLock?<span className="capsWarning">Caps Lock is on.</span>:null}{!isLogin?<span className="fieldHelp">Use at least 8 characters.</span>:null}{touched.password&&!passwordValid?<span className="fieldError">Password must be at least 8 characters.</span>:null}</label>
+      <label className="authField"><span className="authFieldLabel">Password</span><div className={`authInputWrap passwordField${touched.password&&!passwordValid?' invalid':''}`}><span className="authInputIcon"><FieldIcon name="lock"/></span><input type={showPassword?'text':'password'} autoComplete={isLogin?'current-password':'new-password'} enterKeyHint={isLogin?'go':'done'} value={password} onBlur={()=>setTouched(v=>({...v,password:true}))} onKeyUp={e=>setCapsLock(e.getModifierState('CapsLock'))} onKeyDown={e=>setCapsLock(e.getModifierState('CapsLock'))} onChange={e=>setPassword(e.target.value)} minLength={8} aria-invalid={touched.password&&!passwordValid}/><button type="button" className="passwordToggle" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'} title={showPassword?'Hide password':'Show password'}><EyeIcon off={showPassword}/></button></div>{capsLock?<span className="capsWarning">Caps Lock is on.</span>:null}{!isLogin?<span className="fieldHelp">At least 8 characters</span>:null}{touched.password&&!passwordValid?<span className="fieldError">Password must be at least 8 characters.</span>:null}</label>
 
-      {isLogin?<>
-       <div className="authUtility"><label className="rememberMe"><input type="checkbox" checked={rememberMe} onChange={e=>setRememberMe(e.target.checked)}/><span>Remember me</span></label><a href="/forgot-password">Forgot password?</a></div>
-       <section className="authWorkspaceChooser" aria-label="Choose workspace after sign in">
-        <div className="authWorkspaceHead"><span>Open after sign in</span><small>Use one account across the workspaces you are allowed to access</small></div>
-        <button type="button" className={`authWorkspaceOption provider${workspace==='provider'?' selected':''}`} onClick={()=>setWorkspace('provider')} aria-pressed={workspace==='provider'}>
-         <span className="authWorkspaceIcon"><WorkspaceIcon name="provider"/></span><span className="authWorkspaceCopy"><strong>Service Provider</strong><small>Manage jobs, services and availability</small></span><span className="authWorkspaceAction">{workspace==='provider'?'Selected':'Choose'}</span>
-        </button>
-        <button type="button" className={`authWorkspaceOption customer${workspace==='customer'?' selected':''}`} onClick={()=>setWorkspace('customer')} aria-pressed={workspace==='customer'}>
-         <span className="authWorkspaceIcon"><WorkspaceIcon name="customer"/></span><span className="authWorkspaceCopy"><strong>Customer Portal</strong><small>Request services and track your requests</small></span><span className="authWorkspaceAction">{workspace==='customer'?'Selected':'Choose'}</span>
-        </button>
-        <button type="button" className={`authWorkspaceOption admin${workspace==='admin'?' selected':''}`} onClick={()=>setWorkspace('admin')} aria-pressed={workspace==='admin'}>
-         <span className="authWorkspaceIcon"><WorkspaceIcon name="admin"/></span><span className="authWorkspaceCopy"><strong>Admin Portal</strong><small>System administration and platform controls · Administrators only</small></span><span className="authWorkspaceAction">{workspace==='admin'?'Selected':'Choose'}</span>
-        </button>
-       </section>
-      </>:null}
+      {isLogin?<div className="authUtility"><label className="rememberMe"><input type="checkbox" checked={rememberMe} onChange={e=>setRememberMe(e.target.checked)}/><span>Remember me</span></label><a href="/forgot-password">Forgot password?</a></div>:null}
 
-      <button className="authSubmit" disabled={busy||!formValid} aria-busy={busy}>{busy?<><span className="buttonSpinner" aria-hidden="true"/>{isLogin?'Signing in…':'Creating account…'}</>:<>{isLogin?'Continue':'Create Account'}<span className="authSubmitArrow" aria-hidden="true">→</span></>}</button>
+      <button className="authSubmit" disabled={busy||!formValid} aria-busy={busy}>{busy?<><span className="buttonSpinner" aria-hidden="true"/>{isLogin?'Signing in…':'Creating account…'}</>:<>{isLogin?'Sign In':'Create Account'}<span className="authSubmitArrow" aria-hidden="true">→</span></>}</button>
      </form>
 
      {message?<p className="formMessage" role="status">{message}</p>:null}
     </section>
 
-    <p className="authFootnote"><span aria-hidden="true">✓</span> One account · Role-based workspace access</p>
+    <p className="authFootnote"><span aria-hidden="true">✓</span> Secure sign-in · Role-based portal access</p>
    </div>
   </main>
  </div>;
