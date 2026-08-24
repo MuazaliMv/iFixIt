@@ -31,12 +31,14 @@ export default function AppModeSwitch({mode,compact=false,className=''}:Props){
     const{data}=await supabase.auth.getSession();
     if(!data.session){if(active)setProviderReady(false);return;}
 
-    // Primary source: account profile. An approved provider keeps CUSTOMER as the
-    // permanent base role, so provider_approved must drive workspace access.
+    // Any account whose permanent role is PROVIDER, or whose provider approval
+    // flag is active, must retain access to both Customer and Service Provider
+    // workspaces. This is the global dual-mode rule for service providers.
     const profileResponse=await fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store'});
     if(profileResponse.ok){
      const payload=await profileResponse.json().catch(()=>({}));
-     if(payload?.profile?.provider_approved===true){
+     const role=String(payload?.profile?.role||'').toUpperCase();
+     if(role==='PROVIDER'||payload?.profile?.provider_approved===true){
       if(active)setProviderReady(true);
       return;
      }
@@ -51,7 +53,12 @@ export default function AppModeSwitch({mode,compact=false,className=''}:Props){
     });
     if(!r.ok){if(active)setProviderReady(false);return;}
     const p=await r.json();
-    if(active)setProviderReady(Boolean(p?.authProfile?.provider_approved||p?.profile?.onboarding_status==='APPROVED'));
+    const fallbackRole=String(p?.authProfile?.role||'').toUpperCase();
+    if(active)setProviderReady(Boolean(
+     fallbackRole==='PROVIDER'||
+     p?.authProfile?.provider_approved===true||
+     p?.profile?.onboarding_status==='APPROVED'
+    ));
    }catch{
     if(active)setProviderReady(false);
    }
@@ -77,7 +84,7 @@ export default function AppModeSwitch({mode,compact=false,className=''}:Props){
    if(mode==='provider'){
     if(data.session)await logMode(data.session.access_token,'customer');
     remember('customer',"You're now viewing as Customer.");
-    window.location.assign('/');
+    window.location.assign('/home');
     return;
    }
    if(!data.session){window.location.assign('/login');return;}
