@@ -1,0 +1,183 @@
+name: Export Complete Codebase
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.complete-codebase-export-trigger'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Build exact single-file codebase export
+        shell: python
+        run: |
+          from pathlib import Path
+          import base64
+          import hashlib
+          import subprocess
+
+          output = Path('FULL_CODEBASE_COMPLETE.txt')
+          source_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+
+          staged = subprocess.check_output(['git', 'ls-files', '--stage', '-z'])
+          records = []
+          for entry in staged.split(b'\0'):
+              if not entry:
+                  continue
+              meta, path_bytes = entry.split(b'\t', 1)
+              mode_b, blob_sha_b, stage_b = meta.split(b' ', 2)
+              path = path_bytes.decode('utf-8', 'surrogateescape')
+              if path == output.as_posix():
+                  continue
+              records.append((path, mode_b.decode(), blob_sha_b.decode()))
+
+          records.sort(key=lambda item: item[0].lower())
+
+          total_original = 0
+          binary_count = 0
+          text_count = 0
+
+          with output.open('wb') as out:
+              header = (
+                  'iFixMV / iFixIt - TRUE COMPLETE SINGLE-FILE CODEBASE EXPORT\n'
+                  'FORMAT: IFIXMV-CODEBASE-BUNDLE-1\n'
+                  f'SOURCE_COMMIT: {source_commit}\n'
+                  'REPOSITORY: MuazaliMv/iFixIt\n'
+                  'SCOPE: Every tracked repository file except this generated bundle itself.\n'
+                  'TEXT: Stored as exact UTF-8 bytes.\n'
+                  'BINARY: Stored as Base64.\n'
+                  'INTEGRITY: Each entry includes Git blob SHA and SHA-256 of original bytes.\n'
+                  'RECONSTRUCTION: Read PAYLOAD_BYTES exactly; Base64-decode entries marked BASE64.\n'
+                  f'FILE_COUNT: {len(records)}\n'
+                  + '=' * 120 + '\n'
+              )
+              out.write(header.encode('utf-8'))
+
+              for index, (path, mode, blob_sha) in enumerate(records, 1):
+                  raw = subprocess.check_output(['git', 'cat-file', 'blob', blob_sha])
+                  total_original += len(raw)
+                  sha256 = hashlib.sha256(raw).hexdigest()
+
+                  try:
+                      raw.decode('utf-8')
+                      is_text = b'\x00' not in raw
+                  except UnicodeDecodeError:
+                      is_text = False
+
+                  if is_text:
+                      encoding = 'UTF-8-RAW'
+                      payload = raw
+                      text_count += 1
+                  else:
+                      encoding = 'BASE64'
+                      payload = base64.b64encode(raw)
+                      binary_count += 1
+
+                  meta = (
+                      '\n' + '=' * 120 + '\n'
+                      f'FILE_INDEX: {index}\n'
+                      f'PATH: {path}\n'
+                      f'MODE: {mode}\n'
+                      f'GIT_BLOB_SHA: {blob_sha}\n'
+                      f'SHA256: {sha256}\n'
+                      f'ORIGINAL_BYTES: {len(raw)}\n'
+                      f'ENCODING: {encoding}\n'
+                      f'PAYLOAD_BYTES: {len(payload)}\n'
+                      'PAYLOAD-BEGIN\n'
+                  )
+                  out.write(meta.encode('utf-8'))
+                  out.write(payload)
+                  out.write(b'\nPAYLOAD-END\n')
+
+              footer = (
+                  '=' * 120 + '\n'
+                  f'END_FILE_COUNT: {len(records)}\n'
+                  f'TEXT_FILE_COUNT: {text_count}\n'
+                  f'BINARY_FILE_COUNT: {binary_count}\n'
+                  f'TOTAL_ORIGINAL_BYTES: {total_original}\n'
+                  f'SOURCE_COMMIT: {source_commit}\n'
+                  'END_OF_BUNDLE\n'
+              )
+              out.write(footer.encode('utf-8'))
+
+          bundle_size = output.stat().st_size
+          print(f'Created {output}: {len(records)} files, {text_count} text, {binary_count} binary, {bundle_size} bundle bytes.')
+          if bundle_size >= 95 * 1024 * 1024:
+              raise SystemExit('Complete bundle is too close to GitHub\'s 100 MB per-file limit.')
+
+      - name: Verify every bundled file against Git
+        shell: python
+        run: |
+          from pathlib import Path
+          import base64
+          import hashlib
+          import subprocess
+
+          data = Path('FULL_CODEBASE_COMPLETE.txt').read_bytes()
+          cursor = 0
+          verified = 0
+          marker = b'PAYLOAD-BEGIN\n'
+
+          while True:
+              pos = data.find(marker, cursor)
+              if pos < 0:
+                  break
+
+              meta_start = data.rfind(b'\n' + b'=' * 120 + b'\n', cursor, pos)
+              if meta_start < 0:
+                  raise SystemExit('Malformed bundle metadata boundary.')
+              meta = data[meta_start:pos].decode('utf-8')
+              fields = {}
+              for line in meta.splitlines():
+                  if ': ' in line:
+                      key, value = line.split(': ', 1)
+                      fields[key] = value
+
+              payload_start = pos + len(marker)
+              payload_len = int(fields['PAYLOAD_BYTES'])
+              payload = data[payload_start:payload_start + payload_len]
+              if data[payload_start + payload_len:payload_start + payload_len + len(b'\nPAYLOAD-END\n')] != b'\nPAYLOAD-END\n':
+                  raise SystemExit(f"Malformed payload terminator for {fields.get('PATH')}")
+
+              raw = base64.b64decode(payload, validate=True) if fields['ENCODING'] == 'BASE64' else payload
+              if len(raw) != int(fields['ORIGINAL_BYTES']):
+                  raise SystemExit(f"Byte-size mismatch for {fields['PATH']}")
+              if hashlib.sha256(raw).hexdigest() != fields['SHA256']:
+                  raise SystemExit(f"SHA-256 mismatch for {fields['PATH']}")
+
+              current = subprocess.check_output(['git', 'cat-file', 'blob', fields['GIT_BLOB_SHA']])
+              if raw != current:
+                  raise SystemExit(f"Git blob mismatch for {fields['PATH']}")
+
+              verified += 1
+              cursor = payload_start + payload_len + len(b'\nPAYLOAD-END\n')
+
+          if verified == 0:
+              raise SystemExit('No files verified.')
+          print(f'Verified {verified} bundled files byte-for-byte.')
+
+      - name: Commit complete export
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add FULL_CODEBASE_COMPLETE.txt
+          if git diff --cached --quiet; then
+            echo 'No complete export changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Export complete codebase with Base64 binary assets'
+          git push origin main
