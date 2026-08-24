@@ -48,9 +48,20 @@ function dispatchText(d:DispatchRow|undefined,now:number){
 
 export default function MyRequestsPage(){
  const[requests,setRequests]=useState<RequestRow[]>([]);const[dispatch,setDispatch]=useState<Record<string,DispatchRow>>({});const[notifications,setNotifications]=useState<NotificationRow[]>([]);const[filter,setFilter]=useState<Filter>('ACTIVE');const[busy,setBusy]=useState(false);const[cancelling,setCancelling]=useState('');const[retrying,setRetrying]=useState('');const[waiting,setWaiting]=useState('');const[message,setMessage]=useState('Loading…');const[now,setNow]=useState(()=>Date.now());
- useEffect(()=>{void load();const poll=window.setInterval(()=>void load(true),3000);return()=>window.clearInterval(poll);},[]);
+ useEffect(()=>{let active=true;let poll:number|undefined;void(async()=>{try{await token();if(!active)return;await load();poll=window.setInterval(()=>void load(true),3000);}catch(e){if(active)setMessage(e instanceof Error?e.message:'Unable to load requests');}})();return()=>{active=false;if(poll)window.clearInterval(poll);};},[]);
  useEffect(()=>{const id=window.setInterval(()=>setNow(Date.now()),1000);return()=>window.clearInterval(id);},[]);
- async function token(){const{data}=await supabase.auth.getSession();if(!data.session){window.location.href='/login';return '';}return data.session.access_token;}
+ async function token(){
+  const{data,error}=await supabase.auth.getSession();
+  if(error)throw error;
+  if(data.session)return data.session.access_token;
+  await new Promise<void>(resolve=>{const timer=window.setTimeout(resolve,1200);const{data:listener}=supabase.auth.onAuthStateChange((_event,session)=>{if(session){window.clearTimeout(timer);listener.subscription.unsubscribe();resolve();}});});
+  const{data:retry,error:retryError}=await supabase.auth.getSession();
+  if(retryError)throw retryError;
+  if(retry.session)return retry.session.access_token;
+  const next=`${window.location.pathname}${window.location.search}${window.location.hash}`;
+  window.location.replace(`/login?next=${encodeURIComponent(next)}`);
+  return '';
+ }
  async function call(body:Record<string,unknown>){const t=await token();if(!t)throw new Error('Sign in required');const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify(body)});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to load requests');return p;}
  async function dispatchCall(body:Record<string,unknown>){const t=await token();if(!t)throw new Error('Sign in required');const r=await fetch(DISPATCH_API,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify(body)});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to update provider search');return p;}
  async function load(silent=false){if(!silent)setBusy(true);try{const[p,d]=await Promise.all([call({action:'list'}),dispatchCall({action:'status'})]);setRequests(p.requests||[]);const map:Record<string,DispatchRow>={};for(const row of d.requests||[])map[row.ticket_number]=row;setDispatch(map);setNotifications(d.notifications||[]);if(!silent)setMessage((p.requests||[]).length?'Up to date':'No requests yet');}catch(e){if(!silent)setMessage(e instanceof Error?e.message:'Unable to load requests');}finally{if(!silent)setBusy(false);}}
