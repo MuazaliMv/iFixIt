@@ -15,13 +15,22 @@ export function useProviderMode(redirectIncomplete=true){
   try{
    const{data}=await supabase.auth.getSession();if(!data.session){window.location.href='/login';return;}
    const headers={'Content-Type':'application/json','Authorization':`Bearer ${data.session.access_token}`};
-   const[r,sr]=await Promise.all([fetch(ONBOARDING_URL,{method:'POST',headers,body:JSON.stringify({action:'get'})}),fetch(SUBSCRIPTION_URL,{method:'POST',headers,body:JSON.stringify({action:'status'})})]);
+   const[r,sr,accountResponse]=await Promise.all([
+    fetch(ONBOARDING_URL,{method:'POST',headers,body:JSON.stringify({action:'get'}),cache:'no-store'}),
+    fetch(SUBSCRIPTION_URL,{method:'POST',headers,body:JSON.stringify({action:'status'}),cache:'no-store'}),
+    fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store'})
+   ]);
    if(!r.ok){if(redirectIncomplete)window.location.href='/';setState(s=>({...s,loading:false}));return;}
-   const p=await r.json();const sp=sr.ok?await sr.json():null;const subscription=(sp?.subscription||null) as SubscriptionState|null;
-   const status=String(p?.profile?.onboarding_status||'DRAFT');const approved=Boolean(p?.authProfile?.provider_approved&&status==='APPROVED');
+   const p=await r.json();
+   const accountPayload=accountResponse.ok?await accountResponse.json().catch(()=>({})):{};
+   const sp=sr.ok?await sr.json():null;
+   const subscription=(sp?.subscription||null) as SubscriptionState|null;
+   const status=String(p?.profile?.onboarding_status||'DRAFT').toUpperCase();
+   const providerApproved=Boolean(accountPayload?.profile?.provider_approved===true||p?.authProfile?.provider_approved===true);
+   const approved=providerApproved&&(status==='APPROVED'||Boolean(p?.profile?.approved_at));
    if(redirectIncomplete&&!approved){window.location.href='/';return;}
    if(redirectIncomplete&&subscription&&!subscription.active&&!window.location.pathname.startsWith('/provider/subscription')){window.location.href='/provider/subscription';return;}
-   setState({loading:false,ready:true,approved,status,name:p?.profile?.public_name||p?.authProfile?.full_name||'Provider',providerApproved:Boolean(p?.authProfile?.provider_approved),categories:p?.categories||[],selectedCategoryIds:p?.selectedCategoryIds||[],hours:p?.hours||[],serviceAreas:p?.serviceAreas||[],profile:p?.profile||null,subscription});
+   setState({loading:false,ready:true,approved,status,name:p?.profile?.public_name||p?.authProfile?.full_name||accountPayload?.profile?.full_name||'Provider',providerApproved,categories:p?.categories||[],selectedCategoryIds:p?.selectedCategoryIds||[],hours:p?.hours||[],serviceAreas:p?.serviceAreas||[],profile:p?.profile||null,subscription});
   }catch{if(redirectIncomplete)window.location.href='/';else setState(s=>({...s,loading:false}));}
  },[redirectIncomplete]);
  useEffect(()=>{void load();},[load]);
