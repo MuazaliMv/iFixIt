@@ -2,40 +2,40 @@
 
 import Link from 'next/link';
 import { useEffect } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
-type AdminSubmenu={label:string;href:string;match?:(path:string,query:URLSearchParams)=>boolean};
+type AdminSubmenu={label:string;href:string;match?:(path:string)=>boolean};
 type AdminMenuGroup={label:string;href:string;matches:(path:string)=>boolean;submenus:AdminSubmenu[]};
 
 const groups:AdminMenuGroup[]=[
  {
   label:'Dashboard',href:'/admin',
-  matches:path=>path==='/admin'||path.startsWith('/admin/escalations'),
+  matches:path=>path==='/admin',
   submenus:[
-   {label:'Overview',href:'/admin',match:(path)=>path==='/admin'},
-   {label:'Action Required',href:'/admin/escalations',match:path=>path.startsWith('/admin/escalations')},
-   {label:'Marketplace Activity',href:'/admin/reports?view=marketplace',match:(path,q)=>path.startsWith('/admin/reports')&&q.get('view')==='marketplace'},
+   {label:'Overview',href:'/admin',match:path=>path==='/admin'},
+   {label:'Action Required',href:'/admin/escalations'},
+   {label:'Marketplace Activity',href:'/admin/reports?view=marketplace'},
   ],
  },
  {
   label:'Requests',href:'/admin/requests',
-  matches:path=>path.startsWith('/admin/requests'),
+  matches:path=>path.startsWith('/admin/requests')||path.startsWith('/admin/escalations'),
   submenus:[
-   {label:'All Requests',href:'/admin/requests',match:(path,q)=>path.startsWith('/admin/requests')&&!q.get('status')},
-   {label:'Active Requests',href:'/admin/requests?status=active',match:(path,q)=>path.startsWith('/admin/requests')&&q.get('status')==='active'},
-   {label:'Completed',href:'/admin/requests?status=COMPLETED',match:(path,q)=>path.startsWith('/admin/requests')&&q.get('status')==='COMPLETED'},
-   {label:'Cancelled / Failed',href:'/admin/requests?status=CANCELLED',match:(path,q)=>path.startsWith('/admin/requests')&&q.get('status')==='CANCELLED'},
-   {label:'Escalations',href:'/admin/escalations'},
+   {label:'All Requests',href:'/admin/requests',match:path=>path.startsWith('/admin/requests')},
+   {label:'Active Requests',href:'/admin/requests?status=active'},
+   {label:'Completed',href:'/admin/requests?status=COMPLETED'},
+   {label:'Cancelled / Failed',href:'/admin/requests?status=CANCELLED'},
+   {label:'Escalations',href:'/admin/escalations',match:path=>path.startsWith('/admin/escalations')},
   ],
  },
  {
   label:'Users & Providers',href:'/admin/users',
   matches:path=>path.startsWith('/admin/users')||path.startsWith('/admin/providers'),
   submenus:[
-   {label:'Customers',href:'/admin/users?type=customer',match:(path,q)=>path==='/admin/users'&&q.get('type')==='customer'},
+   {label:'Customers',href:'/admin/users?type=customer'},
    {label:'Service Providers',href:'/admin/providers',match:path=>path==='/admin/providers'},
-   {label:'Provider Applications',href:'/admin/providers?view=applications',match:(path,q)=>path.startsWith('/admin/providers')&&q.get('view')==='applications'},
-   {label:'User Accounts',href:'/admin/users',match:(path,q)=>path==='/admin/users'&&!q.get('type')},
+   {label:'Provider Applications',href:'/admin/providers?view=applications'},
+   {label:'User Accounts',href:'/admin/users',match:path=>path==='/admin/users'},
    {label:'Rights & Privileges',href:'/admin/users/rights-privileges',match:path=>path.startsWith('/admin/users/rights-privileges')},
   ],
  },
@@ -43,30 +43,28 @@ const groups:AdminMenuGroup[]=[
   label:'Services & Locations',href:'/admin/services',
   matches:path=>path.startsWith('/admin/services')||path.startsWith('/admin/request-form')||path.startsWith('/admin/required-fields')||path.startsWith('/admin/locations'),
   submenus:[
-   {label:'Services',href:'/admin/services',match:(path,q)=>path==='/admin/services'&&!q.get('view')},
-   {label:'Categories / Subcategories',href:'/admin/services?view=categories',match:(path,q)=>path.startsWith('/admin/services')&&q.get('view')==='categories'},
+   {label:'Services',href:'/admin/services',match:path=>path==='/admin/services'},
+   {label:'Categories / Subcategories',href:'/admin/services?view=categories'},
    {label:'Request Form',href:'/admin/request-form',match:path=>path.startsWith('/admin/request-form')||path.startsWith('/admin/required-fields')},
-   {label:'Locations',href:'/admin/locations',match:(path,q)=>path==='/admin/locations'&&!q.get('view')},
-   {label:'Provider Coverage',href:'/admin/locations?view=coverage',match:(path,q)=>path.startsWith('/admin/locations')&&q.get('view')==='coverage'},
+   {label:'Locations',href:'/admin/locations',match:path=>path==='/admin/locations'},
+   {label:'Provider Coverage',href:'/admin/locations?view=coverage'},
   ],
  },
  {
   label:'Reports & System',href:'/admin/reports',
-  matches:path=>path.startsWith('/admin/reports')||path.startsWith('/admin/audit-logs')||path.startsWith('/admin/settings')||path.startsWith('/notifications')||path.startsWith('/change-password'),
+  matches:path=>path.startsWith('/admin/reports')||path.startsWith('/admin/audit-logs')||path.startsWith('/admin/settings'),
   submenus:[
-   {label:'Reports',href:'/admin/reports',match:(path,q)=>path.startsWith('/admin/reports')&&q.get('view')!=='marketplace'},
+   {label:'Reports',href:'/admin/reports',match:path=>path.startsWith('/admin/reports')},
    {label:'Audit Logs',href:'/admin/audit-logs',match:path=>path.startsWith('/admin/audit-logs')},
-   {label:'Notifications',href:'/notifications',match:path=>path.startsWith('/notifications')},
+   {label:'Notifications',href:'/notifications'},
    {label:'Settings',href:'/admin/settings',match:path=>path.startsWith('/admin/settings')},
-   {label:'Password & Security',href:'/change-password',match:path=>path.startsWith('/change-password')},
+   {label:'Password & Security',href:'/change-password'},
   ],
  },
 ];
 
 export default function AdminNav(){
  const path=usePathname();
- const searchParams=useSearchParams();
- const query=new URLSearchParams(searchParams.toString());
 
  useEffect(()=>{
   const root=document.documentElement;
@@ -89,7 +87,7 @@ export default function AdminNav(){
 
   <div className="adminSimpleSubmenus" aria-label={`${activeGroup.label} sections`}>
    {activeGroup.submenus.map(item=>{
-    const active=item.match?item.match(path,query):false;
+    const active=item.match?item.match(path):false;
     return <Link key={`${activeGroup.label}-${item.label}`} href={item.href} className={`adminSimpleSubmenuItem${active?' active':''}`} aria-current={active?'page':undefined}>{item.label}</Link>;
    })}
   </div>
