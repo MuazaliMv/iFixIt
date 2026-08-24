@@ -44,7 +44,7 @@ export default function RoleAccessGuard(){
 
         const wrongRoute=
           (role==='ADMIN'&&(customerRoute||providerRoute))||
-          (role==='PROVIDER'&&adminRoute)||
+          (role==='PROVIDER'&&(customerRoute||adminRoute))||
           (role==='CUSTOMER'&&(providerRoute||adminRoute));
 
         if(wrongRoute&&active)router.replace(destination(role));
