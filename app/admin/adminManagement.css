@@ -1,0 +1,97 @@
+/* Desktop-first admin management shell: compact, mouse-friendly, mobile-safe */
+.adminManagementNav{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-card)}
+.adminManagementNav a{min-height:42px;padding:10px 14px;border-radius:10px;white-space:nowrap}
+
+/* Services page: remove the duplicated intro panel and keep one clear workspace. */
+body:has(.servicePanel) .adminManagementNav + .panel:not(.servicePanel){display:none}
+
+.servicePanel{padding:0;overflow:hidden;border-radius:18px}
+.serviceHeading{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:24px 26px 18px;border-bottom:1px solid var(--line)}
+.serviceHeading h2{margin:3px 0 5px;font-size:26px}
+.serviceIntro{margin:0;color:var(--muted)}
+.addNew{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:11px 16px;border:1px solid var(--brand);border-radius:11px;background:var(--brand);color:#fff;font-weight:800;white-space:nowrap}
+.addNew:hover{box-shadow:0 8px 18px color-mix(in srgb,var(--brand) 22%,transparent);transform:translateY(-1px)}
+.addNew span{font-size:19px;line-height:1}
+.serviceToolbar{display:flex;align-items:center;gap:12px;padding:16px 26px;background:var(--surface-alt);border-bottom:1px solid var(--line)}
+.searchBox{display:flex;align-items:center;gap:9px;flex:1;max-width:420px;padding:0 12px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--muted)}
+.searchBox input{border:0;box-shadow:none;padding:11px 0;background:transparent}
+.searchBox input:focus{box-shadow:none}
+.filterSelect{width:170px;padding:11px 36px 11px 12px;background:#fff}
+.serviceSummary{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 26px;color:var(--muted);font-size:13px;border-bottom:1px solid var(--line)}
+.serviceCards{display:grid;gap:0}
+.serviceCard{position:relative;border:0;border-bottom:1px solid var(--line);border-radius:0;background:#fff;padding:18px 26px;color:var(--text);box-shadow:none;cursor:pointer;transition:background .14s ease}
+.serviceCard:last-child{border-bottom:0}
+.serviceCard:hover{background:#f8fbff;border-color:var(--line)}
+.serviceCard.selected{background:#f7faff;color:var(--text);box-shadow:inset 3px 0 0 var(--brand)}
+.serviceCard.isDisabled{background:#fafbfc;color:var(--text);opacity:.82}
+.serviceCard.isDisabled:hover{opacity:1}
+.serviceCard .accent{display:none}
+.serviceCardTop{display:grid;grid-template-columns:48px minmax(240px,1.6fr) 120px;gap:14px;align-items:center}
+.serviceCard .serviceIcon{width:44px;height:44px;margin:0;border-radius:10px;display:grid;place-items:center;font-size:23px;line-height:1;background:var(--brand-soft);color:var(--brand)}
+.serviceIdentity{min-width:0}
+.nameLine{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.nameLine strong{font-size:16px}
+.codeBadge{display:inline-flex;padding:3px 7px;border-radius:999px;background:var(--surface-alt);border:1px solid var(--line);color:var(--muted);font-size:10px;font-weight:800}
+.serviceIdentity p{margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.45}
+.statusBadge{justify-self:start;display:inline-flex;align-items:center;padding:6px 9px;border-radius:8px;font-size:11px;font-weight:800}
+.statusBadge.active{background:#e9f8ef;color:#137a45}
+.statusBadge.disabled{background:#eef1f5;color:#5d6675}
+.disabledNotice{margin:12px 0 0 62px;padding:9px 12px;border:1px solid #e4e8ef;border-radius:9px;background:#f5f7fa;color:#525b68;display:flex;gap:8px;align-items:center;font-size:12px}
+.disabledNotice strong{white-space:nowrap}
+.serviceMetrics{display:grid;grid-template-columns:repeat(4,minmax(80px,120px));gap:10px;margin:14px 0 0 62px}
+.serviceMetrics>div{display:flex;align-items:baseline;gap:5px}
+.serviceMetrics b{font-size:14px}
+.serviceMetrics span{color:var(--muted);font-size:11px}
+.serviceActions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px}
+.serviceActions button{min-height:38px;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;font-weight:750;font-size:12px;color:var(--text)}
+.serviceActions button:hover{border-color:#b9c7df;background:#f7faff}
+.serviceActions .subButton,.serviceActions .editButton{color:var(--brand)}
+.serviceActions .disableButton{color:#a14c00}
+.serviceActions .deleteButton{color:var(--danger)}
+.subPanel{border-radius:18px}
+
+@media(min-width:1050px){
+ body:has(.adminManagementNav){background:#f7f9fc}
+ body:has(.adminManagementNav) .shell{width:auto;max-width:none;margin:0 28px 0 248px;padding-top:22px}
+ body:has(.adminManagementNav) .topbar{min-height:64px;padding:0 0 18px}
+ body:has(.adminManagementNav) .topbar .brand{font-size:28px}
+ .adminManagementNav{position:fixed;z-index:50;left:0;top:0;bottom:0;width:220px;margin:0;padding:104px 12px 18px;display:flex;flex-direction:column;align-items:stretch;gap:6px;border:0;border-right:1px solid var(--line);border-radius:0;box-shadow:none;background:#fff}
+ .adminManagementNav::before{content:'FixIt';position:absolute;left:22px;top:27px;color:var(--brand);font-size:26px;font-weight:900;letter-spacing:-1px}
+ .adminManagementNav::after{content:'ADMIN';position:absolute;left:23px;top:61px;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.14em}
+ .adminManagementNav a{width:100%;justify-content:flex-start;min-height:44px;padding:11px 14px;border:1px solid transparent;background:transparent;box-shadow:none}
+ .adminManagementNav a.secondary{color:#263247}
+ .adminManagementNav a.secondary:hover{background:var(--surface-alt);border-color:transparent}
+ .adminManagementNav a.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+ .serviceCard{display:grid;grid-template-columns:minmax(360px,1.7fr) minmax(310px,1fr);column-gap:24px;align-items:center}
+ .serviceCardTop{grid-column:1;grid-row:1}
+ .serviceMetrics{grid-column:1;grid-row:2;margin:12px 0 0 62px}
+ .serviceActions{grid-column:2;grid-row:1 / span 2;margin:0;align-self:center}
+ .disabledNotice{grid-column:1;grid-row:3;margin:10px 0 0 62px}
+}
+
+@media(max-width:1049px){
+ .adminManagementNav{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+ .adminManagementNav::-webkit-scrollbar{display:none}
+}
+
+@media(max-width:700px){
+ .adminManagementNav{margin:0 0 14px;padding:6px;border-radius:14px}
+ .adminManagementNav a{min-height:40px;padding:9px 12px}
+ .serviceHeading{padding:20px 18px;align-items:flex-start}
+ .serviceHeading h2{font-size:24px}
+ .serviceIntro{font-size:14px}
+ .addNew{min-width:44px;padding:10px 12px}
+ .serviceToolbar{padding:13px 18px;display:grid;grid-template-columns:1fr 130px}
+ .searchBox{max-width:none}
+ .filterSelect{width:100%}
+ .serviceSummary{padding:10px 18px}
+ .serviceCard{padding:17px 18px}
+ .serviceCardTop{grid-template-columns:42px 1fr;gap:12px}
+ .serviceCard .serviceIcon{width:40px;height:40px}
+ .statusBadge{grid-column:2;margin-top:2px}
+ .serviceMetrics{margin:13px 0 0;grid-template-columns:repeat(2,1fr);gap:7px}
+ .serviceMetrics>div{padding:8px 9px;border:1px solid var(--line);border-radius:9px;background:var(--surface-alt);display:grid;gap:1px}
+ .disabledNotice{margin:12px 0 0;display:grid;gap:2px}
+ .serviceActions{justify-content:flex-start;margin-top:13px}
+ .serviceActions button{min-height:42px;flex:1 1 calc(50% - 4px)}
+}
