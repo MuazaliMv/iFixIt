@@ -1,52 +1,93 @@
-.providerLocationsSection{margin-top:28px;padding:22px;border:1px solid #dfe5ee;border-radius:24px;background:#fff;box-shadow:0 14px 30px rgba(15,23,42,.07)}
-.providerLocationsSection .providerServicesSectionHead{margin-bottom:18px}
-.providerLocationsSection .providerServicesSectionHead p{margin:5px 0 0;color:#6f7b91;font-size:14px}
-.providerLocationToolbar{display:grid;gap:16px;margin-bottom:20px}
-.providerLocationStatus{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:14px;background:#effaf3;color:#177a47;border:1px solid #d8f0e1}
-.providerLocationStatusIcon{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#16a34a;color:#fff;font-weight:900;flex:0 0 auto}
+.providerServicesPage{--apple-bg:#f5f5f7;--apple-surface:#fff;--apple-text:#1d1d1f;--apple-secondary:#6e6e73;--apple-separator:rgba(60,60,67,.18);--apple-blue:#007aff;--apple-blue-soft:rgba(0,122,255,.10);--apple-green:#34c759;--apple-orange:#ff9f0a;--apple-red:#ff3b30;--apple-radius:22px;min-height:100vh;background:var(--apple-bg);color:var(--apple-text);padding:0 0 calc(104px + env(safe-area-inset-bottom));font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.providerServicesShell{width:min(calc(100% - 32px),880px);margin:0 auto;padding:22px 0 32px}
+.providerServicesLoading{padding:24px;border:0;border-radius:var(--apple-radius);background:var(--apple-surface);box-shadow:0 1px 2px rgba(0,0,0,.04);font-weight:600;color:var(--apple-secondary)}
+.providerServicesHeader{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:start;gap:14px;margin-bottom:28px}
+.providerServicesBack{width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.88);color:var(--apple-blue)!important;text-decoration:none;font-size:25px;font-weight:400;line-height:1;border:0;box-shadow:0 1px 2px rgba(0,0,0,.06);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px)}
+.providerServicesBack:active{transform:scale(.96);background:#ececf0}
+.providerServicesHeading h1{margin:1px 0 5px;font-size:34px;line-height:1.06;letter-spacing:-.028em;color:var(--apple-text);font-weight:700}
+.providerServicesHeading p{margin:0;color:var(--apple-secondary);font-size:15px;line-height:1.4;max-width:580px}
+.providerServicesCount{min-width:74px;min-height:62px;padding:8px 12px;border-radius:18px;background:var(--apple-blue-soft);color:var(--apple-blue);display:grid;place-items:center;align-content:center;line-height:1;gap:5px}
+.providerServicesCount strong{font-size:24px;font-weight:700}
+.providerServicesCount span{font-size:11px;font-weight:600;letter-spacing:.01em}
+.providerServicesSection{margin-top:22px}
+.providerServicesSectionHead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:0 4px 10px}
+.providerServicesSectionHead h2{margin:0;font-size:20px;line-height:1.2;color:var(--apple-text);font-weight:700;letter-spacing:-.01em}
+.providerServicesSectionHead p{margin:4px 0 0!important;color:var(--apple-secondary)!important;font-size:13px!important;line-height:1.4}
+.providerServicesSectionHead span{font-size:13px;font-weight:600;color:var(--apple-blue);white-space:nowrap}
+.providerServicesGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.providerServiceTile{position:relative;min-height:84px;padding:12px 44px 12px 14px;border:0;border-radius:18px;background:var(--apple-surface);box-shadow:0 1px 2px rgba(0,0,0,.04);display:grid;grid-template-columns:50px minmax(0,1fr);align-items:center;gap:13px;text-align:left;color:var(--apple-text);cursor:pointer;transition:transform .12s ease,background .12s ease,box-shadow .12s ease;-webkit-tap-highlight-color:transparent}
+.providerServiceTile:hover{transform:none;box-shadow:0 1px 2px rgba(0,0,0,.04);background:#fbfbfd}
+.providerServiceTile:active{transform:scale(.985);background:#f2f2f7}
+.providerServiceTile.selected{border:0;background:var(--apple-surface);box-shadow:inset 0 0 0 1.5px rgba(0,122,255,.36),0 1px 2px rgba(0,0,0,.04)}
+.providerServiceIcon{width:50px;height:50px;border-radius:14px;background:var(--apple-blue-soft);color:var(--apple-blue);display:grid;place-items:center;font-size:22px;font-weight:700}
+.providerServiceName{font-size:15px;font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.providerServiceCheck{position:absolute;right:14px;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:50%;background:var(--apple-blue);color:#fff;display:grid;place-items:center;font-size:14px;font-weight:700;box-shadow:none}
+.providerServiceTile:not(.selected) .providerServiceCheck{background:#e5e5ea}
+.providerLocationsSection{margin-top:26px;padding:0;border:0;border-radius:var(--apple-radius);background:var(--apple-surface);box-shadow:0 1px 2px rgba(0,0,0,.04);overflow:hidden}
+.providerLocationsSection>.providerServicesSectionHead{align-items:flex-start;margin:0;padding:20px 20px 15px;border-bottom:1px solid var(--apple-separator)}
+.providerLocationToolbar{display:grid;gap:0;margin:0}
+.providerLocationStatus{display:flex;align-items:center;gap:11px;padding:13px 20px;border-radius:0;background:transparent;color:var(--apple-text);border:0;border-bottom:1px solid var(--apple-separator)}
+.providerLocationStatusIcon{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--apple-green);color:#fff;font-size:14px;font-weight:700;flex:0 0 auto}
 .providerLocationStatus>span:last-child{display:grid;gap:2px}
-.providerLocationStatus small{font-size:11px;color:#5c7b68}
-.providerLocationSearch{display:grid;gap:8px;color:#475569;font-size:13px;font-weight:800}
-.providerLocationSearch input{min-height:52px;padding:0 16px;border:1px solid #dfe5ee;border-radius:16px;background:#fff;color:#14213a;font:inherit;outline:none;box-shadow:inset 0 1px 2px rgba(15,23,42,.03)}
-.providerLocationSearch input:focus{border-color:#8eb8ff;box-shadow:0 0 0 4px rgba(37,99,235,.09)}
-.providerLocationAddForm{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:12px;padding:16px;border:1px solid #e3e8ef;border-radius:18px;background:#f8fafc}
-.providerLocationAddForm label{display:grid;gap:7px;color:#647087;font-size:12px;font-weight:800}
-.providerLocationAddForm select{min-height:48px;border-radius:13px;border:1px solid #d7deea;background:#fff;padding:0 12px;color:#14213a;font:inherit}
-.providerLocationAddButton{align-self:end;min-height:48px;padding:0 18px;border:0;border-radius:13px;background:#2563eb;color:#fff;font-weight:850;cursor:pointer;box-shadow:0 7px 16px rgba(37,99,235,.18)}
-.providerLocationAddButton:disabled{background:#cbd5e1;box-shadow:none;cursor:not-allowed}
-.providerLocationList{display:grid;gap:16px}
-.providerLocationCard{border-radius:18px;padding:20px;border:1px solid;outline:6px solid #fff;outline-offset:0;margin:8px;box-shadow:0 0 0 7px #dfe5ee,0 14px 30px rgba(15,23,42,.08);transition:transform .16s ease,box-shadow .16s ease}
-.providerLocationCard:hover{transform:translateY(-1px);box-shadow:0 0 0 7px #dfe5ee,0 18px 34px rgba(15,23,42,.11)}
-.providerLocationCard.saved{background:#f0fdf4;border-color:#bbf7d0}
-.providerLocationCard.pending{background:#fffbeb;border-color:#fde68a}
+.providerLocationStatus b{font-size:14px;font-weight:600}
+.providerLocationStatus small{font-size:12px;color:var(--apple-secondary)}
+.providerLocationSearch{display:grid;gap:7px;padding:14px 20px;color:var(--apple-secondary);font-size:12px;font-weight:600;border-bottom:1px solid var(--apple-separator)}
+.providerLocationSearch input{min-height:44px;padding:0 13px;border:0;border-radius:12px;background:#f2f2f7;color:var(--apple-text);font:inherit;font-size:15px;outline:none;box-shadow:none}
+.providerLocationSearch input::placeholder{color:#8e8e93}
+.providerLocationSearch input:focus{border:0;box-shadow:0 0 0 2px rgba(0,122,255,.24)}
+.providerLocationAddForm{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:10px;padding:16px 20px;border:0;border-radius:0;background:transparent;border-bottom:1px solid var(--apple-separator)}
+.providerLocationAddForm label{display:grid;gap:6px;color:var(--apple-secondary);font-size:12px;font-weight:600}
+.providerLocationAddForm select,.providerAvailabilityStatusGrid select{min-height:44px;border-radius:12px;border:0;background:#f2f2f7;padding:0 12px;color:var(--apple-text);font:inherit;font-size:14px;outline:none}
+.providerLocationAddForm select:focus,.providerAvailabilityStatusGrid select:focus{box-shadow:0 0 0 2px rgba(0,122,255,.24)}
+.providerLocationAddButton{align-self:end;min-height:44px;padding:0 16px;border:0;border-radius:12px;background:var(--apple-blue);color:#fff;font-size:14px;font-weight:600;cursor:pointer;box-shadow:none;white-space:nowrap}
+.providerLocationAddButton:active{transform:scale(.98)}
+.providerLocationAddButton:disabled{background:#d1d1d6;color:#8e8e93;box-shadow:none;cursor:not-allowed}
+.providerLocationList{display:grid;gap:0;padding:0}
+.providerLocationCard{border-radius:0;padding:15px 20px;border:0;border-bottom:1px solid var(--apple-separator);outline:0;margin:0;box-shadow:none;background:#fff!important;transition:background .12s ease}
+.providerLocationCard:hover{transform:none;box-shadow:none;background:#fbfbfd!important}
+.providerLocationCard:last-child{border-bottom:0}
 .providerLocationCardTop{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
-.providerLocationCardTop>div:first-child{display:grid;gap:4px;min-width:0}
-.providerLocationCardTop strong{font-size:18px;color:#14213a}
-.providerLocationCardTop>div:first-child span{font-size:14px;color:#647087}
+.providerLocationCardTop>div:first-child{display:grid;gap:3px;min-width:0}
+.providerLocationCardTop strong{font-size:16px;color:var(--apple-text);font-weight:600}
+.providerLocationCardTop>div:first-child span{font-size:13px;color:var(--apple-secondary)}
 .providerLocationCardControls{display:flex;align-items:center;gap:8px;flex:0 0 auto}
-.providerLocationBadge{display:inline-flex;align-items:center;justify-content:center;min-height:30px;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:850;white-space:nowrap}
-.providerLocationBadge.saved{background:#dcfce7;color:#15803d}
-.providerLocationBadge.pending{background:#fef3c7;color:#a16207}
-.providerLocationQuickRemove{width:34px;height:34px;border-radius:50%;border:1px solid #fecaca;background:#fff7f7;color:#b42318;font-size:21px;line-height:1;font-weight:700;display:grid;place-items:center;padding:0;cursor:pointer;flex:0 0 auto;touch-action:manipulation}
-.providerLocationQuickRemove:active{transform:scale(.94)}
-.providerLocationMeta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
-.providerLocationMeta span{display:grid;gap:4px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.72);color:#334155;font-size:13px;overflow-wrap:anywhere}
-.providerLocationMeta b{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#8791a3}
-.providerLocationEmpty{padding:28px 18px;text-align:center;border:1px dashed #cbd5e1;border-radius:16px;background:#f8fafc;color:#647087;font-weight:700}
-.providerLocationPagination{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px}
-.providerLocationPagination button{min-height:42px;padding:0 16px;border:1px solid #d7deea;border-radius:12px;background:#fff;color:#334155;font-weight:800;cursor:pointer}
-.providerLocationPagination button:disabled{opacity:.45;cursor:not-allowed}
-.providerLocationPagination span{color:#647087;font-size:13px;font-weight:700}
+.providerLocationBadge{display:inline-flex;align-items:center;justify-content:center;min-height:26px;padding:4px 9px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
+.providerLocationBadge.saved{background:rgba(52,199,89,.12);color:#248a3d}
+.providerLocationBadge.pending{background:rgba(255,159,10,.14);color:#c93400}
+.providerLocationQuickRemove{width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,59,48,.10);color:var(--apple-red);font-size:20px;line-height:1;font-weight:400;display:grid;place-items:center;padding:0;cursor:pointer;flex:0 0 auto;touch-action:manipulation}
+.providerLocationQuickRemove:active{transform:scale(.92)}
+.providerLocationMeta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:10px}
+.providerLocationMeta span{display:flex;gap:6px;padding:0;border-radius:0;background:transparent;border:0;color:var(--apple-secondary);font-size:12px;overflow-wrap:anywhere}
+.providerLocationMeta b{font-size:12px;text-transform:none;letter-spacing:0;color:var(--apple-text);font-weight:600}
+.providerLocationEmpty{margin:16px 20px;padding:24px 16px;text-align:center;border:0;border-radius:14px;background:#f2f2f7;color:var(--apple-secondary);font-size:14px;font-weight:500}
+.providerLocationPagination{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 20px;border-top:1px solid var(--apple-separator);margin:0}
+.providerLocationPagination button{min-height:36px;padding:0 10px;border:0;border-radius:10px;background:transparent;color:var(--apple-blue);font-size:14px;font-weight:600;cursor:pointer}
+.providerLocationPagination button:active{background:var(--apple-blue-soft)}
+.providerLocationPagination button:disabled{opacity:.35;cursor:not-allowed}
+.providerLocationPagination span{color:var(--apple-secondary);font-size:12px;font-weight:500}
 .providerAvailabilitySection{scroll-margin-top:24px}
-.providerAvailabilityStatusGrid{display:grid;grid-template-columns:minmax(0,340px);gap:12px;margin-bottom:18px}
-.providerAvailabilityStatusGrid label{display:grid;gap:8px;color:#475569;font-size:13px;font-weight:800}
-.providerAvailabilityStatusGrid select{min-height:50px;padding:0 14px;border:1px solid #d7deea;border-radius:14px;background:#fff;color:#14213a;font:inherit;font-weight:700}
-.providerAvailabilityEditor{display:grid;gap:10px}
-.providerAvailabilityRow{display:grid;grid-template-columns:minmax(110px,1fr) 135px auto 135px;align-items:center;gap:10px;padding:12px 14px;border:1px solid #e2e8f0;border-radius:15px;background:#f8fafc}
-.providerAvailabilityRow>label{display:flex;align-items:center;gap:10px;color:#1e293b}
-.providerAvailabilityRow input[type=checkbox]{width:20px;height:20px}
-.providerAvailabilityRow input[type=time]{min-height:44px;padding:0 10px;border:1px solid #d7deea;border-radius:11px;background:#fff;color:#14213a;font:inherit}
-.providerAvailabilityRow input[type=time]:disabled{opacity:.45;background:#eef2f7}
-.providerAvailabilityRow>span{color:#64748b;font-size:13px;font-weight:700;text-align:center}
-@media(max-width:760px){.providerLocationsSection{padding:16px;border-radius:20px}.providerLocationAddForm{grid-template-columns:1fr 1fr}.providerLocationAddButton{width:100%}.providerLocationMeta{grid-template-columns:1fr 1fr}.providerLocationCard{padding:16px;margin:7px 4px}.providerAvailabilityRow{grid-template-columns:1fr 1fr 28px 1fr}}
-@media(max-width:520px){.providerLocationAddForm{grid-template-columns:1fr}.providerLocationMeta{grid-template-columns:1fr}.providerLocationCardTop{align-items:flex-start}.providerLocationCardControls{gap:6px}.providerLocationBadge{font-size:11px;padding:4px 9px}.providerLocationQuickRemove{width:32px;height:32px;font-size:20px}.providerLocationPagination{flex-wrap:wrap;justify-content:center}.providerLocationPagination span{width:100%;text-align:center;order:-1}.providerAvailabilityStatusGrid{grid-template-columns:1fr}.providerAvailabilityRow{grid-template-columns:1fr 1fr}.providerAvailabilityRow>label{grid-column:1/-1}.providerAvailabilityRow>span{display:none}}
+.providerAvailabilityStatusGrid{display:grid;grid-template-columns:minmax(0,340px);gap:12px;padding:16px 20px;border-bottom:1px solid var(--apple-separator);margin:0}
+.providerAvailabilityStatusGrid label{display:grid;gap:7px;color:var(--apple-secondary);font-size:12px;font-weight:600}
+.providerAvailabilityEditor{display:grid;gap:0}
+.providerAvailabilityRow{display:grid;grid-template-columns:minmax(110px,1fr) 125px auto 125px;align-items:center;gap:10px;padding:12px 20px;border:0;border-bottom:1px solid var(--apple-separator);border-radius:0;background:#fff}
+.providerAvailabilityRow:last-child{border-bottom:0}
+.providerAvailabilityRow>label{display:flex;align-items:center;gap:10px;color:var(--apple-text);font-size:14px}
+.providerAvailabilityRow input[type=checkbox]{appearance:none;-webkit-appearance:none;width:42px;height:25px;border-radius:999px;background:#e9e9eb;position:relative;cursor:pointer;transition:background .18s ease;flex:0 0 auto}
+.providerAvailabilityRow input[type=checkbox]::after{content:"";position:absolute;width:21px;height:21px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s ease}
+.providerAvailabilityRow input[type=checkbox]:checked{background:var(--apple-green)}
+.providerAvailabilityRow input[type=checkbox]:checked::after{transform:translateX(17px)}
+.providerAvailabilityRow input[type=time]{min-height:38px;padding:0 9px;border:0;border-radius:10px;background:#f2f2f7;color:var(--apple-text);font:inherit;font-size:13px;outline:none}
+.providerAvailabilityRow input[type=time]:focus{box-shadow:0 0 0 2px rgba(0,122,255,.24)}
+.providerAvailabilityRow input[type=time]:disabled{opacity:.42;background:#f2f2f7}
+.providerAvailabilityRow>span{color:var(--apple-secondary);font-size:12px;font-weight:500;text-align:center}
+.providerServicesMessage{margin:16px 0 0;padding:12px 14px;border-radius:14px;background:rgba(255,59,48,.10);color:#d70015;font-weight:500;font-size:13px;border:0}
+.providerServicesMessage.success{background:rgba(52,199,89,.12);color:#248a3d;border:0}
+.providerServicesBottomBar{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:rgba(245,245,247,.86);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid var(--apple-separator)}
+.providerServicesBottomInner{width:min(100%,880px);margin:0 auto;display:block}
+.providerServicesSaveButton{width:100%;min-height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600;text-decoration:none;border:0;background:var(--apple-blue);color:#fff;box-shadow:none;cursor:pointer;transition:transform .12s ease,opacity .12s ease}
+.providerServicesSaveButton:active:not(:disabled){transform:scale(.99)}
+.providerServicesSaveButton:disabled{opacity:.38;cursor:not-allowed}
+.providerServicesSaveButton span{font-size:14px}
+@media(max-width:760px){.providerServicesShell{width:min(calc(100% - 24px),640px);padding-top:16px}.providerServicesHeader{grid-template-columns:42px minmax(0,1fr) auto;gap:11px;margin-bottom:22px}.providerServicesBack{width:42px;height:42px}.providerServicesHeading h1{font-size:30px}.providerServicesHeading p{font-size:14px}.providerServicesCount{min-width:68px;min-height:58px;border-radius:16px}.providerServicesCount strong{font-size:22px}.providerServicesGrid{gap:8px}.providerServiceTile{min-height:78px;grid-template-columns:46px minmax(0,1fr);gap:11px;padding:11px 40px 11px 12px;border-radius:16px}.providerServiceIcon{width:46px;height:46px;border-radius:13px;font-size:20px}.providerLocationAddForm{grid-template-columns:1fr 1fr}.providerLocationAddButton{width:100%}.providerAvailabilityRow{grid-template-columns:minmax(100px,1fr) 112px auto 112px}.providerServicesBottomBar{padding-left:12px;padding-right:12px}}
+@media(max-width:560px){.providerServicesGrid{grid-template-columns:1fr}.providerServicesHeader{grid-template-columns:40px minmax(0,1fr) 62px}.providerServicesBack{width:40px;height:40px}.providerServicesHeading h1{font-size:27px}.providerServicesCount{min-width:62px}.providerLocationsSection>.providerServicesSectionHead{padding:18px 16px 14px}.providerLocationStatus,.providerLocationSearch,.providerLocationAddForm,.providerLocationCard,.providerAvailabilityStatusGrid,.providerAvailabilityRow{padding-left:16px;padding-right:16px}.providerLocationAddForm{grid-template-columns:1fr}.providerLocationMeta{display:grid;gap:5px}.providerLocationPagination{flex-wrap:wrap;justify-content:center;padding-left:16px;padding-right:16px}.providerLocationPagination span{width:100%;text-align:center;order:-1}.providerAvailabilityStatusGrid{grid-template-columns:1fr}.providerAvailabilityRow{grid-template-columns:1fr 1fr}.providerAvailabilityRow>label{grid-column:1/-1}.providerAvailabilityRow>span{display:none}}
+@media(max-width:390px){.providerServicesShell{width:calc(100% - 20px)}.providerServicesHeading h1{font-size:25px}.providerServicesHeading p{font-size:13px}.providerServicesSectionHead h2{font-size:18px}.providerServicesSectionHead span{font-size:12px}.providerServiceName{font-size:14px}.providerServicesCount{min-width:58px;padding:7px 9px}.providerServicesCount span{font-size:10px}}
