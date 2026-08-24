@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import './design-system.css';
 import './ui-compat.css';
@@ -28,6 +28,7 @@ import './mobile-portrait-header-fix.css';
 import './mobile-date-input-fix.css';
 import './remove-save-draft.css';
 import './disable-request-urgency.css';
+import './mobile-viewport-hardening.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
@@ -39,6 +40,12 @@ import MobileDateInputRuntime from './MobileDateInputRuntime';
 export const metadata: Metadata = {
   title: 'FixIt Maldives',
   description: 'Local service requests matched with trusted providers in Maldives.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
