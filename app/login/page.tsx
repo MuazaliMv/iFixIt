@@ -6,7 +6,8 @@ import { apiFetch } from '../../lib/apiClient';
 import './login.css';
 
 type Mode='login'|'register';
-type ExistingProfile={role?:string|null};
+type WorkspaceChoice='customer'|'provider';
+type ExistingProfile={role?:string|null;provider_approved?:boolean|null};
 type FieldIconName='mail'|'lock'|'user'|'phone';
 
 function EyeIcon({off=false}:{off?:boolean}){
@@ -21,8 +22,15 @@ function FieldIcon({name}:{name:FieldIconName}){
  return <svg {...p}><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>;
 }
 
+function WorkspaceIcon({name}:{name:WorkspaceChoice}){
+ const p={viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,'aria-hidden':true};
+ if(name==='provider')return <svg {...p}><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"/></svg>;
+ return <svg {...p}><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>;
+}
+
 export default function LoginPage(){
  const[mode,setMode]=useState<Mode>('login');
+ const[workspace,setWorkspace]=useState<WorkspaceChoice>('customer');
  const[fullName,setFullName]=useState('');
  const[email,setEmail]=useState('');
  const[password,setPassword]=useState('');
@@ -43,6 +51,8 @@ export default function LoginPage(){
    if(requestedMode==='register')setMode('register');
    const saved=localStorage.getItem('ifixmv-login-email');
    if(saved){setEmail(saved);setRememberMe(true);}
+   const savedWorkspace=localStorage.getItem('ifixmv-login-workspace');
+   if(savedWorkspace==='provider'||savedWorkspace==='customer')setWorkspace(savedWorkspace);
   }catch{}
 
   void(async()=>{
@@ -51,7 +61,7 @@ export default function LoginPage(){
     if(!active)return;
     if(response.ok){
      const payload=await response.json().catch(()=>({}));
-     await routeUser(payload?.profile as ExistingProfile|undefined);
+     await routeUser(payload?.profile as ExistingProfile|undefined,false);
      return;
     }
    }catch{}
@@ -61,20 +71,43 @@ export default function LoginPage(){
   return()=>{active=false;};
  },[]);
 
- async function routeUser(knownProfile?:ExistingProfile){
+ function rememberWorkspace(next:WorkspaceChoice){
+  try{
+   localStorage.setItem('ifixmv-login-workspace',next);
+   localStorage.setItem('fixit:mobile-nav-role',next);
+   localStorage.setItem('fixit:app-mode',next);
+  }catch{}
+ }
+
+ async function routeUser(knownProfile?:ExistingProfile,useWorkspaceChoice=false){
   const requested=new URLSearchParams(window.location.search).get('next');
   if(requested&&requested.startsWith('/')&&!requested.startsWith('//')){window.location.replace(requested);return;}
 
-  const knownRole=String(knownProfile?.role||'').toUpperCase();
-  if(knownRole==='PROVIDER'){window.location.replace('/provider');return;}
-  if(knownRole==='ADMIN'){window.location.replace('/admin');return;}
-  if(knownRole==='CUSTOMER'){window.location.replace('/home');return;}
+  let profile=knownProfile;
+  if(!profile?.role){
+   try{
+    const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),5000);
+    const response=await apiFetch('/api/user/profile',{signal:controller.signal});clearTimeout(timer);
+    if(response.ok){const payload=await response.json();profile=payload?.profile as ExistingProfile|undefined;}
+   }catch{}
+  }
 
-  try{
-   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),5000);
-   const response=await apiFetch('/api/user/profile',{signal:controller.signal});clearTimeout(timer);
-   if(response.ok){const payload=await response.json();const accountRole=String(payload?.profile?.role||'').toUpperCase();if(accountRole==='PROVIDER'){window.location.replace('/provider');return;}if(accountRole==='ADMIN'){window.location.replace('/admin');return;}}
-  }catch{}
+  const role=String(profile?.role||'CUSTOMER').toUpperCase();
+  const providerReady=role==='PROVIDER'||role==='ADMIN'||profile?.provider_approved===true;
+
+  if(useWorkspaceChoice){
+   if(role==='ADMIN'){window.location.replace('/admin');return;}
+   rememberWorkspace(workspace);
+   if(workspace==='provider'){
+    window.location.replace(providerReady?'/provider/today':'/provider/onboarding');
+    return;
+   }
+   window.location.replace('/home');
+   return;
+  }
+
+  if(role==='PROVIDER'){window.location.replace('/provider');return;}
+  if(role==='ADMIN'){window.location.replace('/admin');return;}
   window.location.replace('/home');
  }
 
@@ -110,30 +143,31 @@ export default function LoginPage(){
     const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to sign in.');
     if(!p?.session?.access_token||!p?.session?.refresh_token)throw new Error('Unable to open session.');
 
-    const {error:sessionError}=await supabase.auth.setSession({
-      access_token:p.session.access_token,
-      refresh_token:p.session.refresh_token,
-    });
+    const {error:sessionError}=await supabase.auth.setSession({access_token:p.session.access_token,refresh_token:p.session.refresh_token});
     if(sessionError)throw new Error(sessionError.message||'Unable to open session.');
 
-    try{
-      if(rememberMe)localStorage.setItem('ifixmv-login-email',emailTrimmed);else localStorage.removeItem('ifixmv-login-email');
-    }catch{}
-    await routeUser(p?.profile as ExistingProfile|undefined);
+    try{if(rememberMe)localStorage.setItem('ifixmv-login-email',emailTrimmed);else localStorage.removeItem('ifixmv-login-email');}catch{}
+    await routeUser(p?.profile as ExistingProfile|undefined,true);
    }
   }catch(e){setMessage(e instanceof Error?e.message:'Unable to continue.');}finally{setBusy(false);}
  }
 
- if(checkingSession)return <div className="authShell"><main className="authPage"><div className="authStage"><a className="authBrand" href="/" aria-label="iFix Maldives home"><span className="authBrandMark">iF</span><span><strong>iFix</strong><small>Maldives</small></span></a><section className="authCardClean authChecking" aria-live="polite" aria-busy="true"><span className="authLargeSpinner" aria-hidden="true"/><div className="authIntro"><h1>Opening iFixMV…</h1><p>Checking your existing secure session.</p></div></section></div></main></div>;
+ if(checkingSession)return <div className="authShell"><main className="authPage"><div className="authStage"><div className="authNav authNavChecking"><a className="authBrand" href="/" aria-label="iFix Maldives home"><span className="authBrandMark">iF</span><span><strong>iFix</strong><small>Maldives</small></span></a></div><section className="authCardClean authChecking" aria-live="polite" aria-busy="true"><span className="authLargeSpinner" aria-hidden="true"/><div className="authIntro"><h1>Opening iFixMV…</h1><p>Checking your existing secure session.</p></div></section></div></main></div>;
 
  return <div className="authShell">
   <main className="authPage">
    <div className="authStage">
-    <a className="authBrand" href="/" aria-label="iFix Maldives home"><span className="authBrandMark">iF</span><span><strong>iFix</strong><small>Maldives</small></span></a>
+    <div className="authNav">
+     <a className="authBrand" href="/" aria-label="iFix Maldives home"><span className="authBrandMark">iF</span><span><strong>iFix</strong><small>Maldives</small></span></a>
+     <div className="authModeToggle" role="tablist" aria-label="Account access">
+      <button type="button" className={isLogin?'active':''} onClick={()=>switchMode('login')} role="tab" aria-selected={isLogin}>Sign in</button>
+      <button type="button" className={!isLogin?'active':''} onClick={()=>switchMode('register')} role="tab" aria-selected={!isLogin}>Create account</button>
+     </div>
+    </div>
 
     <section className="authCardClean">
      <div className="authStatusPill"><span aria-hidden="true"/>{isLogin?'Secure account access':'New iFixMV account'}</div>
-     <div className="authIntro"><h1>{isLogin?'Welcome back':'Create your account'}</h1><p>{isLogin?'Sign in once to continue to your iFixMV workspace.':'Create one account for requesting services and, when approved, providing services.'}</p></div>
+     <div className="authIntro"><h1>{isLogin?'Welcome back':'Create your account'}</h1><p>{isLogin?'Sign in once, then open the workspace you need.':'Create one account for requesting services and, when approved, providing services.'}</p></div>
 
      <form onSubmit={submit} className="authFormClean" noValidate>
       {!isLogin?<>
@@ -145,15 +179,23 @@ export default function LoginPage(){
 
       <label className="authField"><span className="authFieldLabel">Password</span><div className={`authInputWrap passwordField${touched.password&&!passwordValid?' invalid':''}`}><span className="authInputIcon"><FieldIcon name="lock"/></span><input type={showPassword?'text':'password'} autoComplete={isLogin?'current-password':'new-password'} value={password} onBlur={()=>setTouched(v=>({...v,password:true}))} onKeyUp={e=>setCapsLock(e.getModifierState('CapsLock'))} onKeyDown={e=>setCapsLock(e.getModifierState('CapsLock'))} onChange={e=>setPassword(e.target.value)} minLength={8} aria-invalid={touched.password&&!passwordValid}/><button type="button" className="passwordToggle" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'} title={showPassword?'Hide password':'Show password'}><EyeIcon off={showPassword}/></button></div>{capsLock?<span className="capsWarning">Caps Lock is on.</span>:null}{!isLogin?<span className="fieldHelp">Use at least 8 characters.</span>:null}{touched.password&&!passwordValid?<span className="fieldError">Password must be at least 8 characters.</span>:null}</label>
 
-      {isLogin?<div className="authUtility"><label className="rememberMe"><input type="checkbox" checked={rememberMe} onChange={e=>setRememberMe(e.target.checked)}/><span>Remember me</span></label><a href="/forgot-password">Forgot password?</a></div>:null}
+      {isLogin?<>
+       <div className="authUtility"><label className="rememberMe"><input type="checkbox" checked={rememberMe} onChange={e=>setRememberMe(e.target.checked)}/><span>Remember me</span></label><a href="/forgot-password">Forgot password?</a></div>
+       <section className="authWorkspaceChooser" aria-label="Choose workspace after sign in">
+        <div className="authWorkspaceHead"><span>Open after sign in</span><small>Use one account across your workspaces</small></div>
+        <button type="button" className={`authWorkspaceOption provider${workspace==='provider'?' selected':''}`} onClick={()=>setWorkspace('provider')} aria-pressed={workspace==='provider'}>
+         <span className="authWorkspaceIcon"><WorkspaceIcon name="provider"/></span><span className="authWorkspaceCopy"><strong>Service Provider</strong><small>Manage jobs, services and availability</small></span><span className="authWorkspaceAction">{workspace==='provider'?'Selected':'Choose'}</span>
+        </button>
+        <button type="button" className={`authWorkspaceOption customer${workspace==='customer'?' selected':''}`} onClick={()=>setWorkspace('customer')} aria-pressed={workspace==='customer'}>
+         <span className="authWorkspaceIcon"><WorkspaceIcon name="customer"/></span><span className="authWorkspaceCopy"><strong>Customer Portal</strong><small>Request services and track your requests</small></span><span className="authWorkspaceAction">{workspace==='customer'?'Selected':'Choose'}</span>
+        </button>
+       </section>
+      </>:null}
 
       <button className="authSubmit" disabled={busy||!formValid} aria-busy={busy}>{busy?<><span className="buttonSpinner" aria-hidden="true"/>{isLogin?'Signing in…':'Creating account…'}</>:<>{isLogin?'Continue':'Create Account'}<span className="authSubmitArrow" aria-hidden="true">→</span></>}</button>
      </form>
 
      {message?<p className="formMessage" role="status">{message}</p>:null}
-
-     <div className="authDivider"><span>{isLogin?'New to iFixMV?':'Already registered?'}</span></div>
-     <button type="button" className="authSecondaryAction" onClick={()=>switchMode(isLogin?'register':'login')}>{isLogin?'Create an account':'Sign in instead'}</button>
     </section>
 
     <p className="authFootnote"><span aria-hidden="true">✓</span> One account · Customer and Service Provider workspaces</p>
