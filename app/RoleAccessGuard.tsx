@@ -9,7 +9,7 @@ type AccountRole='CUSTOMER'|'PROVIDER'|'ADMIN';
 function destination(role:AccountRole){
   if(role==='ADMIN')return '/admin';
   if(role==='PROVIDER')return '/provider/jobs';
-  return '/';
+  return '/home';
 }
 
 function isProviderApplicationRoute(path:string){
@@ -25,7 +25,10 @@ export default function RoleAccessGuard(){
 
     async function enforce(){
       const providerApplicationRoute=isProviderApplicationRoute(path);
-      const customerRoute=path==='/'||path==='/requests'||path.startsWith('/requests/')||path==='/messages'||path.startsWith('/messages/')||providerApplicationRoute;
+      // `/` is the public marketing landing page. Never run authenticated
+      // role routing there; otherwise it can paint first and then redirect,
+      // which causes the visible startup-page flash on mobile browsers.
+      const customerRoute=path==='/home'||path==='/requests'||path.startsWith('/requests/')||path==='/messages'||path.startsWith('/messages/')||providerApplicationRoute;
       const providerRoute=!providerApplicationRoute&&(path==='/provider'||path.startsWith('/provider/'));
       const adminRoute=path==='/admin'||path.startsWith('/admin/');
       const roleControlled=customerRoute||providerRoute||adminRoute;
