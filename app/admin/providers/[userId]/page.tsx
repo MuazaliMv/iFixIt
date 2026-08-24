@@ -8,6 +8,7 @@ import './provider-detail.css';
 
 const ADMIN_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/admin-operations';
 const SUMMARY_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-admin-summary';
+const REQUEST_TIMEOUT_MS=15000;
 
 type Account={user_id:string;email?:string|null;full_name?:string|null;provider_approved:boolean;created_at:string;updated_at:string};
 type Onboarding={provider_type:string;public_name:string;business_name?:string|null;description?:string|null;experience_years:number;service_area_text:string;availability_status:string;accepting_leads:boolean;onboarding_status:string;submitted_at?:string|null;approved_at?:string|null;created_at:string;updated_at:string};
@@ -20,6 +21,7 @@ type Subscription={id:string;status:string;trial_started_at?:string|null;current
 type RequestRow={ticket_number:string;service_name:string;service_location_text:string;status:string;created_at:string;updated_at:string};
 type HistoryRow={id:string;event_type:string;severity:string;entity_type?:string|null;created_at:string;metadata?:Record<string,unknown>|null};
 type Summary={serviceAreas:ServiceArea[];subscription:Subscription|null;requests:RequestRow[];history:HistoryRow[]};
+type ProviderStatus='APPROVED'|'REJECTED'|'SUSPENDED'|'SUBMITTED';
 
 const dayNames=['','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const pretty=(value:string)=>value.replaceAll('_',' ').toLowerCase().replace(/(^|\s)\S/g,s=>s.toUpperCase());
@@ -35,61 +37,82 @@ export default function AdminProviderDetailPage(){
   const[detail,setDetail]=useState<Detail|null>(null);
   const[summary,setSummary]=useState<Summary|null>(null);
   const[message,setMessage]=useState('Loading provider…');
-  const[busy,setBusy]=useState(false);
+  const[busyStatus,setBusyStatus]=useState<ProviderStatus|null>(null);
   const[busyDoc,setBusyDoc]=useState('');
 
   useEffect(()=>{if(userId)void load();},[userId]);
 
   async function jwt(){
     const{data}=await supabase.auth.getSession();
-    if(!data.session){window.location.href='/login';return '';}
+    if(!data.session){window.location.href='/login';throw new Error('Sign in required');}
     return data.session.access_token;
   }
 
   async function call(url:string,body:Record<string,unknown>){
     const t=await jwt();
-    if(!t)return null;
-    const response=await fetch(url,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},
-      body:JSON.stringify(body)
-    });
-    const text=await response.text();
-    let payload:any={};
-    try{payload=text?JSON.parse(text):{};}catch{payload={error:text||'Admin request failed'};}
-    if(!response.ok)throw new Error(payload?.error||'Admin request failed');
-    return payload;
+    const controller=new AbortController();
+    const timeout=window.setTimeout(()=>controller.abort(),REQUEST_TIMEOUT_MS);
+    try{
+      const response=await fetch(url,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},
+        body:JSON.stringify(body),
+        signal:controller.signal
+      });
+      const text=await response.text();
+      let payload:any={};
+      try{payload=text?JSON.parse(text):{};}catch{payload={error:text||'Admin request failed'};}
+      if(!response.ok)throw new Error(payload?.error||`Admin request failed (${response.status})`);
+      return payload;
+    }catch(error){
+      if(error instanceof DOMException&&error.name==='AbortError')throw new Error('Request timed out. Please try again.');
+      throw error;
+    }finally{
+      window.clearTimeout(timeout);
+    }
   }
 
   async function load(){
     try{
-      const[d,s]=await Promise.all([
-        call(ADMIN_URL,{action:'provider_detail',providerUserId:userId}),
-        call(SUMMARY_URL,{providerUserId:userId})
-      ]);
-      if(!d)return;
+      const d=await call(ADMIN_URL,{action:'provider_detail',providerUserId:userId});
       setDetail(d as Detail);
-      setSummary((s||{serviceAreas:[],subscription:null,requests:[],history:[]}) as Summary);
       setMessage('Provider record loaded.');
     }catch(error){
       setMessage(error instanceof Error?error.message:'Unable to load provider.');
+      return;
+    }
+
+    try{
+      const s=await call(SUMMARY_URL,{providerUserId:userId});
+      setSummary((s||{serviceAreas:[],subscription:null,requests:[],history:[]}) as Summary);
+    }catch{
+      setSummary({serviceAreas:[],subscription:null,requests:[],history:[]});
     }
   }
 
-  async function setStatus(status:'APPROVED'|'REJECTED'|'SUSPENDED'|'SUBMITTED'){
+  const docs=detail?.documents||[];
+  const approvedType=(type:string)=>docs.some(d=>d.document_type===type&&d.review_status==='APPROVED');
+  const idApproved=approvedType('ID_CARD');
+  const businessApproved=approvedType('BUSINESS_LICENSE');
+  const documentsReady=idApproved&&businessApproved;
+
+  async function setStatus(status:ProviderStatus){
+    if(busyStatus)return;
     if(status==='APPROVED'&&!documentsReady){
       setMessage('Approve the ID Card and Business Permit before approving this provider.');
       return;
     }
-    setBusy(true);
+    setBusyStatus(status);
+    setMessage(`${pretty(status)} action in progress…`);
     try{
       await call(ADMIN_URL,{action:'set_provider_onboarding_status',providerUserId:userId,status});
-      await load();
+      const d=await call(ADMIN_URL,{action:'provider_detail',providerUserId:userId});
+      setDetail(d as Detail);
       setMessage(`Provider status changed to ${pretty(status)}.`);
     }catch(error){
       setMessage(error instanceof Error?error.message:'Unable to update provider status.');
     }finally{
-      setBusy(false);
+      setBusyStatus(null);
     }
   }
 
@@ -117,7 +140,8 @@ export default function AdminProviderDetailPage(){
         status,
         note
       });
-      await load();
+      const d=await call(ADMIN_URL,{action:'provider_detail',providerUserId:userId});
+      setDetail(d as Detail);
       setMessage(`${doc.document_label||pretty(doc.document_type)} ${status==='APPROVED'?'approved':'rejected'} successfully.`);
     }catch(error){
       setMessage(error instanceof Error?error.message:'Unable to review document.');
@@ -137,13 +161,7 @@ export default function AdminProviderDetailPage(){
   const p=detail.onboarding;
   const subscription=summary?.subscription;
   const activeAreas=summary?.serviceAreas.filter(a=>a.is_active)||[];
-  const docs=detail.documents||[];
   const status=p?.onboarding_status||(detail.account.provider_approved?'APPROVED':'PENDING');
-
-  const approvedType=(type:string)=>docs.some(d=>d.document_type===type&&d.review_status==='APPROVED');
-  const idApproved=approvedType('ID_CARD');
-  const businessApproved=approvedType('BUSINESS_LICENSE');
-  const documentsReady=idApproved&&businessApproved;
 
   return <main className="shell adminProviderDetail">
     <header className="topbar"><div><a className="brand" href="/admin">FixIt</a><p className="tagline">Admin • Providers</p></div></header>
@@ -154,13 +172,13 @@ export default function AdminProviderDetailPage(){
         <div className="providerIdentity"><p className="eyebrow">PROVIDER RECORD</p><h1>{p?.public_name||detail.account.full_name||'Unnamed provider'}</h1><p className="muted">{detail.account.email||'No email'}</p></div>
         <div className="providerBadges"><span className="pill">{pretty(status)}</span>{subscription?<span className="pill">Subscription: {pretty(subscription.status)}</span>:null}</div>
       </div>
-      <p className="providerMessage" role="status">{message}</p>
+      <p className="providerMessage" role="status" aria-live="polite">{message}</p>
       {!documentsReady&&status!=='APPROVED'?<p className="muted">Provider approval unlocks after both the ID Card and Business Permit are approved.</p>:null}
       <div className="providerActions">
-        <button className="primary" disabled={busy||status==='APPROVED'||!documentsReady} onClick={()=>setStatus('APPROVED')}>{status==='APPROVED'?'Approved':'Approve Provider'}</button>
-        <button className="secondary" disabled={busy||status==='SUBMITTED'} onClick={()=>setStatus('SUBMITTED')}>Mark Submitted</button>
-        <button className="secondary rejectAction" disabled={busy||status==='REJECTED'} onClick={()=>setStatus('REJECTED')}>Reject</button>
-        <button className="secondary suspendAction" disabled={busy||status==='SUSPENDED'} onClick={()=>setStatus('SUSPENDED')}>Suspend</button>
+        <button type="button" className="primary" disabled={Boolean(busyStatus)||status==='APPROVED'||!documentsReady} onClick={()=>void setStatus('APPROVED')}>{busyStatus==='APPROVED'?'Approving…':status==='APPROVED'?'Approved':'Approve Provider'}</button>
+        <button type="button" className="secondary" disabled={Boolean(busyStatus)||status==='SUBMITTED'} onClick={()=>void setStatus('SUBMITTED')}>{busyStatus==='SUBMITTED'?'Saving…':'Mark Submitted'}</button>
+        <button type="button" className="secondary rejectAction" disabled={Boolean(busyStatus)||status==='REJECTED'} onClick={()=>void setStatus('REJECTED')}>{busyStatus==='REJECTED'?'Rejecting…':'Reject'}</button>
+        <button type="button" className="secondary suspendAction" disabled={Boolean(busyStatus)||status==='SUSPENDED'} onClick={()=>void setStatus('SUSPENDED')}>{busyStatus==='SUSPENDED'?'Suspending…':'Suspend'}</button>
       </div>
     </section>
 
