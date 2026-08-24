@@ -37,6 +37,14 @@ test('cancelled requests stay out of normal customer request views and counters'
  assert.match(source,/requests\.filter\(r=>!\['COMPLETED','CANCELLED'\]\.includes\(r\.status\)\)\.length/);
 });
 
+test('provider status actions disable the current state and lock during saves',async()=>{
+ const source=await read('app/admin/providers/[userId]/page.tsx');
+ assert.match(source,/const statusBusy=busyStatus!==null/);
+ assert.match(source,/disabled=\{statusBusy\|\|status==='APPROVED'\}/);
+ assert.match(source,/disabled=\{statusBusy\|\|status==='SUSPENDED'\}/);
+ assert.match(source,/status==='APPROVED'\?'Approved':'Approve Provider'/);
+});
+
 test('unified control family is loaded after page-specific styles',async()=>{
  const layout=await read('app/layout.tsx');
  const styles=await read('app/unified-control-family.css');
