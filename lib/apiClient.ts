@@ -6,7 +6,9 @@
  * Authentication stays server-managed:
  * Browser -> HttpOnly auth cookies -> same-origin Next.js API -> Supabase.
  *
- * Do not read, persist, or attach Supabase access/refresh tokens here.
+ * A temporary compatibility bridge is kept for older browser Supabase sessions
+ * so an already signed-in user can move between Customer and Provider workspaces
+ * without being sent back to the login screen.
  */
 
 type ApiRequestInit = RequestInit & {
@@ -18,22 +20,64 @@ let sessionRecovery: Promise<boolean> | null = null;
 
 function isSessionEndpoint(input: RequestInfo | URL) {
   const value = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url;
-  return value === '/api/auth/session' || value.startsWith('/api/auth/session?');
+  return value === '/api/auth/session' ||
+    value.startsWith('/api/auth/session?') ||
+    value === '/api/auth/session/sync' ||
+    value.startsWith('/api/auth/session/sync?');
+}
+
+async function checkServerSession(): Promise<boolean> {
+  return fetch('/api/auth/session', {
+    method: 'GET',
+    credentials: 'same-origin',
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+  })
+    .then((response) => response.ok)
+    .catch(() => false);
+}
+
+async function syncLegacyBrowserSession(): Promise<boolean> {
+  try {
+    const { supabase } = await import('./supabaseClient');
+    const { data, error } = await supabase.auth.getSession();
+    if (error || !data.session?.access_token) return false;
+
+    const response = await fetch('/api/auth/session/sync', {
+      method: 'POST',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        accessToken: data.session.access_token,
+        refreshToken: data.session.refresh_token || null,
+        expiresIn: data.session.expires_in || 3600,
+      }),
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
 async function recoverSession(): Promise<boolean> {
   if (!sessionRecovery) {
-    sessionRecovery = fetch('/api/auth/session', {
-      method: 'GET',
-      credentials: 'same-origin',
-      cache: 'no-store',
-      headers: { Accept: 'application/json' },
-    })
-      .then((response) => response.ok)
-      .catch(() => false)
-      .finally(() => {
-        sessionRecovery = null;
-      });
+    sessionRecovery = (async () => {
+      // First let the secure HttpOnly-cookie session validate/refresh itself.
+      if (await checkServerSession()) return true;
+
+      // Older signed-in screens may still have a valid Supabase browser session.
+      // Re-hydrate the secure same-origin cookie session once, then continue
+      // without asking the user to sign in again.
+      if (!(await syncLegacyBrowserSession())) return false;
+      return checkServerSession();
+    })().finally(() => {
+      sessionRecovery = null;
+    });
   }
 
   return sessionRecovery;
