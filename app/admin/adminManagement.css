@@ -1,6 +1,7 @@
 /* Desktop-first admin management shell: compact, mouse-friendly, mobile-safe */
+.adminManagementMobileNav{display:none}
 .adminManagementNav{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-card)}
-.adminManagementNav a{min-height:42px;padding:10px 14px;border-radius:10px;white-space:nowrap}
+.adminManagementNav a{flex:0 0 auto!important;width:auto!important;max-width:none!important;min-width:max-content;min-height:42px;padding:10px 14px;border-radius:10px;white-space:nowrap;overflow:visible;text-overflow:clip}
 
 /* Services page: remove the duplicated intro panel and keep one clear workspace. */
 body:has(.servicePanel) .adminManagementNav + .panel:not(.servicePanel){display:none}
@@ -58,7 +59,7 @@ body:has(.servicePanel) .adminManagementNav + .panel:not(.servicePanel){display:
  .adminManagementNav{position:fixed;z-index:50;left:0;top:0;bottom:0;width:220px;margin:0;padding:104px 12px 18px;display:flex;flex-direction:column;align-items:stretch;gap:6px;border:0;border-right:1px solid var(--line);border-radius:0;box-shadow:none;background:#fff}
  .adminManagementNav::before{content:'FixIt';position:absolute;left:22px;top:27px;color:var(--brand);font-size:26px;font-weight:900;letter-spacing:-1px}
  .adminManagementNav::after{content:'ADMIN';position:absolute;left:23px;top:61px;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.14em}
- .adminManagementNav a{width:100%;justify-content:flex-start;min-height:44px;padding:11px 14px;border:1px solid transparent;background:transparent;box-shadow:none}
+ .adminManagementNav a{width:100%!important;min-width:0;justify-content:flex-start;min-height:44px;padding:11px 14px;border:1px solid transparent;background:transparent;box-shadow:none}
  .adminManagementNav a.secondary{color:#263247}
  .adminManagementNav a.secondary:hover{background:var(--surface-alt);border-color:transparent}
  .adminManagementNav a.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
@@ -69,14 +70,16 @@ body:has(.servicePanel) .adminManagementNav + .panel:not(.servicePanel){display:
  .disabledNotice{grid-column:1;grid-row:3;margin:10px 0 0 62px}
 }
 
-@media(max-width:1049px){
- .adminManagementNav{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+@media(max-width:1049px) and (min-width:761px){
+ .adminManagementNav{overflow-x:auto;overscroll-behavior-x:contain;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch}
  .adminManagementNav::-webkit-scrollbar{display:none}
 }
 
-@media(max-width:700px){
- .adminManagementNav{margin:0 0 14px;padding:6px;border-radius:14px}
- .adminManagementNav a{min-height:40px;padding:9px 12px}
+@media(max-width:760px){
+ .adminManagementNav{display:none!important}
+ .adminManagementMobileNav{display:grid;gap:6px;margin:0 0 14px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-card)}
+ .adminManagementMobileNav label{font-size:11px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+ .adminManagementMobileNav select{width:100%;min-height:48px;margin:0;padding:0 42px 0 14px;border:1px solid #d8e0ec;border-radius:12px;background-color:#fff;color:var(--text);font-size:16px;font-weight:800;line-height:1.2}
  .serviceHeading{padding:20px 18px;align-items:flex-start}
  .serviceHeading h2{font-size:24px}
  .serviceIntro{font-size:14px}
