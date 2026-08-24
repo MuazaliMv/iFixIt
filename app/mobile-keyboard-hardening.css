@@ -1,12 +1,35 @@
 :root{--app-keyboard-inset:0px;--app-visual-viewport-height:100vh}
 html{scroll-padding-bottom:calc(var(--app-keyboard-inset) + 28px)}
 body{min-height:100dvh}
-input,textarea,select,[contenteditable="true"]{scroll-margin-top:88px;scroll-margin-bottom:calc(var(--app-keyboard-inset) + 32px)}
+input,textarea,select,[contenteditable="true"]{scroll-margin-top:96px;scroll-margin-bottom:120px}
 @supports(height:100dvh){.c3Page,.c4App,.c4Main{min-height:100dvh}}
+
 @media(max-width:900px){
- html.app-keyboard-open,html.app-keyboard-open body{scroll-padding-bottom:32px}
- html.app-keyboard-open .c3ActionDock{display:none!important}
- html.app-keyboard-open .c3Page{padding-bottom:calc(28px + env(safe-area-inset-bottom))!important}
- html.app-keyboard-open .c3WizardCard{padding-bottom:calc(36px + env(safe-area-inset-bottom))}
- html.app-keyboard-open [data-hide-when-keyboard-open="true"]{display:none!important}
+  /* The focused control is the reliable signal. iOS 26/WebKit may report stale
+     visualViewport geometry during keyboard animation, so do not depend on the
+     calculated keyboard inset before protecting the field. */
+  html.app-editing,html.app-editing body,
+  html.app-keyboard-open,html.app-keyboard-open body{scroll-padding-bottom:140px}
+
+  html.app-editing .c3ActionDock,
+  html.app-keyboard-open .c3ActionDock{display:none!important;visibility:hidden!important;pointer-events:none!important}
+
+  html.app-editing .c3Page,
+  html.app-keyboard-open .c3Page{padding-bottom:180px!important}
+
+  html.app-editing .c3WizardCard,
+  html.app-keyboard-open .c3WizardCard{padding-bottom:140px!important}
+
+  html.app-editing [data-hide-when-keyboard-open="true"],
+  html.app-keyboard-open [data-hide-when-keyboard-open="true"]{display:none!important}
+
+  .c3Field:focus-within{position:relative;z-index:80;scroll-margin-top:96px;scroll-margin-bottom:160px}
+  .c3Field input:focus,.c3Field textarea:focus,.c3Field select:focus{scroll-margin-top:96px;scroll-margin-bottom:160px}
+}
+
+@media(max-width:900px) and (pointer:coarse){
+  /* CSS fallback if JavaScript/visualViewport events are delayed. Supported by
+     modern iOS Safari and Chromium-based Android browsers. */
+  .c3Wizard:has(input:focus,textarea:focus,select:focus,[contenteditable="true"]:focus) .c3ActionDock{display:none!important}
+  .c3Wizard:has(input:focus,textarea:focus,select:focus,[contenteditable="true"]:focus) .c3WizardCard{padding-bottom:140px!important}
 }
