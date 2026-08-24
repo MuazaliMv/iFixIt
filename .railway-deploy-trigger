@@ -1,6 +1,6 @@
 Trigger Railway deployment from the latest main head only.
-Updated: 2026-08-25T01:59:00+05:00
-Reason: deploy the latest login workspace menu with Customer Portal, Service Provider, and Admin Portal options.
+Updated: 2026-08-25T02:52:55+05:00
+Reason: deploy the new Service Provider Dashboard landing workspace.
 
 Required production behavior:
 - Production source of truth is GitHub branch: main.
@@ -10,12 +10,15 @@ Required production behavior:
 - ifixmv.com must point to the newest successful production deployment.
 
 Current target main HEAD at time of this trigger:
-- 745d3046bd6c11bea1668dd84092666aaf069f08
-- Trigger Admin Portal login deployment
+- 2a38dd01964cf9c36c216176b35ca88ac0302f92
+- Service Provider Dashboard landing page
 
-Expected login workspace menu:
-- Service Provider
-- Customer Portal
-- Admin Portal
+Expected provider workspace behavior:
+- /provider and provider mode entry land on /provider/today.
+- Dashboard shows live New, Active, Completed, and working-day summary data.
+- New request cards retain customer request photos and Accept/Decline actions.
+- Quick access links connect to Jobs, Calendar, Availability, Services, and Profile.
+- Provider can switch to Customer without another login.
+- Mobile-first responsive provider dashboard styling is enabled.
 
 This trigger intentionally changes on main so the Railway hosting integration performs a new production build from the latest source.
