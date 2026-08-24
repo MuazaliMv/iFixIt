@@ -1,0 +1,12 @@
+:root{--app-keyboard-inset:0px;--app-visual-viewport-height:100vh}
+html{scroll-padding-bottom:calc(var(--app-keyboard-inset) + 28px)}
+body{min-height:100dvh}
+input,textarea,select,[contenteditable="true"]{scroll-margin-top:88px;scroll-margin-bottom:calc(var(--app-keyboard-inset) + 32px)}
+@supports(height:100dvh){.c3Page,.c4App,.c4Main{min-height:100dvh}}
+@media(max-width:900px){
+ html.app-keyboard-open,html.app-keyboard-open body{scroll-padding-bottom:32px}
+ html.app-keyboard-open .c3ActionDock{display:none!important}
+ html.app-keyboard-open .c3Page{padding-bottom:calc(28px + env(safe-area-inset-bottom))!important}
+ html.app-keyboard-open .c3WizardCard{padding-bottom:calc(36px + env(safe-area-inset-bottom))}
+ html.app-keyboard-open [data-hide-when-keyboard-open="true"]{display:none!important}
+}
