@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { apiFetch } from '../lib/apiClient';
 
 type AccountRole='CUSTOMER'|'PROVIDER'|'ADMIN';
 
@@ -26,7 +27,7 @@ export default function RoleAccessGuard(){
       if(!roleControlled)return;
 
       try{
-        const r=await fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store'});
+        const r=await apiFetch('/api/user/profile');
         if(!active)return;
         if(r.status===401){router.replace(`/login?next=${encodeURIComponent(path)}`);return;}
         if(!r.ok)return;
