@@ -1,60 +1,62 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 
-type AdminSubmenu={label:string;href:string;match?:(path:string)=>boolean};
-type AdminMenuGroup={label:string;href:string;matches:(path:string)=>boolean;submenus:AdminSubmenu[]};
+type AdminIcon='dashboard'|'requests'|'users'|'services'|'system';
+type AdminSubmenu={label:string;href:string;match?:(path:string,query:URLSearchParams)=>boolean};
+type AdminMenuGroup={label:string;href:string;icon:AdminIcon;matches:(path:string)=>boolean;submenus:AdminSubmenu[]};
+type Theme='light'|'dark';
 
 const groups:AdminMenuGroup[]=[
  {
-  label:'Dashboard',href:'/admin',
+  label:'Dashboard',href:'/admin',icon:'dashboard',
   matches:path=>path==='/admin',
   submenus:[
-   {label:'Overview',href:'/admin',match:path=>path==='/admin'},
+   {label:'Overview',href:'/admin',match:(path)=>path==='/admin'},
    {label:'Action Required',href:'/admin/escalations'},
    {label:'Marketplace Activity',href:'/admin/reports?view=marketplace'},
   ],
  },
  {
-  label:'Requests',href:'/admin/requests',
+  label:'Requests',href:'/admin/requests',icon:'requests',
   matches:path=>path.startsWith('/admin/requests')||path.startsWith('/admin/escalations'),
   submenus:[
-   {label:'All Requests',href:'/admin/requests',match:path=>path.startsWith('/admin/requests')},
-   {label:'Active Requests',href:'/admin/requests?status=active'},
-   {label:'Completed',href:'/admin/requests?status=COMPLETED'},
-   {label:'Cancelled / Failed',href:'/admin/requests?status=CANCELLED'},
+   {label:'All Requests',href:'/admin/requests',match:(path,q)=>path.startsWith('/admin/requests')&&!q.get('status')},
+   {label:'Active Requests',href:'/admin/requests?status=active',match:(path,q)=>path.startsWith('/admin/requests')&&q.get('status')==='active'},
+   {label:'Completed',href:'/admin/requests?status=COMPLETED',match:(path,q)=>path.startsWith('/admin/requests')&&q.get('status')==='COMPLETED'},
+   {label:'Cancelled / Failed',href:'/admin/requests?status=CANCELLED',match:(path,q)=>path.startsWith('/admin/requests')&&q.get('status')==='CANCELLED'},
    {label:'Escalations',href:'/admin/escalations',match:path=>path.startsWith('/admin/escalations')},
   ],
  },
  {
-  label:'Users & Providers',href:'/admin/users',
+  label:'Users & Providers',href:'/admin/users',icon:'users',
   matches:path=>path.startsWith('/admin/users')||path.startsWith('/admin/providers'),
   submenus:[
-   {label:'Customers',href:'/admin/users?type=customer'},
-   {label:'Service Providers',href:'/admin/providers',match:path=>path==='/admin/providers'},
-   {label:'Provider Applications',href:'/admin/providers?view=applications'},
-   {label:'User Accounts',href:'/admin/users',match:path=>path==='/admin/users'},
+   {label:'Customers',href:'/admin/users?type=customer',match:(path,q)=>path==='/admin/users'&&q.get('type')==='customer'},
+   {label:'Service Providers',href:'/admin/providers',match:(path,q)=>path==='/admin/providers'&&!q.get('view')},
+   {label:'Provider Applications',href:'/admin/providers?view=applications',match:(path,q)=>path.startsWith('/admin/providers')&&q.get('view')==='applications'},
+   {label:'User Accounts',href:'/admin/users',match:(path,q)=>path==='/admin/users'&&!q.get('type')},
    {label:'Rights & Privileges',href:'/admin/users/rights-privileges',match:path=>path.startsWith('/admin/users/rights-privileges')},
   ],
  },
  {
-  label:'Services & Locations',href:'/admin/services',
+  label:'Services & Locations',href:'/admin/services',icon:'services',
   matches:path=>path.startsWith('/admin/services')||path.startsWith('/admin/request-form')||path.startsWith('/admin/required-fields')||path.startsWith('/admin/locations'),
   submenus:[
-   {label:'Services',href:'/admin/services',match:path=>path==='/admin/services'},
-   {label:'Categories / Subcategories',href:'/admin/services?view=categories'},
+   {label:'Services',href:'/admin/services',match:(path,q)=>path==='/admin/services'&&!q.get('view')},
+   {label:'Categories / Subcategories',href:'/admin/services?view=categories',match:(path,q)=>path.startsWith('/admin/services')&&q.get('view')==='categories'},
    {label:'Request Form',href:'/admin/request-form',match:path=>path.startsWith('/admin/request-form')||path.startsWith('/admin/required-fields')},
-   {label:'Locations',href:'/admin/locations',match:path=>path==='/admin/locations'},
-   {label:'Provider Coverage',href:'/admin/locations?view=coverage'},
+   {label:'Locations',href:'/admin/locations',match:(path,q)=>path==='/admin/locations'&&!q.get('view')},
+   {label:'Provider Coverage',href:'/admin/locations?view=coverage',match:(path,q)=>path.startsWith('/admin/locations')&&q.get('view')==='coverage'},
   ],
  },
  {
-  label:'Reports & System',href:'/admin/reports',
+  label:'Reports & System',href:'/admin/reports',icon:'system',
   matches:path=>path.startsWith('/admin/reports')||path.startsWith('/admin/audit-logs')||path.startsWith('/admin/settings'),
   submenus:[
-   {label:'Reports',href:'/admin/reports',match:path=>path.startsWith('/admin/reports')},
+   {label:'Reports',href:'/admin/reports',match:(path,q)=>path.startsWith('/admin/reports')&&q.get('view')!=='marketplace'},
    {label:'Audit Logs',href:'/admin/audit-logs',match:path=>path.startsWith('/admin/audit-logs')},
    {label:'Notifications',href:'/notifications'},
    {label:'Settings',href:'/admin/settings',match:path=>path.startsWith('/admin/settings')},
@@ -63,49 +65,84 @@ const groups:AdminMenuGroup[]=[
  },
 ];
 
-export default function AdminNav(){
+function MenuIcon({name}:{name:AdminIcon}){
+ const props={viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,'aria-hidden':true};
+ if(name==='dashboard')return <svg {...props}><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>;
+ if(name==='requests')return <svg {...props}><path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>;
+ if(name==='users')return <svg {...props}><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0M14 16.5a4.5 4.5 0 0 1 6.5 3.5"/></svg>;
+ if(name==='services')return <svg {...props}><path d="M4 7h10M4 17h16M14 7l2-2 4 4-2 2M8 17l-2-2-2 2 2 2Z"/><circle cx="9" cy="7" r="2"/><circle cx="14" cy="17" r="2"/></svg>;
+ return <svg {...props}><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/></svg>;
+}
+
+function ThemeIcon({theme}:{theme:Theme}){
+ if(theme==='dark')return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>;
+ return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>;
+}
+
+function AdminNavInner(){
  const path=usePathname();
+ const searchParams=useSearchParams();
+ const query=new URLSearchParams(searchParams.toString());
+ const[theme,setTheme]=useState<Theme>('light');
 
  useEffect(()=>{
   const root=document.documentElement;
   root.classList.add('adminSimpleNavActive');
+  let next:Theme='light';
+  try{
+   const saved=localStorage.getItem('ifixmv-admin-theme');
+   if(saved==='light'||saved==='dark')next=saved;
+   else if(window.matchMedia?.('(prefers-color-scheme: dark)').matches)next='dark';
+  }catch{}
+  root.dataset.adminTheme=next;
+  setTheme(next);
   return()=>root.classList.remove('adminSimpleNavActive');
  },[]);
+
+ function toggleTheme(){
+  const next:Theme=theme==='dark'?'light':'dark';
+  setTheme(next);
+  document.documentElement.dataset.adminTheme=next;
+  try{localStorage.setItem('ifixmv-admin-theme',next);}catch{}
+ }
 
  if(!path.startsWith('/admin'))return null;
  const activeGroup=groups.find(group=>group.matches(path))||groups[0];
 
  return <nav className="adminSimpleNav" aria-label="Admin navigation">
-  <div className="adminSimplePrimary" role="list">
+  <div className="adminNavHeader">
+   <Link className="adminNavIdentity" href="/admin" aria-label="iFix Maldives Admin dashboard">
+    <span className="adminNavMark">iF</span>
+    <span className="adminNavIdentityCopy"><strong>iFix Admin</strong><small>Operations Console</small></span>
+   </Link>
+   <div className="adminNavTools">
+    <span className="adminSecurePill"><i aria-hidden="true"/>Secure admin access</span>
+    <button type="button" className="adminThemeToggle" onClick={toggleTheme} aria-label={`Switch to ${theme==='dark'?'light':'dark'} mode`} title={`Switch to ${theme==='dark'?'light':'dark'} mode`}><ThemeIcon theme={theme}/></button>
+   </div>
+  </div>
+
+  <div className="adminSimplePrimary" role="list" aria-label="Admin sections">
    {groups.map(group=>{
     const active=group.label===activeGroup.label;
     return <Link key={group.label} href={group.href} className={`adminSimplePrimaryItem${active?' active':''}`} aria-current={active?'page':undefined}>
-     <span>{group.label}</span>
+     <MenuIcon name={group.icon}/><span>{group.label}</span>
     </Link>;
    })}
   </div>
 
   <div className="adminSimpleSubmenus" aria-label={`${activeGroup.label} sections`}>
    {activeGroup.submenus.map(item=>{
-    const active=item.match?item.match(path):false;
-    return <Link key={`${activeGroup.label}-${item.label}`} href={item.href} className={`adminSimpleSubmenuItem${active?' active':''}`} aria-current={active?'page':undefined}>{item.label}</Link>;
+    const active=item.match?item.match(path,query):false;
+    return <a key={`${activeGroup.label}-${item.label}`} href={item.href} className={`adminSimpleSubmenuItem${active?' active':''}`} aria-current={active?'page':undefined}>{item.label}</a>;
    })}
   </div>
-
-  <style jsx global>{`
-   .adminSimpleNavActive .globalMenuHeaderWrap{display:none!important}
-   .adminSimpleNavActive .fixitModalBackdrop{display:none!important}
-   .adminSimpleNav{width:100%;display:grid;gap:9px;margin:12px 0 18px;padding:10px;border:1px solid #e2e8f0;border-radius:18px;background:rgba(255,255,255,.96);box-shadow:0 8px 24px rgba(15,23,42,.05);overflow:hidden}
-   .adminSimplePrimary,.adminSimpleSubmenus{display:flex;align-items:center;gap:7px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-   .adminSimplePrimary::-webkit-scrollbar,.adminSimpleSubmenus::-webkit-scrollbar{display:none}
-   .adminSimplePrimaryItem{min-height:48px;display:inline-flex;align-items:center;justify-content:center;flex:1 0 auto;padding:0 14px;border:1px solid transparent;border-radius:13px;color:#475569;background:#f8fafc;text-decoration:none;font-size:13px;font-weight:800;white-space:nowrap;transition:.15s ease}
-   .adminSimplePrimaryItem:hover{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}
-   .adminSimplePrimaryItem.active{border-color:#2563eb;background:#2563eb;color:#fff;box-shadow:0 6px 16px rgba(37,99,235,.18)}
-   .adminSimpleSubmenus{padding-top:1px}
-   .adminSimpleSubmenuItem{min-height:44px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;padding:0 13px;border:1px solid #e2e8f0;border-radius:999px;background:#fff;color:#64748b;text-decoration:none;font-size:12px;font-weight:750;white-space:nowrap;transition:.15s ease}
-   .adminSimpleSubmenuItem:hover{border-color:#93c5fd;color:#1d4ed8;background:#f8fbff}
-   .adminSimpleSubmenuItem.active{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8;font-weight:850}
-   @media(max-width:640px){.adminSimpleNav{margin:9px 0 14px;padding:8px;border-radius:16px}.adminSimplePrimary{gap:6px}.adminSimplePrimaryItem{min-height:48px;padding:0 13px;font-size:12px}.adminSimpleSubmenus{gap:6px}.adminSimpleSubmenuItem{min-height:44px;padding:0 12px;font-size:11.5px}}
-  `}</style>
  </nav>;
+}
+
+function AdminNavFallback(){
+ return <nav className="adminSimpleNav" aria-label="Admin navigation" aria-busy="true"><div className="adminNavHeader"><span className="adminNavIdentity"><span className="adminNavMark">iF</span><span className="adminNavIdentityCopy"><strong>iFix Admin</strong><small>Operations Console</small></span></span></div></nav>;
+}
+
+export default function AdminNav(){
+ return <Suspense fallback={<AdminNavFallback/>}><AdminNavInner/></Suspense>;
 }
