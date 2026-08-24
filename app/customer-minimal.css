@@ -44,6 +44,40 @@
 .c3ActionDock{background:transparent;backdrop-filter:none}
 .c3ActionInner{max-width:720px;margin:0 auto}
 .c3Primary,.c3Secondary{min-height:48px;border-radius:14px;box-shadow:none}
+
+/* Apple-style service selection layer. Keeps the existing React request flow intact. */
+.appleServiceToolbar{display:grid;gap:10px;margin:16px 0 10px}
+.appleServiceSearch{position:relative;display:flex;align-items:center}
+.appleServiceSearch svg{position:absolute;left:13px;width:17px;height:17px;fill:none;stroke:#86868b;stroke-width:2;stroke-linecap:round;pointer-events:none}
+.appleServiceSearch input{width:100%;height:44px;padding:0 14px 0 40px;border:1px solid #d2d2d7;border-radius:13px;background:#fff;color:#1d1d1f;font:inherit;font-size:14px;outline:none;transition:border-color .18s ease,box-shadow .18s ease}
+.appleServiceSearch input:focus{border-color:#0071e3;box-shadow:0 0 0 3px rgba(0,113,227,.12)}
+.appleServiceSearch input::placeholder{color:#86868b}
+.appleServiceFilters{display:flex;gap:7px;overflow-x:auto;padding:1px 0 3px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.appleServiceFilters::-webkit-scrollbar{display:none}
+.appleServiceFilters button{flex:0 0 auto;min-height:32px;padding:0 12px;border:1px solid #d2d2d7;border-radius:999px;background:#fff;color:#1d1d1f;font:inherit;font-size:12px;font-weight:650;white-space:nowrap;cursor:pointer;transition:background .18s ease,color .18s ease,border-color .18s ease,transform .12s ease}
+.appleServiceFilters button:active{transform:scale(.97)}
+.appleServiceFilters button.active{background:#1d1d1f;border-color:#1d1d1f;color:#fff}
+.appleServiceEmpty{padding:24px 10px;text-align:center;color:#86868b;font-size:13px}
+
+.c3Wizard .c3ServiceGrid{grid-template-columns:1fr;gap:8px;margin-top:10px!important}
+.c3Wizard .c3ServiceTile{position:relative;min-height:62px;border:1px solid #d2d2d7;border-radius:15px;padding:10px 46px 10px 11px;grid-template-columns:38px minmax(0,1fr);gap:11px;background:#fff;color:#1d1d1f;box-shadow:none}
+.c3Wizard .c3ServiceTile::after{content:'';position:absolute;right:15px;top:50%;width:19px;height:19px;transform:translateY(-50%);border:1.5px solid #c7c7cc;border-radius:50%;background:#fff;box-sizing:border-box}
+.c3Wizard .c3ServiceTile:hover{border-color:#b7b7bc;background:#fff;color:#1d1d1f}
+.c3Wizard .c3ServiceTile.selected{border-color:#0071e3;background:#f7fbff;color:#1d1d1f;box-shadow:0 0 0 2px rgba(0,113,227,.10)}
+.c3Wizard .c3ServiceTile.selected::after{content:'✓';display:grid;place-items:center;background:#0071e3;border-color:#0071e3;color:#fff;font-size:12px;font-weight:800}
+.c3Wizard .c3ServiceTile .c3ServiceIcon{width:36px;height:36px;border-radius:10px;background:#f5f5f7;padding:7px}
+.c3Wizard .c3ServiceTile strong{font-size:14px;font-weight:650;line-height:1.2;letter-spacing:-.1px}
+.c3Wizard .c3ServiceTile[hidden]{display:none!important}
+.c3WizardCard:has(.appleServiceToolbar){background:#f5f5f7;border-color:#e5e5e7;padding-bottom:14px}
+.c3WizardCard:has(.appleServiceToolbar) .c3Question h1{font-size:clamp(24px,5vw,30px);color:#1d1d1f}
+.c3WizardCard:has(.appleServiceToolbar) .c3Question p{color:#86868b;margin-top:3px}
+
+.c3ActionDock{position:sticky;bottom:0;z-index:20;padding:10px 0 max(10px,env(safe-area-inset-bottom));background:rgba(245,245,247,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(210,210,215,.65)}
+.c3ActionInner{gap:10px}
+.c3ActionInner .c3Secondary{background:#e8e8ed;border-color:#e8e8ed;color:#1d1d1f}
+.c3ActionInner .c3Primary{background:#0071e3;border-color:#0071e3;color:#fff}
+.c3ActionInner .c3Primary:disabled{opacity:.42;cursor:not-allowed}
+
 @media(max-width:760px){
  .c3Shell{width:min(100% - 20px,620px)}
  .c3Home{padding-top:10px}
@@ -56,11 +90,14 @@
  .c3ServiceTile .c3ServiceIcon{width:22px;height:22px}
  .c3WizardCard{padding:18px 16px;border-radius:18px}
  .c3WizardTop .c3Status{font-size:10px}
- .c3ActionDock{left:10px;right:10px;padding:7px;border-radius:15px}
- .c3ActionInner{grid-template-columns:82px 1fr}
+ .c3ActionDock{left:0;right:0;padding:8px 10px max(8px,env(safe-area-inset-bottom));border-radius:0}
+ .c3ActionInner{grid-template-columns:92px 1fr}
  .c3Urgency{grid-template-columns:1fr}
+ .c3Wizard .c3ServiceTile{min-height:60px;grid-template-columns:36px minmax(0,1fr);padding:10px 44px 10px 10px}
+ .c3Wizard .c3ServiceTile .c3ServiceIcon{width:34px;height:34px}
 }
 @media(max-width:390px){
  .c3ServiceGrid{grid-template-columns:1fr}
  .c3ServiceTile{min-height:58px}
+ .appleServiceFilters{margin-right:-4px}
 }
