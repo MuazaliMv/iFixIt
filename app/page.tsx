@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import './landing.css';
 import './landing-blue.css';
+import './landing-mobile-services.css';
 
 type Lang='en'|'dv';
+type ServiceData=[string,string,string,string[]];
 
 const copy={
  en:{
@@ -13,9 +15,27 @@ const copy={
   nav:['ޚިދުމަތްތައް','ކިހިނެއް ކުރަނީ','ޕްރޮވައިޑަރުން'],signIn:'ސައިން އިން',request:'ޚިދުމަތެއް އެދޭ',eyebrow:'ދިވެހިރާއްޖޭގެ ޚިދުމަތް މާކެޓްޕްލޭސް',hero1:'އިތުބާރުހުރި ދިވެހި އެހީ ހޯދާ.',hero2:'މައްސަލަ ހައްލު ކުރާ.',heroText:'މަރާމާތު، މެއިންޓެނެންސް އަދި ދުވަހުން ދުވަހަށް ބޭނުންވާ މަސައްކަތްތަކަށް ދިވެހިރާއްޖޭގައި ޚިދުމަތްދޭ ފަރާތްތައް އެއް ތަނަކުން ހޯދާ.',become:'ޕްރޮވައިޑަރަކަށް ވާ',trust:['ވެރިފައިޑް ޕްރޮވައިޑަރުން','ތަނާ ގުޅޭ މެޗިންގ','ރޭޓިންގ އަދި ރިވިއު'],start:'ރިކުއެސްޓެއް ފަށާ',needs:'ކޮބައިތޯ ހައްދަން ޖެހެނީ؟',live:'ލައިވް',service:'ޚިދުމަތް',chooseService:'ޚިދުމަތެއް ހޮވާ',location:'ތަން',chooseIsland:'ރަށެއް ހޮވާ',continue:'ކުރިއަށް',fast:'އަވަސް މެޗިންގ',fastText:'ކައިރީގައި ހުރި މުނާސިބު ޕްރޮވައިޑަރުން ހޯދާ',choose:'އިތުބާރާއެކު ހޮވާ',chooseText:'ކަށަވަރު ކުރުމުގެ ކުރިން ރޭޓިންގ ބަލާ',popular:'މަޤްބޫލު ޚިދުމަތްތައް',servicesTitle:'ކޮންމެ މަސައްކަތަކަށްވެސް iFix އިން ފަށާ.',servicesText:'އަވަސް މަރާމާތުން ފެށިގެން ޕްލޭން ކުރެވިފައިވާ މެއިންޓެނެންސްއަށް، މުނާސިބު ޕްރޮވައިޑަރެއް ހޯދާ.',how:'IFIX ކިހިނެއް ކުރަނީ',howTitle:'މައްސަލައިން ހައްލަށް، ދަތިތަކެއް ނެތި.',howText:'އެއް ސާދާ ރިކުއެސްޓަކުން ތިބާއަށް އެހީވެދޭ ޕްރޮވައިޑަރުންނާ ގުޅުވައިދޭ.',trustTitle:'އިތުބާރަށް ބިނާކުރެވިފައި',know:'ތިބާ ހޮވަނީ ކާކުކަން ދަންނާ.',trustText:'iFix ބިނާކުރެވިފައިވަނީ ވެރިފައިޑް ޕްރޮވައިޑަރ ޕްރޮފައިލް، ސާފު ޚިދުމަތް ސަރަހައްދު، ރޭޓިންގ އަދި ރިކުއެސްޓް ޓްރެކިންގ މަތީގައެވެ.',verify:'ޕްރޮވައިޑަރ ވެރިފިކޭޝަން',verifyText:'އިތުބާރު ފެންނަ ގޮތަށް ހެދިފައި',features:['ޕްރޮވައިޑަރގެ އައިޑެންޓިޓީ އަދި ބިޒްނަސް ވެރިފިކޭޝަން','ނިމިފައިވާ ރިކުއެސްޓްތަކުން ރޭޓިންގ','ތަން ބަލައި ޕްރޮވައިޑަރ މެޗިންގ','ފެށުމުން ނިމުމަށް ރިކުއެސްޓް ސްޓޭޓަސް'],forProviders:'ޚިދުމަތްދޭ ފަރާތްތަކަށް',providerTitle:'ގިނަ ލޯކަލް މަސައްކަތް. ހޯދުމުގައި މަދު ވަގުތު.',providerText:'އިންޑިވިޖުއަލް ޕްރޮފެޝަނަލެއް ނުވަތަ ރަޖިސްޓަރޑް ބިޒްނަހަކަށް iFix އާ ގުޅޭ. ތިބާގެ ޚިދުމަތްތަކާ ތަންތަން ސެޓް ކޮށް، ތިބާ ކުރާ މަސައްކަތާ ގުޅޭ ރިކުއެސްޓްތައް ލިބޭ.',providerBullets:['ތިބާ ދޭ ޚިދުމަތްތައް ހޮވާ','ތިބާ ޚިދުމަތްދޭ ތަންތަން ސެޓް ކުރޭ','ރޭޓިންގތަކުން ތިބާގެ ރެޕިއުޓޭޝަން ބޮޑުކުރޭ'],join:'ޕްރޮވައިޑަރަކަށް ގުޅޭ',ready:'ތިބާ ތައްޔާރުވެގެން ހުންނަ އިރަށް',needFixed:'ކަމެއް ހައްދަން ބޭނުންތޯ؟',finalText:'ތިބާއަށް ބޭނުން ކަން ބުނެދޭ. މުނާސިބު ލޯކަލް ޕްރޮވައިޑަރެއް ހޯދުމަށް އެހީވެދޭނަން.',footer:'ލޯކަލް ޚިދުމަތް. އެއް ސާދާ ތަނެއް.',rights:'ހުރިހާ ޙައްޤެއް މަޙްފޫޒު.'}
 };
 
-const serviceData={
- en:[['🔧','General repairs','Everyday fixes and maintenance'],['⚡','Electrical','Lights, wiring and electrical faults'],['🚿','Plumbing','Leaks, taps, pumps and pipe work'],['❄️','AC & refrigeration','Cooling, servicing and repair'],['🧹','Cleaning','Home and business cleaning'],['🪚','Carpentry','Furniture, doors and woodwork'],['🎨','Painting','Interior and exterior painting'],['💻','IT & technical','Devices, networks and setup']],
- dv:[['🔧','އާންމު މަރާމާތު','ދުވަހުން ދުވަހަށް ބޭނުންވާ މަރާމާތު އަދި މެއިންޓެނެންސް'],['⚡','އިލެކްޓްރިކަލް','ލައިޓް، ވަޔަރިންގ އަދި އިލެކްޓްރިކަލް މައްސަލަ'],['🚿','ޕްލަމްބިންގ','ލީކް، ޓެޕް، ޕަމްޕް އަދި ޕައިޕް'],['❄️','އޭސީ އަދި ރެފްރިޖަރޭޝަން','ކޫލިންގ، ސާވިސް އަދި މަރާމާތު'],['🧹','ސާފުކުރުން','ގޭދޮރު އަދި ބިޒްނަސް ސާފުކުރުން'],['🪚','ކާޕެންޓްރީ','ފަރުނީޗަރު، ދޮރު އަދި ލަކުޑީގެ މަސައްކަތް'],['🎨','ކުލަލުން','އެތެރެ އަދި ބޭރު ކުލަލުން'],['💻','އައިޓީ އަދި ޓެކްނިކަލް','ޑިވައިސް، ނެޓްވޯކް އަދި ސެޓަޕް']]
+const serviceData:Record<Lang,ServiceData[]>={
+ en:[
+  ['🔧','General repairs','Everyday fixes and maintenance',['Wall repair','Door repair','Furniture fix','Hardware','+2 more']],
+  ['⚡','Electrical','Lights, wiring and electrical faults',['Lighting','Switches','Wiring','Circuit breaker','+2 more']],
+  ['🚿','Plumbing','Leaks, taps, pumps and pipe work',['Leak repair','Tap install','Pipe repair','Pump repair','+2 more']],
+  ['❄️','AC & refrigeration','Cooling, servicing and repair',['AC service','AC repair','Installation','Refrigerator','+1 more']],
+  ['🧹','Cleaning','Home and business cleaning',['Home cleaning','Deep cleaning','Office cleaning','Post renovation','+2 more']],
+  ['🪚','Carpentry','Furniture, doors and woodwork',['Door install','Wardrobe','Shelving','Custom furniture','+2 more']],
+  ['🎨','Painting','Interior and exterior painting',['Interior paint','Exterior paint','Wall texture','Touch up','+1 more']],
+  ['💻','IT & technical','Devices, networks and setup',['Device setup','Wi-Fi setup','Network support','Troubleshooting','+1 more']]
+ ],
+ dv:[
+  ['🔧','އާންމު މަރާމާތު','ދުވަހުން ދުވަހަށް ބޭނުންވާ މަރާމާތު އަދި މެއިންޓެނެންސް',['ފާރު މަރާމާތު','ދޮރު މަރާމާތު','ފަރުނީޗަރު','ހާޑްވެއަރ','+2']],
+  ['⚡','އިލެކްޓްރިކަލް','ލައިޓް، ވަޔަރިންގ އަދި އިލެކްޓްރިކަލް މައްސަލަ',['ލައިޓިންގ','ސްވިޗް','ވަޔަރިންގ','ސާކިޓް ބްރޭކަރ','+2']],
+  ['🚿','ޕްލަމްބިންގ','ލީކް، ޓެޕް، ޕަމްޕް އަދި ޕައިޕް',['ލީކް މަރާމާތު','ޓެޕް ހަރުކުރުން','ޕައިޕް މަރާމާތު','ޕަމްޕް މަރާމާތު','+2']],
+  ['❄️','އޭސީ އަދި ރެފްރިޖަރޭޝަން','ކޫލިންގ، ސާވިސް އަދި މަރާމާތު',['އޭސީ ސާވިސް','އޭސީ މަރާމާތު','އިންސްޓޯލް','ރެފްރިޖެރޭޓަރ','+1']],
+  ['🧹','ސާފުކުރުން','ގޭދޮރު އަދި ބިޒްނަސް ސާފުކުރުން',['ގެ ސާފު','ޑީޕް ކްލީނިންގ','އޮފީސް','ރެނޮވޭޝަން ފަހު','+2']],
+  ['🪚','ކާޕެންޓްރީ','ފަރުނީޗަރު، ދޮރު އަދި ލަކުޑީގެ މަސައްކަތް',['ދޮރު ހަރުކުރުން','ވޯޑްރޯބް','ޝެލްފް','ކަސްޓަމް ފަރުނީޗަރު','+2']],
+  ['🎨','ކުލަލުން','އެތެރެ އަދި ބޭރު ކުލަލުން',['އެތެރެ ކުލަ','ބޭރު ކުލަ','ފާރު ޓެކްސްޗަރ','ޓަޗް އަޕް','+1']],
+  ['💻','އައިޓީ އަދި ޓެކްނިކަލް','ޑިވައިސް، ނެޓްވޯކް އަދި ސެޓަޕް',['ޑިވައިސް ސެޓަޕް','ވައި-ފައި','ނެޓްވޯކް','ޓްރަބަލްޝޫޓް','+1']]
+ ]
 };
 
 const stepData={
@@ -37,7 +57,7 @@ export default function IndexPage(){
   <main>
    <section className="landingHero"><div className="landingHeroGlow"/><div className="landingHeroInner"><div className="landingHeroCopy"><div className="landingEyebrow"><span/>{t.eyebrow}</div><h1>{t.hero1}<br/><em>{t.hero2}</em></h1><p>{t.heroText}</p><div className="landingHeroActions"><a className="landingPrimary" href="/login">{t.request} <span>→</span></a><a className="landingSecondary" href="#providers">{t.become}</a></div><div className="landingTrustRow">{t.trust.map(x=><span key={x}><b>✓</b>{x}</span>)}</div></div>
     <div className="landingHeroCard"><div className="landingHeroCardTop"><div><small>{t.start}</small><h2>{t.needs}</h2></div><span className="landingStatusDot">● {t.live}</span></div><div className="landingFinder"><label>{t.service}<div className="landingFakeInput"><span>🔧</span><strong>{t.chooseService}</strong><b>⌄</b></div></label><label>{t.location}<div className="landingFakeInput"><span>⌖</span><strong>{t.chooseIsland}</strong><b>⌄</b></div></label><a href="/login" className="landingFindButton">{t.continue} <span>→</span></a></div><div className="landingMiniCards"><div><span>⚡</span><p><strong>{t.fast}</strong><small>{t.fastText}</small></p></div><div><span>★</span><p><strong>{t.choose}</strong><small>{t.chooseText}</small></p></div></div></div></div></section>
-   <section className="landingSection landingServices" id="services"><div className="landingSectionHead"><div><small>{t.popular}</small><h2>{t.servicesTitle}</h2></div><p>{t.servicesText}</p></div><div className="landingServiceGrid">{serviceData[lang].map(([icon,title,text])=><a href="/login" className="landingServiceCard" key={title}><span className="landingServiceIcon">{icon}</span><div><strong>{title}</strong><small>{text}</small></div><b>→</b></a>)}</div></section>
+   <section className="landingSection landingServices" id="services"><div className="landingSectionHead"><div><small>{t.popular}</small><h2>{t.servicesTitle}</h2></div><p>{t.servicesText}</p></div><div className="landingServiceGrid">{serviceData[lang].map(([icon,title,text,subcategories])=><a href="/login" className="landingServiceCard" key={title}><span className="landingServiceIcon">{icon}</span><div><strong>{title}</strong><small>{text}</small></div><b>→</b><div className="landingSubcategories" aria-label={`${title} subcategories`}>{subcategories.map(item=><span className={`landingSubcategory${item.startsWith('+')?' landingSubcategoryMore':''}`} key={item}>{item}</span>)}</div></a>)}</div></section>
    <section className="landingHow" id="how-it-works"><div className="landingHowInner"><div className="landingSectionHead light"><div><small>{t.how}</small><h2>{t.howTitle}</h2></div><p>{t.howText}</p></div><div className="landingSteps">{stepData[lang].map(([n,title,text])=><div className="landingStep" key={n}><span>{n}</span><h3>{title}</h3><p>{text}</p></div>)}</div></div></section>
    <section className="landingSection landingSafety"><div className="landingSafetyCard"><div className="landingSafetyVisual"><span className="landingShield">✓</span><div><strong>{t.verify}</strong><small>{t.verifyText}</small></div></div><div className="landingSafetyCopy"><small>{t.trustTitle}</small><h2>{t.know}</h2><p>{t.trustText}</p><div className="landingFeatureList">{t.features.map(x=><span key={x}><b>✓</b>{x}</span>)}</div></div></div></section>
    <section className="landingProvider" id="providers"><div className="landingProviderInner"><div><small>{t.forProviders}</small><h2>{t.providerTitle}</h2><p>{t.providerText}</p><div className="landingProviderBullets">{t.providerBullets.map(x=><span key={x}>✓ {x}</span>)}</div><a className="landingProviderCta" href="/login">{t.join} <span>→</span></a></div><div className="landingProviderGraphic"><div className="landingProviderCard"><span>{lang==='dv'?'އާ ރިކުއެސްޓް':'New request'}</span><strong>{lang==='dv'?'އޭސީ ސާވިސް':'AC servicing'}</strong><small>Hulhumalé · Standard</small><b>{lang==='dv'?'މަސައްކަތް ބަލާ →':'View job →'}</b></div><div className="landingProviderCard second"><span>{lang==='dv'?'ނިމިފައި':'Completed'}</span><strong>{lang==='dv'?'ޕްލަމްބިންގ މަރާމާތު':'Plumbing repair'}</strong><small>Malé · ★ 5.0</small><b>{lang==='dv'?'ރަނގަޅު މަސައްކަތް':'Great work'}</b></div></div></div></section>
