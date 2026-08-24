@@ -2,9 +2,11 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import { apiFetch } from '../../lib/apiClient';
 import './login.css';
 
 type Mode='login'|'register';
+type ExistingProfile={role?:string|null};
 
 function EyeIcon({off=false}:{off?:boolean}){
  return <svg viewBox="0 0 24 24" aria-hidden="true" className="eyeIcon"><path d="M2.3 12s3.5-5.5 9.7-5.5S21.7 12 21.7 12 18.2 17.5 12 17.5 2.3 12 2.3 12Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8"/>{off?<path d="M4 4l16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>:null}</svg>;
@@ -19,27 +21,53 @@ export default function LoginPage(){
  const[countryCode,setCountryCode]=useState('+960');
  const[message,setMessage]=useState('');
  const[busy,setBusy]=useState(false);
+ const[checkingSession,setCheckingSession]=useState(true);
  const[showPassword,setShowPassword]=useState(false);
  const[rememberMe,setRememberMe]=useState(true);
  const[capsLock,setCapsLock]=useState(false);
  const[touched,setTouched]=useState({email:false,password:false,phone:false,fullName:false});
 
  useEffect(()=>{
+  let active=true;
   try{
    const requestedMode=new URLSearchParams(window.location.search).get('mode');
    if(requestedMode==='register')setMode('register');
    const saved=localStorage.getItem('ifixmv-login-email');
    if(saved){setEmail(saved);setRememberMe(true);}
   }catch{}
+
+  // A visit to /login must not ask for credentials again when the secure
+  // application session is still valid. apiFetch also performs the one-time
+  // compatibility recovery for older browser sessions before we show the form.
+  void(async()=>{
+   try{
+    const response=await apiFetch('/api/user/profile');
+    if(!active)return;
+    if(response.ok){
+     const payload=await response.json().catch(()=>({}));
+     await routeUser(payload?.profile as ExistingProfile|undefined);
+     return;
+    }
+   }catch{}
+   if(active)setCheckingSession(false);
+  })();
+
+  return()=>{active=false;};
  },[]);
 
- async function routeUser(){
+ async function routeUser(knownProfile?:ExistingProfile){
   const requested=new URLSearchParams(window.location.search).get('next');
   if(requested&&requested.startsWith('/')&&!requested.startsWith('//')){window.location.replace(requested);return;}
+
+  const knownRole=String(knownProfile?.role||'').toUpperCase();
+  if(knownRole==='PROVIDER'){window.location.replace('/provider');return;}
+  if(knownRole==='ADMIN'){window.location.replace('/admin');return;}
+  if(knownRole==='CUSTOMER'){window.location.replace('/home');return;}
+
   try{
    const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),5000);
-   const response=await fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store',signal:controller.signal});clearTimeout(timer);
-   if(response.ok){const payload=await response.json();const accountRole=payload?.profile?.role;if(accountRole==='PROVIDER'){window.location.replace('/provider');return;}if(accountRole==='ADMIN'){window.location.replace('/admin');return;}}
+   const response=await apiFetch('/api/user/profile',{signal:controller.signal});clearTimeout(timer);
+   if(response.ok){const payload=await response.json();const accountRole=String(payload?.profile?.role||'').toUpperCase();if(accountRole==='PROVIDER'){window.location.replace('/provider');return;}if(accountRole==='ADMIN'){window.location.replace('/admin');return;}}
   }catch{}
   window.location.replace('/home');
  }
@@ -85,10 +113,12 @@ export default function LoginPage(){
     try{
       if(rememberMe)localStorage.setItem('ifixmv-login-email',emailTrimmed);else localStorage.removeItem('ifixmv-login-email');
     }catch{}
-    await routeUser();
+    await routeUser(p?.profile as ExistingProfile|undefined);
    }
   }catch(e){setMessage(e instanceof Error?e.message:'Unable to continue.');}finally{setBusy(false);}
  }
+
+ if(checkingSession)return <div className="authShell"><main className="authPage"><section className="authCardClean" aria-live="polite" aria-busy="true"><div className="authIntro"><h1>Opening iFixMV…</h1><p>Checking your existing session.</p></div></section></main></div>;
 
  return <div className="authShell">
   <div className="globalMenuHeaderWrap authShellHeaderWrap">
