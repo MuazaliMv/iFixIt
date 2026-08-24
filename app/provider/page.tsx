@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
 export default function ProviderPage() {
-  redirect('/provider/jobs');
+  redirect('/provider/today');
 }
