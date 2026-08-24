@@ -1,0 +1,81 @@
+name: Simplify Provider Approval Once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/simplify-provider-approval-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Simplify onboarding and provider approval
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          # 1) Provider onboarding: keep only approval essentials.
+          p = Path('app/provider/onboarding/page.tsx')
+          s = p.read_text()
+
+          s = s.replace("if(submit&&!requiredDocsPresent)return setMessage(providerType==='BUSINESS'?'Upload your ID Card and Business Permit before submitting.':'Upload your ID Card before submitting.');", "")
+
+          about = re.compile(r'''  <section className="panel"><div className="panelHeader"><div><p className="eyebrow">ABOUT YOU</p><h2>Provider details</h2></div></div>.*?</section>''', re.S)
+          s, n = about.subn('''  <section className="panel"><div className="panelHeader"><div><p className="eyebrow">1 · BASIC DETAILS</p><h2>Provider details</h2><p className="sectionLead">Only the details needed for the application.</p></div></div><div className="formGrid onboardingForm"><label>Provider type<select value={providerType} onChange={e=>setProviderType(e.target.value as ProviderType)}><option value="INDIVIDUAL">Individual</option><option value="BUSINESS">Business</option></select></label><label>Provider name<input value={publicName} onChange={e=>setPublicName(e.target.value)} placeholder="Name customers will see"/></label>{providerType==='BUSINESS'?<label className="full">Business name<input value={businessName} onChange={e=>setBusinessName(e.target.value)} placeholder="Registered or trading name"/></label>:null}</div></section>''', s, count=1)
+          if n != 1: raise SystemExit('Provider details section not found')
+
+          s = s.replace('<p className="eyebrow">VERIFICATION</p><h2>Required documents</h2><p className="sectionLead">These fields are shown to every applicant according to provider type, so Admin approval can never require a document that the applicant could not upload.</p>', '<p className="eyebrow">4 · OPTIONAL DOCUMENTS</p><h2>Supporting documents</h2><p className="sectionLead">Optional. Upload ID or business registration only if you want to provide supporting information.</p>')
+          s = s.replace("<span className=\"pill\">{requiredDocsPresent?'Uploaded':'Action Required'}</span>", '<span className="pill">Optional</span>')
+          s = s.replace("{providerType==='BUSINESS'?'Required before submission: ID Card and Business Permit.':'Required before submission: ID Card.'}", "Supporting documents do not block submission or provider approval.")
+
+          # Remove weekly hours from onboarding; provider can configure them after approval.
+          hours = re.compile(r'''\n  <section className="panel"><div className="panelHeader"><div><p className="eyebrow">AVAILABILITY</p><h2>Weekly working hours</h2></div>.*?</section>''', re.S)
+          s, n = hours.subn('', s, count=1)
+          if n != 1: raise SystemExit('Weekly availability section not found')
+
+          # Make service areas and services numbered, clearer steps.
+          s = s.replace('<p className="eyebrow">SERVICE AREAS</p><h2>Where do you work?</h2>', '<p className="eyebrow">2 · SERVICE AREA</p><h2>Where do you work?</h2>')
+          s = s.replace('<p className="eyebrow">SERVICES</p><h2>What work do you provide?</h2>', '<p className="eyebrow">3 · SERVICES</p><h2>What work do you provide?</h2>')
+
+          submission = re.compile(r'''  <section className="panel"><div className="panelHeader"><div><p className="eyebrow">SUBMISSION</p><h2>Save or send for approval</h2></div></div>.*?</section>''', re.S)
+          s, n = submission.subn('''  <section className="panel"><div className="panelHeader"><div><p className="eyebrow">5 · SUBMIT</p><h2>Send for Admin approval</h2><p className="sectionLead">One approval only. Supporting documents are optional.</p></div></div><div className="actions"><button className="primary" disabled={busy||Boolean(uploading)} onClick={()=>save(true)}>{busy?'Submitting…':'Submit for Approval'}</button></div><p className="localNotice">After Admin approves the application, Provider access is enabled on this same account.</p></section>''', s, count=1)
+          if n != 1: raise SystemExit('Submission section not found')
+          p.write_text(s)
+
+          # 2) Admin provider detail: one main approval, documents view-only/optional.
+          p = Path('app/admin/providers/[userId]/page.tsx')
+          s = p.read_text()
+          calc = re.compile(r'''  const docs=detail\?\.documents\|\|\[\];\n  const approvedType=.*?\n  const documentsReady=.*?;\n''', re.S)
+          s, n = calc.subn('  const docs=detail?.documents||[];\n', s, count=1)
+          if n != 1: raise SystemExit('Document approval calculation block not found')
+          s = s.replace("    if(status==='APPROVED'&&!documentsReady){setMessage('Approve the ID Card and Business Permit before approving this provider.');return;}\n", '')
+          s = re.sub(r'''\n      \{!documentsReady&&status!=='APPROVED'\?<p className="muted">.*?</p>:null\}''', '', s, count=1, flags=re.S)
+          s = s.replace('<p className="eyebrow">DOCUMENTS</p><h2>Verification Documents</h2><p className="muted">Validate each required document before approving the provider.</p>', '<p className="eyebrow">SUPPORTING DOCUMENTS</p><h2>Optional Documents</h2><p className="muted">Documents are optional reference material and do not block the main provider approval.</p>')
+          # Remove per-document approval/rejection action controls from main provider page.
+          s = re.sub(r'''\n          <div className="actions">\n            <button className="primary".*?</div>''', '', s, count=1, flags=re.S)
+          s = re.sub(r'''\n      <div className="providerFacts" style=\{\{marginTop:16\}\}>.*?</div>''', '', s, count=1, flags=re.S)
+          p.write_text(s)
+
+          # 3) Dedicated documents screen: viewing only, no sub-approval workflow.
+          p = Path('app/admin/providers/[userId]/documents/page.tsx')
+          s = p.read_text()
+          s = s.replace("const[message,setMessage]=useState('Loading documents…');const[busy,setBusy]=useState('');const[notes,setNotes]=useState<Record<string,string>>({});const[openDoc,setOpenDoc]=useState<string|null>(null);const[opening,setOpening]=useState('');", "const[message,setMessage]=useState('Loading documents…');const[openDoc,setOpenDoc]=useState<string|null>(null);const[opening,setOpening]=useState('');")
+          s = re.sub(r'''\n async function review\(doc:DocumentRow,status:'APPROVED'\|'REQUEST_INFO'\|'REJECTED'\)\{.*?\n \}''', '', s, count=1, flags=re.S)
+          s = s.replace('<p className="eyebrow">VERIFICATION DOCUMENTS</p>', '<p className="eyebrow">OPTIONAL SUPPORTING DOCUMENTS</p>')
+          s = re.sub(r'''<span className="pill">\{docs\.filter\(d=>d\.review_status==='PENDING'\)\.length\} pending</span>''', '<span className="pill">Optional</span>', s, count=1)
+          s = s.replace("setMessage('Document opened for review.');", "setMessage('Document opened.');")
+          s = re.sub(r'''\n   <div className="providerAccessRow">.*?</div><div className="actions">.*?</div>\{doc\.reviewed_at\?<div className="muted">.*?</div>:null\}''', '', s, count=1, flags=re.S)
+          p.write_text(s)
+          PY
+      - name: Commit simplified approval flow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/provider/onboarding/page.tsx app/admin/providers/[userId]/page.tsx app/admin/providers/[userId]/documents/page.tsx
+          git commit -m "Simplify provider onboarding to one main approval"
+          git push
