@@ -175,10 +175,10 @@ export default function AdminProviderDetailPage(){
     </section>
 
     <section className="providerSection">
-      <div className="providerSectionHeader"><div><p className="eyebrow">SUPPORTING DOCUMENTS</p><h2>Optional Documents</h2><p className="muted">Documents are optional reference material and do not block the main provider approval.</p></div><div className="documentActions"><span className="pill">{docs.length} documents</span>{docs.length?<a className="secondary" href={`/admin/providers/${userId}/documents`}>Review Documents</a>:null}</div></div>
+      <div className="providerSectionHeader"><div><p className="eyebrow">SUPPORTING DOCUMENTS</p><h2>Optional Documents</h2><p className="muted">Documents are optional reference material and do not block the main provider approval.</p></div><div className="documentActions"><span className="pill">{docs.length} documents</span>{docs.length?<a className="secondary" href={`/admin/providers/${userId}/documents`}>View Documents</a>:null}</div></div>
       <div className="jobList">
         {docs.map(d=><article className="jobCard" key={d.id}>
-          <div className="jobTop"><div><strong>{d.document_label||pretty(d.document_type)}</strong><div className="muted">Submitted {when(d.submitted_at)}</div></div><span className="pill">{pretty(d.review_status)}</span></div>
+          <div className="jobTop"><div><strong>{d.document_label||pretty(d.document_type)}</strong><div className="muted">Submitted {when(d.submitted_at)}</div></div><span className="pill">Optional</span></div>
           {d.review_note?<p className="jobDescription">{d.review_note}</p>:null}
           <div className="actions">{d.signed_url?<a className="secondary" href={d.signed_url} target="_blank" rel="noreferrer">View Document</a>:<span className="muted">File unavailable</span>}</div>
         </article>)}
