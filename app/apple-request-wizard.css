@@ -1,0 +1,95 @@
+/* Apple-inspired service request wizard. Visual-only overrides; request logic remains unchanged. */
+:root{
+  --apple-blue:#3457e6;
+  --apple-blue-soft:#f1f5ff;
+  --apple-bg:#f7f8fa;
+  --apple-card:#ffffff;
+  --apple-text:#101828;
+  --apple-muted:#667085;
+  --apple-line:#e4e7ec;
+  --apple-radius:24px;
+}
+
+.c3Wizard{padding-top:22px;padding-bottom:18px}
+.c3WizardTop{margin:0 0 18px;padding:0 6px;align-items:center}
+.c3StepDots{flex:1;gap:10px;max-width:560px}
+.c3StepDot{height:6px;flex:1;width:auto;max-width:92px;background:#e7ebf2;border-radius:999px}
+.c3StepDot.active,.c3StepDot.done{background:var(--apple-blue)}
+.c3WizardTop .c3Status{background:#f2f5fc;color:var(--apple-blue);font-size:13px;font-weight:750;padding:9px 14px;border-radius:999px;white-space:nowrap}
+
+.c3WizardCard{background:var(--apple-card);border:1px solid var(--apple-line);border-radius:28px;box-shadow:0 12px 36px rgba(16,24,40,.05);padding:30px;min-height:460px}
+.c3Question{max-width:760px}
+.c3Question small{display:block;color:var(--apple-blue);font-size:13px;font-weight:800;letter-spacing:.13em;margin-bottom:15px}
+.c3Question h1{color:var(--apple-text);font-size:clamp(34px,5vw,48px);line-height:1.02;letter-spacing:-1.9px;margin:0 0 14px;font-weight:800}
+.c3Question h2{color:var(--apple-text);font-size:clamp(26px,4vw,36px);line-height:1.08;letter-spacing:-1.1px;margin:6px 0 10px;font-weight:800}
+.c3Question p{font-size:17px;line-height:1.55;color:#6f737b;max-width:700px}
+
+.c3Form{grid-template-columns:1fr;gap:18px;margin-top:26px;max-width:760px}
+.c3Field{gap:10px;color:#1d2939;font-size:15px;font-weight:750}
+.c3Field input,.c3Field select,.c3Field textarea{border:1px solid #d5d9e0;border-radius:18px;background:#fff;color:#171a21;min-height:60px;padding:15px 17px;font-size:17px;box-shadow:0 1px 2px rgba(16,24,40,.02);transition:border-color .18s ease,box-shadow .18s ease,background .18s ease}
+.c3Field textarea{min-height:150px;line-height:1.45;padding:16px 18px}
+.c3Field input::placeholder,.c3Field textarea::placeholder{color:#8b92a3;opacity:1}
+.c3Field input:focus,.c3Field select:focus,.c3Field textarea:focus{border-color:var(--apple-blue);box-shadow:0 0 0 4px rgba(52,87,230,.10)}
+.c3Field select:disabled{background:#fafafa;color:#aaa;border-color:#ececec;opacity:1}
+
+.c3WizardCard>.c3Secondary{min-height:60px;border-radius:18px;border:1px solid var(--apple-line);background:#fff;color:var(--apple-blue);font-size:16px;font-weight:750;box-shadow:0 1px 2px rgba(16,24,40,.02)}
+.c3WizardCard>.c3Secondary:hover{background:#f8faff}
+
+.c3Urgency{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:26px;max-width:900px}
+.c3Urgency button{position:relative;min-height:102px;border:1px solid var(--apple-line);border-radius:20px;background:#fff;padding:20px;text-align:left;color:var(--apple-text);transition:.18s ease;box-shadow:0 1px 2px rgba(16,24,40,.02)}
+.c3Urgency button.selected{background:var(--apple-blue-soft);border:2px solid var(--apple-blue);color:var(--apple-blue);padding:19px;box-shadow:0 0 0 3px rgba(52,87,230,.04)}
+.c3Urgency strong{font-size:17px;line-height:1.25;font-weight:780}
+.c3Urgency span{font-size:14px;line-height:1.4;color:#737b8c;margin-top:7px}
+.c3Urgency button.selected:after{content:'✓';position:absolute;right:16px;top:16px;width:24px;height:24px;border-radius:50%;background:var(--apple-blue);color:#fff;display:grid;place-items:center;font-size:14px;font-weight:900}
+
+.c3PhotoDrop{max-width:760px;border:1.5px dashed #cbd5e1;background:#fafcff;border-radius:22px;padding:22px;margin-top:22px}
+.c3PhotoDrop .c3Secondary{min-height:52px;border-radius:16px;background:#fff;color:var(--apple-blue);border:1px solid var(--apple-line)}
+
+.c3Notice{max-width:760px;border-radius:16px;background:#f4f6f9;color:#596579;padding:13px 15px;line-height:1.45}
+.c3Review{max-width:760px;margin-top:24px;border:1px solid var(--apple-line);border-radius:20px;padding:4px 18px;background:#fff}
+.c3ReviewRow{padding:16px 2px}
+
+.c3ActionDock{background:rgba(247,248,250,.82);backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px)}
+.c3ActionInner{grid-template-columns:minmax(120px,170px) 1fr;gap:12px;max-width:980px;margin:0 auto}
+.c3ActionInner .c3Primary,.c3ActionInner .c3Secondary{min-height:58px;border-radius:17px;font-size:17px;font-weight:780}
+.c3ActionInner .c3Primary{background:var(--apple-blue);box-shadow:none}
+.c3ActionInner .c3Secondary{background:#fff;border:1px solid #cfd4dc;color:#171a21}
+
+@media(max-width:760px){
+  .c3Page{background:var(--apple-bg);padding-bottom:112px}
+  .c3Shell{width:min(100% - 20px,620px)}
+  .c3Wizard{padding-top:18px}
+  .c3WizardTop{margin-bottom:14px;padding:0 4px}
+  .c3StepDots{gap:7px}
+  .c3StepDot{height:5px;max-width:none}
+  .c3WizardTop .c3Status{font-size:12px;padding:8px 11px}
+  .c3WizardCard{padding:24px 20px 28px;border-radius:24px;box-shadow:none;min-height:0}
+  .c3Question small{font-size:12px;margin-bottom:13px}
+  .c3Question h1{font-size:38px;line-height:1.04;letter-spacing:-1.55px;margin-bottom:13px}
+  .c3Question h2{font-size:30px;line-height:1.08;letter-spacing:-1px}
+  .c3Question p{font-size:17px;line-height:1.5}
+  .c3Form{gap:17px;margin-top:24px}
+  .c3Field{font-size:15px}
+  .c3Field input,.c3Field select{min-height:58px;border-radius:17px;font-size:16px}
+  .c3Field textarea{min-height:155px;border-radius:18px;font-size:16px}
+  .c3WizardCard>.c3Secondary{width:100%;min-height:58px;margin-top:16px!important}
+  .c3Urgency{grid-template-columns:1fr;gap:12px;margin-top:24px}
+  .c3Urgency button{min-height:96px;border-radius:19px;padding:18px 52px 18px 18px}
+  .c3Urgency button.selected{padding:17px 51px 17px 17px}
+  .c3Urgency strong{font-size:17px}
+  .c3Urgency span{font-size:14px}
+  .c3PhotoDrop{padding:18px;border-radius:20px}
+  .c3ActionDock{left:0;right:0;bottom:0;border:0;border-top:1px solid rgba(224,227,233,.9);border-radius:0;margin:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(16,24,40,.06)}
+  .c3ActionInner{grid-template-columns:120px 1fr;gap:10px}
+  .c3ActionInner .c3Primary,.c3ActionInner .c3Secondary{min-height:56px;border-radius:16px;font-size:17px}
+}
+
+@media(max-width:420px){
+  .c3Shell{width:calc(100% - 16px)}
+  .c3WizardCard{padding:22px 18px 26px}
+  .c3Question h1{font-size:35px}
+  .c3Question h2{font-size:28px}
+  .c3Question p{font-size:16px}
+  .c3ActionDock{padding-left:12px;padding-right:12px}
+  .c3ActionInner{grid-template-columns:104px 1fr}
+}
