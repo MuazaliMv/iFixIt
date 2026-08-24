@@ -87,7 +87,8 @@ export default function GlobalModeSwitch(){
     </div>
     <div className="airMenuDivider"/>
     <Link className="airMenuItem" href={profileHref} role="menuitem" onClick={()=>setOpen(false)}>
-     <span>Profile</span><span aria-hidden="true">›</span>
+     <span className="airMenuItemMain"><span className="airMenuItemTitle">Profile</span><small>View and manage your account</small></span>
+     <span aria-hidden="true">›</span>
     </Link>
     {!isAdmin?<div className="airModeRow" role="none">
      <AppModeSwitch mode={mode}/>
@@ -102,22 +103,33 @@ export default function GlobalModeSwitch(){
    .airAccountTrigger:active{transform:scale(.98)}
    .airMenuIcon{display:grid;place-items:center;color:#222}
    .airAvatar{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#717171;color:#fff}
-   .airAccountMenu{position:absolute;right:0;top:56px;width:min(285px,calc(100vw - 24px));padding:8px 0;border:1px solid #e6e6e6;border-radius:14px;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,.18);overflow:hidden}
-   .airMenuCurrent{padding:12px 16px 10px;color:#222}
-   .airMenuCurrentLabel{display:block;margin-bottom:2px;color:#717171;font-size:12px;font-weight:600}
-   .airMenuCurrent strong{font-size:14px}
+   .airAccountMenu{position:absolute;right:0;top:56px;width:min(360px,calc(100vw - 24px));padding:10px 0;border:1px solid #e6e6e6;border-radius:16px;background:#fff;box-shadow:0 10px 32px rgba(0,0,0,.18);overflow:hidden}
+   .airMenuCurrent{padding:16px 20px 14px;color:#222}
+   .airMenuCurrentLabel{display:block;margin-bottom:4px;color:#717171;font-size:13px;font-weight:600}
+   .airMenuCurrent strong{display:block;font-size:18px;line-height:1.25}
    .airMenuDivider{height:1px;background:#ededed;margin:4px 0}
-   .airMenuItem{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:10px 16px;color:#222;text-decoration:none;font-size:14px;font-weight:600}
+   .airMenuItem{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:58px;padding:12px 20px;color:#222;text-decoration:none;font-size:15px;font-weight:650}
    .airMenuItem:hover{background:#f7f7f7}
-   .airModeRow{padding:4px 8px 8px}
-   .airModeRow .modeSwitch{width:100%;min-height:46px;justify-content:flex-start!important;padding:11px 12px!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#222!important;box-shadow:none!important;font-size:14px!important;font-weight:650!important;text-align:left}
+   .airMenuItemMain{display:flex;min-width:0;flex-direction:column;gap:2px}
+   .airMenuItemTitle{font-size:16px;font-weight:700;line-height:1.2}
+   .airMenuItemMain small{color:#717171;font-size:13px;font-weight:500;line-height:1.35;white-space:normal}
+   .airModeRow{padding:6px 10px 10px}
+   .airModeRow .modeSwitch{width:100%;min-height:56px;justify-content:flex-start!important;padding:13px 14px!important;border:0!important;border-radius:12px!important;background:transparent!important;color:#222!important;box-shadow:none!important;font-size:15px!important;font-weight:700!important;text-align:left;white-space:normal!important;line-height:1.3!important}
    .airModeRow .modeSwitch:hover{background:#f7f7f7!important}
-   .airModeRow .modeDot{width:8px!important;height:8px!important;flex:0 0 8px}
+   .airModeRow .modeDot{width:9px!important;height:9px!important;flex:0 0 9px}
    @media(max-width:520px){
     .airAccount{right:max(12px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top))}
-    .airAccountTrigger{min-width:70px;min-height:44px}
+    .airAccountTrigger{min-width:72px;min-height:46px}
     .airAvatar{width:32px;height:32px}
-    .airAccountMenu{top:52px;width:min(300px,calc(100vw - 24px))}
+    .airAccountMenu{position:fixed;left:12px;right:12px;top:max(64px,calc(env(safe-area-inset-top) + 54px));width:auto;max-width:none;border-radius:18px}
+    .airMenuCurrent{padding:18px 20px 16px}
+    .airMenuCurrentLabel{font-size:13px}
+    .airMenuCurrent strong{font-size:20px}
+    .airMenuItem{min-height:64px;padding:14px 20px}
+    .airMenuItemTitle{font-size:17px}
+    .airMenuItemMain small{font-size:14px}
+    .airModeRow{padding:8px 10px 12px}
+    .airModeRow .modeSwitch{min-height:60px;font-size:16px!important;padding:14px 16px!important}
    }
   `}</style>
  </>;
