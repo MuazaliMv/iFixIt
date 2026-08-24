@@ -31,6 +31,7 @@ import './mobile-compliance-v2.css';
 import './mobile-compliance-v3.css';
 import './apple-request-wizard.css';
 import './apple-system.css';
+import './workspace-system.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
@@ -43,6 +44,7 @@ import MobileKeyboardRuntime from './MobileKeyboardRuntime';
 import NewRequestRuntime from './NewRequestRuntime';
 import PreferredDateRuntime from './PreferredDateRuntime';
 import SendRequestTapRuntime from './SendRequestTapRuntime';
+import WorkspaceThemeRuntime from './WorkspaceThemeRuntime';
 
 export const metadata: Metadata = {
   title: 'FixIt Maldives',
@@ -58,7 +60,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/><ResponsiveRuntime/><MobileKeyboardRuntime/><SendRequestTapRuntime/><RoleAccessGuard/><NewRequestRuntime/><PreferredDateRuntime/><GlobalRoleMenu/><GlobalModeSwitch/><GlobalCardPagination/><MobileDateInputRuntime/>{children}<ModeToast/></body>
+      <body><ThemeRuntime/><ResponsiveRuntime/><MobileKeyboardRuntime/><WorkspaceThemeRuntime/><SendRequestTapRuntime/><RoleAccessGuard/><NewRequestRuntime/><PreferredDateRuntime/><GlobalRoleMenu/><GlobalModeSwitch/><GlobalCardPagination/><MobileDateInputRuntime/>{children}<ModeToast/></body>
     </html>
   );
 }
