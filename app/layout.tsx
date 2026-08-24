@@ -34,6 +34,7 @@ import GlobalRoleMenu from './GlobalRoleMenu';
 import GlobalCardPagination from './GlobalCardPagination';
 import MobileDateInputRuntime from './MobileDateInputRuntime';
 import MobileKeyboardRuntime from './MobileKeyboardRuntime';
+import NewRequestRuntime from './NewRequestRuntime';
 
 export const metadata: Metadata = {
   title: 'FixIt Maldives',
@@ -49,7 +50,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/><ResponsiveRuntime/><MobileKeyboardRuntime/><RoleAccessGuard/><GlobalRoleMenu/><GlobalCardPagination/><MobileDateInputRuntime/>{children}<ModeToast/></body>
+      <body><ThemeRuntime/><ResponsiveRuntime/><MobileKeyboardRuntime/><RoleAccessGuard/><NewRequestRuntime/><GlobalRoleMenu/><GlobalCardPagination/><MobileDateInputRuntime/>{children}<ModeToast/></body>
     </html>
   );
 }
