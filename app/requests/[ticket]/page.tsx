@@ -45,7 +45,7 @@ export default function RequestDetailPage(){
  async function selectProvider(providerUserId:string){await market('select_provider',{providerUserId});}
  async function proposeInspection(){const preferredSlots=slots.filter(Boolean);if(!preferredSlots.length){setNotice('Choose at least one preferred inspection time.');return;}if(await market('propose_inspection',{preferredSlots}))setSlots(['','','']);}
  async function decideEstimate(decision:'APPROVE'|'DECLINE'){if(await market('decide_estimate',{decision,note:estimateNote.trim()||null}))setEstimateNote('');}
- async function confirmCompletion(){if(await market('confirm_completion'))setTab('overview');}
+ async function confirmCompletion(){if(await market('confirm_completion'))window.location.replace('/requests');}
  async function submitRating(){if(qualityRating<1||timeRating<1||costRating<1){setNotice('Choose 1–5 stars for Quality, Time, and Cost.');return;}if(await market('submit_rating',{qualityRating,timeRating,costRating,review:reviewText.trim()})){setReviewText('');setQualityRating(0);setTimeRating(0);setCostRating(0);}}
  async function reportProblem(){if(problemText.trim().length<5){setNotice('Please describe the problem.');return;}if(await market('report_problem',{note:problemText.trim()}))setProblemText('');}
  async function send(){if(!text.trim())return;setBusy(true);try{const p=await post(MESSAGE_API,{action:'send',ticketNumber:ticket,message:text.trim()});setMessages(p.messages||[]);setUnread(0);setText('');}catch(e){setNotice(e instanceof Error?e.message:'Unable to send message.');}finally{setBusy(false);}}
