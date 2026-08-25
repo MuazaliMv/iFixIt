@@ -1,6 +1,6 @@
 Trigger Railway deployment from the latest main head only.
-Updated: 2026-08-25T03:50:00+05:00
-Reason: deploy the verified pre-production usability hardening, including the unified account profile, separate Provider verification flow, improved profile accessibility/mobile behavior, and server/client logout synchronization.
+Updated: 2026-08-25T11:19:00+05:00
+Reason: force a fresh production deployment after deep deployment audit and ensure Railway builds the actual current main HEAD.
 
 Required production behavior:
 - Production source of truth is GitHub branch: main.
@@ -8,22 +8,23 @@ Required production behavior:
 - Do not roll back, redeploy, promote, or pin an older deployment unless explicitly requested by the project owner.
 - Build a fresh Next.js production bundle from the selected commit.
 - ifixmv.com must point to the newest successful production deployment.
+- Railway must run the repository Dockerfile and start the Next.js server with npm start.
 
 Current target main HEAD at time of this trigger:
-- f84d63872f308b7f5388c545b7738f8d78621407
-- Includes PR #72 unified profile/settings redesign and PR #73 pre-deploy usability hardening.
+- a1a54bcdef9028a72de3885af4d412bf05ad36fb
+- Includes the latest merged mobile profile save fix and prior iOS-style web-app usability changes.
 
-Expected production usability behavior:
-- Customer, Provider, and Admin accounts use one real account profile/settings experience at `/profile`.
-- `/provider/profile` remains a compatibility route and opens the unified account profile instead of a verification-only screen.
-- Provider verification documents and subscription controls remain available separately at `/provider/verification` and `/provider/subscription`.
-- Profile forms use mobile-safe 16px inputs, 48px touch targets, improved autofill, keyboard focus visibility, anchor offsets, and live save-status feedback.
-- Client-side sign out also clears the HttpOnly server session through `/api/auth/logout`.
-- Existing role protection, Provider workspace routing, customer requests, provider jobs, and Admin operations remain unchanged.
+Deployment audit findings:
+- GitHub Build workflow for current main HEAD completed successfully.
+- npm install completed successfully.
+- npm run build completed successfully.
+- Dockerfile is valid for the Next.js production build and exposes port 3000.
+- railway.toml uses the Dockerfile builder and npm start.
+- The prior deployment trigger referenced an older main commit and has now been refreshed.
 
-Validation before deployment:
-- PR #73 iFixIt CI passed tests, lint, and production build.
-- PR #73 separate Build workflow passed.
-- Regression tests cover Provider profile routing, Provider verification access, and server-session logout synchronization.
+Expected production behavior:
+- Railway detects this new main commit and creates a fresh production deployment.
+- The deployment must use the newest GitHub main source, not a cached or older revision.
+- Existing Customer, Provider, and Admin functionality must remain unchanged.
 
-This trigger intentionally changes on main so the Railway hosting integration performs a new production build from the latest verified source.
+If the new Railway deployment succeeds but ifixmv.com is still unreachable, the remaining fault is outside the application codebase and must be corrected in Railway domain/DNS configuration.
