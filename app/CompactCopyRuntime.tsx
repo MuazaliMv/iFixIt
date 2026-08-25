@@ -72,46 +72,45 @@ function compactText(value: string) {
   const text = value.trim();
   if (!text) return value;
   if (EXACT[text]) return EXACT[text];
-
-  if (/^Unable to\s+/i.test(text)) {
-    return text.replace(/^Unable to\s+/i, 'Couldn’t ');
-  }
-  if (/^Please\s+/i.test(text) && text.length > 34) {
-    return text.replace(/^Please\s+/i, '');
-  }
-  if (/ successfully\.$/i.test(text) && text.length > 28) {
-    return text.replace(/ successfully\.$/i, '.');
-  }
+  if (/^Unable to\s+/i.test(text)) return text.replace(/^Unable to\s+/i, 'Couldn’t ');
+  if (/^Please\s+/i.test(text) && text.length > 34) return text.replace(/^Please\s+/i, '');
+  if (/ successfully\.$/i.test(text) && text.length > 28) return text.replace(/ successfully\.$/i, '.');
   return value;
 }
 
+function applyElement(element: HTMLElement) {
+  if (!element.matches(UI_SELECTOR)) return;
+  if (element.closest('.chatBubble, [data-user-content="true"], [contenteditable="true"]')) return;
+  if (element.children.length > 0 && !element.matches('.statusNotice, .statusMessage, .formMessage, .emptyState, .authStatusPill, .authFootnote')) return;
+  const current = element.textContent || '';
+  const next = compactText(current);
+  if (next !== current) {
+    element.textContent = next;
+    element.dataset.compactCopy = 'true';
+  }
+}
+
 function applyCompactCopy(root: ParentNode = document) {
-  root.querySelectorAll<HTMLElement>(UI_SELECTOR).forEach((element) => {
-    if (element.closest('.chatBubble, [data-user-content="true"], [contenteditable="true"]')) return;
-    if (element.children.length > 0 && !element.matches('.statusNotice, .statusMessage, .formMessage, .emptyState, .authStatusPill, .authFootnote')) return;
-    const current = element.textContent || '';
-    const next = compactText(current);
-    if (next !== current) {
-      element.textContent = next;
-      element.dataset.compactCopy = 'true';
-    }
-  });
+  if (root instanceof HTMLElement) applyElement(root);
+  root.querySelectorAll<HTMLElement>(UI_SELECTOR).forEach(applyElement);
 }
 
 export default function CompactCopyRuntime() {
   useEffect(() => {
-    let queued = false;
-    const schedule = () => {
-      if (queued) return;
-      queued = true;
-      requestAnimationFrame(() => {
-        queued = false;
-        applyCompactCopy();
-      });
-    };
-
     applyCompactCopy();
-    const observer = new MutationObserver(schedule);
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach((node) => {
+            if (node instanceof HTMLElement) applyCompactCopy(node);
+            else if (node.parentElement) applyElement(node.parentElement);
+          });
+        } else if (mutation.type === 'characterData') {
+          const parent = mutation.target.parentElement;
+          if (parent) applyElement(parent);
+        }
+      }
+    });
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
     return () => observer.disconnect();
   }, []);
