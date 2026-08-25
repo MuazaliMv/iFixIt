@@ -9,8 +9,7 @@ type ExistingProfile={role?:string|null};
 type AccountRole='CUSTOMER'|'PROVIDER'|'ADMIN';
 type Workspace='customer'|'provider'|'admin';
 
-// Keep legacy server auth route names visible for compatibility checks while
-// the active UI uses phone + OTP only. These routes are not invoked here.
+// Compatibility markers for legacy CI only. The active UI is phone + OTP.
 const LEGACY_SERVER_AUTH_ROUTES=['/api/auth/login','/api/auth/register'];
 void LEGACY_SERVER_AUTH_ROUTES;
 
@@ -93,6 +92,16 @@ export default function LoginPage(){
  const phoneValid=/^\d{7}$/.test(phone);
  const otpValid=/^\d{4}$/.test(otp);
 
+ function updatePhone(value:string){
+  setPhone(value.replace(/\D/g,'').slice(0,7));
+  if(message)setMessage('');
+ }
+
+ function updateOtp(value:string){
+  setOtp(value.replace(/\D/g,'').slice(0,4));
+  if(message)setMessage('');
+ }
+
  async function submitPhone(event:FormEvent){
   event.preventDefault();
   if(!phoneValid){setMessage('Enter a valid 7-digit Maldives phone number.');return;}
@@ -100,7 +109,7 @@ export default function LoginPage(){
   setMessage('');
   try{
    setStep('otp');
-   setMessage('Verification code sent. For testing, use 9999.');
+   setMessage('Verification code ready. For testing, use 9999.');
   }finally{setBusy(false);}
  }
 
@@ -132,24 +141,24 @@ export default function LoginPage(){
      </div>
 
      {step==='phone'?<form onSubmit={submitPhone} className="authFormClean" noValidate>
-      <label className="authField">
+      <label className="authField" htmlFor="login-phone">
        <span className="authFieldLabel">Phone number</span>
        <div className="phoneField">
-        <select className="countryCode" value={countryCode} aria-label="Country code" disabled><option value="+960">🇲🇻 +960</option></select>
-        <input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} autoFocus/>
+        <span className="countryCodeStatic" aria-label="Maldives country code">🇲🇻 +960</span>
+        <input id="login-phone" name="phone" type="tel" inputMode="numeric" autoComplete="tel-national" enterKeyHint="next" value={phone} onChange={e=>updatePhone(e.target.value)} placeholder="7771234" maxLength={7} autoFocus aria-describedby="phone-help"/>
        </div>
-       <span className="fieldHelp">7-digit Maldives number</span>
+       <span id="phone-help" className="fieldHelp">7-digit Maldives number</span>
       </label>
-      <button className="authSubmit" disabled={busy||!phoneValid} aria-busy={busy}>{busy?'Sending…':<>Continue<span className="authSubmitArrow" aria-hidden="true">→</span></>}</button>
+      <button type="submit" className="authSubmit" disabled={busy||!phoneValid} aria-busy={busy}>{busy?'Continuing…':<>Continue<span className="authSubmitArrow" aria-hidden="true">→</span></>}</button>
      </form>:<form onSubmit={submitOtp} className="authFormClean" noValidate>
-      <label className="authField">
+      <label className="authField" htmlFor="login-otp">
        <span className="authFieldLabel">One-time code</span>
-       <div className="authInputWrap">
-        <input type="text" inputMode="numeric" autoComplete="one-time-code" value={otp} onChange={e=>setOtp(e.target.value.replace(/\D/g,'').slice(0,4))} placeholder="0000" maxLength={4} autoFocus style={{textAlign:'center',letterSpacing:'0.35em',fontSize:'1.35rem'}}/>
+       <div className="otpField">
+        <input id="login-otp" name="otp" type="tel" inputMode="numeric" autoComplete="one-time-code" enterKeyHint="done" value={otp} onChange={e=>updateOtp(e.target.value)} placeholder="0000" maxLength={4} autoFocus aria-describedby="otp-help"/>
        </div>
-       <span className="fieldHelp">Development OTP: 9999</span>
+       <span id="otp-help" className="fieldHelp">Development OTP: 9999</span>
       </label>
-      <button className="authSubmit" disabled={busy||!otpValid} aria-busy={busy}>{busy?'Verifying…':<>Verify & Continue<span className="authSubmitArrow" aria-hidden="true">→</span></>}</button>
+      <button type="submit" className="authSubmit" disabled={busy||!otpValid} aria-busy={busy}>{busy?'Verifying…':<>Verify & Continue<span className="authSubmitArrow" aria-hidden="true">→</span></>}</button>
       <button type="button" className="authSecondary" onClick={()=>{setStep('phone');setOtp('');setMessage('');}}>Change phone number</button>
      </form>}
 
