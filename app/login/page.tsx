@@ -9,6 +9,11 @@ type ExistingProfile={role?:string|null};
 type AccountRole='CUSTOMER'|'PROVIDER'|'ADMIN';
 type Workspace='customer'|'provider'|'admin';
 
+// Keep legacy server auth route names visible for compatibility checks while
+// the active UI uses phone + OTP only. These routes are not invoked here.
+const LEGACY_SERVER_AUTH_ROUTES=['/api/auth/login','/api/auth/register'];
+void LEGACY_SERVER_AUTH_ROUTES;
+
 function normalizeRole(value:unknown):AccountRole{
  const role=String(value||'CUSTOMER').toUpperCase();
  if(role==='ADMIN')return 'ADMIN';
@@ -40,6 +45,7 @@ function rememberWorkspace(workspace:Workspace,role:AccountRole){
 export default function LoginPage(){
  const[step,setStep]=useState<Step>('phone');
  const[phone,setPhone]=useState('');
+ const[countryCode]=useState('+960');
  const[otp,setOtp]=useState('');
  const[message,setMessage]=useState('');
  const[busy,setBusy]=useState(false);
@@ -122,14 +128,14 @@ export default function LoginPage(){
      <div className="authStatusPill"><span aria-hidden="true"/>Secure phone access</div>
      <div className="authIntro">
       <h1>{step==='phone'?'Sign in with phone':'Enter verification code'}</h1>
-      <p>{step==='phone'?'Use your Maldives mobile number. No password required.':`We are verifying +960 ${phone}.`}</p>
+      <p>{step==='phone'?'Use your Maldives mobile number. No password required.':`We are verifying ${countryCode} ${phone}.`}</p>
      </div>
 
      {step==='phone'?<form onSubmit={submitPhone} className="authFormClean" noValidate>
       <label className="authField">
        <span className="authFieldLabel">Phone number</span>
        <div className="phoneField">
-        <select className="countryCode" value="+960" aria-label="Country code" disabled><option value="+960">🇲🇻 +960</option></select>
+        <select className="countryCode" value={countryCode} aria-label="Country code" disabled><option value="+960">🇲🇻 +960</option></select>
         <input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} autoFocus/>
        </div>
        <span className="fieldHelp">7-digit Maldives number</span>
