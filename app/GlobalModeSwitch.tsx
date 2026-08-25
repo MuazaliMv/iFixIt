@@ -171,10 +171,10 @@ export default function GlobalModeSwitch(){
       className={`airWorkspaceOption admin${mode==='admin'?' selected':''}`}
       href="/admin"
       role="menuitem"
-      onClick={()=>rememberWorkspace('admin',"You're now viewing as Admin.")}
+      onClick={()=>rememberWorkspace('admin',"You're now viewing the Admin Control Center.")}
      >
       <span className="airWorkspaceIcon"><WorkspaceIcon name="admin"/></span>
-      <span className="airWorkspaceCopy"><strong>Admin Portal</strong><small>System administration and platform controls</small></span>
+      <span className="airWorkspaceCopy"><strong>Admin Control Center</strong><small>System administration and platform controls</small></span>
       <span className="airWorkspaceAction">{mode==='admin'?'Current':'Open'}</span>
      </Link>:null}
     </section>
