@@ -49,30 +49,31 @@ export default async function proxy(request:NextRequest){
  const adminRoute=path==='/admin'||path.startsWith('/admin/');
  const adminApi=path==='/api/admin'||path.startsWith('/api/admin/');
  const providerApi=path==='/api/provider'||path.startsWith('/api/provider/');
- const protectedRoute=customerRoute||providerRoute||adminRoute||providerApplicationRoute||adminApi||providerApi;
+ const customerApi=path==='/api/service-requests'||path.startsWith('/api/service-requests/');
+ const protectedApi=adminApi||providerApi||customerApi;
+ const protectedRoute=customerRoute||providerRoute||adminRoute||providerApplicationRoute||protectedApi;
  if(!protectedRoute)return NextResponse.next();
 
  const auth=await resolveServerAuth(request);
  if(!auth){
-  if(adminApi||providerApi)return apiError('Authentication required.',401);
+  if(protectedApi)return apiError('Authentication required.',401);
   return NextResponse.redirect(loginUrl(request));
  }
 
- // Customer pages and provider application pages only require a valid session.
- if(customerRoute||providerApplicationRoute){
+ // Customer workspace routes, customer-owned request APIs, and provider application
+ // require an authenticated session. Data ownership is still enforced downstream.
+ if(customerRoute||customerApi||providerApplicationRoute){
   return applyAuthCookies(NextResponse.next(),auth);
  }
 
  const access=await resolveAccessProfile(auth.authorization);
  if(!access){
-  // A temporary permission/profile lookup failure is not proof that the user
-  // lost access. Redirecting UI routes here used to create a ping-pong loop:
-  // provider/admin -> /home -> client stored workspace -> provider/admin.
-  // Preserve the current UI route and let page/API error handling recover.
+  // Role-protected surfaces fail closed. A permission-service outage must never
+  // temporarily expose Admin or Service Provider interfaces or APIs.
   if(adminApi||providerApi){
    return applyAuthCookies(apiError('Unable to verify account permissions.',503),auth);
   }
-  return applyAuthCookies(NextResponse.next(),auth);
+  return applyAuthCookies(NextResponse.redirect(new URL('/home',request.url)),auth);
  }
 
  if((adminRoute||adminApi)&&!canAccessPortal(access.role,'admin',access.providerApproved)){
@@ -95,6 +96,7 @@ export const config={
   '/messages/:path*',
   '/provider/:path*',
   '/admin/:path*',
+  '/api/service-requests/:path*',
   '/api/provider/:path*',
   '/api/admin/:path*',
  ],
