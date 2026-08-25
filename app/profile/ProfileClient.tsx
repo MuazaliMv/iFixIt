@@ -98,18 +98,16 @@ export default function ProfileClient(){
  async function signOut(){await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin'}).catch(()=>{});await supabase.auth.signOut().catch(()=>{});window.location.href='/login';}
 
  const initial=(profile?.full_name||profile?.email||'U').slice(0,1).toUpperCase();const serviceAddresses=profile?.serviceAddresses||[];const pp=providerData?.profile;const selectedNames=(providerData?.categories||[]).filter(c=>(providerData?.selectedCategoryIds||[]).includes(c.id)).map(c=>c.name);const areas=providerData?.serviceAreas||[];const hours=providerData?.hours||[];const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
- const roleLabel=profile?.role==='PROVIDER'?'Service Provider':profile?.role==='ADMIN'?'Administrator':'Customer';
 
  return <main className="profileRedesignPage">
   <div className="profileRedesignShell">
    <div className="profileRedesignGrid">
     <aside className="profileSidebar">
      <section className="profileSummaryCard"><div className="profileSummaryAvatarWrap">{profile?.profile_photo_url?<img className="profileSummaryAvatar" src={profile.profile_photo_url} alt="Profile"/>:<div className="profileSummaryAvatar profileInitial">{initial}</div>}</div><h2>{loading?'Loading…':profile?.full_name||'Your profile'}</h2><p>{loading?'Loading account…':profile?.email||'Email not provided'}</p><div className="profileRoleRow"><span>{profile?.role||'ACCOUNT'}</span><span>Maldives</span></div><div className="profileSummaryStats"><div><small>Saved service addresses</small><strong>{serviceAddresses.length}</strong></div><div><small>Account status</small><strong>{pretty(profile?.account_status)}</strong></div></div></section>
-     <nav className="profileSettingsNav" aria-label="Profile settings"><a className="active" href="#profile">Profile Information</a><a href="#service-addresses">Maldives Locations</a>{profile?.role==='PROVIDER'?<a href="/provider/verification">Provider Verification</a>:null}<a href="/change-password">Security & Password</a><a href="/notifications">Notifications & Alerts</a></nav>
     </aside>
 
     <div className="profileContentColumn">
-     <section className="profileEditCard" id="profile"><div className="profileEditHeader"><div><h2>Edit {roleLabel} Details</h2><p>Update the information used across your iFixMV account and service requests.</p></div><span className="profileSaveState" role="status" aria-live="polite">{message}</span></div>
+     <section className="profileEditCard" id="profile">
       <form onSubmit={event=>{event.preventDefault();void saveProfile();}} className="profileEditForm">
        <div className="profileFormSection"><h3>Personal Information</h3><div className="profileFormGrid"><label>Full Name<input value={name} onChange={e=>setName(e.target.value)} autoComplete="name" required disabled={loading}/></label><label>Email Address<input value={profile?.email||''} autoComplete="email" readOnly disabled/></label></div></div>
        <div className="profileFormSection"><h3>Contact</h3><div className="profileFormGrid"><label>Phone Number (Maldives)<span className="profilePhoneField"><b>🇲🇻 +960</b><input type="tel" inputMode="numeric" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7XXXXXX" maxLength={7} autoComplete="tel-national" disabled={loading}/></span></label><label>Country / Region<input value="Maldives" autoComplete="country-name" readOnly disabled/></label></div></div>
