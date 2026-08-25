@@ -18,14 +18,16 @@ function sameOrigin(request:NextRequest){
 export async function POST(request:NextRequest){
  if(!sameOrigin(request))return NextResponse.json({error:'Invalid request origin.'},{status:403});
  const body=await request.json().catch(()=>({}));
- const email=String(body.email||'').trim().toLowerCase();
- const password=String(body.password||'');
- if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!password)return NextResponse.json({error:'Invalid email or password.'},{status:400});
+ const digits=String(body.phone||'').replace(/\D/g,'');
+ const phone=/^960\d{7}$/.test(digits)?`+${digits}`:/^\d{7}$/.test(digits)?`+960${digits}`:'';
+ const otp=String(body.otp||'').trim();
+ if(!phone)return NextResponse.json({error:'Enter a valid 7-digit Maldives phone number.'},{status:400});
+ if(!/^\d{4}$/.test(otp))return NextResponse.json({error:'Enter the 4-digit verification code.'},{status:400});
  try{
   const response=await fetch(AUTH_API,{
    method:'POST',signal:AbortSignal.timeout(12000),
    headers:{'Content-Type':'application/json','User-Agent':request.headers.get('user-agent')||''},
-   body:JSON.stringify({action:'login',email,password})
+   body:JSON.stringify({action:'login',phone,otp})
   });
   const payload=await response.json().catch(()=>({error:'Unable to sign in.'}));
   const next=NextResponse.json(payload,{status:response.status});
