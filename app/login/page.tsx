@@ -58,39 +58,26 @@ export default function LoginPage(){
  const[otp,setOtp]=useState('');
  const[message,setMessage]=useState('');
  const[busy,setBusy]=useState(false);
- const[checkingSession,setCheckingSession]=useState(true);
 
  useEffect(()=>{
   let active=true;
 
   void(async()=>{
    try{
-    // Check the authoritative server session once, with a hard timeout.
-    // A slow/broken session endpoint must never trap the user on this screen.
+    // Restore a valid session in the background. The sign-in form stays usable
+    // immediately, so a slow or broken session endpoint can never freeze login.
     const sessionResponse=await fetchWithTimeout('/api/auth/session',{retryAuth:false},3000);
-    if(!active)return;
+    if(!active||!sessionResponse.ok)return;
 
-    if(!sessionResponse.ok){
-     setCheckingSession(false);
-     return;
-    }
-
-    // We have a valid server session. Resolve the profile briefly so the user can
-    // be routed to their default workspace. If profile loading fails, fall back to
-    // the sign-in form instead of spinning forever.
     const profileResponse=await fetchWithTimeout('/api/user/profile',{},3000);
+    if(!active||!profileResponse.ok)return;
+
+    const payload=await profileResponse.json().catch(()=>({}));
     if(!active)return;
-
-    if(profileResponse.ok){
-     const payload=await profileResponse.json().catch(()=>({}));
-     await routeUser(payload?.profile as ExistingProfile|undefined);
-     return;
-    }
+    await routeUser(payload?.profile as ExistingProfile|undefined);
    }catch{
-    // Timeout/network failure is not allowed to block access to the sign-in form.
+    // A timeout/network failure simply leaves the usable sign-in form on screen.
    }
-
-   if(active)setCheckingSession(false);
   })();
 
   return()=>{active=false;};
@@ -161,8 +148,6 @@ export default function LoginPage(){
    }
   }finally{setBusy(false);}
  }
-
- if(checkingSession)return <div className="signinPage"><div className="signinContainer"><div className="signinCard signinChecking"><span className="signinSpinner" aria-hidden="true"/><p>Checking your session…</p></div></div></div>;
 
  return <div className="signinPage">
   <main className="signinContainer">
