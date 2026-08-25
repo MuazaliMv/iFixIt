@@ -1,0 +1,42 @@
+/* iFixMV mobile web-app shell: iOS-inspired behavior without changing business logic. */
+:root{--ios-tab-height:64px;--ios-safe-bottom:env(safe-area-inset-bottom,0px);--ios-safe-top:env(safe-area-inset-top,0px)}
+html,body{min-height:100%;overscroll-behavior-y:none;-webkit-text-size-adjust:100%}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button,a{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+
+.iosTabBar{display:none}
+
+@media(max-width:960px){
+ body{padding-bottom:calc(var(--ios-tab-height) + var(--ios-safe-bottom))}
+ .c4Sidebar{display:none!important}
+ .c4Main,.c4App.dv .c4Main{margin:0!important}
+ .c3Page{min-height:100dvh}
+ .c3Header{padding-top:var(--ios-safe-top);height:calc(60px + var(--ios-safe-top))!important;position:sticky!important;top:0;z-index:80}
+ .c3Shell{padding-bottom:18px}
+ .iosTabBar{position:fixed;left:0;right:0;bottom:0;z-index:120;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:calc(var(--ios-tab-height) + var(--ios-safe-bottom));padding:6px 10px calc(6px + var(--ios-safe-bottom));background:rgba(249,249,251,.92);border-top:1px solid rgba(60,60,67,.16);-webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px)}
+ .iosTabBar a,.iosTabBar button{appearance:none;border:0;background:transparent;color:#8e8e93;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;min-height:50px;padding:2px 4px;border-radius:12px;font:600 10px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif}
+ .iosTabBar svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+ .iosTabBar a.active{color:var(--brand,#3457e6)}
+ .iosTabBar .iosTabNew{color:var(--brand,#3457e6)}
+ .iosTabBar .iosTabNew svg{stroke-width:2.1}
+ .iosTabBar a:active,.iosTabBar button:active{transform:scale(.94);background:rgba(60,60,67,.06)}
+ .c3ActionDock{bottom:calc(var(--ios-tab-height) + var(--ios-safe-bottom))!important;padding-bottom:10px!important}
+ input,textarea,select{font-size:16px!important}
+}
+
+@media(max-width:520px){
+ .c3Shell{width:100%!important;padding-left:12px!important;padding-right:12px!important}
+ .c3Home,.c3Wizard{gap:12px!important}
+ .c3Welcome,.c3Section,.c3WizardCard,.c3RequestCard{border-radius:20px!important}
+ .c3Welcome{padding:20px!important}
+ .c3Welcome h1{font-size:30px!important;line-height:1.05!important}
+ .c3Section,.c3WizardCard{padding:16px!important}
+ .c3ServiceGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .c3ServiceTile{min-height:104px!important;padding:13px!important}
+}
+
+@media(display-mode:standalone){
+ html{background:#f5f5f7}
+ body{user-select:none}
+ input,textarea{user-select:text}
+}
