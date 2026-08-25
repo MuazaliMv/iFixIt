@@ -1,20 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-type NominatimResult = {
-  address?: {
-    postcode?: string;
-  };
-};
-
 function clean(value: string | null) {
   return (value || '').trim();
 }
 
-function validMaldivesPostalCode(value: string) {
-  return /^\d{5}$/.test(value);
-}
-
-function slug(value: string) {
+function normalizeLocation(value: string) {
   return value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -22,116 +12,61 @@ function slug(value: string) {
     .toLowerCase()
     .replace(/\bcity\b/g, '')
     .replace(/\batoll\b/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
 }
 
-function uniqueCodes(values: string[]) {
-  return Array.from(new Set(values.filter(validMaldivesPostalCode))).sort();
-}
+type PostalRule = {
+  code: string;
+  matches: (params: { atoll: string; city: string; ward: string }) => boolean;
+};
 
-async function lookupNominatim(params: { atoll: string; city: string; road: string }) {
-  const queries = [
-    `${params.road}, ${params.city}, Maldives`,
-    `${params.road}, ${params.city}, ${params.atoll}, Maldives`,
-  ];
-  const codes: string[] = [];
+/*
+ * Postal codes must be resolved from an exact administrative locality, never
+ * from nearby POIs, hotels, bridges, resorts, or arbitrary search results.
+ *
+ * Add new verified Maldives postal localities here (or replace this with the
+ * postal-code master table once that table is populated).
+ */
+const POSTAL_RULES: PostalRule[] = [
+  {
+    code: '23000',
+    matches: ({ city, ward }) => {
+      const cityKey = normalizeLocation(city);
+      const wardKey = normalizeLocation(ward);
+      return cityKey === 'hulhumale' || wardKey === 'hulhumale' || wardKey.startsWith('hulhumale phase ');
+    },
+  },
+];
 
-  for (const query of queries) {
-    const url = new URL('https://nominatim.openstreetmap.org/search');
-    url.searchParams.set('format', 'jsonv2');
-    url.searchParams.set('addressdetails', '1');
-    url.searchParams.set('countrycodes', 'mv');
-    url.searchParams.set('q', query);
-    url.searchParams.set('limit', '50');
-
-    const response = await fetch(url, {
-      headers: {
-        Accept: 'application/json',
-        'Accept-Language': 'en',
-        'User-Agent': 'FixIt-Maldives/1.1 (postal-code lookup)',
-      },
-      next: { revalidate: 21600 },
-    });
-
-    if (!response.ok) continue;
-    const results = (await response.json()) as NominatimResult[];
-    for (const item of results) {
-      const postcode = clean(item.address?.postcode || null);
-      if (validMaldivesPostalCode(postcode)) codes.push(postcode);
-    }
-    if (codes.length) break;
-  }
-
-  return uniqueCodes(codes);
-}
-
-async function lookupWorldPostalCode(params: { city: string; road: string }) {
-  const citySlug = slug(params.city);
-  const roadSlug = slug(params.road);
-  if (!citySlug || !roadSlug) return [] as string[];
-
-  const candidates = [
-    `https://worldpostalcode.com/maldives/${citySlug}/${roadSlug}`,
-    `https://worldpostalcode.com/maldives/${roadSlug}`,
-  ];
-
-  for (const target of candidates) {
-    try {
-      const response = await fetch(target, {
-        headers: {
-          Accept: 'text/html,application/xhtml+xml',
-          'Accept-Language': 'en',
-          'User-Agent': 'FixIt-Maldives/1.1 (postal-code lookup)',
-        },
-        next: { revalidate: 86400 },
-      });
-      if (!response.ok) continue;
-      const html = await response.text();
-      const codes = uniqueCodes(Array.from(html.matchAll(/\b\d{5}\b/g), (match) => match[0]));
-      if (codes.length) return codes;
-    } catch {
-      // Continue to the next candidate URL.
-    }
-  }
-
-  return [] as string[];
+function resolvePostalCodes(params: { atoll: string; city: string; ward: string }) {
+  const codes = POSTAL_RULES.filter((rule) => rule.matches(params)).map((rule) => rule.code);
+  return Array.from(new Set(codes));
 }
 
 export async function GET(request: NextRequest) {
   const atoll = clean(request.nextUrl.searchParams.get('atoll'));
   const city = clean(request.nextUrl.searchParams.get('city'));
-  const road = clean(request.nextUrl.searchParams.get('road'));
+  const ward = clean(request.nextUrl.searchParams.get('ward'));
 
-  if (!atoll || !city || !road) {
+  if (!atoll || !city) {
     return NextResponse.json(
-      { postalCodes: [], error: 'Atoll, city/island and road are required.' },
+      { postalCodes: [], error: 'Atoll and city/island are required.' },
       { status: 400 },
     );
   }
 
-  try {
-    const osmCodes = await lookupNominatim({ atoll, city, road });
-    if (osmCodes.length) {
-      return NextResponse.json(
-        { postalCodes: osmCodes, source: 'OpenStreetMap Nominatim' },
-        { headers: { 'Cache-Control': 'public, s-maxage=21600, stale-while-revalidate=86400' } },
-      );
-    }
+  const postalCodes = resolvePostalCodes({ atoll, city, ward });
 
-    const fallbackCodes = await lookupWorldPostalCode({ city, road });
-    return NextResponse.json(
-      {
-        postalCodes: fallbackCodes,
-        source: fallbackCodes.length ? 'Maldives postal-code directory fallback' : 'No matching postal source',
+  return NextResponse.json(
+    {
+      postalCodes,
+      source: postalCodes.length ? 'Verified Maldives locality rule' : 'No verified locality match',
+    },
+    {
+      headers: {
+        'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800',
       },
-      { headers: { 'Cache-Control': 'public, s-maxage=21600, stale-while-revalidate=86400' } },
-    );
-  } catch (error) {
-    console.error('Postal code lookup failed', error);
-    return NextResponse.json(
-      { postalCodes: [], error: 'Unable to retrieve postal codes right now.' },
-      { status: 502 },
-    );
-  }
+    },
+  );
 }
