@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import './profile-redesign.css';
 
@@ -44,10 +44,33 @@ export default function ProfileClient(){
 
  async function load(){setLoading(true);setMessage('Loading profile…');try{const next=await profileRequest();const normalized={...next,phone_number:localPhone(next.phone_number)};setProfile(normalized);populate(normalized);if(normalized.role==='PROVIDER')setProviderData(await providerRequest());else setProviderData(null);setMessage('Profile is up to date.');}catch(error:any){if(error?.status===401){window.location.replace('/login?next=%2Fprofile');return;}const timedOut=error instanceof Error&&(error.name==='AbortError'||error.name==='TimeoutError');setMessage(timedOut?'Profile service is taking longer than expected. Tap Refresh to retry.':error instanceof Error?error.message:'Unable to load profile details.');}finally{setLoading(false);}}
 
- async function save(e:FormEvent){
-  e.preventDefault();const normalizedPhone=phone.replace(/\D/g,'');if(normalizedPhone&&normalizedPhone.length!==7){setMessage('Enter a valid 7-digit Maldives phone number.');return;}
+ async function saveProfile(){
+  if(loading||saving)return;
+  const trimmedName=name.trim();
+  const normalizedPhone=phone.replace(/\D/g,'');
+  if(!trimmedName){setMessage('Enter your full name.');return;}
+  if(normalizedPhone&&normalizedPhone.length!==7){setMessage('Enter a valid 7-digit Maldives phone number.');return;}
   setSaving(true);setMessage('Saving profile…');
-  try{const form=new FormData();form.set('fullName',name.trim());if(normalizedPhone)form.set('phoneNumber',normalizedPhone);form.set('primaryAddress',JSON.stringify({line1:line1.trim()||null,line2:line2.trim()||null,city:city.trim()||null,stateRegion:stateRegion.trim()||null,postalCode:postalCode.trim()||null,country:'Maldives'}));const response=await fetch('/api/user/profile',{method:'PUT',body:form,credentials:'same-origin'});const payload=await response.json().catch(()=>({}));if(response.status===401){window.location.replace('/login?next=%2Fprofile');return;}if(!response.ok)throw new Error(payload?.error||'Unable to update profile.');await load();setMessage('Profile updated successfully.');window.dispatchEvent(new Event('fixit:profile-updated'));}catch(error){setMessage(error instanceof Error?error.message:'Unable to update profile.');}finally{setSaving(false);}
+  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),20000);
+  try{
+   const form=new FormData();
+   form.set('fullName',trimmedName);
+   form.set('phoneNumber',normalizedPhone);
+   form.set('primaryAddress',JSON.stringify({line1:line1.trim()||null,line2:line2.trim()||null,city:city.trim()||null,stateRegion:stateRegion.trim()||null,postalCode:postalCode.trim()||null,country:'Maldives'}));
+   const response=await fetch('/api/user/profile',{method:'PUT',body:form,credentials:'same-origin',signal:controller.signal});
+   const payload=await response.json().catch(()=>({}));
+   if(response.status===401){window.location.replace('/login?next=%2Fprofile');return;}
+   if(!response.ok)throw new Error(payload?.error||'Unable to update profile.');
+   const next=await profileRequest();
+   const normalized={...next,phone_number:localPhone(next.phone_number)};
+   setProfile(normalized);populate(normalized);
+   if(normalized.role==='PROVIDER')setProviderData(await providerRequest());else setProviderData(null);
+   setMessage('Profile updated successfully.');
+   window.dispatchEvent(new Event('fixit:profile-updated'));
+  }catch(error){
+   const timedOut=error instanceof Error&&(error.name==='AbortError'||error.name==='TimeoutError');
+   setMessage(timedOut?'Save timed out. Please try again.':error instanceof Error?error.message:'Unable to update profile.');
+  }finally{clearTimeout(timer);setSaving(false);}
  }
 
  function cancelEdit(){if(profile)populate(profile);setMessage('Changes reset.');}
@@ -68,11 +91,12 @@ export default function ProfileClient(){
 
     <div className="profileContentColumn">
      <section className="profileEditCard" id="profile"><div className="profileEditHeader"><div><h2>Edit {roleLabel} Details</h2><p>Update the information used across your iFixMV account and service requests.</p></div><span className="profileSaveState" role="status" aria-live="polite">{message}</span></div>
-      <form onSubmit={save} className="profileEditForm">
+      <form onSubmit={event=>{event.preventDefault();void saveProfile();}} className="profileEditForm">
        <div className="profileFormSection"><h3>Personal Information</h3><div className="profileFormGrid"><label>Full Name<input value={name} onChange={e=>setName(e.target.value)} autoComplete="name" required disabled={loading}/></label><label>Email Address<input value={profile?.email||''} autoComplete="email" readOnly disabled/></label></div></div>
        <div className="profileFormSection"><h3>Contact</h3><div className="profileFormGrid"><label>Phone Number (Maldives)<span className="profilePhoneField"><b>🇲🇻 +960</b><input type="tel" inputMode="numeric" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7XXXXXX" maxLength={7} autoComplete="tel-national" disabled={loading}/></span></label><label>Country / Region<input value="Maldives" autoComplete="country-name" readOnly disabled/></label></div></div>
        <div className="profileFormSection" id="service-addresses"><h3>Primary address</h3><div className="profileFormGrid"><label className="wide">House / Building Name<input value={line1} onChange={e=>setLine1(e.target.value)} placeholder="House or building name" autoComplete="address-line1" disabled={loading}/></label><label>Street / Additional Address<input value={line2} onChange={e=>setLine2(e.target.value)} placeholder="Street, floor or apartment" autoComplete="address-line2" disabled={loading}/></label><label>Island / City<input value={city} onChange={e=>setCity(e.target.value)} placeholder="Island or city" autoComplete="address-level2" disabled={loading}/></label><label>Atoll / Region<input value={stateRegion} onChange={e=>setStateRegion(e.target.value)} placeholder="Atoll or region" autoComplete="address-level1" disabled={loading}/></label><label>Postal Code<input value={postalCode} onChange={e=>setPostalCode(e.target.value)} placeholder="Postal code" autoComplete="postal-code" disabled={loading}/></label></div></div>
-       <div className="profileFormActions"><button className="secondary" type="button" onClick={cancelEdit} disabled={loading||saving}>Cancel</button><button className="primary" type="submit" disabled={loading||saving}>{saving?'Saving…':'Save Profile Information'}</button></div>
+       <div className="profileFormActions"><button className="secondary" type="button" onClick={cancelEdit} disabled={loading||saving}>Cancel</button><button className="primary" type="button" onClick={()=>void saveProfile()} disabled={loading||saving} aria-busy={saving}>{saving?'Saving…':'Save Profile Information'}</button></div>
+       <p className="profileSaveState" role="status" aria-live="polite" style={{margin:0}}>{message}</p>
       </form>
      </section>
 
