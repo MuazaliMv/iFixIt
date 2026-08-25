@@ -4,11 +4,10 @@ function clean(value: string | null) {
   return (value || '').trim();
 }
 
-function normalizeLocation(value: string) {
+function normalize(value: string) {
   return value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[’'`]/g, '')
     .toLowerCase()
     .replace(/\bcity\b/g, '')
     .replace(/\batoll\b/g, '')
@@ -16,32 +15,38 @@ function normalizeLocation(value: string) {
     .trim();
 }
 
-type PostalRule = {
-  code: string;
-  matches: (params: { atoll: string; city: string; ward: string }) => boolean;
-};
-
-/*
- * Postal codes must be resolved from an exact administrative locality, never
- * from nearby POIs, hotels, bridges, resorts, or arbitrary search results.
- *
- * Add new verified Maldives postal localities here (or replace this with the
- * postal-code master table once that table is populated).
- */
-const POSTAL_RULES: PostalRule[] = [
-  {
-    code: '23000',
-    matches: ({ city, ward }) => {
-      const cityKey = normalizeLocation(city);
-      const wardKey = normalizeLocation(ward);
-      return cityKey === 'hulhumale' || wardKey === 'hulhumale' || wardKey.startsWith('hulhumale phase ');
-    },
-  },
+const VERIFIED_POSTAL_CODES: Array<{
+  atoll?: string;
+  city: string;
+  ward?: string;
+  postalCode: string;
+}> = [
+  { atoll: 'Kaafu', city: 'Male', ward: 'Hulhumale Phase 1', postalCode: '23000' },
+  { atoll: 'Kaafu', city: 'Male', ward: 'Hulhumale Phase 2', postalCode: '23000' },
+  { atoll: 'Kaafu', city: 'Hulhumale', postalCode: '23000' },
 ];
 
-function resolvePostalCodes(params: { atoll: string; city: string; ward: string }) {
-  const codes = POSTAL_RULES.filter((rule) => rule.matches(params)).map((rule) => rule.code);
-  return Array.from(new Set(codes));
+function resolvePostalCode(params: { atoll: string; city: string; ward?: string }) {
+  const atoll = normalize(params.atoll);
+  const city = normalize(params.city);
+  const ward = normalize(params.ward || '');
+
+  const exactWard = VERIFIED_POSTAL_CODES.find((item) => {
+    const itemAtoll = normalize(item.atoll || '');
+    return (!itemAtoll || itemAtoll === atoll)
+      && normalize(item.city) === city
+      && item.ward
+      && normalize(item.ward) === ward;
+  });
+  if (exactWard) return exactWard.postalCode;
+
+  const exactCity = VERIFIED_POSTAL_CODES.find((item) => {
+    const itemAtoll = normalize(item.atoll || '');
+    return (!itemAtoll || itemAtoll === atoll)
+      && normalize(item.city) === city
+      && !item.ward;
+  });
+  return exactCity?.postalCode || null;
 }
 
 export async function GET(request: NextRequest) {
@@ -56,17 +61,12 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const postalCodes = resolvePostalCodes({ atoll, city, ward });
-
+  const postalCode = resolvePostalCode({ atoll, city, ward });
   return NextResponse.json(
     {
-      postalCodes,
-      source: postalCodes.length ? 'Verified Maldives locality rule' : 'No verified locality match',
+      postalCodes: postalCode ? [postalCode] : [],
+      source: postalCode ? 'Verified locality lookup' : 'No verified postal code found',
     },
-    {
-      headers: {
-        'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800',
-      },
-    },
+    { headers: { 'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800' } },
   );
 }
