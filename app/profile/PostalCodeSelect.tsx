@@ -51,20 +51,18 @@ function normalizeWardList(city: string, values: string[]) {
   return unique(filtered);
 }
 
-export default function PostalCodeSelect({ atoll, city, road: _road, value, onChange, disabled }: Props) {
+export default function PostalCodeSelect({ atoll, city, road, value, onChange, disabled }: Props) {
   const [ward, setWard] = useState('');
   const [wards, setWards] = useState<string[]>([]);
   const [wardLoading, setWardLoading] = useState(false);
   const [postalCodes, setPostalCodes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const previousLocation = useRef('');
+  const previousAddress = useRef('');
 
   const wardReady = Boolean(atoll.trim() && city.trim());
-  const cityIsDirectLocality = normalizedCity(city) === 'hulhumale';
-  const requiresWard = wards.length > 0 && !cityIsDirectLocality;
-  const ready = Boolean(atoll.trim() && city.trim() && (!requiresWard || ward.trim()));
-  const locationKey = `${atoll.trim()}|${city.trim()}|${ward.trim()}`;
+  const ready = Boolean(atoll.trim() && city.trim());
+  const addressKey = `${atoll.trim()}|${city.trim()}|${road.trim()}|${ward.trim()}`;
 
   useEffect(() => {
     setWard('');
@@ -77,9 +75,7 @@ export default function PostalCodeSelect({ atoll, city, road: _road, value, onCh
       setWardLoading(true);
       try {
         const params = new URLSearchParams({ atoll, city });
-        const response = await fetch(`/api/locations/wards?${params.toString()}`, {
-          signal: controller.signal,
-        });
+        const response = await fetch(`/api/locations/wards?${params.toString()}`, { signal: controller.signal });
         const payload = (await response.json()) as WardLookupResponse;
         if (!response.ok) throw new Error(payload.error || 'Unable to load wards.');
         const remoteWards = Array.isArray(payload.wards) ? payload.wards : [];
@@ -98,11 +94,9 @@ export default function PostalCodeSelect({ atoll, city, road: _road, value, onCh
   }, [atoll, city, wardReady]);
 
   useEffect(() => {
-    if (previousLocation.current && previousLocation.current !== locationKey && value) {
-      onChange('');
-    }
-    previousLocation.current = locationKey;
-  }, [locationKey, onChange, value]);
+    if (previousAddress.current && previousAddress.current !== addressKey && value) onChange('');
+    previousAddress.current = addressKey;
+  }, [addressKey, onChange, value]);
 
   useEffect(() => {
     if (!ready) {
@@ -118,20 +112,14 @@ export default function PostalCodeSelect({ atoll, city, road: _road, value, onCh
       setError('');
       try {
         const params = new URLSearchParams({ atoll, city });
+        if (road.trim()) params.set('road', road);
         if (ward) params.set('ward', ward);
-        const response = await fetch(`/api/locations/postal-codes?${params.toString()}`, {
-          signal: controller.signal,
-        });
+        const response = await fetch(`/api/locations/postal-codes?${params.toString()}`, { signal: controller.signal });
         const payload = (await response.json()) as LookupResponse;
         if (!response.ok) throw new Error(payload.error || 'Unable to load postal code.');
-        const nextCodes = Array.isArray(payload.postalCodes) ? payload.postalCodes : [];
-        setPostalCodes(nextCodes);
-
-        if (nextCodes.length === 1 && value !== nextCodes[0]) {
-          onChange(nextCodes[0]);
-        } else if (nextCodes.length === 0 && value) {
-          onChange('');
-        }
+        const codes = Array.isArray(payload.postalCodes) ? payload.postalCodes : [];
+        setPostalCodes(codes);
+        if (codes.length === 1 && value !== codes[0]) onChange(codes[0]);
       } catch (err) {
         if (controller.signal.aborted) return;
         setPostalCodes([]);
@@ -139,19 +127,18 @@ export default function PostalCodeSelect({ atoll, city, road: _road, value, onCh
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
-    }, 200);
+    }, 250);
 
     return () => {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [atoll, city, ward, ready, onChange, value]);
+  }, [atoll, city, road, ward, ready, onChange, value]);
 
-  let postalPlaceholder = requiresWard && !ward ? 'Select Ward first' : 'Postal code will be matched automatically';
-  if (ready && loading) postalPlaceholder = 'Matching postal code…';
-  else if (ready && error) postalPlaceholder = 'Postal lookup unavailable';
-  else if (ready && !loading && postalCodes.length === 0) postalPlaceholder = 'No verified postal code found';
-  else if (ready && postalCodes.length === 1) postalPlaceholder = postalCodes[0];
+  let postalText = value || '';
+  if (ready && loading) postalText = 'Finding postal code…';
+  else if (ready && error && !value) postalText = 'Postal lookup unavailable';
+  else if (ready && !loading && postalCodes.length === 0 && !value) postalText = 'No verified postal code found';
 
   let wardPlaceholder = 'Select City / Island first';
   if (wardReady && wardLoading && wards.length === 0) wardPlaceholder = 'Loading wards…';
@@ -170,21 +157,18 @@ export default function PostalCodeSelect({ atoll, city, road: _road, value, onCh
         aria-busy={wardLoading}
       >
         <option value="">{wardPlaceholder}</option>
-        {wards.map((item) => (
-          <option key={item} value={item}>{item}</option>
-        ))}
+        {wards.map((item) => <option key={item} value={item}>{item}</option>)}
       </select>
 
       <span className="fieldLabel">Postal code</span>
       <input
-        value={value || ''}
+        value={postalText}
         readOnly
-        disabled={disabled}
-        placeholder={postalPlaceholder}
+        disabled={disabled || !ready}
         aria-label="Postal code"
         aria-busy={loading}
       />
-      {value && postalCodes.length === 1 ? <small className="muted" role="status">Automatically matched to the selected locality.</small> : null}
+      {value ? <small className="muted">Automatically matched to the selected locality.</small> : null}
       {error ? <small className="muted" role="status">{error}</small> : null}
     </div>
   );
