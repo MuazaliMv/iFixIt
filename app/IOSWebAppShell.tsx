@@ -1,13 +1,15 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { apiFetch } from '../lib/apiClient';
 import { canAccessPortal, normalizeAccountRole, type AccountRole, type PortalRole } from '../lib/roleAccess';
 
 const hiddenPrefixes=['/admin','/provider','/login','/register','/auth','/api'];
 
 type IconName='home'|'requests'|'new'|'switch'|'profile'|'customer'|'provider'|'admin';
+type CachedAccess={role:AccountRole;providerApproved:boolean};
 
 function Icon({name}:{name:IconName}){
  const paths={
@@ -25,6 +27,7 @@ function Icon({name}:{name:IconName}){
 
 export default function IOSWebAppShell(){
  const pathname=usePathname()||'/';
+ const router=useRouter();
  const [standalone,setStandalone]=useState(false);
  const [switchOpen,setSwitchOpen]=useState(false);
  const [accountRole,setAccountRole]=useState<AccountRole>('CUSTOMER');
@@ -45,24 +48,43 @@ export default function IOSWebAppShell(){
   return()=>document.documentElement.classList.remove('ifix-customer-tabbar');
  },[hidden]);
 
+ useEffect(()=>{setSwitchOpen(false);},[pathname]);
+
+ // Resolve account access once for this persistent app shell. Previously this
+ // re-fetched /api/user/profile on every tab change, which added avoidable
+ // loading work and caused the Switch tab to flicker during navigation.
  useEffect(()=>{
-  setSwitchOpen(false);
   let active=true;
+  try{
+   const raw=sessionStorage.getItem('fixit:mobile-access');
+   if(raw){
+    const cached=JSON.parse(raw) as CachedAccess;
+    if(cached?.role){
+     setAccountRole(normalizeAccountRole(cached.role));
+     setProviderApproved(Boolean(cached.providerApproved));
+     setSignedIn(true);
+    }
+   }
+  }catch{}
+
   void(async()=>{
    try{
     const response=await apiFetch('/api/user/profile',{cache:'no-store'});
     if(!active)return;
     if(!response.ok){setSignedIn(false);return;}
     const payload=await response.json().catch(()=>({}));
-    setAccountRole(normalizeAccountRole(payload?.profile?.role));
-    setProviderApproved(Boolean(payload?.profile?.provider_approved));
+    const role=normalizeAccountRole(payload?.profile?.role);
+    const approved=Boolean(payload?.profile?.provider_approved);
+    setAccountRole(role);
+    setProviderApproved(approved);
     setSignedIn(true);
+    try{sessionStorage.setItem('fixit:mobile-access',JSON.stringify({role,providerApproved:approved} satisfies CachedAccess));}catch{}
    }catch{
-    if(active)setSignedIn(false);
+    // Keep a valid cached access state if one was already restored.
    }
   })();
   return()=>{active=false;};
- },[pathname]);
+ },[]);
 
  useEffect(()=>{
   if(!switchOpen)return;
@@ -87,7 +109,7 @@ export default function IOSWebAppShell(){
    sessionStorage.setItem('fixit:mode-toast',`You're now viewing as ${label}.`);
   }catch{}
   setSwitchOpen(false);
-  window.location.assign(next==='provider'?'/provider/today':next==='admin'?'/admin':'/home');
+  router.push(next==='provider'?'/provider/today':next==='admin'?'/admin':'/home');
  }
 
  return <>
@@ -104,11 +126,11 @@ export default function IOSWebAppShell(){
   </div>:null}
 
   <nav className={`iosTabBar${hasWorkspaceSwitch?' hasWorkspaceSwitch':''}`} aria-label="Customer app navigation" data-standalone={standalone?'true':'false'}>
-   <a href="/" className={active('home')?'active':''}><Icon name="home"/><span>Home</span></a>
-   <a href="/requests" className={active('requests')?'active':''}><Icon name="requests"/><span>Requests</span></a>
-   <a href="/?new=1" className="iosTabNew"><Icon name="new"/><span>New</span></a>
+   <Link href="/" className={active('home')?'active':''}><Icon name="home"/><span>Home</span></Link>
+   <Link href="/requests" className={active('requests')?'active':''}><Icon name="requests"/><span>Requests</span></Link>
+   <Link href="/?new=1" className="iosTabNew"><Icon name="new"/><span>New</span></Link>
    {hasWorkspaceSwitch?<button type="button" className={switchOpen?'active':''} onClick={()=>setSwitchOpen(true)} aria-haspopup="dialog" aria-expanded={switchOpen}><Icon name="switch"/><span>Switch</span></button>:null}
-   <a href="/profile" className={active('profile')?'active':''}><Icon name="profile"/><span>Profile</span></a>
+   <Link href="/profile" className={active('profile')?'active':''}><Icon name="profile"/><span>Profile</span></Link>
   </nav>
  </>;
 }
