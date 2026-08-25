@@ -1,13 +1,15 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { apiFetch } from '../../lib/apiClient';
+import { apiFetch, invalidateProfileCache } from '../../lib/apiClient';
+import { supabase } from '../../lib/supabaseClient';
 import './login.css';
 
 type Step='phone'|'otp';
 type ExistingProfile={role?:string|null};
 type AccountRole='CUSTOMER'|'PROVIDER'|'ADMIN';
 type Workspace='customer'|'provider'|'admin';
+type LoginSession={access_token?:string|null;refresh_token?:string|null};
 
 function normalizeRole(value:unknown):AccountRole{
  const role=String(value||'CUSTOMER').toUpperCase();
@@ -51,6 +53,14 @@ async function fetchWithTimeout(
  }
 }
 
+async function syncBrowserSession(session:LoginSession|undefined){
+ const accessToken=String(session?.access_token||'').trim();
+ const refreshToken=String(session?.refresh_token||'').trim();
+ if(!accessToken||!refreshToken)throw new Error('Unable to create the browser login session.');
+ const {data,error}=await supabase.auth.setSession({access_token:accessToken,refresh_token:refreshToken});
+ if(error||!data.session?.access_token)throw new Error(error?.message||'Unable to create the browser login session.');
+}
+
 export default function LoginPage(){
  const[step,setStep]=useState<Step>('phone');
  const[phone,setPhone]=useState('');
@@ -64,8 +74,8 @@ export default function LoginPage(){
 
   void(async()=>{
    try{
-    // Restore a valid session in the background. The sign-in form stays usable
-    // immediately, so a slow or broken session endpoint can never freeze login.
+    // Restore a valid secure server session in the background. The sign-in form
+    // stays usable immediately, so a slow or broken session endpoint cannot freeze login.
     const sessionResponse=await fetchWithTimeout('/api/auth/session',{retryAuth:false},3000);
     if(!active||!sessionResponse.ok)return;
 
@@ -139,6 +149,17 @@ export default function LoginPage(){
    },8000);
    const payload=await response.json().catch(()=>({}));
    if(!response.ok||!payload?.ok){setMessage(payload?.error||'Unable to sign in.');return;}
+
+   // The API sets authoritative HttpOnly cookies. Existing customer/provider screens
+   // still call Supabase Edge Functions directly with a browser access token, so keep
+   // that browser session synchronized before navigating. Without this handoff those
+   // screens immediately redirect the newly authenticated user back to /login.
+   await syncBrowserSession(payload?.session as LoginSession|undefined);
+   invalidateProfileCache();
+
+   const sessionCheck=await fetchWithTimeout('/api/auth/session',{retryAuth:false},4000);
+   if(!sessionCheck.ok)throw new Error('The login session could not be verified. Please try again.');
+
    await routeUser(payload?.profile as ExistingProfile|undefined);
   }catch(error){
    if(error instanceof DOMException&&error.name==='AbortError'){
