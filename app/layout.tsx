@@ -36,6 +36,7 @@ import './workspace-system.css';
 import './unified-control-family.css';
 import './mobile-section-pager.css';
 import './service-picker-ux.css';
+import './ios-web-app.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
@@ -54,22 +55,31 @@ import PreferredDateRuntime from './PreferredDateRuntime';
 import SendRequestTapRuntime from './SendRequestTapRuntime';
 import WorkspaceThemeRuntime from './WorkspaceThemeRuntime';
 import ServerSessionSignOutSync from './ServerSessionSignOutSync';
+import IOSWebAppShell from './IOSWebAppShell';
 
 export const metadata: Metadata = {
   title: 'FixIt Maldives',
   description: 'Local service requests matched with trusted providers in Maldives.',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'FixIt',
+  },
+  formatDetection: { telephone: true },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  themeColor: '#f5f5f7',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/><ResponsiveRuntime/><CompactCopyRuntime/><ServicePickerUXRuntime/><ButtonUsabilityRuntime/><MobileSectionPager/><MobileKeyboardRuntime/><WorkspaceThemeRuntime/><ServerSessionSignOutSync/><SendRequestTapRuntime/><RoleAccessGuard/><NewRequestRuntime/><PreferredDateRuntime/><GlobalRoleMenu/><GlobalModeSwitch/><GlobalCardPagination/><MobileDateInputRuntime/>{children}<ModeToast/></body>
+      <body><ThemeRuntime/><ResponsiveRuntime/><CompactCopyRuntime/><ServicePickerUXRuntime/><ButtonUsabilityRuntime/><MobileSectionPager/><MobileKeyboardRuntime/><WorkspaceThemeRuntime/><ServerSessionSignOutSync/><SendRequestTapRuntime/><RoleAccessGuard/><NewRequestRuntime/><PreferredDateRuntime/><GlobalRoleMenu/><GlobalModeSwitch/><GlobalCardPagination/><MobileDateInputRuntime/><IOSWebAppShell/>{children}<ModeToast/></body>
     </html>
   );
 }
