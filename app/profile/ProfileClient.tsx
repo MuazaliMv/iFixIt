@@ -102,8 +102,6 @@ export default function ProfileClient(){
 
  return <main className="profileRedesignPage">
   <div className="profileRedesignShell">
-   <header className="profileRedesignTitlebar"><div><p className="profileBreadcrumb">Account / <span>Profile & Settings</span></p><h1>{roleLabel} Profile & Settings</h1><p>Manage your contact details, service locations and account settings.</p></div><span className={`profileVerified ${profile?.is_phone_verified?'ok':''}`}><i/>{profile?.is_phone_verified?'Phone verified':'Account active'}</span></header>
-
    <div className="profileRedesignGrid">
     <aside className="profileSidebar">
      <section className="profileSummaryCard"><div className="profileSummaryAvatarWrap">{profile?.profile_photo_url?<img className="profileSummaryAvatar" src={profile.profile_photo_url} alt="Profile"/>:<div className="profileSummaryAvatar profileInitial">{initial}</div>}</div><h2>{loading?'Loading…':profile?.full_name||'Your profile'}</h2><p>{loading?'Loading account…':profile?.email||'Email not provided'}</p><div className="profileRoleRow"><span>{profile?.role||'ACCOUNT'}</span><span>Maldives</span></div><div className="profileSummaryStats"><div><small>Saved service addresses</small><strong>{serviceAddresses.length}</strong></div><div><small>Account status</small><strong>{pretty(profile?.account_status)}</strong></div></div></section>
