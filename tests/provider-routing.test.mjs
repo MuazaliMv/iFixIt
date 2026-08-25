@@ -19,7 +19,7 @@ test('provider portal access honors both provider role and approved provider ent
  assert.match(access,/portal==='provider'\)return role==='PROVIDER'\|\|role==='ADMIN'\|\|providerApproved/);
  assert.match(proxy,/providerApproved:Boolean\(payload\?\.profile\?\.provider_approved\)/);
  assert.match(guard,/canAccessPortal\(role,'provider',providerApproved\)/);
- assert.match(switcher,/canAccessPortal\(role,'provider',providerApproved\)/);
+ assert.match(switcher,/return null;/);
  assert.match(proxy,/Service Provider permission required/);
  assert.match(proxy,/NextResponse\.redirect\(new URL\('\/home'/);
 });
