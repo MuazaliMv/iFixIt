@@ -37,6 +37,8 @@ function rememberWorkspace(workspace:Workspace,role:AccountRole){
  }catch{}
 }
 
+const wait=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
+
 export default function LoginPage(){
  const[step,setStep]=useState<Step>('phone');
  const[phone,setPhone]=useState('');
@@ -49,15 +51,29 @@ export default function LoginPage(){
  useEffect(()=>{
   let active=true;
   void(async()=>{
-   try{
-    const response=await apiFetch('/api/user/profile');
-    if(!active)return;
-    if(response.ok){
-     const payload=await response.json().catch(()=>({}));
-     await routeUser(payload?.profile as ExistingProfile|undefined);
-     return;
+   // A login page can be reached briefly while secure cookies/browser state are
+   // still settling after a route change. Retry transient failures and only show
+   // the form after the server has definitively reported that no session exists.
+   for(let attempt=0;attempt<3;attempt++){
+    try{
+     const response=await apiFetch('/api/user/profile');
+     if(!active)return;
+     if(response.ok){
+      const payload=await response.json().catch(()=>({}));
+      await routeUser(payload?.profile as ExistingProfile|undefined);
+      return;
+     }
+     if(response.status===401||response.status===404){
+      if(attempt<2){await wait(250*(attempt+1));continue;}
+      setCheckingSession(false);
+      return;
+     }
+     // 5xx/timeout/network-style responses are not proof of logout.
+     if(attempt<2){await wait(400*(attempt+1));continue;}
+    }catch{
+     if(attempt<2){await wait(400*(attempt+1));continue;}
     }
-   }catch{}
+   }
    if(active)setCheckingSession(false);
   })();
   return()=>{active=false;};
