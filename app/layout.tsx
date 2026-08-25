@@ -34,11 +34,13 @@ import './apple-system.css';
 import './workspace-system.css';
 import './unified-control-family.css';
 import './mobile-section-pager.css';
+import './service-picker-ux.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
 import MobileSectionPager from './MobileSectionPager';
 import CompactCopyRuntime from './CompactCopyRuntime';
+import ServicePickerUXRuntime from './ServicePickerUXRuntime';
 import RoleAccessGuard from './RoleAccessGuard';
 import GlobalRoleMenu from './GlobalRoleMenu';
 import GlobalModeSwitch from './GlobalModeSwitch';
@@ -65,7 +67,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/><ResponsiveRuntime/><CompactCopyRuntime/><MobileSectionPager/><MobileKeyboardRuntime/><WorkspaceThemeRuntime/><ServerSessionSignOutSync/><SendRequestTapRuntime/><RoleAccessGuard/><NewRequestRuntime/><PreferredDateRuntime/><GlobalRoleMenu/><GlobalModeSwitch/><GlobalCardPagination/><MobileDateInputRuntime/>{children}<ModeToast/></body>
+      <body><ThemeRuntime/><ResponsiveRuntime/><CompactCopyRuntime/><ServicePickerUXRuntime/><MobileSectionPager/><MobileKeyboardRuntime/><WorkspaceThemeRuntime/><ServerSessionSignOutSync/><SendRequestTapRuntime/><RoleAccessGuard/><NewRequestRuntime/><PreferredDateRuntime/><GlobalRoleMenu/><GlobalModeSwitch/><GlobalCardPagination/><MobileDateInputRuntime/>{children}<ModeToast/></body>
     </html>
   );
 }
