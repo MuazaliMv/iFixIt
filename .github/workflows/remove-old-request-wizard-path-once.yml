@@ -1,0 +1,64 @@
+name: Remove old request wizard path once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/remove-old-request-wizard-path-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Replace legacy request path
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              Path('app/IOSWebAppShell.tsx'): [("href:'/?new=1'", "href:'/home?new=1'")],
+              Path('app/requests/page.tsx'): [('href="/?new=1"', 'href="/home?new=1"')],
+          }
+          for path, pairs in replacements.items():
+              text = path.read_text()
+              for old, new in pairs:
+                  text = text.replace(old, new)
+              path.write_text(text)
+
+          layout = Path('app/layout.tsx')
+          text = layout.read_text()
+          text = text.replace("import NewRequestRuntime from './NewRequestRuntime';\n", '')
+          text = text.replace('        <NewRequestRuntime/>\n', '')
+          layout.write_text(text)
+
+          legacy = Path('app/NewRequestRuntime.tsx')
+          if legacy.exists():
+              legacy.unlink()
+          PY
+      - name: Verify no legacy route remains
+        run: |
+          if grep -R --line-number --fixed-strings '/?new=1' app --include='*.tsx' --include='*.ts'; then
+            echo 'Legacy request route still exists.'
+            exit 1
+          fi
+          if grep -R --line-number --fixed-strings 'NewRequestRuntime' app --include='*.tsx' --include='*.ts'; then
+            echo 'Legacy request runtime still exists.'
+            exit 1
+          fi
+      - name: Commit cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No changes needed.'
+            exit 0
+          fi
+          git commit -m 'Remove old request wizard path'
+          git push origin HEAD:main
