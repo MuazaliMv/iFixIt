@@ -124,7 +124,7 @@ export default function IOSWebAppShell(){
    <Link href="/" className={active('home')?'active':''}><Icon name="home"/><span>Home</span></Link>
    <Link href="/requests" className={active('requests')?'active':''}><Icon name="requests"/><span>Requests</span></Link>
    <Link href="/?new=1" className="iosTabNew"><Icon name="new"/><span>New</span></Link>
-   {hasWorkspaceSwitch?<button type="button" className="workspaceAvailable" onClick={()=>setSwitchOpen(true)} aria-haspopup="dialog" aria-expanded={switchOpen} aria-label="Switch workspace"><Icon name="switch"/><span>Switch</span></button>:null}
+   {hasWorkspaceSwitch?<button type="button" className={`workspaceAvailable${switchOpen?' active':''}`} onClick={()=>setSwitchOpen(true)} aria-haspopup="dialog" aria-expanded={switchOpen} aria-label="Switch workspace"><Icon name="switch"/><span>Switch</span></button>:null}
    <Link href="/profile" className={active('profile')?'active':''}><Icon name="profile"/><span>Profile</span></Link>
   </nav>
  </>;
