@@ -91,6 +91,15 @@ export default function MobileSectionPager() {
         return;
       }
 
+      // These views manage their own navigation/pagination and must never be
+      // wrapped by the generic mobile Back/Continue pager. Check the whole
+      // container, not only individual children, so request/list pages cannot
+      // accidentally receive a second navigation bar.
+      if (container.matches(SKIP_SELECTOR) || container.querySelector(SKIP_SELECTOR)) {
+        removePager(container);
+        return;
+      }
+
       const items = eligibleChildren(container);
       if (items.length < 3 || container.scrollHeight < window.innerHeight * 1.25) {
         removePager(container);
