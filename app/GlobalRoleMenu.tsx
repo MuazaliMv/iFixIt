@@ -96,11 +96,11 @@ function LogoutIcon(){return <svg width="20" height="20" viewBox="0 0 24 24" fil
 
 export default function GlobalRoleMenu(){
  const path=usePathname();
- const[role,setRole]=useState<Role|null>(routeRole(path));
+ const[role,setRole]=useState<Role|null>(()=>isPublicOrAuth(path)?null:(routeRole(path)||'customer'));
  const[open,setOpen]=useState(false);
  const[userName,setUserName]=useState('User');
 
- useEffect(()=>{let active=true;async function resolve(){const byRoute=routeRole(path);if(isPublicOrAuth(path)){if(active)setRole(null);return;}try{const{data}=await supabase.auth.getSession();if(!data.session){if(active)setRole(byRoute);return;}const r=await fetch('/api/user/profile',{headers:{Authorization:`Bearer ${data.session.access_token}`}});if(!r.ok){if(active)setRole(byRoute);return;}const p=await r.json();const raw=String(p?.profile?.role||'CUSTOMER').toUpperCase();const resolved:Role=byRoute||(raw==='ADMIN'?'admin':raw==='PROVIDER'?'provider':'customer');if(raw==='PROVIDER'&&path==='/profile'){window.location.replace('/provider/profile');return;}if(active){setRole(resolved);setUserName(String(p?.profile?.full_name||data.session.user.user_metadata?.full_name||data.session.user.email?.split('@')[0]||'User'));}}catch{if(active)setRole(byRoute);}}void resolve();setOpen(false);return()=>{active=false;};},[path]);
+ useEffect(()=>{let active=true;async function resolve(){const byRoute=routeRole(path);if(isPublicOrAuth(path)){if(active)setRole(null);return;}const fallback=byRoute||'customer';try{const{data}=await supabase.auth.getSession();if(!data.session){if(active)setRole(fallback);return;}const r=await fetch('/api/user/profile',{headers:{Authorization:`Bearer ${data.session.access_token}`}});if(!r.ok){if(active)setRole(fallback);return;}const p=await r.json();const raw=String(p?.profile?.role||'CUSTOMER').toUpperCase();const resolved:Role=byRoute||(raw==='ADMIN'?'admin':raw==='PROVIDER'?'provider':'customer');if(raw==='PROVIDER'&&path==='/profile'){window.location.replace('/provider/profile');return;}if(active){setRole(resolved);setUserName(String(p?.profile?.full_name||data.session.user.user_metadata?.full_name||data.session.user.email?.split('@')[0]||'User'));}}catch{if(active)setRole(fallback);}}void resolve();setOpen(false);return()=>{active=false;};},[path]);
  useEffect(()=>{if(!open)return;const old=document.body.style.overflow;document.body.style.overflow='hidden';const key=(e:KeyboardEvent)=>{if(e.key==='Escape')setOpen(false);};document.addEventListener('keydown',key);return()=>{document.body.style.overflow=old;document.removeEventListener('keydown',key);};},[open]);
 
  async function signOut(){setOpen(false);await supabase.auth.signOut();window.location.href='/login';}
