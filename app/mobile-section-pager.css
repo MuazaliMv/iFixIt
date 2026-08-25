@@ -1,0 +1,107 @@
+@media (max-width: 767px) {
+  .mobileSectionProgress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin: 4px 0 14px;
+    padding: 0 2px;
+  }
+
+  .mobileSectionProgressTrack {
+    position: relative;
+    display: block;
+    flex: 1;
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.09);
+  }
+
+  .mobileSectionProgressFill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: inherit;
+    background: var(--primary, var(--accent, #0a84ff));
+    transition: width 180ms ease;
+  }
+
+  .mobileSectionProgress strong {
+    min-width: 42px;
+    color: var(--muted, #6b7280);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: end;
+  }
+
+  [data-mobile-page-item] {
+    animation: mobileSectionEnter 180ms ease-out both;
+  }
+
+  .mobileSectionPager {
+    position: sticky;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    z-index: 35;
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 10px;
+    width: calc(100% - 24px);
+    max-width: 680px;
+    margin: 16px auto 12px;
+    padding: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.09);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--surface, #fff) 92%, transparent);
+    box-shadow: 0 12px 34px rgba(15, 23, 42, 0.12);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .mobileSectionPagerButton {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 16px;
+    border-radius: 14px;
+    font: inherit;
+    font-weight: 700;
+    touch-action: manipulation;
+  }
+
+  .mobileSectionPagerBack {
+    border: 1px solid var(--border, #d8dee8);
+    background: var(--surface, #fff);
+    color: var(--text, #111827);
+  }
+
+  .mobileSectionPagerNext {
+    border: 1px solid transparent;
+    background: var(--primary, var(--accent, #0a84ff));
+    color: #fff;
+  }
+
+  .mobileSectionPagerButton:disabled {
+    opacity: 0.42;
+    cursor: default;
+  }
+
+  .c3Shell,
+  .adminContent,
+  .providerContent,
+  .settingsContent,
+  [data-mobile-flow='true'] {
+    min-height: 0 !important;
+  }
+
+  @keyframes mobileSectionEnter {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-mobile-page-item],
+  .mobileSectionProgressFill {
+    animation: none !important;
+    transition: none !important;
+  }
+}
