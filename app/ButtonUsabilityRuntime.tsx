@@ -2,24 +2,27 @@
 
 import { useEffect } from 'react';
 
+const BUTTON_SELECTOR='button,[role="button"],a.button,a.btn';
+
+function enhanceElement(el:HTMLElement){
+  if(!el.matches(BUTTON_SELECTOR))return;
+  if(el instanceof HTMLButtonElement){
+    if(el.disabled)el.setAttribute('aria-disabled','true');
+    else if(el.getAttribute('aria-disabled')==='true')el.removeAttribute('aria-disabled');
+  }
+
+  const text=(el.textContent||'').trim();
+  const hasName=Boolean(el.getAttribute('aria-label')||el.getAttribute('aria-labelledby')||el.getAttribute('title')||text);
+  if(!hasName&&el.querySelector('svg,[data-icon]'))el.setAttribute('aria-label','Action');
+
+  if(!el.hasAttribute('tabindex')&&el.getAttribute('role')==='button'&&!(el instanceof HTMLButtonElement)&&!(el instanceof HTMLAnchorElement)){
+    el.tabIndex=0;
+  }
+}
+
 function enhance(root:ParentNode=document){
-  root.querySelectorAll<HTMLElement>('button,[role="button"],a.button,a.btn').forEach((el)=>{
-    if(el instanceof HTMLButtonElement){
-      if(el.disabled){el.setAttribute('aria-disabled','true');}
-      else if(el.getAttribute('aria-disabled')==='true')el.removeAttribute('aria-disabled');
-    }
-
-    const text=(el.textContent||'').trim();
-    const hasName=Boolean(el.getAttribute('aria-label')||el.getAttribute('aria-labelledby')||el.getAttribute('title')||text);
-    if(!hasName){
-      const icon=el.querySelector('svg,[data-icon]');
-      if(icon)el.setAttribute('aria-label','Action');
-    }
-
-    if(!el.hasAttribute('tabindex')&&el.getAttribute('role')==='button'&&!(el instanceof HTMLButtonElement)&&!(el instanceof HTMLAnchorElement)){
-      el.tabIndex=0;
-    }
-  });
+  if(root instanceof HTMLElement)enhanceElement(root);
+  root.querySelectorAll<HTMLElement>(BUTTON_SELECTOR).forEach(enhanceElement);
 }
 
 export default function ButtonUsabilityRuntime(){
@@ -27,8 +30,11 @@ export default function ButtonUsabilityRuntime(){
     enhance();
     const observer=new MutationObserver((mutations)=>{
       for(const mutation of mutations){
-        if(mutation.type==='childList')mutation.addedNodes.forEach(node=>{if(node instanceof HTMLElement)enhance(node);});
-        if(mutation.type==='attributes'&&mutation.target instanceof HTMLElement)enhance(mutation.target.parentElement||document);
+        if(mutation.type==='childList'){
+          mutation.addedNodes.forEach(node=>{if(node instanceof HTMLElement)enhance(node);});
+        }else if(mutation.type==='attributes'&&mutation.target instanceof HTMLElement){
+          enhanceElement(mutation.target);
+        }
       }
     });
     observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','aria-disabled']});
