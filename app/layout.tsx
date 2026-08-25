@@ -9,6 +9,7 @@ import './final-ui-polish.css';
 import './request-detail-v3.css';
 import './airbnb-theme.css';
 import './global-buttons.css';
+import './button-usability-hardening.css';
 import './blue-accent.css';
 import './dual-mode.css';
 import './dual-mode-extras.css';
@@ -41,6 +42,7 @@ import ResponsiveRuntime from './ResponsiveRuntime';
 import MobileSectionPager from './MobileSectionPager';
 import CompactCopyRuntime from './CompactCopyRuntime';
 import ServicePickerUXRuntime from './ServicePickerUXRuntime';
+import ButtonUsabilityRuntime from './ButtonUsabilityRuntime';
 import RoleAccessGuard from './RoleAccessGuard';
 import GlobalRoleMenu from './GlobalRoleMenu';
 import GlobalModeSwitch from './GlobalModeSwitch';
@@ -67,7 +69,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/><ResponsiveRuntime/><CompactCopyRuntime/><ServicePickerUXRuntime/><MobileSectionPager/><MobileKeyboardRuntime/><WorkspaceThemeRuntime/><ServerSessionSignOutSync/><SendRequestTapRuntime/><RoleAccessGuard/><NewRequestRuntime/><PreferredDateRuntime/><GlobalRoleMenu/><GlobalModeSwitch/><GlobalCardPagination/><MobileDateInputRuntime/>{children}<ModeToast/></body>
+      <body><ThemeRuntime/><ResponsiveRuntime/><CompactCopyRuntime/><ServicePickerUXRuntime/><ButtonUsabilityRuntime/><MobileSectionPager/><MobileKeyboardRuntime/><WorkspaceThemeRuntime/><ServerSessionSignOutSync/><SendRequestTapRuntime/><RoleAccessGuard/><NewRequestRuntime/><PreferredDateRuntime/><GlobalRoleMenu/><GlobalModeSwitch/><GlobalCardPagination/><MobileDateInputRuntime/>{children}<ModeToast/></body>
     </html>
   );
 }
