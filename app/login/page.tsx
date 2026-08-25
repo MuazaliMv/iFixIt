@@ -9,10 +9,6 @@ type ExistingProfile={role?:string|null};
 type AccountRole='CUSTOMER'|'PROVIDER'|'ADMIN';
 type Workspace='customer'|'provider'|'admin';
 
-// Compatibility markers for legacy CI only. The active UI is phone + OTP.
-const LEGACY_SERVER_AUTH_ROUTES=['/api/auth/login','/api/auth/register'];
-void LEGACY_SERVER_AUTH_ROUTES;
-
 function normalizeRole(value:unknown):AccountRole{
  const role=String(value||'CUSTOMER').toUpperCase();
  if(role==='ADMIN')return 'ADMIN';
@@ -105,22 +101,26 @@ export default function LoginPage(){
  async function submitPhone(event:FormEvent){
   event.preventDefault();
   if(!phoneValid){setMessage('Enter a valid 7-digit Maldives phone number.');return;}
-  setBusy(true);
-  setMessage('');
-  try{
-   setStep('otp');
-   setMessage('Verification code ready. For testing, use 9999.');
-  }finally{setBusy(false);}
+  setStep('otp');
+  setMessage('For testing, enter OTP 9999.');
  }
 
  async function submitOtp(event:FormEvent){
   event.preventDefault();
   if(!otpValid){setMessage('Enter the 4-digit verification code.');return;}
-  if(otp!=='9999'){setMessage('Incorrect verification code.');return;}
   setBusy(true);
   setMessage('');
   try{
+   const response=await apiFetch('/api/auth/login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({phone:`${countryCode}${phone}`,otp}),
+   });
+   const payload=await response.json().catch(()=>({}));
+   if(!response.ok){setMessage(payload?.error||'Unable to sign in.');return;}
    await routeUser();
+  }catch(error){
+   setMessage(error instanceof Error?error.message:'Unable to sign in.');
   }finally{setBusy(false);}
  }
 
@@ -149,7 +149,7 @@ export default function LoginPage(){
        </div>
        <span id="phone-help" className="fieldHelp">7-digit Maldives number</span>
       </label>
-      <button type="submit" className="authSubmit" disabled={busy||!phoneValid} aria-busy={busy}>{busy?'Continuing…':<>Continue<span className="authSubmitArrow" aria-hidden="true">→</span></>}</button>
+      <button type="submit" className="authSubmit" disabled={!phoneValid}>Continue<span className="authSubmitArrow" aria-hidden="true">→</span></button>
      </form>:<form onSubmit={submitOtp} className="authFormClean" noValidate>
       <label className="authField" htmlFor="login-otp">
        <span className="authFieldLabel">One-time code</span>
@@ -158,7 +158,7 @@ export default function LoginPage(){
        </div>
        <span id="otp-help" className="fieldHelp">Development OTP: 9999</span>
       </label>
-      <button type="submit" className="authSubmit" disabled={busy||!otpValid} aria-busy={busy}>{busy?'Verifying…':<>Verify & Continue<span className="authSubmitArrow" aria-hidden="true">→</span></>}</button>
+      <button type="submit" className="authSubmit" disabled={busy||!otpValid} aria-busy={busy}>{busy?'Signing in…':<>Verify & Sign In<span className="authSubmitArrow" aria-hidden="true">→</span></>}</button>
       <button type="button" className="authSecondary" onClick={()=>{setStep('phone');setOtp('');setMessage('');}}>Change phone number</button>
      </form>}
 
