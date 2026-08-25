@@ -37,6 +37,7 @@ import './unified-control-family.css';
 import './mobile-section-pager.css';
 import './service-picker-ux.css';
 import './ios-web-app.css';
+import './global-shell.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
@@ -79,7 +80,32 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/><ResponsiveRuntime/><CompactCopyRuntime/><ButtonUsabilityRuntime/><MobileSectionPager/><MobileKeyboardRuntime/><WorkspaceThemeRuntime/><ServerSessionSignOutSync/><SendRequestTapRuntime/><RoleAccessGuard/><NewRequestRuntime/><PreferredDateRuntime/><GlobalRoleMenu/><GlobalModeSwitch/><GlobalCardPagination/><MobileDateInputRuntime/><IOSWebAppShell/><ErrorRuntime/>{children}<ModeToast/></body>
+      <body>
+        <ThemeRuntime/>
+        <ResponsiveRuntime/>
+        <CompactCopyRuntime/>
+        <ButtonUsabilityRuntime/>
+        <MobileSectionPager/>
+        <MobileKeyboardRuntime/>
+        <WorkspaceThemeRuntime/>
+        <ServerSessionSignOutSync/>
+        <SendRequestTapRuntime/>
+        <RoleAccessGuard/>
+        <NewRequestRuntime/>
+        <PreferredDateRuntime/>
+        <GlobalRoleMenu/>
+        <GlobalModeSwitch/>
+        <GlobalCardPagination/>
+        <MobileDateInputRuntime/>
+        <ErrorRuntime/>
+
+        <main id="main-content" className="globalMainWorkspace">
+          {children}
+        </main>
+
+        <IOSWebAppShell/>
+        <ModeToast/>
+      </body>
     </html>
   );
 }
