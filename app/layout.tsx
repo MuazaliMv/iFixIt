@@ -55,6 +55,7 @@ import SendRequestTapRuntime from './SendRequestTapRuntime';
 import WorkspaceThemeRuntime from './WorkspaceThemeRuntime';
 import ServerSessionSignOutSync from './ServerSessionSignOutSync';
 import IOSWebAppShell from './IOSWebAppShell';
+import ErrorRuntime from './ErrorRuntime';
 
 export const metadata: Metadata = {
   title: 'FixIt Maldives',
@@ -78,7 +79,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><ThemeRuntime/><ResponsiveRuntime/><CompactCopyRuntime/><ButtonUsabilityRuntime/><MobileSectionPager/><MobileKeyboardRuntime/><WorkspaceThemeRuntime/><ServerSessionSignOutSync/><SendRequestTapRuntime/><RoleAccessGuard/><NewRequestRuntime/><PreferredDateRuntime/><GlobalRoleMenu/><GlobalModeSwitch/><GlobalCardPagination/><MobileDateInputRuntime/><IOSWebAppShell/>{children}<ModeToast/></body>
+      <body><ThemeRuntime/><ResponsiveRuntime/><CompactCopyRuntime/><ButtonUsabilityRuntime/><MobileSectionPager/><MobileKeyboardRuntime/><WorkspaceThemeRuntime/><ServerSessionSignOutSync/><SendRequestTapRuntime/><RoleAccessGuard/><NewRequestRuntime/><PreferredDateRuntime/><GlobalRoleMenu/><GlobalModeSwitch/><GlobalCardPagination/><MobileDateInputRuntime/><IOSWebAppShell/><ErrorRuntime/>{children}<ModeToast/></body>
     </html>
   );
 }
