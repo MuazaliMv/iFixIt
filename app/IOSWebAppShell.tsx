@@ -6,10 +6,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import { apiFetch } from '../lib/apiClient';
 import { canAccessPortal, normalizeAccountRole, type AccountRole, type PortalRole } from '../lib/roleAccess';
 
-const hiddenPrefixes=['/admin','/provider','/login','/register','/auth','/api'];
+const hiddenPrefixes=['/login','/register','/auth','/api'];
 
-type IconName='home'|'requests'|'new'|'switch'|'profile'|'customer'|'provider'|'admin';
+type IconName='home'|'requests'|'new'|'switch'|'profile'|'customer'|'provider'|'admin'|'jobs'|'services'|'users';
 type CachedAccess={role:AccountRole;providerApproved:boolean};
+type WorkspaceRole='customer'|'provider'|'admin';
+type Tab={href:string;label:string;icon:IconName;match:(path:string)=>boolean;accent?:boolean};
 
 function Icon({name}:{name:IconName}){
  const paths={
@@ -20,9 +22,40 @@ function Icon({name}:{name:IconName}){
   profile:<><circle cx="12" cy="8" r="4"/><path d="M4.5 20c.9-4 3.5-6 7.5-6s6.6 2 7.5 6"/></>,
   customer:<><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 10h16M10 20V10"/></>,
   provider:<><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></>,
-  admin:<><path d="M12 3 20 6v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3Z"/><path d="m9 12 2 2 4-4"/></>
+  admin:<><path d="M12 3 20 6v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3Z"/><path d="m9 12 2 2 4-4"/></>,
+  jobs:<><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M9 5V3h6v2M4 10h16M9 14h6"/></>,
+  services:<><path d="M14.7 6.3a4 4 0 0 0-5 5L3 18l3 3 6.7-6.7a4 4 0 0 0 5-5l-3 3-3-3 3-3Z"/></>,
+  users:<><path d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20"/><circle cx="9" cy="7" r="4"/><path d="M22 20v-1.5a4 4 0 0 0-3-3.87M16 3.2a4 4 0 0 1 0 7.6"/></>
  };
  return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
+}
+
+function workspaceForPath(path:string):WorkspaceRole{
+ if(path==='/provider/onboarding'||path.startsWith('/provider/onboarding/'))return 'customer';
+ if(path.startsWith('/admin'))return 'admin';
+ if(path.startsWith('/provider'))return 'provider';
+ return 'customer';
+}
+
+function tabsFor(role:WorkspaceRole):Tab[]{
+ if(role==='provider')return [
+  {href:'/provider/today',label:'Today',icon:'home',match:p=>p==='/provider'||p.startsWith('/provider/today')},
+  {href:'/provider/jobs',label:'Jobs',icon:'jobs',match:p=>p.startsWith('/provider/jobs')},
+  {href:'/provider/services',label:'Services',icon:'services',match:p=>p.startsWith('/provider/services')},
+  {href:'/provider/profile',label:'Profile',icon:'profile',match:p=>p.startsWith('/provider/profile')},
+ ];
+ if(role==='admin')return [
+  {href:'/admin',label:'Overview',icon:'admin',match:p=>p==='/admin'},
+  {href:'/admin/requests',label:'Requests',icon:'requests',match:p=>p.startsWith('/admin/requests')},
+  {href:'/admin/users',label:'Users',icon:'users',match:p=>p.startsWith('/admin/users')||p.startsWith('/admin/providers')},
+  {href:'/profile',label:'Profile',icon:'profile',match:p=>p==='/profile'||p.startsWith('/profile/')},
+ ];
+ return [
+  {href:'/home',label:'Home',icon:'home',match:p=>p==='/'||p==='/home'},
+  {href:'/requests',label:'Requests',icon:'requests',match:p=>p.startsWith('/requests')},
+  {href:'/?new=1',label:'New',icon:'new',match:()=>false,accent:true},
+  {href:'/profile',label:'Profile',icon:'profile',match:p=>p.startsWith('/profile')},
+ ];
 }
 
 export default function IOSWebAppShell(){
@@ -34,6 +67,7 @@ export default function IOSWebAppShell(){
  const [providerApproved,setProviderApproved]=useState(false);
  const [signedIn,setSignedIn]=useState(false);
  const hidden=hiddenPrefixes.some(prefix=>pathname===prefix||pathname.startsWith(prefix+'/'));
+ const workspace=workspaceForPath(pathname);
 
  useEffect(()=>{
   const iosStandalone=(window.navigator as Navigator & {standalone?:boolean}).standalone===true;
@@ -44,9 +78,9 @@ export default function IOSWebAppShell(){
  },[]);
 
  useEffect(()=>{
-  document.documentElement.classList.toggle('ifix-customer-tabbar',!hidden);
+  document.documentElement.classList.toggle('ifix-customer-tabbar',!hidden&&workspace==='customer');
   return()=>document.documentElement.classList.remove('ifix-customer-tabbar');
- },[hidden]);
+ },[hidden,workspace]);
 
  useEffect(()=>{setSwitchOpen(false);},[pathname]);
 
@@ -88,12 +122,12 @@ export default function IOSWebAppShell(){
   return()=>document.removeEventListener('keydown',onKeyDown);
  },[switchOpen]);
 
- if(hidden)return null;
+ if(hidden||!signedIn)return null;
 
- const active=(key:string)=>key==='home'?pathname==='/'||pathname==='/home':key==='requests'?pathname.startsWith('/requests'):key==='profile'?pathname.startsWith('/profile'):false;
- const canUseProvider=signedIn&&canAccessPortal(accountRole,'provider',providerApproved);
- const canUseAdmin=signedIn&&canAccessPortal(accountRole,'admin',providerApproved);
+ const canUseProvider=canAccessPortal(accountRole,'provider',providerApproved);
+ const canUseAdmin=canAccessPortal(accountRole,'admin',providerApproved);
  const hasWorkspaceSwitch=canUseProvider||canUseAdmin;
+ const tabs=tabsFor(workspace);
 
  function openWorkspace(next:PortalRole){
   if(!canAccessPortal(accountRole,next,providerApproved))return;
@@ -113,19 +147,16 @@ export default function IOSWebAppShell(){
     <div className="iosWorkspaceHandle" aria-hidden="true"/>
     <div className="iosWorkspaceHead"><div><small>Workspace</small><h2>Switch view</h2></div><button type="button" onClick={()=>setSwitchOpen(false)} aria-label="Close workspace switch">×</button></div>
     <div className="iosWorkspaceOptions">
-     <button type="button" className="selected" onClick={()=>openWorkspace('customer')}><span className="iosWorkspaceIcon"><Icon name="customer"/></span><span><strong>Customer</strong><small>Request and track services</small></span><b>Current</b></button>
-     {canUseProvider?<button type="button" onClick={()=>openWorkspace('provider')}><span className="iosWorkspaceIcon"><Icon name="provider"/></span><span><strong>Service Provider</strong><small>Jobs, services and availability</small></span><b>Open</b></button>:null}
-     {canUseAdmin?<button type="button" onClick={()=>openWorkspace('admin')}><span className="iosWorkspaceIcon"><Icon name="admin"/></span><span><strong>Admin</strong><small>Platform administration</small></span><b>Open</b></button>:null}
+     <button type="button" className={workspace==='customer'?'selected':''} onClick={()=>openWorkspace('customer')}><span className="iosWorkspaceIcon"><Icon name="customer"/></span><span><strong>Customer</strong><small>Request and track services</small></span><b>{workspace==='customer'?'Current':'Open'}</b></button>
+     {canUseProvider?<button type="button" className={workspace==='provider'?'selected':''} onClick={()=>openWorkspace('provider')}><span className="iosWorkspaceIcon"><Icon name="provider"/></span><span><strong>Service Provider</strong><small>Jobs, services and availability</small></span><b>{workspace==='provider'?'Current':'Open'}</b></button>:null}
+     {canUseAdmin?<button type="button" className={workspace==='admin'?'selected':''} onClick={()=>openWorkspace('admin')}><span className="iosWorkspaceIcon"><Icon name="admin"/></span><span><strong>Admin</strong><small>Platform administration</small></span><b>{workspace==='admin'?'Current':'Open'}</b></button>:null}
     </div>
    </section>
   </div>:null}
 
-  <nav className={`iosTabBar${hasWorkspaceSwitch?' hasWorkspaceSwitch':''}`} aria-label="Customer app navigation" data-standalone={standalone?'true':'false'}>
-   <Link href="/" className={active('home')?'active':''}><Icon name="home"/><span>Home</span></Link>
-   <Link href="/requests" className={active('requests')?'active':''}><Icon name="requests"/><span>Requests</span></Link>
-   <Link href="/?new=1" className="iosTabNew"><Icon name="new"/><span>New</span></Link>
+  <nav className={`iosTabBar${hasWorkspaceSwitch?' hasWorkspaceSwitch':''}`} aria-label={`${workspace} app navigation`} data-standalone={standalone?'true':'false'} data-workspace={workspace}>
+   {tabs.map(tab=><Link key={tab.href+tab.label} href={tab.href} className={`${tab.match(pathname)?'active ':''}${tab.accent?'iosTabNew':''}`.trim()}><Icon name={tab.icon}/><span>{tab.label}</span></Link>)}
    {hasWorkspaceSwitch?<button type="button" className={`workspaceAvailable${switchOpen?' active':''}`} onClick={()=>setSwitchOpen(true)} aria-haspopup="dialog" aria-expanded={switchOpen} aria-label="Switch workspace"><Icon name="switch"/><span>Switch</span></button>:null}
-   <Link href="/profile" className={active('profile')?'active':''}><Icon name="profile"/><span>Profile</span></Link>
   </nav>
  </>;
 }
