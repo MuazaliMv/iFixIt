@@ -41,6 +41,11 @@ export default function IOSWebAppShell(){
  },[]);
 
  useEffect(()=>{
+  document.documentElement.classList.toggle('ifix-customer-tabbar',!hidden);
+  return()=>document.documentElement.classList.remove('ifix-customer-tabbar');
+ },[hidden]);
+
+ useEffect(()=>{
   setSwitchOpen(false);
   let active=true;
   void(async()=>{
