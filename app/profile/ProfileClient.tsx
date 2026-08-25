@@ -28,9 +28,15 @@ async function profileRequest(){
 }
 
 async function providerRequest(){
- const{data}=await supabase.auth.getSession();const token=data.session?.access_token;if(!token)return null;
- const response=await fetch(ONBOARDING_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({action:'get'}),cache:'no-store'});
- if(!response.ok)return null;return await response.json() as ProviderData;
+ const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),8000);
+ try{
+  const{data}=await supabase.auth.getSession();const token=data.session?.access_token;if(!token)return null;
+  const response=await fetch(ONBOARDING_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({action:'get'}),cache:'no-store',signal:controller.signal});
+  if(!response.ok)return null;return await response.json() as ProviderData;
+ }catch(error){
+  if(error instanceof Error&&error.name==='AbortError')return null;
+  return null;
+ }finally{clearTimeout(timer);}
 }
 
 export default function ProfileClient(){
@@ -42,7 +48,22 @@ export default function ProfileClient(){
   setName(p.full_name||'');setPhone(localPhone(p.phone_number));setLine1(a?.line1||'');setLine2(a?.line2||'');setCity(a?.city||'');setStateRegion(a?.stateRegion||'');setPostalCode(a?.postalCode||'');
  }
 
- async function load(){setLoading(true);setMessage('Loading profile…');try{const next=await profileRequest();const normalized={...next,phone_number:localPhone(next.phone_number)};setProfile(normalized);populate(normalized);if(normalized.role==='PROVIDER')setProviderData(await providerRequest());else setProviderData(null);setMessage('Profile is up to date.');}catch(error:any){if(error?.status===401){window.location.replace('/login?next=%2Fprofile');return;}const timedOut=error instanceof Error&&(error.name==='AbortError'||error.name==='TimeoutError');setMessage(timedOut?'Profile service is taking longer than expected. Tap Refresh to retry.':error instanceof Error?error.message:'Unable to load profile details.');}finally{setLoading(false);}}
+ async function refreshProviderData(){const nextProvider=await providerRequest();setProviderData(nextProvider);}
+
+ async function load(){
+  setLoading(true);setMessage('Loading profile…');
+  try{
+   const next=await profileRequest();const normalized={...next,phone_number:localPhone(next.phone_number)};
+   setProfile(normalized);populate(normalized);setMessage('Profile is up to date.');
+   setLoading(false);
+   if(normalized.role==='PROVIDER')void refreshProviderData();else setProviderData(null);
+  }catch(error:any){
+   if(error?.status===401){window.location.replace('/login?next=%2Fprofile');return;}
+   const timedOut=error instanceof Error&&(error.name==='AbortError'||error.name==='TimeoutError');
+   setMessage(timedOut?'Profile service is taking longer than expected. Tap Refresh to retry.':error instanceof Error?error.message:'Unable to load profile details.');
+   setLoading(false);
+  }
+ }
 
  async function saveProfile(){
   if(loading||saving)return;
@@ -64,7 +85,7 @@ export default function ProfileClient(){
    const next=await profileRequest();
    const normalized={...next,phone_number:localPhone(next.phone_number)};
    setProfile(normalized);populate(normalized);
-   if(normalized.role==='PROVIDER')setProviderData(await providerRequest());else setProviderData(null);
+   if(normalized.role==='PROVIDER')void refreshProviderData();else setProviderData(null);
    setMessage('Profile updated successfully.');
    window.dispatchEvent(new Event('fixit:profile-updated'));
   }catch(error){
