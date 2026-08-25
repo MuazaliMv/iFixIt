@@ -15,6 +15,8 @@ type Category={id:string;name:string};
 type ProviderHour={day_of_week:number;is_working:boolean;start_time?:string|null;end_time?:string|null};
 type ProviderArea={id?:string;islandName?:string|null;locationUnitName?:string|null};
 type ProviderData={profile?:ProviderProfile|null;categories?:Category[];selectedCategoryIds?:string[];hours?:ProviderHour[];serviceAreas?:ProviderArea[]};
+type AtollLookup={id:string;official_name:string;display_name:string;sort_order:number};
+type IslandLookup={id:string;atoll_id:string;canonical_name:string;display_name:string;location_kind:'ISLAND'|'CITY';sort_order:number};
 
 function localPhone(v?:string|null){const raw=(v||'').trim();return /^\+960\d{7}$/.test(raw)?raw.slice(4):raw.replace(/\D/g,'').slice(-7);}
 function value(v?:string|null){return String(v||'').trim()||'Not provided';}
@@ -39,13 +41,28 @@ async function providerRequest(){
  }finally{clearTimeout(timer);}
 }
 
+async function locationLookupRequest(){
+ const[{data:atollData,error:atollError},{data:islandData,error:islandError}]=await Promise.all([
+  supabase.from('atolls').select('id,official_name,display_name,sort_order').eq('is_active',true).order('sort_order').order('display_name'),
+  supabase.from('islands').select('id,atoll_id,canonical_name,display_name,location_kind,sort_order').eq('is_active',true).order('sort_order').order('display_name')
+ ]);
+ if(atollError)throw atollError;
+ if(islandError)throw islandError;
+ return {atolls:(atollData||[]) as AtollLookup[],islands:(islandData||[]) as IslandLookup[]};
+}
+
 export default function ProfileClient(){
- const[profile,setProfile]=useState<Profile|null>(null);const[providerData,setProviderData]=useState<ProviderData|null>(null);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[message,setMessage]=useState('Loading profile…');const[name,setName]=useState('');const[phone,setPhone]=useState('');const[line1,setLine1]=useState('');const[line2,setLine2]=useState('');const[city,setCity]=useState('');const[stateRegion,setStateRegion]=useState('');const[postalCode,setPostalCode]=useState('');
- useEffect(()=>{void load();},[]);
+ const[profile,setProfile]=useState<Profile|null>(null);const[providerData,setProviderData]=useState<ProviderData|null>(null);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[message,setMessage]=useState('Loading profile…');const[name,setName]=useState('');const[phone,setPhone]=useState('');const[line1,setLine1]=useState('');const[line2,setLine2]=useState('');const[city,setCity]=useState('');const[stateRegion,setStateRegion]=useState('');const[postalCode,setPostalCode]=useState('');const[atolls,setAtolls]=useState<AtollLookup[]>([]);const[islands,setIslands]=useState<IslandLookup[]>([]);const[locationLookupLoading,setLocationLookupLoading]=useState(true);
+ useEffect(()=>{void load();void loadLocationLookups();},[]);
 
  function populate(p:Profile){
   const a=p.primaryAddress||{line1:p.address_line1,line2:p.address_line2,city:p.city,stateRegion:p.state_region,postalCode:p.postal_code,country:p.country||'Maldives'};
   setName(p.full_name||'');setPhone(localPhone(p.phone_number));setLine1(a?.line1||'');setLine2(a?.line2||'');setCity(a?.city||'');setStateRegion(a?.stateRegion||'');setPostalCode(a?.postalCode||'');
+ }
+
+ async function loadLocationLookups(){
+  setLocationLookupLoading(true);
+  try{const lookups=await locationLookupRequest();setAtolls(lookups.atolls);setIslands(lookups.islands);}catch{setMessage(current=>current==='Loading profile…'?current:'Unable to load Maldives location list.');}finally{setLocationLookupLoading(false);}
  }
 
  async function refreshProviderData(){const nextProvider=await providerRequest();setProviderData(nextProvider);}
@@ -71,6 +88,8 @@ export default function ProfileClient(){
   const normalizedPhone=phone.replace(/\D/g,'');
   if(!trimmedName){setMessage('Enter your full name.');return;}
   if(normalizedPhone&&normalizedPhone.length!==7){setMessage('Enter a valid 7-digit Maldives phone number.');return;}
+  if(!stateRegion){setMessage('Select an Atoll / Region.');return;}
+  if(!city){setMessage('Select an Island / City.');return;}
   setSaving(true);setMessage('Saving profile…');
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),20000);
   try{
@@ -97,6 +116,9 @@ export default function ProfileClient(){
  function cancelEdit(){if(profile)populate(profile);setMessage('Changes reset.');}
  async function signOut(){await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin'}).catch(()=>{});await supabase.auth.signOut().catch(()=>{});window.location.href='/login';}
 
+ const selectedAtoll=atolls.find(a=>a.display_name===stateRegion||a.official_name===stateRegion)||null;
+ const availableIslands=selectedAtoll?islands.filter(i=>i.atoll_id===selectedAtoll.id):[];
+ const selectedIsland=availableIslands.find(i=>i.display_name===city||i.canonical_name===city)||null;
  const initial=(profile?.full_name||profile?.email||'U').slice(0,1).toUpperCase();const serviceAddresses=profile?.serviceAddresses||[];const pp=providerData?.profile;const selectedNames=(providerData?.categories||[]).filter(c=>(providerData?.selectedCategoryIds||[]).includes(c.id)).map(c=>c.name);const areas=providerData?.serviceAreas||[];const hours=providerData?.hours||[];const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
  return <main className="profileRedesignPage">
@@ -111,7 +133,7 @@ export default function ProfileClient(){
       <form onSubmit={event=>{event.preventDefault();void saveProfile();}} className="profileEditForm">
        <div className="profileFormSection"><h3>Personal Information</h3><div className="profileFormGrid"><label>Full Name<input value={name} onChange={e=>setName(e.target.value)} autoComplete="name" required disabled={loading}/></label><label>Email Address<input value={profile?.email||''} autoComplete="email" readOnly disabled/></label></div></div>
        <div className="profileFormSection"><h3>Contact</h3><div className="profileFormGrid"><label>Phone Number (Maldives)<span className="profilePhoneField"><b>🇲🇻 +960</b><input type="tel" inputMode="numeric" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7XXXXXX" maxLength={7} autoComplete="tel-national" disabled={loading}/></span></label><label>Country / Region<input value="Maldives" autoComplete="country-name" readOnly disabled/></label></div></div>
-       <div className="profileFormSection" id="service-addresses"><h3>Primary address</h3><div className="profileFormGrid"><label className="wide">House / Building Name<input value={line1} onChange={e=>setLine1(e.target.value)} placeholder="House or building name" autoComplete="address-line1" disabled={loading}/></label><label>Street / Additional Address<input value={line2} onChange={e=>setLine2(e.target.value)} placeholder="Street, floor or apartment" autoComplete="address-line2" disabled={loading}/></label><label>Island / City<input value={city} onChange={e=>setCity(e.target.value)} placeholder="Island or city" autoComplete="address-level2" disabled={loading}/></label><label>Atoll / Region<input value={stateRegion} onChange={e=>setStateRegion(e.target.value)} placeholder="Atoll or region" autoComplete="address-level1" disabled={loading}/></label><label>Postal Code<input value={postalCode} onChange={e=>setPostalCode(e.target.value)} placeholder="Postal code" autoComplete="postal-code" disabled={loading}/></label></div></div>
+       <div className="profileFormSection" id="service-addresses"><h3>Primary address</h3><div className="profileFormGrid"><label className="wide">House / Building Name<input value={line1} onChange={e=>setLine1(e.target.value)} placeholder="House or building name" autoComplete="address-line1" disabled={loading}/></label><label>Street / Additional Address<input value={line2} onChange={e=>setLine2(e.target.value)} placeholder="Street, floor or apartment" autoComplete="address-line2" disabled={loading}/></label><label>Atoll / Region<select value={selectedAtoll?.id||''} onChange={e=>{const next=atolls.find(a=>a.id===e.target.value);setStateRegion(next?.display_name||'');setCity('');}} autoComplete="address-level1" disabled={loading||locationLookupLoading}><option value="">{locationLookupLoading?'Loading atolls…':'Select atoll / region'}</option>{atolls.map(a=><option key={a.id} value={a.id}>{a.display_name}</option>)}</select></label><label>Island / City<select value={selectedIsland?.id||''} onChange={e=>{const next=availableIslands.find(i=>i.id===e.target.value);setCity(next?.display_name||'');}} autoComplete="address-level2" disabled={loading||locationLookupLoading||!selectedAtoll}><option value="">{!selectedAtoll?'Select atoll first':locationLookupLoading?'Loading islands…':'Select island / city'}</option>{availableIslands.map(i=><option key={i.id} value={i.id}>{i.display_name}</option>)}</select></label><label>Postal Code<input value={postalCode} onChange={e=>setPostalCode(e.target.value)} placeholder="Postal code" autoComplete="postal-code" disabled={loading}/></label></div></div>
        <div className="profileFormActions"><button className="secondary" type="button" onClick={cancelEdit} disabled={loading||saving}>Cancel</button><button className="primary" type="button" onClick={()=>void saveProfile()} disabled={loading||saving} aria-busy={saving}>{saving?'Saving…':'Save Profile Information'}</button></div>
        <p className="profileSaveState" role="status" aria-live="polite" style={{margin:0}}>{message}</p>
       </form>
