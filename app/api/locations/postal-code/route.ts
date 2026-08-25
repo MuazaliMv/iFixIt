@@ -35,13 +35,15 @@ export async function GET(request:NextRequest){
  const line1=clean(request.nextUrl.searchParams.get('line1'));
  const line2=clean(request.nextUrl.searchParams.get('line2'));
  const city=clean(request.nextUrl.searchParams.get('city'));
+ const ward=clean(request.nextUrl.searchParams.get('ward'));
  const atoll=clean(request.nextUrl.searchParams.get('atoll'));
  if(!city||!atoll)return NextResponse.json({error:'Island / City and Atoll / Region are required.'},{status:400});
 
  try{
   const attempts=[
-   [line1,line2,city,atoll,'Maldives'],
-   [line2,city,atoll,'Maldives'],
+   [line1,line2,ward,city,atoll,'Maldives'],
+   [line2,ward,city,atoll,'Maldives'],
+   [ward,city,atoll,'Maldives'],
    [city,atoll,'Maldives']
   ];
   const choices=new Map<string,PostalOption>();
