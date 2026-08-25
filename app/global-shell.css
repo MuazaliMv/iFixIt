@@ -46,6 +46,33 @@ body:has(.globalMenuHeaderWrap)>.globalMainWorkspace .c4App{
   min-height:100%;
 }
 
+/* Authentication views are routed content too. Keep them inside the Main Content Area.
+   They must never create a second 100dvh viewport that can cover persistent shell chrome. */
+.globalMainWorkspace .authShell{
+  height:100%;
+  min-height:100%;
+  max-height:100%;
+}
+
+.globalMainWorkspace .authPage{
+  height:100%;
+  min-height:100%;
+  max-height:100%;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* The supplied secure sign-in design is the workspace content; do not render a second
+   page-level navigation row inside the login view. Global navigation belongs to the shell. */
+.globalMainWorkspace .authLoginMode .authNav{
+  display:none;
+}
+
+.globalMainWorkspace .authLoginMode .authStage{
+  grid-template-rows:auto auto;
+}
+
 @media(max-width:960px){
   :root{
     --global-top-nav-height:76px;
