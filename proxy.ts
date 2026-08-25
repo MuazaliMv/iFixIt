@@ -58,14 +58,21 @@ export default async function proxy(request:NextRequest){
   return NextResponse.redirect(loginUrl(request));
  }
 
+ // Customer pages and provider application pages only require a valid session.
  if(customerRoute||providerApplicationRoute){
   return applyAuthCookies(NextResponse.next(),auth);
  }
 
  const access=await resolveAccessProfile(auth.authorization);
  if(!access){
-  if(adminApi||providerApi)return applyAuthCookies(apiError('Unable to verify account permissions.',503),auth);
-  return applyAuthCookies(NextResponse.redirect(new URL('/home',request.url)),auth);
+  // A temporary permission/profile lookup failure is not proof that the user
+  // lost access. Redirecting UI routes here used to create a ping-pong loop:
+  // provider/admin -> /home -> client stored workspace -> provider/admin.
+  // Preserve the current UI route and let page/API error handling recover.
+  if(adminApi||providerApi){
+   return applyAuthCookies(apiError('Unable to verify account permissions.',503),auth);
+  }
+  return applyAuthCookies(NextResponse.next(),auth);
  }
 
  if((adminRoute||adminApi)&&!canAccessPortal(access.role,'admin',access.providerApproved)){
