@@ -10,11 +10,13 @@ type NominatimResult={
  display_name?:string;
 };
 
+type PostalOption={postalCode:string;matchedAddress:string|null};
+
 function clean(value:string|null){return String(value||'').trim().slice(0,160);}
 
 async function queryNominatim(parts:string[]){
  const q=parts.filter(Boolean).join(', ');
- const params=new URLSearchParams({format:'jsonv2',addressdetails:'1',limit:'5',countrycodes:'mv',q});
+ const params=new URLSearchParams({format:'jsonv2',addressdetails:'1',limit:'10',countrycodes:'mv',q});
  const response=await fetch(`${NOMINATIM_URL}?${params.toString()}`,{
   headers:{
    Accept:'application/json',
@@ -42,14 +44,24 @@ export async function GET(request:NextRequest){
    [line2,city,atoll,'Maldives'],
    [city,atoll,'Maldives']
   ];
+  const choices=new Map<string,PostalOption>();
   for(const parts of attempts){
    const rows=await queryNominatim(parts);
-   const match=rows.find(row=>row?.address?.country_code?.toLowerCase()==='mv'&&String(row?.address?.postcode||'').trim());
-   if(match){
-    return NextResponse.json({postalCode:String(match.address?.postcode||'').trim(),source:'OpenStreetMap Nominatim',matchedAddress:match.display_name||null},{headers:{'Cache-Control':'private, max-age=3600'}});
+   for(const row of rows){
+    const code=String(row?.address?.postcode||'').trim();
+    if(row?.address?.country_code?.toLowerCase()==='mv'&&code&&!choices.has(code)){
+     choices.set(code,{postalCode:code,matchedAddress:row.display_name||null});
+    }
    }
   }
-  return NextResponse.json({postalCode:null,source:'OpenStreetMap Nominatim',matchedAddress:null},{headers:{'Cache-Control':'private, max-age=900'}});
+  const postalCodes=[...choices.values()];
+  const first=postalCodes[0]||null;
+  return NextResponse.json({
+   postalCode:first?.postalCode||null,
+   postalCodes,
+   source:'OpenStreetMap Nominatim',
+   matchedAddress:first?.matchedAddress||null
+  },{headers:{'Cache-Control':'private, max-age=900'}});
  }catch(error){
   const timedOut=error instanceof Error&&(error.name==='TimeoutError'||error.name==='AbortError');
   return NextResponse.json({error:timedOut?'Postal code lookup timed out. Please try again.':error instanceof Error?error.message:'Unable to look up postal code.'},{status:502});
