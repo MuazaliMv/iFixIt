@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
+import { apiFetch, invalidateProfileCache } from '../lib/apiClient';
 
 type Role='customer'|'provider'|'admin';
 type IconName='profile'|'key'|'bell'|'settings'|'requests'|'alert'|'location'|'users'|'reports'|'audit'|'jobs'|'calendar'|'services'|'messages';
@@ -12,85 +13,28 @@ type MenuSection={title:string;items:MenuItem[]};
 type RoleMenu={label:string;roleLabel:string;home:string;secondary:{href:string;label:string};sections:MenuSection[]};
 
 const menus:Record<Role,RoleMenu>={
-  admin:{
-    label:'Admin',roleLabel:'System Administrator',home:'/admin',secondary:{href:'/admin/reports',label:'Reports'},
-    sections:[
-      {title:'ACCOUNT & SETTINGS',items:[
-        {href:'/profile',label:'My Profile',icon:'profile'},
-        {href:'/change-password',label:'Change Password',icon:'key'},
-        {href:'/notifications',label:'Notifications',icon:'bell'},
-        {href:'/admin/settings',label:'Settings',icon:'settings'},
-      ]},
-      {title:'MANAGEMENT & OPERATIONS',items:[
-        {href:'/admin/requests',label:'Request Management',icon:'requests'},
-        {href:'/admin/escalations',label:'Attention / Escalations',icon:'alert',badge:3},
-        {href:'/admin/locations',label:'Locations',icon:'location'},
-        {href:'/admin/users',label:'User Management',icon:'users'},
-      ]},
-      {title:'SYSTEM & ANALYTICS',items:[
-        {href:'/admin/reports',label:'Reports',icon:'reports'},
-        {href:'/admin/audit-logs',label:'Audit Logs',icon:'audit'},
-      ]},
-    ],
-  },
-  provider:{
-    label:'Provider',roleLabel:'Service Provider',home:'/provider/jobs',secondary:{href:'/provider/availability',label:'Location'},
-    sections:[
-      {title:'ACCOUNT & SETTINGS',items:[
-        {href:'/provider/profile',label:'My Profile',icon:'profile'},
-        {href:'/change-password',label:'Change Password',icon:'key'},
-        {href:'/notifications',label:'Notifications',icon:'bell'},
-      ]},
-      {title:'WORK & FIELD OPERATIONS',items:[
-        {href:'/provider/jobs',label:'My Jobs',icon:'jobs'},
-        {href:'/provider/calendar',label:'Schedule',icon:'calendar'},
-        {href:'/provider/services',label:'Services Provided',icon:'services'},
-      ]},
-      {title:'COMMUNICATION & LOCATION',items:[
-        {href:'/provider/messages',label:'Messages',icon:'messages'},
-        {href:'/provider/availability',label:'Location',icon:'location'},
-      ]},
-    ],
-  },
-  customer:{
-    label:'Customer',roleLabel:'Customer',home:'/',secondary:{href:'/messages',label:'Messages'},
-    sections:[
-      {title:'ACCOUNT & SETTINGS',items:[
-        {href:'/profile',label:'My Profile',icon:'profile'},
-        {href:'/change-password',label:'Change Password',icon:'key'},
-        {href:'/notifications',label:'Notifications',icon:'bell'},
-      ]},
-      {title:'MY ACTIVITY',items:[
-        {href:'/requests',label:'Service Requests',icon:'requests'},
-        {href:'/messages',label:'Messages',icon:'messages'},
-      ]},
-      {title:'PROVIDER',items:[
-        {href:'/provider/onboarding',label:'Become a Provider',icon:'services'},
-      ]},
-    ],
-  },
+  admin:{label:'Admin',roleLabel:'System Administrator',home:'/admin',secondary:{href:'/admin/reports',label:'Reports'},sections:[
+    {title:'ACCOUNT & SETTINGS',items:[{href:'/profile',label:'My Profile',icon:'profile'},{href:'/change-password',label:'Change Password',icon:'key'},{href:'/notifications',label:'Notifications',icon:'bell'},{href:'/admin/settings',label:'Settings',icon:'settings'}]},
+    {title:'MANAGEMENT & OPERATIONS',items:[{href:'/admin/requests',label:'Request Management',icon:'requests'},{href:'/admin/escalations',label:'Attention / Escalations',icon:'alert',badge:3},{href:'/admin/locations',label:'Locations',icon:'location'},{href:'/admin/users',label:'User Management',icon:'users'}]},
+    {title:'SYSTEM & ANALYTICS',items:[{href:'/admin/reports',label:'Reports',icon:'reports'},{href:'/admin/audit-logs',label:'Audit Logs',icon:'audit'}]},
+  ]},
+  provider:{label:'Provider',roleLabel:'Service Provider',home:'/provider/jobs',secondary:{href:'/provider/availability',label:'Location'},sections:[
+    {title:'ACCOUNT & SETTINGS',items:[{href:'/provider/profile',label:'My Profile',icon:'profile'},{href:'/change-password',label:'Change Password',icon:'key'},{href:'/notifications',label:'Notifications',icon:'bell'}]},
+    {title:'WORK & FIELD OPERATIONS',items:[{href:'/provider/jobs',label:'My Jobs',icon:'jobs'},{href:'/provider/calendar',label:'Schedule',icon:'calendar'},{href:'/provider/services',label:'Services Provided',icon:'services'}]},
+    {title:'COMMUNICATION & LOCATION',items:[{href:'/provider/messages',label:'Messages',icon:'messages'},{href:'/provider/availability',label:'Location',icon:'location'}]},
+  ]},
+  customer:{label:'Customer',roleLabel:'Customer',home:'/',secondary:{href:'/messages',label:'Messages'},sections:[
+    {title:'ACCOUNT & SETTINGS',items:[{href:'/profile',label:'My Profile',icon:'profile'},{href:'/change-password',label:'Change Password',icon:'key'},{href:'/notifications',label:'Notifications',icon:'bell'}]},
+    {title:'MY ACTIVITY',items:[{href:'/requests',label:'Service Requests',icon:'requests'},{href:'/messages',label:'Messages',icon:'messages'}]},
+    {title:'PROVIDER',items:[{href:'/provider/onboarding',label:'Become a Provider',icon:'services'}]},
+  ]},
 };
 
 function routeRole(path:string):Role|null{if(path==='/provider/onboarding'||path.startsWith('/provider/onboarding/'))return null;if(path.startsWith('/admin'))return 'admin';if(path.startsWith('/provider'))return 'provider';return null;}
 function isPublicOrAuth(path:string){return path.startsWith('/login')||path.startsWith('/register')||path.startsWith('/auth')||path.startsWith('/api/')||path.startsWith('/onboarding');}
 function itemIsActive(path:string,href:string){if(href==='/')return path==='/';if(href==='/admin/users')return path.startsWith('/admin/users')||path.startsWith('/admin/providers')||path.startsWith('/admin/services');return path===href||path.startsWith(href+'/');}
 
-function MenuIcon({name}:{name:IconName}){
- const p={width:20,height:20,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,'aria-hidden':true};
- if(name==='profile')return <svg {...p}><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>;
- if(name==='key')return <svg {...p}><circle cx="7.5" cy="15.5" r="3.5"/><path d="m10 13 9-9m-2 2 2 2m-5 1 2 2"/></svg>;
- if(name==='bell')return <svg {...p}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>;
- if(name==='settings')return <svg {...p}><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.08-1l2-1.55-2-3.46-2.46 1a7 7 0 0 0-1.72-1L14.4 3h-4.8l-.34 2.99a7 7 0 0 0-1.72 1L5.08 6l-2 3.46L5.08 11a7 7 0 0 0 0 2l-2 1.55 2 3.46 2.46-1a7 7 0 0 0 1.72 1L9.6 21h4.8l.34-2.99a7 7 0 0 0 1.72-1l2.46 1 2-3.46-2-1.55c.05-.33.08-.66.08-1Z"/></svg>;
- if(name==='requests'||name==='jobs')return <svg {...p}><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>;
- if(name==='alert')return <svg {...p}><path d="M10.3 3.2 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.2a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></svg>;
- if(name==='location')return <svg {...p}><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>;
- if(name==='users')return <svg {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
- if(name==='reports')return <svg {...p}><path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/></svg>;
- if(name==='audit')return <svg {...p}><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>;
- if(name==='calendar')return <svg {...p}><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>;
- if(name==='services')return <svg {...p}><path d="M14.7 6.3a4 4 0 0 0-5 5L3 18l3 3 6.7-6.7a4 4 0 0 0 5-5l-3 3-3-3 3-3Z"/></svg>;
- return <svg {...p}><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/></svg>;
-}
+function MenuIcon({name}:{name:IconName}){const p={width:20,height:20,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,'aria-hidden':true};if(name==='profile')return <svg {...p}><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>;if(name==='key')return <svg {...p}><circle cx="7.5" cy="15.5" r="3.5"/><path d="m10 13 9-9m-2 2 2 2m-5 1 2 2"/></svg>;if(name==='bell')return <svg {...p}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>;if(name==='settings')return <svg {...p}><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.08-1l2-1.55-2-3.46-2.46 1a7 7 0 0 0-1.72-1L14.4 3h-4.8l-.34 2.99a7 7 0 0 0-1.72 1L5.08 6l-2 3.46L5.08 11a7 7 0 0 0 0 2l-2 1.55 2 3.46 2.46-1a7 7 0 0 0 1.72 1L9.6 21h4.8l.34-2.99a7 7 0 0 0 1.72-1l2.46 1 2-3.46-2-1.55c.05-.33.08-.66.08-1Z"/></svg>;if(name==='requests'||name==='jobs')return <svg {...p}><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>;if(name==='alert')return <svg {...p}><path d="M10.3 3.2 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.2a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></svg>;if(name==='location')return <svg {...p}><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>;if(name==='users')return <svg {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>;if(name==='reports')return <svg {...p}><path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/></svg>;if(name==='audit')return <svg {...p}><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>;if(name==='calendar')return <svg {...p}><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>;if(name==='services')return <svg {...p}><path d="M14.7 6.3a4 4 0 0 0-5 5L3 18l3 3 6.7-6.7a4 4 0 0 0 5-5l-3 3-3-3 3-3Z"/></svg>;return <svg {...p}><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/></svg>}
 function Chevron(){return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>}
 function LogoutIcon(){return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/></svg>}
 
@@ -100,63 +44,24 @@ export default function GlobalRoleMenu(){
  const[open,setOpen]=useState(false);
  const[userName,setUserName]=useState('User');
 
- useEffect(()=>{let active=true;async function resolve(){const byRoute=routeRole(path);if(isPublicOrAuth(path)){if(active)setRole(null);return;}const fallback=byRoute||'customer';try{const{data}=await supabase.auth.getSession();if(!data.session){if(active)setRole(fallback);return;}const r=await fetch('/api/user/profile',{headers:{Authorization:`Bearer ${data.session.access_token}`}});if(!r.ok){if(active)setRole(fallback);return;}const p=await r.json();const raw=String(p?.profile?.role||'CUSTOMER').toUpperCase();const resolved:Role=byRoute||(raw==='ADMIN'?'admin':raw==='PROVIDER'?'provider':'customer');if(raw==='PROVIDER'&&path==='/profile'){window.location.replace('/provider/profile');return;}if(active){setRole(resolved);setUserName(String(p?.profile?.full_name||data.session.user.user_metadata?.full_name||data.session.user.email?.split('@')[0]||'User'));}}catch{if(active)setRole(fallback);}}void resolve();setOpen(false);return()=>{active=false;};},[path]);
+ useEffect(()=>{let active=true;async function resolve(){const byRoute=routeRole(path);if(isPublicOrAuth(path)){if(active)setRole(null);return;}const fallback=byRoute||'customer';try{const r=await apiFetch('/api/user/profile');if(!active)return;if(!r.ok){setRole(fallback);return;}const p=await r.json();const raw=String(p?.profile?.role||'CUSTOMER').toUpperCase();const resolved:Role=byRoute||(raw==='ADMIN'?'admin':raw==='PROVIDER'?'provider':'customer');if(raw==='PROVIDER'&&path==='/profile'){window.location.replace('/provider/profile');return;}setRole(resolved);setUserName(String(p?.profile?.full_name||p?.profile?.email?.split?.('@')?.[0]||'User'));}catch{if(active)setRole(fallback);}}void resolve();setOpen(false);return()=>{active=false;};},[path]);
  useEffect(()=>{if(!open)return;const old=document.body.style.overflow;document.body.style.overflow='hidden';const key=(e:KeyboardEvent)=>{if(e.key==='Escape')setOpen(false);};document.addEventListener('keydown',key);return()=>{document.body.style.overflow=old;document.removeEventListener('keydown',key);};},[open]);
 
- async function signOut(){setOpen(false);await supabase.auth.signOut();window.location.href='/login';}
+ async function signOut(){setOpen(false);invalidateProfileCache();await supabase.auth.signOut();window.location.href='/login';}
  if(!role)return null;
  const menu=menus[role];
 
  return <>
   <div className="globalMenuHeaderWrap"><header className="globalMenuHeader" aria-label={`${menu.label} navigation`}><Link href={menu.home} className="globalMenuBrand" onClick={()=>setOpen(false)}><span className="globalMenuBrandMark">F</span><span>FixIt</span></Link><div className="globalMenuHeaderActions"><Link className="globalMenuSecondary" href={menu.secondary.href}>{menu.secondary.label}</Link><button className="globalMenuToggle" type="button" aria-label={open?'Close menu':'Open menu'} aria-expanded={open} onClick={()=>setOpen(v=>!v)}>{open?<span className="globalMenuClose">×</span>:<span className="globalMenuBars"><i/><i/><i/></span>}</button></div></header></div>
-
-  {open?<div className="fixitModalBackdrop" role="presentation" onMouseDown={e=>{if(e.currentTarget===e.target)setOpen(false);}}>
-   <section className="fixitModalMenu" role="dialog" aria-modal="true" aria-label={`${menu.label} menu`}>
-    <header className="fixitModalHead">
-      <Link href={menu.home} className="fixitModalLogo" onClick={()=>setOpen(false)}>F</Link>
-      <div className="fixitModalIdentity"><strong>FixIt</strong><span>{userName}<em>{menu.roleLabel}</em></span></div>
-      <button className="fixitModalClose" type="button" aria-label="Close menu" onClick={()=>setOpen(false)}>×</button>
-    </header>
-
-    <div className="fixitModalScroll">
-     {menu.sections.map(section=><section key={section.title} className="fixitModalSection">
-      <div className="fixitModalCard">
-       <div className="fixitModalSectionHead">{section.title}</div>
-       <div className="fixitModalRows">
-        {section.items.map(item=><Link key={item.href+item.label} href={item.href} onClick={()=>setOpen(false)} className={`fixitModalRow${itemIsActive(path,item.href)?' active':''}`}>
-         <span className="fixitModalIcon"><MenuIcon name={item.icon}/></span>
-         <span className="fixitModalLabel">{item.label}</span>
-         {item.badge?<span className="fixitModalBadge">{item.badge}</span>:null}
-         <span className="fixitModalChevron"><Chevron/></span>
-        </Link>)}
-       </div>
-      </div>
-     </section>)}
-    </div>
-
-    <div className="fixitModalFooter"><button type="button" className="fixitModalSignOut" onClick={()=>void signOut()}><LogoutIcon/>Sign Out</button></div>
-   </section>
-  </div>:null}
-
+  {open?<div className="fixitModalBackdrop" role="presentation" onMouseDown={e=>{if(e.currentTarget===e.target)setOpen(false);}}><section className="fixitModalMenu" role="dialog" aria-modal="true" aria-label={`${menu.label} menu`}><header className="fixitModalHead"><Link href={menu.home} className="fixitModalLogo" onClick={()=>setOpen(false)}>F</Link><div className="fixitModalIdentity"><strong>FixIt</strong><span>{userName}<em>{menu.roleLabel}</em></span></div><button className="fixitModalClose" type="button" aria-label="Close menu" onClick={()=>setOpen(false)}>×</button></header><div className="fixitModalScroll">{menu.sections.map(section=><section key={section.title} className="fixitModalSection"><div className="fixitModalCard"><div className="fixitModalSectionHead">{section.title}</div><div className="fixitModalRows">{section.items.map(item=><Link key={item.href+item.label} href={item.href} onClick={()=>setOpen(false)} className={`fixitModalRow${itemIsActive(path,item.href)?' active':''}`}><span className="fixitModalIcon"><MenuIcon name={item.icon}/></span><span className="fixitModalLabel">{item.label}</span>{item.badge?<span className="fixitModalBadge">{item.badge}</span>:null}<span className="fixitModalChevron"><Chevron/></span></Link>)}</div></div></section>)}</div><div className="fixitModalFooter"><button type="button" className="fixitModalSignOut" onClick={()=>void signOut()}><LogoutIcon/>Sign Out</button></div></section></div>:null}
   <style jsx global>{`
-   .fixitModalBackdrop{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.30);backdrop-filter:blur(4px);animation:fixitFade .18s ease-out}
-   @keyframes fixitFade{from{opacity:0}to{opacity:1}}
-   .fixitModalMenu{width:min(100%,448px);max-height:90dvh;display:flex;flex-direction:column;overflow:hidden;border-radius:22px;background:#f8fafc;box-shadow:0 30px 80px rgba(15,23,42,.24);animation:fixitRise .24s ease-out}
-   @keyframes fixitRise{from{transform:translateY(16px);opacity:.7}to{transform:translateY(0);opacity:1}}
-   .fixitModalHead{display:grid;grid-template-columns:40px minmax(0,1fr) 38px;align-items:center;gap:12px;padding:16px;border-bottom:1px solid #f1f5f9;background:#fff}
-   .fixitModalLogo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#2563eb;color:#fff;font-size:20px;font-weight:900;box-shadow:0 4px 12px rgba(37,99,235,.20)}
+   .fixitModalBackdrop{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.30);backdrop-filter:blur(4px);animation:fixitFade .18s ease-out}@keyframes fixitFade{from{opacity:0}to{opacity:1}}
+   .fixitModalMenu{width:min(100%,448px);max-height:90dvh;display:flex;flex-direction:column;overflow:hidden;border-radius:22px;background:#f8fafc;box-shadow:0 30px 80px rgba(15,23,42,.24);animation:fixitRise .24s ease-out}@keyframes fixitRise{from{transform:translateY(16px);opacity:.7}to{transform:translateY(0);opacity:1}}
+   .fixitModalHead{display:grid;grid-template-columns:40px minmax(0,1fr) 38px;align-items:center;gap:12px;padding:16px;border-bottom:1px solid #f1f5f9;background:#fff}.fixitModalLogo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#2563eb;color:#fff;font-size:20px;font-weight:900;box-shadow:0 4px 12px rgba(37,99,235,.20)}
    .fixitModalIdentity{min-width:0}.fixitModalIdentity strong{display:block;color:#111827;font-size:18px;line-height:1.1;font-weight:800}.fixitModalIdentity span{display:flex;align-items:center;gap:8px;margin-top:5px;color:#4b5563;font-size:13px;min-width:0}.fixitModalIdentity span>em{font-style:normal;display:inline-flex;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 8px;border-radius:999px;background:#f3f4f6;color:#4b5563;font-size:11px;font-weight:700}
-   .fixitModalClose{width:38px;height:38px;border:0;border-radius:10px;background:transparent;color:#6b7280;font-size:27px;line-height:1;display:grid;place-items:center;transition:.16s ease}.fixitModalClose:hover{background:#f3f4f6;color:#111827}
-   .fixitModalScroll{flex:1;overflow-y:auto;padding:16px;display:grid;gap:16px}
-   .fixitModalSection{min-width:0}.fixitModalCard{overflow:hidden;border:1px solid #eef2f7;border-radius:18px;background:#fff;box-shadow:0 2px 8px rgba(15,23,42,.04);transition:box-shadow .18s ease}.fixitModalCard:hover{box-shadow:0 8px 24px rgba(15,23,42,.07)}
-   .fixitModalSectionHead{padding:11px 16px;border-bottom:1px solid #f1f5f9;background:rgba(248,250,252,.82);color:#9ca3af;font-size:11px;font-weight:800;letter-spacing:.10em;text-transform:uppercase}
-   .fixitModalRows{padding:8px}
-   .fixitModalRow{min-height:48px;display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;color:#374151;transition:.15s ease}.fixitModalRow:hover,.fixitModalRow.active{background:#f8fafc;color:#111827}.fixitModalRow.active{box-shadow:inset 3px 0 0 #2563eb}
-   .fixitModalIcon{width:24px;display:grid;place-items:center;color:#9ca3af;transition:.16s ease}.fixitModalRow:hover .fixitModalIcon,.fixitModalRow.active .fixitModalIcon{color:#2563eb}
-   .fixitModalLabel{min-width:0;flex:1;font-size:14px;font-weight:700}
-   .fixitModalBadge{min-width:24px;height:22px;display:inline-flex;align-items:center;justify-content:center;padding:0 7px;border-radius:999px;background:#fee2e2;color:#dc2626;font-size:11px;font-weight:900}
-   .fixitModalChevron{display:grid;place-items:center;color:#d1d5db}.fixitModalRow:hover .fixitModalChevron{color:#6b7280}
-   .fixitModalFooter{padding:0 16px 16px;background:#f8fafc}.fixitModalSignOut{width:100%;min-height:52px;border:0;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:9px;background:#dc2626;color:#fff;font-size:15px;font-weight:850;box-shadow:0 5px 14px rgba(220,38,38,.18);transition:.18s ease}.fixitModalSignOut:hover{background:#b91c1c;box-shadow:0 10px 22px rgba(220,38,38,.24);transform:scale(1.01)}.fixitModalSignOut:active{background:#991b1b;transform:scale(.99)}
+   .fixitModalClose{width:38px;height:38px;border:0;border-radius:10px;background:transparent;color:#6b7280;font-size:27px;line-height:1;display:grid;place-items:center}.fixitModalScroll{flex:1;overflow-y:auto;padding:16px;display:grid;gap:16px}.fixitModalCard{overflow:hidden;border:1px solid #eef2f7;border-radius:18px;background:#fff;box-shadow:0 2px 8px rgba(15,23,42,.04)}.fixitModalSectionHead{padding:11px 16px;border-bottom:1px solid #f1f5f9;background:rgba(248,250,252,.82);color:#9ca3af;font-size:11px;font-weight:800;letter-spacing:.10em;text-transform:uppercase}.fixitModalRows{padding:8px}
+   .fixitModalRow{min-height:48px;display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;color:#374151}.fixitModalRow:hover,.fixitModalRow.active{background:#f8fafc;color:#111827}.fixitModalRow.active{box-shadow:inset 3px 0 0 #2563eb}.fixitModalIcon{width:24px;display:grid;place-items:center;color:#9ca3af}.fixitModalRow:hover .fixitModalIcon,.fixitModalRow.active .fixitModalIcon{color:#2563eb}.fixitModalLabel{min-width:0;flex:1;font-size:14px;font-weight:700}.fixitModalBadge{min-width:24px;height:22px;display:inline-flex;align-items:center;justify-content:center;padding:0 7px;border-radius:999px;background:#fee2e2;color:#dc2626;font-size:11px;font-weight:900}.fixitModalChevron{display:grid;place-items:center;color:#d1d5db}
+   .fixitModalFooter{padding:0 16px 16px;background:#f8fafc}.fixitModalSignOut{width:100%;min-height:52px;border:0;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:9px;background:#dc2626;color:#fff;font-size:15px;font-weight:850;box-shadow:0 5px 14px rgba(220,38,38,.18)}
    @media(max-width:520px){.fixitModalBackdrop{align-items:flex-end;padding:0}.fixitModalMenu{width:100%;max-height:94dvh;border-radius:22px 22px 0 0}.fixitModalHead{padding:14px 16px}.fixitModalScroll{padding:14px;gap:14px}.fixitModalFooter{padding:0 14px max(14px,env(safe-area-inset-bottom))}.fixitModalIdentity span{gap:6px}.fixitModalIdentity span>em{max-width:128px}}
   `}</style>
  </>;
