@@ -7,26 +7,6 @@ import { canAccessPortal, normalizeAccountRole, type AccountRole, type PortalRol
 
 type WorkspaceRole=PortalRole;
 
-function workspaceDestination(workspace:WorkspaceRole){
-  if(workspace==='admin')return '/admin';
-  if(workspace==='provider')return '/provider/today';
-  return '/home';
-}
-
-function defaultWorkspace(role:AccountRole):WorkspaceRole{
-  if(role==='ADMIN')return 'admin';
-  if(role==='PROVIDER')return 'provider';
-  return 'customer';
-}
-
-function readSelectedWorkspace(role:AccountRole):WorkspaceRole{
-  try{
-    const stored=String(localStorage.getItem('fixit:app-mode')||localStorage.getItem('fixit:mobile-nav-role')||'').toLowerCase();
-    if(stored==='admin'||stored==='provider'||stored==='customer')return stored;
-  }catch{}
-  return defaultWorkspace(role);
-}
-
 function saveSelectedWorkspace(workspace:WorkspaceRole,role:AccountRole){
   try{
     localStorage.setItem('fixit:account-role',role.toLowerCase());
@@ -37,6 +17,20 @@ function saveSelectedWorkspace(workspace:WorkspaceRole,role:AccountRole){
 
 function isProviderApplicationRoute(path:string){
   return path==='/provider/onboarding'||path.startsWith('/provider/onboarding/');
+}
+
+function routeWorkspace(path:string):WorkspaceRole|null{
+  if(path==='/admin'||path.startsWith('/admin/'))return 'admin';
+  if(path==='/provider'||path.startsWith('/provider/')){
+    if(isProviderApplicationRoute(path))return null;
+    return 'provider';
+  }
+  if(
+    path==='/home'||path.startsWith('/home/')||
+    path==='/requests'||path.startsWith('/requests/')||
+    path==='/messages'||path.startsWith('/messages/')
+  )return 'customer';
+  return null;
 }
 
 async function hasConfirmedSession(){
@@ -57,10 +51,8 @@ export default function RoleAccessGuard(){
 
     async function enforce(){
       const providerApplicationRoute=isProviderApplicationRoute(path);
-      const customerRoute=path==='/home'||path==='/requests'||path.startsWith('/requests/')||path==='/messages'||path.startsWith('/messages/');
-      const providerRoute=!providerApplicationRoute&&(path==='/provider'||path.startsWith('/provider/'));
-      const adminRoute=path==='/admin'||path.startsWith('/admin/');
-      const roleControlled=customerRoute||providerRoute||adminRoute||providerApplicationRoute;
+      const workspace=routeWorkspace(path);
+      const roleControlled=workspace!==null||providerApplicationRoute;
       if(!roleControlled)return;
 
       try{
@@ -68,8 +60,8 @@ export default function RoleAccessGuard(){
         if(!active)return;
 
         if(response.status===401){
-          // Never flash/redirect to Login on a single transient auth failure.
-          // Confirm that the authoritative server session is really gone first.
+          // A single profile 401 can be transient while secure auth state settles.
+          // Only redirect to Login after the authoritative session endpoint agrees.
           const sessionAlive=await hasConfirmedSession();
           if(!active)return;
           if(sessionAlive){
@@ -80,48 +72,36 @@ export default function RoleAccessGuard(){
           return;
         }
 
-        // Network/server failures are not logout events. Keep the current shell/workspace.
+        // Network/server/permission-service failures are not navigation events.
+        // Keep the current shell and workspace instead of redirecting elsewhere.
         if(!response.ok)return;
 
         const payload=await response.json().catch(()=>({}));
         const role=normalizeAccountRole(payload?.profile?.role);
         const providerApproved=Boolean(payload?.profile?.provider_approved);
 
-        let selected=readSelectedWorkspace(role);
-        if(!canAccessPortal(role,selected,providerApproved))selected='customer';
-        saveSelectedWorkspace(selected,role);
-
         if(providerApplicationRoute){
-          if(canAccessPortal(role,'provider',providerApproved)){
-            if(active)router.replace(workspaceDestination(selected==='customer'?'provider':selected));
-            return;
-          }
-          if(selected!=='customer'){
-            selected='customer';
-            saveSelectedWorkspace(selected,role);
-          }
+          // Approved providers may still view the application route without being
+          // forced into another workspace. This avoids non-user-driven redirects.
           return;
         }
 
-        if(adminRoute&&!canAccessPortal(role,'admin',providerApproved)){
+        if(workspace==='admin'&&!canAccessPortal(role,'admin',providerApproved)){
           saveSelectedWorkspace('customer',role);
           if(active)router.replace('/home');
           return;
         }
 
-        if(providerRoute&&!canAccessPortal(role,'provider',providerApproved)){
+        if(workspace==='provider'&&!canAccessPortal(role,'provider',providerApproved)){
           saveSelectedWorkspace('customer',role);
           if(active)router.replace('/home');
           return;
         }
 
-        const routeMatchesSelected=
-          (selected==='customer'&&customerRoute)||
-          (selected==='provider'&&providerRoute)||
-          (selected==='admin'&&adminRoute);
-
-        if(!routeMatchesSelected&&active){
-          router.replace(workspaceDestination(selected));
+        // The URL is authoritative after navigation succeeds. Persist it only so
+        // the global switcher reflects the workspace the user is actually viewing.
+        if(workspace&&canAccessPortal(role,workspace,providerApproved)){
+          saveSelectedWorkspace(workspace,role);
         }
       }catch{}
     }
