@@ -65,7 +65,7 @@ export default function IOSWebAppShell(){
  const [switchOpen,setSwitchOpen]=useState(false);
  const [accountRole,setAccountRole]=useState<AccountRole>('CUSTOMER');
  const [providerApproved,setProviderApproved]=useState(false);
- const [signedIn,setSignedIn]=useState(false);
+ const [signedIn,setSignedIn]=useState(true);
  const hidden=hiddenPrefixes.some(prefix=>pathname===prefix||pathname.startsWith(prefix+'/'));
  const workspace=workspaceForPath(pathname);
 
@@ -102,7 +102,10 @@ export default function IOSWebAppShell(){
    try{
     const response=await apiFetch('/api/user/profile',{cache:'no-store'});
     if(!active)return;
-    if(!response.ok){setSignedIn(false);return;}
+    if(!response.ok){
+     if(response.status===401)setSignedIn(false);
+     return;
+    }
     const payload=await response.json().catch(()=>({}));
     const role=normalizeAccountRole(payload?.profile?.role);
     const approved=Boolean(payload?.profile?.provider_approved);
