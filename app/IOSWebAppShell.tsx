@@ -53,7 +53,7 @@ function tabsFor(role:WorkspaceRole):Tab[]{
  return [
   {href:'/home',label:'Home',icon:'home',match:p=>p==='/'||p==='/home'},
   {href:'/requests',label:'Requests',icon:'requests',match:p=>p.startsWith('/requests')},
-  {href:'/?new=1',label:'New',icon:'new',match:()=>false,accent:true},
+  {href:'/home?new=1',label:'New',icon:'new',match:()=>false,accent:true},
   {href:'/profile',label:'Profile',icon:'profile',match:p=>p.startsWith('/profile')},
  ];
 }

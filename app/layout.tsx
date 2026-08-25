@@ -50,7 +50,6 @@ import GlobalModeSwitch from './GlobalModeSwitch';
 import GlobalCardPagination from './GlobalCardPagination';
 import MobileDateInputRuntime from './MobileDateInputRuntime';
 import MobileKeyboardRuntime from './MobileKeyboardRuntime';
-import NewRequestRuntime from './NewRequestRuntime';
 import PreferredDateRuntime from './PreferredDateRuntime';
 import SendRequestTapRuntime from './SendRequestTapRuntime';
 import WorkspaceThemeRuntime from './WorkspaceThemeRuntime';
@@ -91,7 +90,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <ServerSessionSignOutSync/>
         <SendRequestTapRuntime/>
         <RoleAccessGuard/>
-        <NewRequestRuntime/>
         <PreferredDateRuntime/>
         <GlobalRoleMenu/>
         <GlobalModeSwitch/>
