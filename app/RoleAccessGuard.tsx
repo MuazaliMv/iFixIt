@@ -39,6 +39,15 @@ function isProviderApplicationRoute(path:string){
   return path==='/provider/onboarding'||path.startsWith('/provider/onboarding/');
 }
 
+async function hasConfirmedSession(){
+  try{
+    const response=await apiFetch('/api/auth/session',{retryAuth:false});
+    return response.ok;
+  }catch{
+    return false;
+  }
+}
+
 export default function RoleAccessGuard(){
   const path=usePathname();
   const router=useRouter();
@@ -57,7 +66,21 @@ export default function RoleAccessGuard(){
       try{
         const response=await apiFetch('/api/user/profile');
         if(!active)return;
-        if(response.status===401){router.replace(`/login?next=${encodeURIComponent(path)}`);return;}
+
+        if(response.status===401){
+          // Never flash/redirect to Login on a single transient auth failure.
+          // Confirm that the authoritative server session is really gone first.
+          const sessionAlive=await hasConfirmedSession();
+          if(!active)return;
+          if(sessionAlive){
+            router.refresh();
+            return;
+          }
+          router.replace(`/login?next=${encodeURIComponent(path)}`);
+          return;
+        }
+
+        // Network/server failures are not logout events. Keep the current shell/workspace.
         if(!response.ok)return;
 
         const payload=await response.json().catch(()=>({}));
