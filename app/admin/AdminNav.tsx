@@ -20,12 +20,8 @@ export default function AdminNav(){
   <nav className="adminCommandNav">
    <div className="adminCommandGrid">
     {NAV_ITEMS.map(item=>{
-     const active=item.href==='/admin'?path==='/admin':path.startsWith(item.href);
-     const activeClass=active?' active':'';
-     if(item.label==='Service Categories'){
-      return <a key={item.href} href={item.href} className={`adminCommand${activeClass}`} aria-current={path.startsWith('/admin/service-categories')?'page':undefined}><span className="adminCommandIcon">{item.icon}</span>{item.label}</a>;
-     }
-     return <a key={item.href} href={item.href} className={`adminCommand${activeClass}`}><span className="adminCommandIcon">{item.icon}</span>{item.label}</a>;
+     const active=item.href==='/admin'?path==='/admin':item.href==='/admin/service-categories'?path.startsWith('/admin/service-categories'):path.startsWith(item.href);
+     return <a key={item.href} href={item.href} className={`adminCommand${active?' active':''}`} aria-current={active?'page':undefined}><span className="adminCommandIcon">{item.icon}</span>{item.label}</a>;
     })}
    </div>
   </nav>
