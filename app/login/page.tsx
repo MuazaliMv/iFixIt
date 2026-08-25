@@ -122,7 +122,7 @@ export default function LoginPage(){
   event.preventDefault();
   if(!phoneValid){setMessage('Enter a valid 7-digit Maldives number.');return;}
   setStep('otp');
-  setMessage('Development OTP: 9999');
+  setMessage('Testing code: 9999');
  }
 
  async function submitOtp(event:FormEvent){
@@ -169,7 +169,7 @@ export default function LoginPage(){
       <div className="otpInputWrapper">
        <input id="login-otp" name="otp" type="tel" inputMode="numeric" autoComplete="one-time-code" enterKeyHint="done" value={otp} onChange={e=>updateOtp(e.target.value)} placeholder="0000" maxLength={4} autoFocus/>
       </div>
-      <p className="otpHint">Development OTP: 9999</p>
+      <p className="otpHint">Testing code: 9999</p>
      </div>
      <button className="continueButton" type="submit" disabled={busy||!otpValid}>{busy?'Signing in…':<>Verify & Sign In <span aria-hidden="true">→</span></>}</button>
      <button className="changePhoneButton" type="button" disabled={busy} onClick={()=>{setStep('phone');setOtp('');setMessage('');}}>Change phone number</button>
