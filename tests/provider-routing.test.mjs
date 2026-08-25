@@ -23,3 +23,20 @@ test('provider portal access honors both provider role and approved provider ent
  assert.match(proxy,/Service Provider permission required/);
  assert.match(proxy,/NextResponse\.redirect\(new URL\('\/home'/);
 });
+
+test('role-protected routes fail closed and protected APIs reject missing sessions',async()=>{
+ const proxy=await read('proxy.ts');
+ assert.match(proxy,/const protectedApi=adminApi\|\|providerApi\|\|customerApi/);
+ assert.match(proxy,/if\(protectedApi\)return apiError\('Authentication required\.',401\)/);
+ assert.match(proxy,/Unable to verify account permissions\.',503/);
+ assert.match(proxy,/NextResponse\.redirect\(new URL\('\/home',request\.url\)\)/);
+ assert.match(proxy,/\/api\/service-requests\/:path\*/);
+});
+
+test('admin and provider APIs return explicit 403 permission errors',async()=>{
+ const proxy=await read('proxy.ts');
+ assert.match(proxy,/Admin permission required\.',403/);
+ assert.match(proxy,/Service Provider permission required\.',403/);
+ assert.match(proxy,/canAccessPortal\(access\.role,'admin',access\.providerApproved\)/);
+ assert.match(proxy,/canAccessPortal\(access\.role,'provider',access\.providerApproved\)/);
+});
