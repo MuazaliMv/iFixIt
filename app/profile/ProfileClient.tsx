@@ -52,7 +52,7 @@ async function locationLookupRequest(){
 }
 
 export default function ProfileClient(){
- const[profile,setProfile]=useState<Profile|null>(null);const[providerData,setProviderData]=useState<ProviderData|null>(null);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[message,setMessage]=useState('Loading profile…');const[name,setName]=useState('');const[phone,setPhone]=useState('');const[line1,setLine1]=useState('');const[line2,setLine2]=useState('');const[city,setCity]=useState('');const[stateRegion,setStateRegion]=useState('');const[postalCode,setPostalCode]=useState('');const[atolls,setAtolls]=useState<AtollLookup[]>([]);const[islands,setIslands]=useState<IslandLookup[]>([]);const[locationLookupLoading,setLocationLookupLoading]=useState(true);
+ const[profile,setProfile]=useState<Profile|null>(null);const[providerData,setProviderData]=useState<ProviderData|null>(null);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[message,setMessage]=useState('Loading profile…');const[name,setName]=useState('');const[phone,setPhone]=useState('');const[line1,setLine1]=useState('');const[line2,setLine2]=useState('');const[city,setCity]=useState('');const[stateRegion,setStateRegion]=useState('');const[postalCode,setPostalCode]=useState('');const[atolls,setAtolls]=useState<AtollLookup[]>([]);const[islands,setIslands]=useState<IslandLookup[]>([]);const[locationLookupLoading,setLocationLookupLoading]=useState(true);const[postalLookupLoading,setPostalLookupLoading]=useState(false);
  useEffect(()=>{void load();void loadLocationLookups();},[]);
 
  function populate(p:Profile){
@@ -63,6 +63,23 @@ export default function ProfileClient(){
  async function loadLocationLookups(){
   setLocationLookupLoading(true);
   try{const lookups=await locationLookupRequest();setAtolls(lookups.atolls);setIslands(lookups.islands);}catch{setMessage(current=>current==='Loading profile…'?current:'Unable to load Maldives location list.');}finally{setLocationLookupLoading(false);}
+ }
+
+ async function lookupPostalCode(cityValue=city,stateValue=stateRegion){
+  if(!cityValue||!stateValue){setPostalCode('');return;}
+  setPostalLookupLoading(true);
+  try{
+   const params=new URLSearchParams({city:cityValue,atoll:stateValue,line1:line1.trim(),line2:line2.trim()});
+   const response=await fetch(`/api/locations/postal-code?${params.toString()}`,{credentials:'same-origin',cache:'no-store'});
+   const payload=await response.json().catch(()=>({}));
+   if(!response.ok)throw new Error(payload?.error||'Unable to look up postal code.');
+   const code=String(payload?.postalCode||'').trim();
+   setPostalCode(code);
+   setMessage(code?'Postal code found from address lookup.':'Postal code was not found for this address.');
+  }catch(error){
+   setPostalCode('');
+   setMessage(error instanceof Error?error.message:'Unable to look up postal code.');
+  }finally{setPostalLookupLoading(false);}
  }
 
  async function refreshProviderData(){const nextProvider=await providerRequest();setProviderData(nextProvider);}
@@ -133,8 +150,8 @@ export default function ProfileClient(){
       <form onSubmit={event=>{event.preventDefault();void saveProfile();}} className="profileEditForm">
        <div className="profileFormSection"><h3>Personal Information</h3><div className="profileFormGrid"><label>Full Name<input value={name} onChange={e=>setName(e.target.value)} autoComplete="name" required disabled={loading}/></label><label>Email Address<input value={profile?.email||''} autoComplete="email" readOnly disabled/></label></div></div>
        <div className="profileFormSection"><h3>Contact</h3><div className="profileFormGrid"><label>Phone Number (Maldives)<span className="profilePhoneField"><b>🇲🇻 +960</b><input type="tel" inputMode="numeric" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7XXXXXX" maxLength={7} autoComplete="tel-national" disabled={loading}/></span></label><label>Country / Region<input value="Maldives" autoComplete="country-name" readOnly disabled/></label></div></div>
-       <div className="profileFormSection" id="service-addresses"><h3>Primary address</h3><div className="profileFormGrid"><label className="wide">House / Building Name<input value={line1} onChange={e=>setLine1(e.target.value)} placeholder="House or building name" autoComplete="address-line1" disabled={loading}/></label><label>Street / Additional Address<input value={line2} onChange={e=>setLine2(e.target.value)} placeholder="Street, floor or apartment" autoComplete="address-line2" disabled={loading}/></label><label>Atoll / Region<select value={selectedAtoll?.id||''} onChange={e=>{const next=atolls.find(a=>a.id===e.target.value);setStateRegion(next?.display_name||'');setCity('');}} autoComplete="address-level1" disabled={loading||locationLookupLoading}><option value="">{locationLookupLoading?'Loading atolls…':'Select atoll / region'}</option>{atolls.map(a=><option key={a.id} value={a.id}>{a.display_name}</option>)}</select></label><label>Island / City<select value={selectedIsland?.id||''} onChange={e=>{const next=availableIslands.find(i=>i.id===e.target.value);setCity(next?.display_name||'');}} autoComplete="address-level2" disabled={loading||locationLookupLoading||!selectedAtoll}><option value="">{!selectedAtoll?'Select atoll first':locationLookupLoading?'Loading islands…':'Select island / city'}</option>{availableIslands.map(i=><option key={i.id} value={i.id}>{i.display_name}</option>)}</select></label><label>Postal Code<input value={postalCode} onChange={e=>setPostalCode(e.target.value)} placeholder="Postal code" autoComplete="postal-code" disabled={loading}/></label></div></div>
-       <div className="profileFormActions"><button className="secondary" type="button" onClick={cancelEdit} disabled={loading||saving}>Cancel</button><button className="primary" type="button" onClick={()=>void saveProfile()} disabled={loading||saving} aria-busy={saving}>{saving?'Saving…':'Save Profile Information'}</button></div>
+       <div className="profileFormSection" id="service-addresses"><h3>Primary address</h3><div className="profileFormGrid"><label className="wide">House / Building Name<input value={line1} onChange={e=>setLine1(e.target.value)} onBlur={()=>{if(city&&stateRegion)void lookupPostalCode();}} placeholder="House or building name" autoComplete="address-line1" disabled={loading}/></label><label>Street / Additional Address<input value={line2} onChange={e=>setLine2(e.target.value)} onBlur={()=>{if(city&&stateRegion)void lookupPostalCode();}} placeholder="Street, floor or apartment" autoComplete="address-line2" disabled={loading}/></label><label>Atoll / Region<select value={selectedAtoll?.id||''} onChange={e=>{const next=atolls.find(a=>a.id===e.target.value);setStateRegion(next?.display_name||'');setCity('');setPostalCode('');}} autoComplete="address-level1" disabled={loading||locationLookupLoading}><option value="">{locationLookupLoading?'Loading atolls…':'Select atoll / region'}</option>{atolls.map(a=><option key={a.id} value={a.id}>{a.display_name}</option>)}</select></label><label>Island / City<select value={selectedIsland?.id||''} onChange={e=>{const next=availableIslands.find(i=>i.id===e.target.value);const nextCity=next?.display_name||'';setCity(nextCity);setPostalCode('');if(nextCity&&selectedAtoll)void lookupPostalCode(nextCity,selectedAtoll.display_name);}} autoComplete="address-level2" disabled={loading||locationLookupLoading||!selectedAtoll}><option value="">{!selectedAtoll?'Select atoll first':locationLookupLoading?'Loading islands…':'Select island / city'}</option>{availableIslands.map(i=><option key={i.id} value={i.id}>{i.display_name}</option>)}</select></label><label>Postal Code<input value={postalLookupLoading?'Looking up…':postalCode} placeholder="Looked up automatically" autoComplete="postal-code" readOnly disabled={loading||postalLookupLoading}/></label></div></div>
+       <div className="profileFormActions"><button className="secondary" type="button" onClick={cancelEdit} disabled={loading||saving}>Cancel</button><button className="primary" type="button" onClick={()=>void saveProfile()} disabled={loading||saving||postalLookupLoading} aria-busy={saving}>{saving?'Saving…':'Save Profile Information'}</button></div>
        <p className="profileSaveState" role="status" aria-live="polite" style={{margin:0}}>{message}</p>
       </form>
      </section>
