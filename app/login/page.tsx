@@ -97,7 +97,7 @@ export default function LoginPage(){
   let profile=knownProfile;
   if(!profile?.role){
    try{
-    const response=await fetchWithTimeout('/api/user/profile',{},3000);
+    const response=await fetchWithTimeout('/api/user/profile',{},6000);
     if(response.ok){
      const payload=await response.json().catch(()=>({}));
      profile=payload?.profile as ExistingProfile|undefined;
@@ -146,7 +146,7 @@ export default function LoginPage(){
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({phone:`${countryCode}${phone}`,otp}),
     retryAuth:false,
-   },8000);
+   },16000);
    const payload=await response.json().catch(()=>({}));
    if(!response.ok||!payload?.ok){setMessage(payload?.error||'Unable to sign in.');return;}
 
@@ -157,7 +157,9 @@ export default function LoginPage(){
    await syncBrowserSession(payload?.session as LoginSession|undefined);
    invalidateProfileCache();
 
-   const sessionCheck=await fetchWithTimeout('/api/auth/session',{retryAuth:false},4000);
+   // /api/auth/session can spend up to ~10 seconds validating the token and profile,
+   // so its verification timeout must be longer than either server-side fetch timeout.
+   const sessionCheck=await fetchWithTimeout('/api/auth/session',{retryAuth:false},12000);
    if(!sessionCheck.ok)throw new Error('The login session could not be verified. Please try again.');
 
    await routeUser(payload?.profile as ExistingProfile|undefined);
