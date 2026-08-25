@@ -1,6 +1,10 @@
 /* Mobile-first service picker: compact, scannable, searchable. */
 .servicePickerUX{display:none}
 
+/* Keep every service subcategory as the same-size selectable card. */
+.c3Subchips{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;overflow:visible!important;align-items:stretch!important}
+.c3Subchips .c3Chip{width:100%!important;min-width:0!important;min-height:82px!important;height:100%!important;padding:12px 14px!important;border-radius:16px!important;white-space:normal!important;line-height:1.3!important;text-align:center!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow-wrap:anywhere!important}
+
 @media(max-width:760px){
  .c3WizardCard:has(.c3ServiceGrid){padding:16px 14px 18px!important;background:#fff!important;border:1px solid #e5e7eb!important;border-radius:20px!important}
  .c3WizardCard:has(.c3ServiceGrid) .c3Question{margin-bottom:12px!important}
@@ -28,4 +32,12 @@
  .c3Wizard .c3ServiceGrid[data-mobile-friendly-picker="true"] .c3ServiceTile.selected{border-color:#3b82f6!important;background:#f7fbff!important;box-shadow:0 0 0 2px rgba(59,130,246,.10)!important}
  .c3Wizard .c3ServiceGrid[data-mobile-friendly-picker="true"] .c3ServiceTile.selected::after{content:'✓'!important;color:#2563eb!important;font-size:16px!important;font-weight:800!important}
  .c3Wizard .c3ServiceGrid[data-mobile-friendly-picker="true"] .c3ServiceTile:active{transform:scale(.99)!important;background:#f8fafc!important}
+
+ .c3Subchips{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .c3Subchips .c3Chip{min-height:88px!important}
+}
+
+@media(max-width:420px){
+ .c3Subchips{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+ .c3Subchips .c3Chip{min-height:92px!important;padding:10px!important;font-size:13px!important}
 }
