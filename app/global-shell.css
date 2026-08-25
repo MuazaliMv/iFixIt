@@ -1,7 +1,7 @@
-/* Global application shell: persistent top navigation + routed workspace + persistent bottom navigation. */
+/* Global application shell: fixed top navigation + independently scrolling workspace + fixed bottom navigation. */
 :root{
   --global-top-nav-height:82px;
-  --global-bottom-nav-height:0px;
+  --global-bottom-nav-height:58px;
 }
 
 .globalMainWorkspace{
@@ -9,93 +9,99 @@
   min-height:0;
 }
 
-/* The global shell owns the viewport. The document itself never scrolls; only the middle workspace does. */
+/* The document never scrolls. Navigation is viewport-fixed; only the workspace scrolls. */
 body:has(.globalMenuHeaderWrap){
+  width:100%;
   height:100dvh;
   min-height:100dvh;
   max-height:100dvh;
+  margin:0;
+  padding:0!important;
   overflow:hidden!important;
-  display:grid;
-  grid-template-rows:var(--global-top-nav-height) minmax(0,1fr) var(--global-bottom-nav-height);
+  position:relative;
 }
 
-/* Top navigation is a dedicated shell row. It must never participate in workspace scrolling. */
+/* Top navigation is permanently pinned to the visual viewport. */
 body:has(.globalMenuHeaderWrap)>.globalMenuHeaderWrap{
-  grid-row:1;
-  position:relative!important;
-  top:auto!important;
-  inset:auto!important;
-  z-index:1000;
+  position:fixed!important;
+  top:0!important;
+  left:0!important;
+  right:0!important;
+  bottom:auto!important;
+  inset:0 0 auto 0!important;
+  z-index:2000!important;
   width:100%;
-  height:var(--global-top-nav-height);
-  min-height:var(--global-top-nav-height);
-  max-height:var(--global-top-nav-height);
+  height:var(--global-top-nav-height)!important;
+  min-height:var(--global-top-nav-height)!important;
+  max-height:var(--global-top-nav-height)!important;
   box-sizing:border-box;
+  margin:0!important;
+  transform:none!important;
+  visibility:visible!important;
+  opacity:1!important;
   overflow:visible;
 }
 
-/* Only this middle row is allowed to scroll. */
+/* The Main Content Area is the only scroll container. It can never move either navigation bar. */
 body:has(.globalMenuHeaderWrap)>.globalMainWorkspace{
-  grid-row:2;
+  position:fixed!important;
+  top:var(--global-top-nav-height)!important;
+  left:0!important;
+  right:0!important;
+  bottom:var(--global-bottom-nav-height)!important;
+  width:auto!important;
+  height:auto!important;
   min-width:0;
   min-height:0;
-  height:auto;
-  max-height:100%;
-  overflow-x:hidden;
-  overflow-y:auto;
+  max-height:none!important;
+  margin:0!important;
+  padding-bottom:0!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
   overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;
-  position:relative;
   isolation:isolate;
+  z-index:1;
 }
 
-/* Route content must not create a second viewport over the shell. */
+/* Route content must not create another viewport over the shell. */
 body:has(.globalMenuHeaderWrap)>.globalMainWorkspace .providerModePage,
 body:has(.globalMenuHeaderWrap)>.globalMainWorkspace .c3Page,
 body:has(.globalMenuHeaderWrap)>.globalMainWorkspace .c4App{
   min-height:100%;
 }
 
+/* Bottom navigation is permanently pinned to the visual viewport. */
+body:has(.globalMenuHeaderWrap)>.iosTabBar{
+  position:fixed!important;
+  left:0!important;
+  right:0!important;
+  top:auto!important;
+  bottom:0!important;
+  inset:auto 0 0 0!important;
+  z-index:2000!important;
+  width:100%!important;
+  height:var(--global-bottom-nav-height)!important;
+  min-height:var(--global-bottom-nav-height)!important;
+  max-height:var(--global-bottom-nav-height)!important;
+  margin:0!important;
+  transform:none!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+
 @media(max-width:960px){
   :root{
-    --global-top-nav-height:76px;
+    --global-top-nav-height:calc(76px + env(safe-area-inset-top,0px));
     --global-bottom-nav-height:calc(var(--ios-tab-height,64px) + env(safe-area-inset-bottom,0px));
   }
 
-  body:has(.globalMenuHeaderWrap){
-    padding:0!important;
-  }
-
   body:has(.globalMenuHeaderWrap)>.globalMenuHeaderWrap{
-    height:var(--global-top-nav-height);
-    min-height:var(--global-top-nav-height);
-    max-height:var(--global-top-nav-height);
-    padding-top:max(8px,env(safe-area-inset-top));
+    padding-top:calc(8px + env(safe-area-inset-top,0px))!important;
   }
 
-  body:has(.globalMenuHeaderWrap)>.globalMainWorkspace{
-    padding-bottom:0!important;
-  }
-
-  /* Critical: the bottom navigation is the third grid row, not a fixed overlay.
-     ios-web-app.css declares it fixed; override that here so it can never cover,
-     detach from, minimise, or disappear behind the workspace. */
   body:has(.globalMenuHeaderWrap)>.iosTabBar{
-    grid-row:3;
-    position:relative!important;
-    left:auto!important;
-    right:auto!important;
-    top:auto!important;
-    bottom:auto!important;
-    inset:auto!important;
-    width:100%;
-    height:var(--global-bottom-nav-height);
-    min-height:var(--global-bottom-nav-height);
-    max-height:var(--global-bottom-nav-height);
-    z-index:1000;
-    transform:none!important;
-    visibility:visible!important;
-    opacity:1!important;
+    display:grid!important;
   }
 
   body:has(.globalMenuHeaderWrap) .c3ActionDock{
@@ -103,28 +109,18 @@ body:has(.globalMenuHeaderWrap)>.globalMainWorkspace .c4App{
   }
 }
 
-/* Desktop keeps the bottom navigation as a compact persistent dock instead of removing it. */
+/* Desktop keeps the same fixed-shell contract. */
 @media(min-width:961px){
-  body:has(.globalMenuHeaderWrap):has(.iosTabBar){
+  :root{
     --global-bottom-nav-height:58px;
   }
 
   body:has(.globalMenuHeaderWrap)>.iosTabBar{
-    grid-row:3;
-    position:relative!important;
-    left:auto!important;
-    right:auto!important;
-    top:auto!important;
-    bottom:auto!important;
-    inset:auto!important;
-    z-index:1000;
     display:grid;
     grid-auto-flow:column;
     grid-auto-columns:minmax(110px,1fr);
     align-items:center;
     justify-content:center;
-    max-width:100%;
-    min-height:58px;
     padding:5px max(18px,calc((100vw - 760px)/2));
     background:rgba(255,255,255,.96);
     border-top:1px solid rgba(148,163,184,.22);
