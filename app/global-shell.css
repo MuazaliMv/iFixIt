@@ -1,0 +1,120 @@
+/* Global application shell: persistent top navigation + routed workspace + persistent bottom navigation. */
+:root{
+  --global-top-nav-height:82px;
+  --global-bottom-nav-height:0px;
+}
+
+.globalMainWorkspace{
+  min-width:0;
+  min-height:0;
+}
+
+/* The authenticated shell owns the viewport. Only the middle workspace scrolls. */
+body:has(.globalMenuHeaderWrap){
+  height:100dvh;
+  overflow:hidden;
+  display:grid;
+  grid-template-rows:var(--global-top-nav-height) minmax(0,1fr) var(--global-bottom-nav-height);
+}
+
+body:has(.globalMenuHeaderWrap)>.globalMenuHeaderWrap{
+  grid-row:1;
+  position:relative;
+  inset:auto;
+  z-index:1000;
+  width:100%;
+  height:var(--global-top-nav-height);
+  box-sizing:border-box;
+}
+
+body:has(.globalMenuHeaderWrap)>.globalMainWorkspace{
+  grid-row:2;
+  min-width:0;
+  min-height:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  position:relative;
+  isolation:isolate;
+}
+
+/* Route content must not create a second viewport over the shell. */
+body:has(.globalMenuHeaderWrap)>.globalMainWorkspace .providerModePage,
+body:has(.globalMenuHeaderWrap)>.globalMainWorkspace .c3Page,
+body:has(.globalMenuHeaderWrap)>.globalMainWorkspace .c4App{
+  min-height:100%;
+}
+
+@media(max-width:960px){
+  :root{
+    --global-top-nav-height:76px;
+    --global-bottom-nav-height:calc(var(--ios-tab-height,64px) + env(safe-area-inset-bottom,0px));
+  }
+
+  body:has(.globalMenuHeaderWrap){
+    padding-bottom:0!important;
+  }
+
+  body:has(.globalMenuHeaderWrap)>.globalMenuHeaderWrap{
+    height:var(--global-top-nav-height);
+    padding-top:max(8px,env(safe-area-inset-top));
+  }
+
+  body:has(.globalMenuHeaderWrap)>.globalMainWorkspace{
+    padding-bottom:0;
+  }
+
+  body:has(.globalMenuHeaderWrap)>.iosTabBar{
+    grid-row:3;
+  }
+
+  body:has(.globalMenuHeaderWrap) .c3ActionDock{
+    bottom:0!important;
+  }
+}
+
+/* Desktop keeps the bottom navigation as a compact persistent dock instead of removing it. */
+@media(min-width:961px){
+  body:has(.globalMenuHeaderWrap):has(.iosTabBar){
+    --global-bottom-nav-height:58px;
+  }
+
+  body:has(.globalMenuHeaderWrap)>.iosTabBar{
+    position:relative;
+    left:auto;
+    right:auto;
+    bottom:auto;
+    z-index:1000;
+    display:grid;
+    grid-auto-flow:column;
+    grid-auto-columns:minmax(110px,1fr);
+    align-items:center;
+    justify-content:center;
+    max-width:100%;
+    min-height:58px;
+    padding:5px max(18px,calc((100vw - 760px)/2));
+    background:rgba(255,255,255,.96);
+    border-top:1px solid rgba(148,163,184,.22);
+    box-shadow:0 -8px 24px rgba(15,23,42,.04);
+  }
+
+  body:has(.globalMenuHeaderWrap)>.iosTabBar a,
+  body:has(.globalMenuHeaderWrap)>.iosTabBar button{
+    min-height:46px;
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    border:0;
+    border-radius:12px;
+    background:transparent;
+    color:#64748b;
+    text-decoration:none;
+    font:700 13px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+
+  body:has(.globalMenuHeaderWrap)>.iosTabBar svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  body:has(.globalMenuHeaderWrap)>.iosTabBar .active{color:#315ee7;background:#eef2ff}
+}
