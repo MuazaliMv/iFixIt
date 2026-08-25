@@ -1,0 +1,45 @@
+/* Global button usability hardening: mobile tap targets, keyboard focus, disabled states, and touch feedback. */
+:where(button,[role="button"],a.button,a.btn,.c3Primary,.c3Secondary,.blueButton,.secondary,.danger,.dangerButton,.dangerOutline,.outlineBlue){
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  user-select:none;
+}
+
+:where(button,[role="button"],a.button,a.btn):focus-visible,
+:where(.c3Primary,.c3Secondary,.blueButton,.secondary,.danger,.dangerButton,.dangerOutline,.outlineBlue):focus-visible{
+  outline:3px solid rgba(0,113,227,.35)!important;
+  outline-offset:2px!important;
+}
+
+:where(button,[role="button"],a.button,a.btn):disabled,
+:where(button,[role="button"])[aria-disabled="true"]{
+  cursor:not-allowed!important;
+  pointer-events:none!important;
+  opacity:.48;
+}
+
+:where(button,[role="button"],a.button,a.btn):active:not(:disabled):not([aria-disabled="true"]),
+:where(.c3Primary,.c3Secondary,.blueButton,.secondary,.danger,.dangerButton,.dangerOutline,.outlineBlue):active:not(:disabled){
+  transform:scale(.985);
+}
+
+@media(max-width:767px){
+  :where(button,[role="button"],a.button,a.btn,.c3Primary,.c3Secondary,.blueButton,.secondary,.danger,.dangerButton,.dangerOutline,.outlineBlue){
+    min-height:44px;
+  }
+
+  /* Keep true compact controls compact while retaining a 44px touch area where possible. */
+  :where(.appleServiceFilters button,.c4LangCompact button,[data-service-filter],.bigStars button){
+    min-height:36px!important;
+  }
+
+  :where(button,[role="button"],a.button,a.btn){
+    max-width:100%;
+  }
+}
+
+/* Decorative layers must never intercept taps. */
+:where(button,[role="button"],a.button,a.btn)::before,
+:where(button,[role="button"],a.button,a.btn)::after{
+  pointer-events:none!important;
+}
