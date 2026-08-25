@@ -107,8 +107,6 @@ export default function ProfileClient(){
   catch{setMessage('Unable to sign out. Please try again.');setLoggingOut(false);}
  }
 
- function cancelEdit(){if(profile)void load();setMessage('Changes reset.');}
-
  const selectedAtoll=atolls.find(a=>a.display_name===stateRegion||a.official_name===stateRegion)||null;
  const availableIslands=selectedAtoll?islands.filter(i=>i.atoll_id===selectedAtoll.id):[];
  const selectedIsland=availableIslands.find(i=>i.display_name===city||i.canonical_name===city)||null;
@@ -130,7 +128,7 @@ export default function ProfileClient(){
      <label>Ward<select value={selectedWard?.id||''} onChange={e=>{const next=availableWards.find(w=>w.id===e.target.value);const nextWard=next?.display_name||'';setWard(nextWard);setPostalCode('');setPostalChoices([]);if(city&&stateRegion)void lookupPostalCode(city,stateRegion,nextWard);}} disabled={loading||locationLookupLoading||!selectedIsland||!availableWards.length}><option value="">{!selectedIsland?'Select island / city first':availableWards.length?'Select ward':'No ward / not applicable'}</option>{availableWards.map(w=><option key={w.id} value={w.id}>{w.display_name}</option>)}</select></label>
      <label>Postal Code<select value={postalCode} onChange={e=>setPostalCode(e.target.value)} autoComplete="postal-code" disabled={loading||postalLookupLoading||!city}><option value="">{postalLookupLoading?'Looking up postal codes…':!city?'Select island / city first':postalChoices.length?'Select postal code':'No postal code found'}</option>{postalChoices.map(item=><option key={item.postalCode} value={item.postalCode}>{item.postalCode}{item.matchedAddress?` — ${item.matchedAddress}`:''}</option>)}</select></label>
     </div></div>
-    <div className="profileFormActions"><button className="secondary" type="button" onClick={cancelEdit} disabled={loading||saving}>Cancel</button><button className="primary" type="button" onClick={()=>void saveProfile()} disabled={loading||saving||postalLookupLoading} aria-busy={saving}>{saving?'Saving…':'Save Profile Information'}</button></div><p className="profileSaveState" role="status" aria-live="polite" style={{margin:0}}>{message}</p>
+    <div className="profileFormActions"><button className="primary" type="button" onClick={()=>void saveProfile()} disabled={loading||saving||postalLookupLoading} aria-busy={saving}>{saving?'Saving…':'Save Profile Information'}</button></div><p className="profileSaveState" role="status" aria-live="polite" style={{margin:0}}>{message}</p>
    </form></section>
    <section className="profileSecurityCard"><div><p className="profileInfoEyebrow">ACCOUNT</p><h2>Account actions</h2><p>Manage your subscription and securely sign out from this device.</p></div><div className="profileSecurityActions">{profile?.role==='PROVIDER'?<a className="secondary" href="/provider/subscription">Subscription</a>:null}<button className="secondary" type="button" onClick={()=>void logout()} disabled={loggingOut}>{loggingOut?'Signing out…':'Logout'}</button></div></section>
    {serviceAddresses.length?<section className="profileInfoCard"><div><p className="profileInfoEyebrow">SAVED LOCATIONS</p><h2>Saved service addresses</h2></div><div className="profileLocationList">{serviceAddresses.map((s,i)=><div key={s.id||i}><span>{s.label||`Service location ${i+1}`}{s.is_default?' · Default':''}</span><strong>{[s.address_line1,s.address_line2,s.city,s.state_region,s.postal_code,s.country||'Maldives'].filter(Boolean).join(', ')||'Not provided'}</strong></div>)}</div></section>:null}
