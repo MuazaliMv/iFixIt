@@ -4,8 +4,18 @@ import { applyAuthCookies, resolveServerAuth } from '../../../../lib/serverAuth'
 const SUPABASE_URL='https://yzlhlilxiszefneshatm.supabase.co';
 const AUTH_API=`${SUPABASE_URL}/functions/v1/auth-account`;
 const FIXED_COUNTRY='Maldives';
+const PRODUCTION_ORIGINS=new Set(['https://ifixmv.com','https://www.ifixmv.com']);
 
-function sameOrigin(request:NextRequest){const origin=request.headers.get('origin');return !origin||origin===request.nextUrl.origin;}
+function sameOrigin(request:NextRequest){
+ const origin=request.headers.get('origin');
+ if(!origin)return true;
+ try{
+  const normalizedOrigin=new URL(origin).origin;
+  if(PRODUCTION_ORIGINS.has(normalizedOrigin))return true;
+  if(process.env.NODE_ENV!=='production'&&normalizedOrigin===request.nextUrl.origin)return true;
+  return false;
+ }catch{return false;}
+}
 function normalizeProfilePhone(value:unknown){
  const raw=String(value??'').trim().replace(/[\s()-]/g,'');
  if(!raw)return '';
