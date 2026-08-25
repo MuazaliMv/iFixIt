@@ -43,9 +43,10 @@ const groups:AdminMenuGroup[]=[
  },
  {
   label:'Services & Locations',href:'/admin/services',icon:'services',
-  matches:path=>path.startsWith('/admin/services')||path.startsWith('/admin/request-form')||path.startsWith('/admin/required-fields')||path.startsWith('/admin/locations'),
+  matches:path=>path.startsWith('/admin/services')||path.startsWith('/admin/service-categories')||path.startsWith('/admin/request-form')||path.startsWith('/admin/required-fields')||path.startsWith('/admin/locations'),
   submenus:[
    {label:'Services',href:'/admin/services',match:(path,q)=>path==='/admin/services'&&!q.get('view')},
+   {label:'Service Categories',href:'/admin/service-categories',match:path=>path.startsWith('/admin/service-categories')},
    {label:'Categories / Subcategories',href:'/admin/services?view=categories',match:(path,q)=>path.startsWith('/admin/services')&&q.get('view')==='categories'},
    {label:'Request Form',href:'/admin/request-form',match:path=>path.startsWith('/admin/request-form')||path.startsWith('/admin/required-fields')},
    {label:'Locations',href:'/admin/locations',match:(path,q)=>path==='/admin/locations'&&!q.get('view')},
