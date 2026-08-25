@@ -116,7 +116,7 @@ export default function LoginPage(){
 
  function submitPhone(event:FormEvent){
   event.preventDefault();
-  if(!phoneValid){setMessage('Enter a valid 7-digit Maldives phone number.');return;}
+  if(!phoneValid){setMessage('Enter a valid 7-digit Maldives number.');return;}
   setStep('otp');
   setMessage('For testing, enter OTP 9999.');
  }
