@@ -5,6 +5,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 button,a{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 
 .iosTabBar{display:none}
+.iosWorkspaceOverlay{display:none}
 
 @media(max-width:960px){
  body{padding-bottom:calc(var(--ios-tab-height) + var(--ios-safe-bottom))}
@@ -14,14 +15,21 @@ button,a{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
  .c3Header{padding-top:var(--ios-safe-top);height:calc(60px + var(--ios-safe-top))!important;position:sticky!important;top:0;z-index:80}
  .c3Shell{padding-bottom:18px}
  .iosTabBar{position:fixed;left:0;right:0;bottom:0;z-index:120;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:calc(var(--ios-tab-height) + var(--ios-safe-bottom));padding:6px 10px calc(6px + var(--ios-safe-bottom));background:rgba(249,249,251,.92);border-top:1px solid rgba(60,60,67,.16);-webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px)}
+ .iosTabBar.hasWorkspaceSwitch{grid-template-columns:repeat(5,minmax(0,1fr))}
  .iosTabBar a,.iosTabBar button{appearance:none;border:0;background:transparent;color:#8e8e93;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;min-height:50px;padding:2px 4px;border-radius:12px;font:600 10px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif}
  .iosTabBar svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
- .iosTabBar a.active{color:var(--brand,#3457e6)}
+ .iosTabBar a.active,.iosTabBar button.active{color:var(--brand,#3457e6)}
  .iosTabBar .iosTabNew{color:var(--brand,#3457e6)}
  .iosTabBar .iosTabNew svg{stroke-width:2.1}
  .iosTabBar a:active,.iosTabBar button:active{transform:scale(.94);background:rgba(60,60,67,.06)}
  .c3ActionDock{bottom:calc(var(--ios-tab-height) + var(--ios-safe-bottom))!important;padding-bottom:10px!important}
  input,textarea,select{font-size:16px!important}
+
+ .iosWorkspaceOverlay{position:fixed;inset:0;z-index:1180;display:flex;align-items:flex-end;justify-content:center;padding:20px 12px calc(12px + var(--ios-safe-bottom));background:rgba(15,23,42,.28);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}
+ .iosWorkspaceSheet{width:min(560px,100%);padding:10px 14px 14px;border:1px solid rgba(226,232,240,.96);border-radius:28px;background:rgba(255,255,255,.98);box-shadow:0 24px 70px rgba(15,23,42,.22)}
+ .iosWorkspaceHandle{width:38px;height:5px;margin:0 auto 10px;border-radius:999px;background:#d1d5db}
+ .iosWorkspaceHead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px 10px}.iosWorkspaceHead small{display:block;color:#8e8e93;font:700 11px/1.2 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;text-transform:uppercase;letter-spacing:.06em}.iosWorkspaceHead h2{margin:4px 0 0;color:#111827;font:800 24px/1.05 -apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;letter-spacing:-.02em}.iosWorkspaceHead>button{width:34px;height:34px;border:0;border-radius:50%;background:#f2f2f7;color:#6b7280;font:500 24px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}
+ .iosWorkspaceOptions{display:grid;gap:8px}.iosWorkspaceOptions>button{width:100%;display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:11px;min-height:64px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:18px;background:#fff;color:#111827;text-align:left}.iosWorkspaceOptions>button.selected{border-color:#c7d2fe;background:#f8faff}.iosWorkspaceOptions>button:active{transform:scale(.995);background:#f8fafc}.iosWorkspaceOptions>button>span:nth-child(2){min-width:0}.iosWorkspaceOptions strong{display:block;font:750 14px/1.2 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}.iosWorkspaceOptions small{display:block;margin-top:3px;color:#6b7280;font:500 12px/1.3 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}.iosWorkspaceOptions b{padding:6px 8px;border-radius:9px;background:#f2f2f7;color:#6b7280;font:750 10px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}.iosWorkspaceOptions .selected b{background:#eef2ff;color:#3457e6}.iosWorkspaceIcon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#f2f2f7;color:#3457e6}.iosWorkspaceIcon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 }
 
 @media(max-width:520px){
