@@ -51,18 +51,20 @@ function normalizeWardList(city: string, values: string[]) {
   return unique(filtered);
 }
 
-export default function PostalCodeSelect({ atoll, city, road, value, onChange, disabled }: Props) {
+export default function PostalCodeSelect({ atoll, city, road: _road, value, onChange, disabled }: Props) {
   const [ward, setWard] = useState('');
   const [wards, setWards] = useState<string[]>([]);
   const [wardLoading, setWardLoading] = useState(false);
   const [postalCodes, setPostalCodes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const previousAddress = useRef('');
+  const previousLocation = useRef('');
 
   const wardReady = Boolean(atoll.trim() && city.trim());
-  const ready = Boolean(atoll.trim() && city.trim() && road.trim());
-  const addressKey = `${atoll.trim()}|${city.trim()}|${road.trim()}|${ward.trim()}`;
+  const cityIsDirectLocality = normalizedCity(city) === 'hulhumale';
+  const requiresWard = wards.length > 0 && !cityIsDirectLocality;
+  const ready = Boolean(atoll.trim() && city.trim() && (!requiresWard || ward.trim()));
+  const locationKey = `${atoll.trim()}|${city.trim()}|${ward.trim()}`;
 
   useEffect(() => {
     setWard('');
@@ -96,11 +98,11 @@ export default function PostalCodeSelect({ atoll, city, road, value, onChange, d
   }, [atoll, city, wardReady]);
 
   useEffect(() => {
-    if (previousAddress.current && previousAddress.current !== addressKey && value) {
+    if (previousLocation.current && previousLocation.current !== locationKey && value) {
       onChange('');
     }
-    previousAddress.current = addressKey;
-  }, [addressKey, onChange, value]);
+    previousLocation.current = locationKey;
+  }, [locationKey, onChange, value]);
 
   useEffect(() => {
     if (!ready) {
@@ -115,36 +117,41 @@ export default function PostalCodeSelect({ atoll, city, road, value, onChange, d
       setLoading(true);
       setError('');
       try {
-        const params = new URLSearchParams({ atoll, city, road });
+        const params = new URLSearchParams({ atoll, city });
         if (ward) params.set('ward', ward);
         const response = await fetch(`/api/locations/postal-codes?${params.toString()}`, {
           signal: controller.signal,
         });
         const payload = (await response.json()) as LookupResponse;
-        if (!response.ok) throw new Error(payload.error || 'Unable to load postal codes.');
-        setPostalCodes(Array.isArray(payload.postalCodes) ? payload.postalCodes : []);
+        if (!response.ok) throw new Error(payload.error || 'Unable to load postal code.');
+        const nextCodes = Array.isArray(payload.postalCodes) ? payload.postalCodes : [];
+        setPostalCodes(nextCodes);
+
+        if (nextCodes.length === 1 && value !== nextCodes[0]) {
+          onChange(nextCodes[0]);
+        } else if (nextCodes.length === 0 && value) {
+          onChange('');
+        }
       } catch (err) {
         if (controller.signal.aborted) return;
         setPostalCodes([]);
-        setError(err instanceof Error ? err.message : 'Unable to load postal codes.');
+        setError(err instanceof Error ? err.message : 'Unable to load postal code.');
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
-    }, 450);
+    }, 200);
 
     return () => {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [atoll, city, road, ward, ready]);
+  }, [atoll, city, ward, ready, onChange, value]);
 
-  const options = value && !postalCodes.includes(value) ? [value, ...postalCodes] : postalCodes;
-
-  let postalPlaceholder = 'Select Atoll, City / Island and Road first';
-  if (ready && loading) postalPlaceholder = 'Finding postal codes…';
+  let postalPlaceholder = requiresWard && !ward ? 'Select Ward first' : 'Postal code will be matched automatically';
+  if (ready && loading) postalPlaceholder = 'Matching postal code…';
   else if (ready && error) postalPlaceholder = 'Postal lookup unavailable';
-  else if (ready && !loading && postalCodes.length === 0) postalPlaceholder = 'No postal code found for this address';
-  else if (ready) postalPlaceholder = 'Select Postal Code';
+  else if (ready && !loading && postalCodes.length === 0) postalPlaceholder = 'No verified postal code found';
+  else if (ready && postalCodes.length === 1) postalPlaceholder = postalCodes[0];
 
   let wardPlaceholder = 'Select City / Island first';
   if (wardReady && wardLoading && wards.length === 0) wardPlaceholder = 'Loading wards…';
@@ -153,7 +160,7 @@ export default function PostalCodeSelect({ atoll, city, road, value, onChange, d
 
   return (
     <div className="wardPostalControl">
-      <style>{`.scheduleGrid label:has(.wardPostalControl){font-size:0}.wardPostalControl{font-size:16px;display:grid;gap:8px}.wardPostalControl .fieldLabel{font-size:inherit;font-weight:700;line-height:1.25;margin-top:2px}.wardPostalControl select,.wardPostalControl small{font-size:16px}`}</style>
+      <style>{`.scheduleGrid label:has(.wardPostalControl){font-size:0}.wardPostalControl{font-size:16px;display:grid;gap:8px}.wardPostalControl .fieldLabel{font-size:inherit;font-weight:700;line-height:1.25;margin-top:2px}.wardPostalControl select,.wardPostalControl input,.wardPostalControl small{font-size:16px}`}</style>
       <span className="fieldLabel">Ward</span>
       <select
         value={ward}
@@ -169,18 +176,15 @@ export default function PostalCodeSelect({ atoll, city, road, value, onChange, d
       </select>
 
       <span className="fieldLabel">Postal code</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={disabled || !ready || loading || (postalCodes.length === 0 && !value)}
+      <input
+        value={value || ''}
+        readOnly
+        disabled={disabled}
+        placeholder={postalPlaceholder}
         aria-label="Postal code"
         aria-busy={loading}
-      >
-        <option value="">{postalPlaceholder}</option>
-        {options.map((postalCode) => (
-          <option key={postalCode} value={postalCode}>{postalCode}</option>
-        ))}
-      </select>
+      />
+      {value && postalCodes.length === 1 ? <small className="muted" role="status">Automatically matched to the selected locality.</small> : null}
       {error ? <small className="muted" role="status">{error}</small> : null}
     </div>
   );
