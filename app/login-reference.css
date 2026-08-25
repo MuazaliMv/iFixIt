@@ -1,0 +1,237 @@
+/* Exact login reference treatment requested for the Main Content Area. */
+.globalMainWorkspace .authLoginMode{
+  width:100%;
+  height:100%;
+  min-height:100%;
+  background:#f5f7fb;
+}
+
+.globalMainWorkspace .authLoginMode .authPage{
+  width:100%;
+  height:100%;
+  min-height:100%;
+  padding:clamp(18px,4vh,44px) clamp(16px,4vw,30px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow-y:auto;
+  background:#f5f7fb;
+}
+
+.globalMainWorkspace .authLoginMode .authStage{
+  width:min(100%,560px);
+  max-height:none;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  align-items:stretch;
+}
+
+/* The supplied screen is the login workspace itself. Global shell owns navigation. */
+.globalMainWorkspace .authLoginMode .authNav{
+  display:none!important;
+}
+
+.globalMainWorkspace .authLoginMode .authCardClean{
+  width:100%;
+  padding:clamp(26px,5.4vw,40px);
+  border:1px solid #dce3ee;
+  border-radius:32px;
+  background:#fff;
+  box-shadow:0 20px 55px rgba(15,23,42,.09);
+  backdrop-filter:none;
+}
+
+.globalMainWorkspace .authLoginMode .authStatusPill{
+  width:max-content;
+  min-height:40px;
+  padding:0 18px;
+  border:1.5px solid #bfdbfe;
+  border-radius:999px;
+  background:#f8fbff;
+  color:#2563eb;
+  font-size:0;
+  font-weight:850;
+  letter-spacing:1.8px;
+  text-transform:uppercase;
+}
+
+.globalMainWorkspace .authLoginMode .authStatusPill>span{
+  display:none;
+}
+
+.globalMainWorkspace .authLoginMode .authStatusPill::after{
+  content:'SECURE SIGN-IN';
+  font-size:13px;
+  line-height:1;
+}
+
+.globalMainWorkspace .authLoginMode .authIntro{
+  margin:24px 0 26px;
+}
+
+.globalMainWorkspace .authLoginMode .authIntro h1{
+  margin:0;
+  color:#071126;
+  font-size:clamp(46px,11vw,68px);
+  line-height:.98;
+  letter-spacing:-2.8px;
+  font-weight:900;
+}
+
+.globalMainWorkspace .authLoginMode .authIntro p{
+  margin:16px 0 0;
+  color:#6b7890;
+  font-size:0;
+  line-height:1.35;
+}
+
+.globalMainWorkspace .authLoginMode .authIntro p::after{
+  content:'Sign in to continue.';
+  font-size:clamp(18px,4.5vw,24px);
+}
+
+.globalMainWorkspace .authLoginMode .authFormClean{
+  gap:18px;
+}
+
+.globalMainWorkspace .authLoginMode .authField{
+  gap:8px;
+}
+
+.globalMainWorkspace .authLoginMode .authFieldLabel{
+  color:#334155;
+  font-size:clamp(17px,4vw,21px);
+  line-height:1.2;
+  font-weight:850;
+}
+
+.globalMainWorkspace .authLoginMode .authInputWrap{
+  min-height:70px;
+  grid-template-columns:56px minmax(0,1fr);
+  border:1.5px solid #d8e0eb;
+  border-radius:22px;
+  background:#fff;
+  overflow:hidden;
+  box-shadow:inset 0 0 0 1px rgba(226,232,240,.25);
+}
+
+.globalMainWorkspace .authLoginMode .authInputWrap:focus-within{
+  border-color:#93b4ff;
+  box-shadow:0 0 0 4px rgba(37,99,235,.08);
+}
+
+.globalMainWorkspace .authLoginMode .authInputIcon{
+  width:56px;
+  color:#69778f;
+}
+
+.globalMainWorkspace .authLoginMode .authInputIcon svg{
+  width:25px;
+  height:25px;
+}
+
+.globalMainWorkspace .authLoginMode .authInputWrap input{
+  min-height:68px;
+  padding:0 18px 0 0!important;
+  color:#111827!important;
+  font-size:clamp(18px,4.6vw,24px)!important;
+  font-weight:500!important;
+}
+
+.globalMainWorkspace .authLoginMode .passwordField{
+  grid-template-columns:56px minmax(0,1fr) 62px;
+}
+
+.globalMainWorkspace .authLoginMode .passwordToggle{
+  width:62px;
+  height:68px;
+  color:#69778f;
+}
+
+.globalMainWorkspace .authLoginMode .passwordToggle .eyeIcon{
+  width:27px;
+  height:27px;
+}
+
+.globalMainWorkspace .authLoginMode .authUtility{
+  min-height:62px;
+  margin-top:2px;
+  gap:12px;
+}
+
+.globalMainWorkspace .authLoginMode .rememberMe{
+  min-height:52px!important;
+  gap:12px!important;
+  color:#66758d!important;
+  font-size:clamp(15px,3.8vw,20px)!important;
+  font-weight:750!important;
+}
+
+.globalMainWorkspace .authLoginMode .rememberMe input{
+  width:34px!important;
+  height:34px!important;
+  border-radius:50%;
+  accent-color:#2f6df3;
+}
+
+.globalMainWorkspace .authLoginMode .authUtility a{
+  min-height:52px;
+  color:#2f67da;
+  font-size:clamp(15px,3.8vw,20px);
+  font-weight:800;
+}
+
+.globalMainWorkspace .authLoginMode .authSubmit{
+  min-height:72px;
+  margin-top:2px;
+  border-radius:20px;
+  background:#2f6df3;
+  color:#fff;
+  font-size:clamp(19px,4.6vw,25px);
+  font-weight:850;
+  box-shadow:0 10px 24px rgba(47,109,243,.2);
+}
+
+.globalMainWorkspace .authLoginMode .authSubmit:disabled{
+  opacity:1;
+  background:#9eb1d6;
+  color:#fff;
+  box-shadow:none;
+}
+
+.globalMainWorkspace .authLoginMode .authSubmitArrow{
+  font-size:30px;
+}
+
+.globalMainWorkspace .authLoginMode .authFootnote{
+  margin:0;
+  text-align:center;
+  color:#5f7090;
+  font-size:clamp(13px,3vw,17px);
+  line-height:1.4;
+  font-weight:750;
+}
+
+.globalMainWorkspace .authLoginMode .authFootnote span{
+  color:#16a34a;
+  margin-right:7px;
+  font-size:1.2em;
+}
+
+@media(max-width:430px){
+  .globalMainWorkspace .authLoginMode .authPage{padding:18px 12px}
+  .globalMainWorkspace .authLoginMode .authCardClean{padding:24px 20px;border-radius:28px}
+  .globalMainWorkspace .authLoginMode .authIntro h1{font-size:48px}
+}
+
+@media(max-height:720px){
+  .globalMainWorkspace .authLoginMode .authPage{align-items:flex-start;padding-top:12px;padding-bottom:12px}
+  .globalMainWorkspace .authLoginMode .authStage{gap:10px}
+  .globalMainWorkspace .authLoginMode .authCardClean{padding-top:20px;padding-bottom:20px}
+  .globalMainWorkspace .authLoginMode .authIntro{margin:14px 0 16px}
+  .globalMainWorkspace .authLoginMode .authIntro h1{font-size:40px}
+  .globalMainWorkspace .authLoginMode .authInputWrap,.globalMainWorkspace .authLoginMode .authInputWrap input{min-height:58px}
+  .globalMainWorkspace .authLoginMode .passwordToggle{height:58px}
+  .globalMainWorkspace .authLoginMode .authSubmit{min-height:60px}
+}
