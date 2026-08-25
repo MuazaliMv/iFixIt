@@ -37,7 +37,19 @@ function rememberWorkspace(workspace:Workspace,role:AccountRole){
  }catch{}
 }
 
-const wait=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
+async function fetchWithTimeout(
+ input:RequestInfo|URL,
+ init:RequestInit&{retryAuth?:boolean}={},
+ timeoutMs=3500,
+){
+ const controller=new AbortController();
+ const timer=window.setTimeout(()=>controller.abort(),timeoutMs);
+ try{
+  return await apiFetch(input,{...init,signal:controller.signal});
+ }finally{
+  window.clearTimeout(timer);
+ }
+}
 
 export default function LoginPage(){
  const[step,setStep]=useState<Step>('phone');
@@ -50,32 +62,37 @@ export default function LoginPage(){
 
  useEffect(()=>{
   let active=true;
+
   void(async()=>{
-   // A login page can be reached briefly while secure cookies/browser state are
-   // still settling after a route change. Retry transient failures and only show
-   // the form after the server has definitively reported that no session exists.
-   for(let attempt=0;attempt<3;attempt++){
-    try{
-     const response=await apiFetch('/api/user/profile');
-     if(!active)return;
-     if(response.ok){
-      const payload=await response.json().catch(()=>({}));
-      await routeUser(payload?.profile as ExistingProfile|undefined);
-      return;
-     }
-     if(response.status===401||response.status===404){
-      if(attempt<2){await wait(250*(attempt+1));continue;}
-      setCheckingSession(false);
-      return;
-     }
-     // 5xx/timeout/network-style responses are not proof of logout.
-     if(attempt<2){await wait(400*(attempt+1));continue;}
-    }catch{
-     if(attempt<2){await wait(400*(attempt+1));continue;}
+   try{
+    // Check the authoritative server session once, with a hard timeout.
+    // A slow/broken session endpoint must never trap the user on this screen.
+    const sessionResponse=await fetchWithTimeout('/api/auth/session',{retryAuth:false},3000);
+    if(!active)return;
+
+    if(!sessionResponse.ok){
+     setCheckingSession(false);
+     return;
     }
+
+    // We have a valid server session. Resolve the profile briefly so the user can
+    // be routed to their default workspace. If profile loading fails, fall back to
+    // the sign-in form instead of spinning forever.
+    const profileResponse=await fetchWithTimeout('/api/user/profile',{},3000);
+    if(!active)return;
+
+    if(profileResponse.ok){
+     const payload=await profileResponse.json().catch(()=>({}));
+     await routeUser(payload?.profile as ExistingProfile|undefined);
+     return;
+    }
+   }catch{
+    // Timeout/network failure is not allowed to block access to the sign-in form.
    }
+
    if(active)setCheckingSession(false);
   })();
+
   return()=>{active=false;};
  },[]);
 
@@ -83,7 +100,7 @@ export default function LoginPage(){
   let profile=knownProfile;
   if(!profile?.role){
    try{
-    const response=await apiFetch('/api/user/profile');
+    const response=await fetchWithTimeout('/api/user/profile',{},3000);
     if(response.ok){
      const payload=await response.json().catch(()=>({}));
      profile=payload?.profile as ExistingProfile|undefined;
@@ -127,17 +144,21 @@ export default function LoginPage(){
   setBusy(true);
   setMessage('');
   try{
-   const response=await apiFetch('/api/auth/login',{
+   const response=await fetchWithTimeout('/api/auth/login',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({phone:`${countryCode}${phone}`,otp}),
     retryAuth:false,
-   });
+   },8000);
    const payload=await response.json().catch(()=>({}));
    if(!response.ok||!payload?.ok){setMessage(payload?.error||'Unable to sign in.');return;}
    await routeUser(payload?.profile as ExistingProfile|undefined);
   }catch(error){
-   setMessage(error instanceof Error?error.message:'Unable to sign in.');
+   if(error instanceof DOMException&&error.name==='AbortError'){
+    setMessage('Sign in timed out. Please try again.');
+   }else{
+    setMessage(error instanceof Error?error.message:'Unable to sign in.');
+   }
   }finally{setBusy(false);}
  }
 
