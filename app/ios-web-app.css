@@ -9,6 +9,7 @@ button,a{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 
 @media(max-width:960px){
  body{padding-bottom:calc(var(--ios-tab-height) + var(--ios-safe-bottom))}
+ .ifix-customer-tabbar .airAccount{display:none!important}
  .c4Sidebar{display:none!important}
  .c4Main,.c4App.dv .c4Main{margin:0!important}
  .c3Page{min-height:100dvh}
