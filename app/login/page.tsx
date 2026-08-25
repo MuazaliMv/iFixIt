@@ -115,10 +115,11 @@ export default function LoginPage(){
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({phone:`${countryCode}${phone}`,otp}),
+    retryAuth:false,
    });
    const payload=await response.json().catch(()=>({}));
-   if(!response.ok){setMessage(payload?.error||'Unable to sign in.');return;}
-   await routeUser();
+   if(!response.ok||!payload?.ok){setMessage(payload?.error||'Unable to sign in.');return;}
+   await routeUser(payload?.profile as ExistingProfile|undefined);
   }catch(error){
    setMessage(error instanceof Error?error.message:'Unable to sign in.');
   }finally{setBusy(false);}
