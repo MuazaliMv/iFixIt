@@ -1,0 +1,31 @@
+/* Mobile-first service picker: compact, scannable, searchable. */
+.servicePickerUX{display:none}
+
+@media(max-width:760px){
+ .c3WizardCard:has(.c3ServiceGrid){padding:16px 14px 18px!important;background:#fff!important;border:1px solid #e5e7eb!important;border-radius:20px!important}
+ .c3WizardCard:has(.c3ServiceGrid) .c3Question{margin-bottom:12px!important}
+ .c3WizardCard:has(.c3ServiceGrid) .c3Question h1{font-size:26px!important;line-height:1.08!important;letter-spacing:-.6px!important;margin:0 0 5px!important}
+ .c3WizardCard:has(.c3ServiceGrid) .c3Question p{font-size:14px!important;line-height:1.35!important;margin:0!important;color:#6b7280!important}
+
+ .appleServiceToolbar{display:none!important}
+ .servicePickerUX{display:grid;gap:10px;margin:12px 0 14px}
+ .servicePickerUXSearch{position:relative;display:flex;align-items:center}
+ .servicePickerUXSearch svg{position:absolute;left:14px;width:18px;height:18px;fill:none;stroke:#667085;stroke-width:2;stroke-linecap:round;pointer-events:none}
+ .servicePickerUXSearch input{width:100%;height:48px;border:1px solid #d8dee8;border-radius:14px;background:#f8fafc;padding:0 14px 0 42px;color:#111827;font:inherit;font-size:15px;outline:none}
+ .servicePickerUXSearch input:focus{background:#fff;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+ .servicePickerUXFilters{display:flex;gap:7px;overflow-x:auto;padding:1px 1px 3px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ .servicePickerUXFilters::-webkit-scrollbar{display:none}
+ .servicePickerUXFilters button{flex:0 0 auto;min-height:34px;padding:0 13px;border:1px solid #d8dee8;border-radius:999px;background:#fff;color:#344054;font-size:12px;font-weight:700;white-space:nowrap}
+ .servicePickerUXFilters button.active{background:#111827;border-color:#111827;color:#fff}
+ .servicePickerUXEmpty{margin:4px 0 0;padding:16px;border-radius:12px;background:#f8fafc;color:#667085;text-align:center;font-size:13px}
+
+ .c3Wizard .c3ServiceGrid[data-mobile-friendly-picker="true"]{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;margin-top:0!important}
+ .c3Wizard .c3ServiceGrid[data-mobile-friendly-picker="true"] .c3ServiceTile{min-height:58px!important;width:100%!important;padding:8px 42px 8px 9px!important;border:1px solid #e2e8f0!important;border-radius:14px!important;background:#fff!important;display:grid!important;grid-template-columns:40px minmax(0,1fr)!important;align-items:center!important;gap:11px!important;text-align:left!important;box-shadow:none!important}
+ .c3Wizard .c3ServiceGrid[data-mobile-friendly-picker="true"] .c3ServiceTile[hidden]{display:none!important}
+ .c3Wizard .c3ServiceGrid[data-mobile-friendly-picker="true"] .c3ServiceTile .c3ServiceIcon{width:38px!important;height:38px!important;padding:8px!important;border-radius:11px!important;background:#f3f6fa!important;color:#1f2937!important}
+ .c3Wizard .c3ServiceGrid[data-mobile-friendly-picker="true"] .c3ServiceTile strong{font-size:15px!important;line-height:1.22!important;font-weight:700!important;letter-spacing:-.15px!important;color:#111827!important;white-space:normal!important;overflow-wrap:anywhere!important}
+ .c3Wizard .c3ServiceGrid[data-mobile-friendly-picker="true"] .c3ServiceTile::after{content:'›'!important;position:absolute!important;right:15px!important;top:50%!important;transform:translateY(-50%)!important;border:0!important;background:transparent!important;color:#98a2b3!important;width:auto!important;height:auto!important;font-size:24px!important;font-weight:400!important;display:block!important}
+ .c3Wizard .c3ServiceGrid[data-mobile-friendly-picker="true"] .c3ServiceTile.selected{border-color:#3b82f6!important;background:#f7fbff!important;box-shadow:0 0 0 2px rgba(59,130,246,.10)!important}
+ .c3Wizard .c3ServiceGrid[data-mobile-friendly-picker="true"] .c3ServiceTile.selected::after{content:'✓'!important;color:#2563eb!important;font-size:16px!important;font-weight:800!important}
+ .c3Wizard .c3ServiceGrid[data-mobile-friendly-picker="true"] .c3ServiceTile:active{transform:scale(.99)!important;background:#f8fafc!important}
+}
