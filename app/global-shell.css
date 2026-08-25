@@ -9,28 +9,38 @@
   min-height:0;
 }
 
-/* The authenticated shell owns the viewport. Only the middle workspace scrolls. */
+/* The global shell owns the viewport. The document itself never scrolls; only the middle workspace does. */
 body:has(.globalMenuHeaderWrap){
   height:100dvh;
-  overflow:hidden;
+  min-height:100dvh;
+  max-height:100dvh;
+  overflow:hidden!important;
   display:grid;
   grid-template-rows:var(--global-top-nav-height) minmax(0,1fr) var(--global-bottom-nav-height);
 }
 
+/* Top navigation is a dedicated shell row. It must never participate in workspace scrolling. */
 body:has(.globalMenuHeaderWrap)>.globalMenuHeaderWrap{
   grid-row:1;
-  position:relative;
-  inset:auto;
+  position:relative!important;
+  top:auto!important;
+  inset:auto!important;
   z-index:1000;
   width:100%;
   height:var(--global-top-nav-height);
+  min-height:var(--global-top-nav-height);
+  max-height:var(--global-top-nav-height);
   box-sizing:border-box;
+  overflow:visible;
 }
 
+/* Only this middle row is allowed to scroll. */
 body:has(.globalMenuHeaderWrap)>.globalMainWorkspace{
   grid-row:2;
   min-width:0;
   min-height:0;
+  height:auto;
+  max-height:100%;
   overflow-x:hidden;
   overflow-y:auto;
   overscroll-behavior:contain;
@@ -53,20 +63,39 @@ body:has(.globalMenuHeaderWrap)>.globalMainWorkspace .c4App{
   }
 
   body:has(.globalMenuHeaderWrap){
-    padding-bottom:0!important;
+    padding:0!important;
   }
 
   body:has(.globalMenuHeaderWrap)>.globalMenuHeaderWrap{
     height:var(--global-top-nav-height);
+    min-height:var(--global-top-nav-height);
+    max-height:var(--global-top-nav-height);
     padding-top:max(8px,env(safe-area-inset-top));
   }
 
   body:has(.globalMenuHeaderWrap)>.globalMainWorkspace{
-    padding-bottom:0;
+    padding-bottom:0!important;
   }
 
+  /* Critical: the bottom navigation is the third grid row, not a fixed overlay.
+     ios-web-app.css declares it fixed; override that here so it can never cover,
+     detach from, minimise, or disappear behind the workspace. */
   body:has(.globalMenuHeaderWrap)>.iosTabBar{
     grid-row:3;
+    position:relative!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    inset:auto!important;
+    width:100%;
+    height:var(--global-bottom-nav-height);
+    min-height:var(--global-bottom-nav-height);
+    max-height:var(--global-bottom-nav-height);
+    z-index:1000;
+    transform:none!important;
+    visibility:visible!important;
+    opacity:1!important;
   }
 
   body:has(.globalMenuHeaderWrap) .c3ActionDock{
@@ -81,10 +110,13 @@ body:has(.globalMenuHeaderWrap)>.globalMainWorkspace .c4App{
   }
 
   body:has(.globalMenuHeaderWrap)>.iosTabBar{
-    position:relative;
-    left:auto;
-    right:auto;
-    bottom:auto;
+    grid-row:3;
+    position:relative!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    inset:auto!important;
     z-index:1000;
     display:grid;
     grid-auto-flow:column;
