@@ -71,7 +71,19 @@ export default function MobileSectionPager() {
   useEffect(() => {
     const states = new WeakMap<Element, PagerState>();
     const mobile = () => window.matchMedia('(max-width: 767px)').matches;
+    const blockedRoute = () => {
+      const path = window.location.pathname;
+      return path === '/requests' || path.startsWith('/requests/');
+    };
     let scheduled = false;
+
+    const cleanupInjectedPager = () => {
+      document.querySelectorAll('[data-mobile-section-pager="true"], .mobileSectionProgress').forEach((node) => node.remove());
+      document.querySelectorAll<HTMLElement>('[data-mobile-page-item]').forEach((item) => {
+        item.hidden = false;
+        item.removeAttribute('data-mobile-page-item');
+      });
+    };
 
     const removePager = (container: Element) => {
       const state = states.get(container);
@@ -86,15 +98,17 @@ export default function MobileSectionPager() {
     };
 
     const render = (container: Element, resetGroups = false) => {
+      if (blockedRoute()) {
+        removePager(container);
+        cleanupInjectedPager();
+        return;
+      }
+
       if (!mobile()) {
         removePager(container);
         return;
       }
 
-      // These views manage their own navigation/pagination and must never be
-      // wrapped by the generic mobile Back/Continue pager. Check the whole
-      // container, not only individual children, so request/list pages cannot
-      // accidentally receive a second navigation bar.
       if (container.matches(SKIP_SELECTOR) || container.querySelector(SKIP_SELECTOR)) {
         removePager(container);
         return;
@@ -179,6 +193,11 @@ export default function MobileSectionPager() {
 
     const apply = (resetGroups = false) => {
       scheduled = false;
+      if (blockedRoute()) {
+        document.querySelectorAll(CONTENT_SELECTORS).forEach(removePager);
+        cleanupInjectedPager();
+        return;
+      }
       document.querySelectorAll(CONTENT_SELECTORS).forEach((container) => render(container, resetGroups));
     };
 
@@ -205,6 +224,7 @@ export default function MobileSectionPager() {
       window.removeEventListener('resize', onResize);
       window.removeEventListener('orientationchange', onResize);
       document.querySelectorAll(CONTENT_SELECTORS).forEach(removePager);
+      cleanupInjectedPager();
     };
   }, []);
 
