@@ -13,6 +13,21 @@ type NominatimResult={
 type PostalOption={postalCode:string;matchedAddress:string|null};
 
 function clean(value:string|null){return String(value||'').trim().slice(0,160);}
+function normalizePlace(value:string){return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
+function validMaldivesPostalCode(value:string){return /^\d{5}$/.test(value);}
+
+function codeMatchesLocation(code:string,city:string){
+ if(!validMaldivesPostalCode(code))return false;
+ const place=normalizePlace(city);
+ // Maldives' current postcode system uses 2xxxx for the Malé postal region.
+ // Keep the well-defined capital-area prefixes from being mixed with atoll results.
+ if(place==='male'||place==='male city')return /^20\d{3}$/.test(code);
+ if(place==='villingili'||place==='villimale'||place==='villingili island')return /^21\d{3}$/.test(code);
+ if(place==='hulhule'||place==='hulhule island')return code==='22000';
+ if(place==='hulhumale'||place.startsWith('hulhumale '))return /^23\d{3}$/.test(code);
+ // Other inhabited atolls use the 0xxxx/1xxxx postal regions, not Malé-region 2xxxx codes.
+ return /^[01]\d{4}$/.test(code);
+}
 
 async function queryNominatim(parts:string[]){
  const q=parts.filter(Boolean).join(', ');
@@ -46,23 +61,37 @@ export async function GET(request:NextRequest){
    [ward,city,atoll,'Maldives'],
    [city,atoll,'Maldives']
   ];
-  const choices=new Map<string,PostalOption>();
+
+  // Do not merge broad fallback results with a more specific address match.
+  // The first query level that yields valid, location-compatible Maldives postcodes wins.
   for(const parts of attempts){
    const rows=await queryNominatim(parts);
+   const choices=new Map<string,PostalOption>();
    for(const row of rows){
     const code=String(row?.address?.postcode||'').trim();
-    if(row?.address?.country_code?.toLowerCase()==='mv'&&code&&!choices.has(code)){
-     choices.set(code,{postalCode:code,matchedAddress:row.display_name||null});
-    }
+    if(row?.address?.country_code?.toLowerCase()!=='mv')continue;
+    if(!codeMatchesLocation(code,city))continue;
+    if(!choices.has(code))choices.set(code,{postalCode:code,matchedAddress:row.display_name||null});
+   }
+   if(choices.size){
+    const postalCodes=[...choices.values()];
+    const first=postalCodes.length===1?postalCodes[0]:null;
+    return NextResponse.json({
+     postalCode:first?.postalCode||null,
+     postalCodes,
+     source:'OpenStreetMap Nominatim',
+     matchedAddress:first?.matchedAddress||null,
+     requiresSelection:postalCodes.length>1
+    },{headers:{'Cache-Control':'private, max-age=900'}});
    }
   }
-  const postalCodes=[...choices.values()];
-  const first=postalCodes[0]||null;
+
   return NextResponse.json({
-   postalCode:first?.postalCode||null,
-   postalCodes,
+   postalCode:null,
+   postalCodes:[],
    source:'OpenStreetMap Nominatim',
-   matchedAddress:first?.matchedAddress||null
+   matchedAddress:null,
+   requiresSelection:false
   },{headers:{'Cache-Control':'private, max-age=900'}});
  }catch(error){
   const timedOut=error instanceof Error&&(error.name==='TimeoutError'||error.name==='AbortError');
