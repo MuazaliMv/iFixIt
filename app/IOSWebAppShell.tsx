@@ -50,9 +50,6 @@ export default function IOSWebAppShell(){
 
  useEffect(()=>{setSwitchOpen(false);},[pathname]);
 
- // Resolve account access once for this persistent app shell. Previously this
- // re-fetched /api/user/profile on every tab change, which added avoidable
- // loading work and caused the Switch tab to flicker during navigation.
  useEffect(()=>{
   let active=true;
   try{
@@ -79,9 +76,7 @@ export default function IOSWebAppShell(){
     setProviderApproved(approved);
     setSignedIn(true);
     try{sessionStorage.setItem('fixit:mobile-access',JSON.stringify({role,providerApproved:approved} satisfies CachedAccess));}catch{}
-   }catch{
-    // Keep a valid cached access state if one was already restored.
-   }
+   }catch{}
   })();
   return()=>{active=false;};
  },[]);
@@ -129,7 +124,7 @@ export default function IOSWebAppShell(){
    <Link href="/" className={active('home')?'active':''}><Icon name="home"/><span>Home</span></Link>
    <Link href="/requests" className={active('requests')?'active':''}><Icon name="requests"/><span>Requests</span></Link>
    <Link href="/?new=1" className="iosTabNew"><Icon name="new"/><span>New</span></Link>
-   {hasWorkspaceSwitch?<button type="button" className={switchOpen?'active':''} onClick={()=>setSwitchOpen(true)} aria-haspopup="dialog" aria-expanded={switchOpen}><Icon name="switch"/><span>Switch</span></button>:null}
+   {hasWorkspaceSwitch?<button type="button" className="workspaceAvailable" onClick={()=>setSwitchOpen(true)} aria-haspopup="dialog" aria-expanded={switchOpen} aria-label="Switch workspace"><Icon name="switch"/><span>Switch</span></button>:null}
    <Link href="/profile" className={active('profile')?'active':''}><Icon name="profile"/><span>Profile</span></Link>
   </nav>
  </>;
