@@ -19,6 +19,17 @@ export default function ACCustomIssueRuntime(){
    return Array.from(document.querySelectorAll<HTMLButtonElement>('.c3Subchips button')).find(button=>textOf(button)===OTHER_LABEL)||null;
   }
 
+  function placeSubcategoriesBelowSelectedCategory(){
+   const chips=document.querySelector<HTMLElement>('.c3Subchips');
+   const selectedTile=document.querySelector<HTMLButtonElement>('.c3WizardCard .c3ServiceGrid .c3ServiceTile.selected');
+   if(!chips||!selectedTile)return;
+   if(chips.previousElementSibling!==selectedTile)selectedTile.insertAdjacentElement('afterend',chips);
+   chips.style.gridColumn='1 / -1';
+   chips.style.width='100%';
+   chips.style.marginTop='0';
+   chips.style.marginBottom='8px';
+  }
+
   function updateContinue(){
    const field=document.getElementById(FIELD_ID);
    if(!field)return;
@@ -78,6 +89,7 @@ export default function ACCustomIssueRuntime(){
   }
 
   function sync(){
+   placeSubcategoriesBelowSelectedCategory();
    const chip=otherChip();
    const selected=Boolean(chip?.classList.contains('selected'));
    if(selected){
