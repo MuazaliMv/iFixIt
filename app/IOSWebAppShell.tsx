@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 const hiddenPrefixes=['/admin','/provider','/login','/register','/auth','/api'];
 
@@ -17,7 +17,6 @@ function Icon({name}:{name:'home'|'requests'|'new'|'profile'}){
 
 export default function IOSWebAppShell(){
  const pathname=usePathname()||'/';
- const router=useRouter();
  const [standalone,setStandalone]=useState(false);
  const hidden=hiddenPrefixes.some(prefix=>pathname===prefix||pathname.startsWith(prefix+'/'));
  useEffect(()=>{
@@ -28,16 +27,11 @@ export default function IOSWebAppShell(){
   return()=>document.documentElement.classList.remove('ifix-ios-standalone');
  },[]);
  if(hidden)return null;
- const goNew=()=>{
-  try{localStorage.setItem('fixit:open-new-request','1')}catch{}
-  if(pathname==='/') window.dispatchEvent(new CustomEvent('fixit:open-new-request'));
-  else router.push('/?newRequest=1');
- };
- const active=(key:string)=>key==='home'?pathname==='/':key==='requests'?pathname.startsWith('/requests'):key==='profile'?pathname.startsWith('/profile'):false;
+ const active=(key:string)=>key==='home'?pathname==='/'||pathname==='/home':key==='requests'?pathname.startsWith('/requests'):key==='profile'?pathname.startsWith('/profile'):false;
  return <nav className="iosTabBar" aria-label="Customer app navigation" data-standalone={standalone?'true':'false'}>
   <a href="/" className={active('home')?'active':''}><Icon name="home"/><span>Home</span></a>
   <a href="/requests" className={active('requests')?'active':''}><Icon name="requests"/><span>Requests</span></a>
-  <button type="button" className="iosTabNew" onClick={goNew}><Icon name="new"/><span>New</span></button>
+  <a href="/?new=1" className="iosTabNew"><Icon name="new"/><span>New</span></a>
   <a href="/profile" className={active('profile')?'active':''}><Icon name="profile"/><span>Profile</span></a>
  </nav>;
 }
