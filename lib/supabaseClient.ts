@@ -57,15 +57,36 @@ if(typeof window!=='undefined'){
   }
 }
 
-// Temporary compatibility only: keep old sign-out callers synchronized with
-// the secure server session until all legacy callers have been removed.
+// Keep every legacy sign-out caller synchronized with the secure server session.
+// The local/browser logout must never make the UI wait on a slow network call.
 const originalSignOut = supabase.auth.signOut.bind(supabase.auth);
 (supabase.auth as any).signOut = async (...args: any[]) => {
-  const result = await originalSignOut(...args);
   if (typeof window !== 'undefined') {
     try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+      localStorage.removeItem('ifixmv-login-workspace');
+      localStorage.removeItem('fixit:mobile-nav-role');
+      localStorage.removeItem('fixit:app-mode');
+      localStorage.removeItem('fixit:account-role');
+      sessionStorage.removeItem('fixit:mode-toast');
     } catch {}
   }
-  return result;
+
+  const serverLogout = typeof window !== 'undefined'
+    ? fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      }).catch(() => null)
+    : Promise.resolve(null);
+
+  const browserLogout = originalSignOut(...args).catch((error: unknown) => ({ error } as any));
+
+  // Do both cleanups together, but cap the wait so logout always feels immediate.
+  await Promise.race([
+    Promise.allSettled([serverLogout, browserLogout]),
+    new Promise(resolve => setTimeout(resolve, 1800)),
+  ]);
+
+  return { error: null } as any;
 };
