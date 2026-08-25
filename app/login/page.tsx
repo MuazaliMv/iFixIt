@@ -37,9 +37,14 @@ function rememberWorkspace(workspace:Workspace,role:AccountRole){
  }catch{}
 }
 
+type Mode='login'|'register';
+
 export default function LoginPage(){
+ const[mode,setMode]=useState<Mode>('login');
  const[step,setStep]=useState<Step>('phone');
- const[phone,setPhone]=useState('');
+ const[phone,setPhone]=useState('+960');
+ const[name,setName]=useState('');
+ const[email,setEmail]=useState('');
  const[otp,setOtp]=useState('');
  const[message,setMessage]=useState('');
  const[busy,setBusy]=useState(false);
@@ -84,7 +89,8 @@ export default function LoginPage(){
   window.location.replace(workspaceDestination(workspace));
  }
 
- const phoneValid=/^\d{7}$/.test(phone);
+ const phoneDigits=phone.replace(/^\+960/,'');
+ const phoneValid=/^\d{7}$/.test(phoneDigits);
  const otpValid=/^\d{4}$/.test(otp);
 
  async function submitPhone(event:FormEvent){
@@ -93,6 +99,9 @@ export default function LoginPage(){
   setBusy(true);
   setMessage('');
   try{
+   if(mode==='register'){
+    await apiFetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phoneNumber:phone,fullName:name,email})});
+   }
    setStep('otp');
    setMessage('Verification code sent. For testing, use 9999.');
   }finally{setBusy(false);}
@@ -105,6 +114,7 @@ export default function LoginPage(){
   setBusy(true);
   setMessage('');
   try{
+   await apiFetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,otp})});
    await routeUser();
   }finally{setBusy(false);}
  }
@@ -122,7 +132,7 @@ export default function LoginPage(){
      <div className="authStatusPill"><span aria-hidden="true"/>Secure phone access</div>
      <div className="authIntro">
       <h1>{step==='phone'?'Sign in with phone':'Enter verification code'}</h1>
-      <p>{step==='phone'?'Use your Maldives mobile number. No password required.':`We are verifying +960 ${phone}.`}</p>
+      <p>{step==='phone'?'Use your Maldives mobile number. No password required.':`We are verifying ${phone}.`}</p>
      </div>
 
      {step==='phone'?<form onSubmit={submitPhone} className="authFormClean" noValidate>
@@ -130,7 +140,7 @@ export default function LoginPage(){
        <span className="authFieldLabel">Phone number</span>
        <div className="phoneField">
         <select className="countryCode" value="+960" aria-label="Country code" disabled><option value="+960">🇲🇻 +960</option></select>
-        <input type="tel" inputMode="numeric" autoComplete="tel-national" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} autoFocus/>
+        <input type="tel" inputMode="numeric" autoComplete="tel-national" value={phoneDigits} onChange={e=>setPhone('+960'+e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7771234" maxLength={7} autoFocus/>
        </div>
        <span className="fieldHelp">7-digit Maldives number</span>
       </label>
@@ -144,7 +154,7 @@ export default function LoginPage(){
        <span className="fieldHelp">Development OTP: 9999</span>
       </label>
       <button className="authSubmit" disabled={busy||!otpValid} aria-busy={busy}>{busy?'Verifying…':<>Verify & Continue<span className="authSubmitArrow" aria-hidden="true">→</span></>}</button>
-      <button type="button" className="authSecondary" onClick={()=>{setStep('phone');setOtp('');setMessage('');}}>Change phone number</button>
+      <button type="button" className="authSecondary" onClick={()=>{setStep('phone');setOtp('');setMessage('');setPhone('+960');}}>Change phone number</button>
      </form>}
 
      {message?<p className="formMessage" role="status">{message}</p>:null}
