@@ -146,3 +146,24 @@ body:has(.globalMenuHeaderWrap)>.iosTabBar{
   body:has(.globalMenuHeaderWrap)>.iosTabBar svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
   body:has(.globalMenuHeaderWrap)>.iosTabBar .active{color:#315ee7;background:#eef2ff}
 }
+
+/* The public landing page already provides its own top navigation. Do not reserve a second
+   global-header safe area above it; this removes the large blank band on iOS Safari. */
+body:has(>.globalMainWorkspace .landingPage)>.globalMenuHeaderWrap{
+  display:none!important;
+}
+
+body:has(>.globalMainWorkspace .landingPage)>.globalMainWorkspace{
+  top:0!important;
+}
+
+@media(max-width:960px){
+  body:has(>.globalMainWorkspace .landingPage)>.globalMainWorkspace{
+    top:0!important;
+  }
+
+  body:has(>.globalMainWorkspace .landingPage) .landingHeader{
+    top:0!important;
+    margin-top:0!important;
+  }
+}
