@@ -98,7 +98,7 @@ export default function LoginPage(){
   if(message)setMessage('');
  }
 
- async function submitPhone(event:FormEvent){
+ function submitPhone(event:FormEvent){
   event.preventDefault();
   if(!phoneValid){setMessage('Enter a valid 7-digit Maldives phone number.');return;}
   setStep('otp');
@@ -125,49 +125,38 @@ export default function LoginPage(){
   }finally{setBusy(false);}
  }
 
- if(checkingSession)return <div className="authShell"><main className="authPage"><div className="authStage"><div className="authNav authNavChecking"><a className="authBrand" href="/" aria-label="iFix Maldives home"><span className="authBrandMark">iF</span><span><strong>iFix</strong><small>Maldives</small></span></a></div><section className="authCardClean authChecking"><span className="authLargeSpinner" aria-hidden="true"/><div className="authIntro"><h1>Opening iFixMV…</h1><p>Checking your session.</p></div></section></div></main></div>;
+ if(checkingSession)return <div className="signinPage"><div className="signinContainer"><div className="signinCard signinChecking"><span className="signinSpinner" aria-hidden="true"/><p>Checking your session…</p></div></div></div>;
 
- return <div className="authShell authLoginMode">
-  <main className="authPage">
-   <div className="authStage">
-    <div className="authNav">
-     <a className="authBrand" href="/" aria-label="iFix Maldives home"><span className="authBrandMark">iF</span><span><strong>iFix</strong><small>Maldives</small></span></a>
-    </div>
+ return <div className="signinPage">
+  <main className="signinContainer">
+   <section className="signinCard">
+    <h1>{step==='phone'?'Sign in with phone':'Enter verification code'}</h1>
 
-    <section className="authCardClean">
-     <div className="authStatusPill"><span aria-hidden="true"/>Secure phone access</div>
-     <div className="authIntro">
-      <h1>{step==='phone'?'Sign in with phone':'Enter verification code'}</h1>
-      <p>{step==='phone'?'Use your Maldives mobile number. No password required.':`We are verifying ${countryCode} ${phone}.`}</p>
+    {step==='phone'?<form onSubmit={submitPhone} noValidate>
+     <div className="formGroup">
+      <label htmlFor="login-phone">Phone number</label>
+      <div className="phoneInputWrapper">
+       <div className="countryCode" aria-label="Maldives country code"><span aria-hidden="true">🇲🇻</span><span>+960</span></div>
+       <input id="login-phone" name="phone" type="tel" inputMode="numeric" autoComplete="tel-national" enterKeyHint="next" value={phone} onChange={e=>updatePhone(e.target.value)} placeholder="Enter your number" maxLength={7} autoFocus/>
+      </div>
      </div>
+     <button className="continueButton" type="submit" disabled={!phoneValid}>Continue <span aria-hidden="true">→</span></button>
+    </form>:<form onSubmit={submitOtp} noValidate>
+     <div className="formGroup">
+      <label htmlFor="login-otp">One-time code</label>
+      <div className="otpInputWrapper">
+       <input id="login-otp" name="otp" type="tel" inputMode="numeric" autoComplete="one-time-code" enterKeyHint="done" value={otp} onChange={e=>updateOtp(e.target.value)} placeholder="0000" maxLength={4} autoFocus/>
+      </div>
+      <p className="otpHint">Testing code: 9999</p>
+     </div>
+     <button className="continueButton" type="submit" disabled={busy||!otpValid}>{busy?'Signing in…':<>Verify & Sign In <span aria-hidden="true">→</span></>}</button>
+     <button className="changePhoneButton" type="button" disabled={busy} onClick={()=>{setStep('phone');setOtp('');setMessage('');}}>Change phone number</button>
+    </form>}
 
-     {step==='phone'?<form onSubmit={submitPhone} className="authFormClean" noValidate>
-      <label className="authField" htmlFor="login-phone">
-       <span className="authFieldLabel">Phone number</span>
-       <div className="phoneField">
-        <span className="countryCodeStatic" aria-label="Maldives country code">🇲🇻 +960</span>
-        <input id="login-phone" name="phone" type="tel" inputMode="numeric" autoComplete="tel-national" enterKeyHint="next" value={phone} onChange={e=>updatePhone(e.target.value)} placeholder="7771234" maxLength={7} autoFocus aria-describedby="phone-help"/>
-       </div>
-       <span id="phone-help" className="fieldHelp">7-digit Maldives number</span>
-      </label>
-      <button type="submit" className="authSubmit" disabled={!phoneValid}>Continue<span className="authSubmitArrow" aria-hidden="true">→</span></button>
-     </form>:<form onSubmit={submitOtp} className="authFormClean" noValidate>
-      <label className="authField" htmlFor="login-otp">
-       <span className="authFieldLabel">One-time code</span>
-       <div className="otpField">
-        <input id="login-otp" name="otp" type="tel" inputMode="numeric" autoComplete="one-time-code" enterKeyHint="done" value={otp} onChange={e=>updateOtp(e.target.value)} placeholder="0000" maxLength={4} autoFocus aria-describedby="otp-help"/>
-       </div>
-       <span id="otp-help" className="fieldHelp">Development OTP: 9999</span>
-      </label>
-      <button type="submit" className="authSubmit" disabled={busy||!otpValid} aria-busy={busy}>{busy?'Signing in…':<>Verify & Sign In<span className="authSubmitArrow" aria-hidden="true">→</span></>}</button>
-      <button type="button" className="authSecondary" onClick={()=>{setStep('phone');setOtp('');setMessage('');}}>Change phone number</button>
-     </form>}
+    {message?<p className="signinMessage" role="status">{message}</p>:null}
+   </section>
 
-     {message?<p className="formMessage" role="status">{message}</p>:null}
-    </section>
-
-    <p className="authFootnote"><span aria-hidden="true">✓</span> Phone verification · No password · Email optional</p>
-   </div>
+   <div className="supportLink"><a href="mailto:support@ifixmv.com">Trouble signing in? Contact Support</a></div>
   </main>
  </div>;
 }
