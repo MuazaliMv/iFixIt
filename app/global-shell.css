@@ -42,19 +42,22 @@ body:has(.globalMenuHeaderWrap)>.globalMenuHeaderWrap{
   overflow:visible;
 }
 
-/* Admin identity: keep the role label geometrically centered in the global top panel. */
-.globalMenuHeader[aria-label="Admin navigation"]{
+/* Unified workspace identity: the active route determines the centered top-panel label. */
+.globalMenuHeader[aria-label="Admin navigation"],
+.globalMenuHeader[aria-label="Customer navigation"],
+.globalMenuHeader[aria-label="Provider navigation"]{
   position:relative;
 }
 
-.globalMenuHeader[aria-label="Admin navigation"]::after{
-  content:"Administrator";
+.globalMenuHeader[aria-label="Admin navigation"]::after,
+.globalMenuHeader[aria-label="Customer navigation"]::after,
+.globalMenuHeader[aria-label="Provider navigation"]::after{
   position:absolute;
   left:50%;
   top:50%;
   transform:translate(-50%,-50%);
   z-index:2;
-  max-width:42vw;
+  max-width:48vw;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
@@ -64,6 +67,10 @@ body:has(.globalMenuHeaderWrap)>.globalMenuHeaderWrap{
   letter-spacing:.01em;
   text-align:center;
 }
+
+.globalMenuHeader[aria-label="Admin navigation"]::after{content:"Admin";}
+.globalMenuHeader[aria-label="Customer navigation"]::after{content:"Customer";}
+.globalMenuHeader[aria-label="Provider navigation"]::after{content:"Service Provider";}
 
 /* The Main Content Area is the only scroll container. It can never move either navigation bar. */
 body:has(.globalMenuHeaderWrap)>.globalMainWorkspace{
