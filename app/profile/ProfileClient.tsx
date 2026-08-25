@@ -17,6 +17,7 @@ type ProviderArea={id?:string;islandName?:string|null;locationUnitName?:string|n
 type ProviderData={profile?:ProviderProfile|null;categories?:Category[];selectedCategoryIds?:string[];hours?:ProviderHour[];serviceAreas?:ProviderArea[]};
 type AtollLookup={id:string;official_name:string;display_name:string;sort_order:number};
 type IslandLookup={id:string;atoll_id:string;canonical_name:string;display_name:string;location_kind:'ISLAND'|'CITY';sort_order:number};
+type PostalChoice={postalCode:string;matchedAddress?:string|null};
 
 function localPhone(v?:string|null){const raw=(v||'').trim();return /^\+960\d{7}$/.test(raw)?raw.slice(4):raw.replace(/\D/g,'').slice(-7);}
 function value(v?:string|null){return String(v||'').trim()||'Not provided';}
@@ -52,12 +53,12 @@ async function locationLookupRequest(){
 }
 
 export default function ProfileClient(){
- const[profile,setProfile]=useState<Profile|null>(null);const[providerData,setProviderData]=useState<ProviderData|null>(null);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[message,setMessage]=useState('Loading profile…');const[name,setName]=useState('');const[phone,setPhone]=useState('');const[line1,setLine1]=useState('');const[line2,setLine2]=useState('');const[city,setCity]=useState('');const[stateRegion,setStateRegion]=useState('');const[postalCode,setPostalCode]=useState('');const[atolls,setAtolls]=useState<AtollLookup[]>([]);const[islands,setIslands]=useState<IslandLookup[]>([]);const[locationLookupLoading,setLocationLookupLoading]=useState(true);const[postalLookupLoading,setPostalLookupLoading]=useState(false);
+ const[profile,setProfile]=useState<Profile|null>(null);const[providerData,setProviderData]=useState<ProviderData|null>(null);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[message,setMessage]=useState('Loading profile…');const[name,setName]=useState('');const[phone,setPhone]=useState('');const[line1,setLine1]=useState('');const[line2,setLine2]=useState('');const[city,setCity]=useState('');const[stateRegion,setStateRegion]=useState('');const[postalCode,setPostalCode]=useState('');const[postalChoices,setPostalChoices]=useState<PostalChoice[]>([]);const[atolls,setAtolls]=useState<AtollLookup[]>([]);const[islands,setIslands]=useState<IslandLookup[]>([]);const[locationLookupLoading,setLocationLookupLoading]=useState(true);const[postalLookupLoading,setPostalLookupLoading]=useState(false);
  useEffect(()=>{void load();void loadLocationLookups();},[]);
 
  function populate(p:Profile){
   const a=p.primaryAddress||{line1:p.address_line1,line2:p.address_line2,city:p.city,stateRegion:p.state_region,postalCode:p.postal_code,country:p.country||'Maldives'};
-  setName(p.full_name||'');setPhone(localPhone(p.phone_number));setLine1(a?.line1||'');setLine2(a?.line2||'');setCity(a?.city||'');setStateRegion(a?.stateRegion||'');setPostalCode(a?.postalCode||'');
+  setName(p.full_name||'');setPhone(localPhone(p.phone_number));setLine1(a?.line1||'');setLine2(a?.line2||'');setCity(a?.city||'');setStateRegion(a?.stateRegion||'');setPostalCode(a?.postalCode||'');setPostalChoices(a?.postalCode?[{postalCode:a.postalCode}]:[]);
  }
 
  async function loadLocationLookups(){
@@ -66,18 +67,21 @@ export default function ProfileClient(){
  }
 
  async function lookupPostalCode(cityValue=city,stateValue=stateRegion){
-  if(!cityValue||!stateValue){setPostalCode('');return;}
+  if(!cityValue||!stateValue){setPostalCode('');setPostalChoices([]);return;}
   setPostalLookupLoading(true);
   try{
    const params=new URLSearchParams({city:cityValue,atoll:stateValue,line1:line1.trim(),line2:line2.trim()});
    const response=await fetch(`/api/locations/postal-code?${params.toString()}`,{credentials:'same-origin',cache:'no-store'});
    const payload=await response.json().catch(()=>({}));
    if(!response.ok)throw new Error(payload?.error||'Unable to look up postal code.');
-   const code=String(payload?.postalCode||'').trim();
-   setPostalCode(code);
-   setMessage(code?'Postal code found from address lookup.':'Postal code was not found for this address.');
+   const choices=(Array.isArray(payload?.postalCodes)?payload.postalCodes:[]).map((item:any)=>({postalCode:String(item?.postalCode||'').trim(),matchedAddress:item?.matchedAddress||null})).filter((item:PostalChoice)=>item.postalCode);
+   const fallback=String(payload?.postalCode||'').trim();
+   const normalizedChoices=choices.length?choices:(fallback?[{postalCode:fallback,matchedAddress:payload?.matchedAddress||null}]:[]);
+   setPostalChoices(normalizedChoices);
+   setPostalCode(current=>normalizedChoices.some((item:PostalChoice)=>item.postalCode===current)?current:(normalizedChoices[0]?.postalCode||''));
+   setMessage(normalizedChoices.length>1?`${normalizedChoices.length} postal codes found. Select the correct one.`:normalizedChoices.length===1?'Postal code found from address lookup.':'Postal code was not found for this address.');
   }catch(error){
-   setPostalCode('');
+   setPostalCode('');setPostalChoices([]);
    setMessage(error instanceof Error?error.message:'Unable to look up postal code.');
   }finally{setPostalLookupLoading(false);}
  }
@@ -107,6 +111,7 @@ export default function ProfileClient(){
   if(normalizedPhone&&normalizedPhone.length!==7){setMessage('Enter a valid 7-digit Maldives phone number.');return;}
   if(!stateRegion){setMessage('Select an Atoll / Region.');return;}
   if(!city){setMessage('Select an Island / City.');return;}
+  if(postalChoices.length&&!postalCode){setMessage('Select a Postal Code.');return;}
   setSaving(true);setMessage('Saving profile…');
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),20000);
   try{
@@ -150,7 +155,7 @@ export default function ProfileClient(){
       <form onSubmit={event=>{event.preventDefault();void saveProfile();}} className="profileEditForm">
        <div className="profileFormSection"><h3>Personal Information</h3><div className="profileFormGrid"><label>Full Name<input value={name} onChange={e=>setName(e.target.value)} autoComplete="name" required disabled={loading}/></label><label>Email Address<input value={profile?.email||''} autoComplete="email" readOnly disabled/></label></div></div>
        <div className="profileFormSection"><h3>Contact</h3><div className="profileFormGrid"><label>Phone Number (Maldives)<span className="profilePhoneField"><b>🇲🇻 +960</b><input type="tel" inputMode="numeric" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7XXXXXX" maxLength={7} autoComplete="tel-national" disabled={loading}/></span></label><label>Country / Region<input value="Maldives" autoComplete="country-name" readOnly disabled/></label></div></div>
-       <div className="profileFormSection" id="service-addresses"><h3>Primary address</h3><div className="profileFormGrid"><label className="wide">House / Building Name<input value={line1} onChange={e=>setLine1(e.target.value)} onBlur={()=>{if(city&&stateRegion)void lookupPostalCode();}} placeholder="House or building name" autoComplete="address-line1" disabled={loading}/></label><label>Street / Additional Address<input value={line2} onChange={e=>setLine2(e.target.value)} onBlur={()=>{if(city&&stateRegion)void lookupPostalCode();}} placeholder="Street, floor or apartment" autoComplete="address-line2" disabled={loading}/></label><label>Atoll / Region<select value={selectedAtoll?.id||''} onChange={e=>{const next=atolls.find(a=>a.id===e.target.value);setStateRegion(next?.display_name||'');setCity('');setPostalCode('');}} autoComplete="address-level1" disabled={loading||locationLookupLoading}><option value="">{locationLookupLoading?'Loading atolls…':'Select atoll / region'}</option>{atolls.map(a=><option key={a.id} value={a.id}>{a.display_name}</option>)}</select></label><label>Island / City<select value={selectedIsland?.id||''} onChange={e=>{const next=availableIslands.find(i=>i.id===e.target.value);const nextCity=next?.display_name||'';setCity(nextCity);setPostalCode('');if(nextCity&&selectedAtoll)void lookupPostalCode(nextCity,selectedAtoll.display_name);}} autoComplete="address-level2" disabled={loading||locationLookupLoading||!selectedAtoll}><option value="">{!selectedAtoll?'Select atoll first':locationLookupLoading?'Loading islands…':'Select island / city'}</option>{availableIslands.map(i=><option key={i.id} value={i.id}>{i.display_name}</option>)}</select></label><label>Postal Code<input value={postalLookupLoading?'Looking up…':postalCode} placeholder="Looked up automatically" autoComplete="postal-code" readOnly disabled={loading||postalLookupLoading}/></label></div></div>
+       <div className="profileFormSection" id="service-addresses"><h3>Primary address</h3><div className="profileFormGrid"><label className="wide">House / Building Name<input value={line1} onChange={e=>setLine1(e.target.value)} onBlur={()=>{if(city&&stateRegion)void lookupPostalCode();}} placeholder="House or building name" autoComplete="address-line1" disabled={loading}/></label><label>Street / Additional Address<input value={line2} onChange={e=>setLine2(e.target.value)} onBlur={()=>{if(city&&stateRegion)void lookupPostalCode();}} placeholder="Street, floor or apartment" autoComplete="address-line2" disabled={loading}/></label><label>Atoll / Region<select value={selectedAtoll?.id||''} onChange={e=>{const next=atolls.find(a=>a.id===e.target.value);setStateRegion(next?.display_name||'');setCity('');setPostalCode('');setPostalChoices([]);}} autoComplete="address-level1" disabled={loading||locationLookupLoading}><option value="">{locationLookupLoading?'Loading atolls…':'Select atoll / region'}</option>{atolls.map(a=><option key={a.id} value={a.id}>{a.display_name}</option>)}</select></label><label>Island / City<select value={selectedIsland?.id||''} onChange={e=>{const next=availableIslands.find(i=>i.id===e.target.value);const nextCity=next?.display_name||'';setCity(nextCity);setPostalCode('');setPostalChoices([]);if(nextCity&&selectedAtoll)void lookupPostalCode(nextCity,selectedAtoll.display_name);}} autoComplete="address-level2" disabled={loading||locationLookupLoading||!selectedAtoll}><option value="">{!selectedAtoll?'Select atoll first':locationLookupLoading?'Loading islands…':'Select island / city'}</option>{availableIslands.map(i=><option key={i.id} value={i.id}>{i.display_name}</option>)}</select></label><label>Postal Code<select value={postalCode} onChange={e=>setPostalCode(e.target.value)} autoComplete="postal-code" disabled={loading||postalLookupLoading||!city}><option value="">{postalLookupLoading?'Looking up postal codes…':!city?'Select island / city first':postalChoices.length?'Select postal code':'No postal code found'}</option>{postalChoices.map(item=><option key={item.postalCode} value={item.postalCode}>{item.postalCode}{item.matchedAddress?` — ${item.matchedAddress}`:''}</option>)}</select></label></div></div>
        <div className="profileFormActions"><button className="secondary" type="button" onClick={cancelEdit} disabled={loading||saving}>Cancel</button><button className="primary" type="button" onClick={()=>void saveProfile()} disabled={loading||saving||postalLookupLoading} aria-busy={saving}>{saving?'Saving…':'Save Profile Information'}</button></div>
        <p className="profileSaveState" role="status" aria-live="polite" style={{margin:0}}>{message}</p>
       </form>
