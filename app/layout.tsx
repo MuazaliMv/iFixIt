@@ -57,6 +57,7 @@ import WorkspaceThemeRuntime from './WorkspaceThemeRuntime';
 import ServerSessionSignOutSync from './ServerSessionSignOutSync';
 import IOSWebAppShell from './IOSWebAppShell';
 import ErrorRuntime from './ErrorRuntime';
+import ACCustomIssueRuntime from './ACCustomIssueRuntime';
 
 export const metadata: Metadata = {
   title: 'FixIt Maldives',
@@ -92,6 +93,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SendRequestTapRuntime/>
         <RoleAccessGuard/>
         <PreferredDateRuntime/>
+        <ACCustomIssueRuntime/>
         <GlobalRoleMenu/>
         <GlobalModeSwitch/>
         <TopWorkspaceRoleLabel/>
