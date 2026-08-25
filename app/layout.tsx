@@ -47,6 +47,7 @@ import ButtonUsabilityRuntime from './ButtonUsabilityRuntime';
 import RoleAccessGuard from './RoleAccessGuard';
 import GlobalRoleMenu from './GlobalRoleMenu';
 import GlobalModeSwitch from './GlobalModeSwitch';
+import TopWorkspaceRoleLabel from './TopWorkspaceRoleLabel';
 import GlobalCardPagination from './GlobalCardPagination';
 import MobileDateInputRuntime from './MobileDateInputRuntime';
 import MobileKeyboardRuntime from './MobileKeyboardRuntime';
@@ -93,6 +94,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <PreferredDateRuntime/>
         <GlobalRoleMenu/>
         <GlobalModeSwitch/>
+        <TopWorkspaceRoleLabel/>
         <GlobalCardPagination/>
         <MobileDateInputRuntime/>
         <ErrorRuntime/>
