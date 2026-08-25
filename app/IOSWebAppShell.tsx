@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { apiFetch } from '../lib/apiClient';
 import { canAccessPortal, normalizeAccountRole, type AccountRole, type PortalRole } from '../lib/roleAccess';
 
-const hiddenPrefixes=['/login','/register','/auth','/api'];
+const hiddenPrefixes=['/api'];
 
 type IconName='home'|'requests'|'new'|'switch'|'profile'|'customer'|'provider'|'admin'|'jobs'|'services'|'users';
 type CachedAccess={role:AccountRole;providerApproved:boolean};
@@ -125,15 +125,15 @@ export default function IOSWebAppShell(){
   return()=>document.removeEventListener('keydown',onKeyDown);
  },[switchOpen]);
 
- if(hidden||!signedIn)return null;
+ if(hidden)return null;
 
- const canUseProvider=canAccessPortal(accountRole,'provider',providerApproved);
- const canUseAdmin=canAccessPortal(accountRole,'admin',providerApproved);
+ const canUseProvider=signedIn&&canAccessPortal(accountRole,'provider',providerApproved);
+ const canUseAdmin=signedIn&&canAccessPortal(accountRole,'admin',providerApproved);
  const hasWorkspaceSwitch=canUseProvider||canUseAdmin;
  const tabs=tabsFor(workspace);
 
  function openWorkspace(next:PortalRole){
-  if(!canAccessPortal(accountRole,next,providerApproved))return;
+  if(!signedIn||!canAccessPortal(accountRole,next,providerApproved))return;
   try{
    localStorage.setItem('fixit:mobile-nav-role',next);
    localStorage.setItem('fixit:app-mode',next);
