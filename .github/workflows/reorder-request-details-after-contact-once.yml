@@ -1,0 +1,65 @@
+name: Reorder Request Details After Contact Once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/reorder-request-details-after-contact-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Move request details to the next form after schedule and contact
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('app/CustomerPortal.tsx')
+          s = p.read_text()
+
+          old_validation = "function validateStep(current:Step,allowIncompleteProfile=false){if(!profile)return'Please sign in first.';if(!allowIncompleteProfile&&profileStatus&&!profileStatus.can_request)return'Complete the required profile fields first.';if(current>=1&&!serviceCode)return'Choose a service.';if(current>=2&&!islandId)return'Add an Island / City to your profile before continuing.';if(current>=3&&description.trim().length<10)return'Tell us a little more about the problem.';if(current>=4&&!enabledRequestTypes.length)return'Request types are currently unavailable.';if(current>=4&&!enabledRequestTypes.includes(urgency))return'Choose an available request type.';if(current>=4&&urgency==='SCHEDULE'&&!preferredDate)return'Choose a preferred date.';if(current>=4&&!isOnSiteSameAsCustomer&&onSiteContactName.trim().length<2)return'Enter the on-site contact name.';if(current>=4&&!isOnSiteSameAsCustomer&&onSiteContactPhone.trim().length<5)return'Enter the on-site contact phone number.';return'';}"
+          new_validation = "function validateStep(current:Step,allowIncompleteProfile=false){if(!profile)return'Please sign in first.';if(!allowIncompleteProfile&&profileStatus&&!profileStatus.can_request)return'Complete the required profile fields first.';if(current>=1&&!serviceCode)return'Choose a service.';if(current>=2&&!islandId)return'Add an Island / City to your profile before continuing.';if(current>=3&&!enabledRequestTypes.length)return'Request types are currently unavailable.';if(current>=3&&!enabledRequestTypes.includes(urgency))return'Choose an available request type.';if(current>=3&&urgency==='SCHEDULE'&&!preferredDate)return'Choose a preferred date.';if(current>=3&&!isOnSiteSameAsCustomer&&onSiteContactName.trim().length<2)return'Enter the on-site contact name.';if(current>=3&&!isOnSiteSameAsCustomer&&onSiteContactPhone.trim().length<5)return'Enter the on-site contact phone number.';if(current>=4&&description.trim().length<10)return'Tell us a little more about the problem.';return'';}"
+
+          if old_validation not in s:
+              raise SystemExit('Expected request validation block not found')
+          s = s.replace(old_validation, new_validation, 1)
+
+          lines = s.splitlines()
+          step3_index = next((i for i, line in enumerate(lines) if '{step===3?' in line), None)
+          step4_index = next((i for i, line in enumerate(lines) if '{step===4?' in line), None)
+          if step3_index is None or step4_index is None:
+              raise SystemExit('Step 3/4 wizard blocks not found')
+
+          detail_line = lines[step3_index].replace('{step===3?', '{step===4?', 1)
+          contact_line = lines[step4_index].replace('{step===4?', '{step===3?', 1)
+          lines[step3_index] = contact_line
+          lines[step4_index] = detail_line
+
+          p.write_text('\n'.join(lines) + '\n')
+          PY
+
+      - name: Verify wizard order
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s = Path('app/CustomerPortal.tsx').read_text()
+          schedule = s.index("{step===3?<><div className=\"c3Question\"><small>{t('schedule')}</small>")
+          details = s.index("{step===4?<><div className=\"c3Question\"><small>{t('problem')}</small>")
+          assert schedule < details
+          assert "if(current>=3&&!enabledRequestTypes.length)" in s
+          assert "if(current>=4&&description.trim().length<10)" in s
+          print('Wizard order verified: service -> schedule/contact -> request details -> review')
+          PY
+
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/CustomerPortal.tsx
+          git commit -m "Move request details after on-site contact"
+          git push
