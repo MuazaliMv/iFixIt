@@ -19,21 +19,40 @@ export default function ServiceAddressManager(){
 
  useEffect(()=>{void load();},[]);
 
- async function load(){
+ async function loadLocationCatalogue(){
+  try{
+   const[atollResponse,islandResponse]=await Promise.all([
+    supabase.from('atolls').select('id,display_name').eq('is_active',true).eq('is_serviceable',true).order('sort_order').order('display_name'),
+    supabase.from('islands').select('id,atoll_id,display_name').eq('is_active',true).eq('is_serviceable',true).order('sort_order').order('display_name')
+   ]);
+   if(atollResponse.error)throw atollResponse.error;
+   if(islandResponse.error)throw islandResponse.error;
+   const atollData=(atollResponse.data||[]) as Atoll[];
+   const islandData=(islandResponse.data||[]) as Island[];
+   if(!atollData.length)throw new Error('No active serviceable Atolls were returned.');
+   setAtolls(atollData);setIslands(islandData);
+  }catch(error){
+   console.error('Unable to load location catalogue.',error);
+   setMessage(error instanceof Error?error.message:'Unable to load Atolls / Islands.');
+  }
+ }
+
+ async function loadCustomerAddresses(){
   setLoading(true);
   try{
    const{data}=await supabase.auth.getSession();const session=data.session;
    if(!session)throw new Error('Sign in to manage Service Addresses.');
    if(!session.user.phone||!session.user.phone_confirmed_at)throw new Error('OTP verification is required to manage Service Addresses.');
-   const[addressResponse,atollResponse,islandResponse]=await Promise.all([
-    supabase.from('user_service_addresses').select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').eq('user_id',session.user.id).eq('is_active',true).order('is_default',{ascending:false}).order('updated_at',{ascending:false}),
-    supabase.from('atolls').select('id,display_name').eq('is_active',true).eq('is_serviceable',true).order('sort_order').order('display_name'),
-    supabase.from('islands').select('id,atoll_id,display_name').eq('is_active',true).eq('is_serviceable',true).order('sort_order').order('display_name')
-   ]);
-   if(addressResponse.error)throw addressResponse.error;if(atollResponse.error)throw atollResponse.error;if(islandResponse.error)throw islandResponse.error;
-   setUserId(session.user.id);setAddresses((addressResponse.data||[]) as ServiceAddress[]);setAtolls((atollResponse.data||[]) as Atoll[]);setIslands((islandResponse.data||[]) as Island[]);
+   const addressResponse=await supabase.from('user_service_addresses').select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').eq('user_id',session.user.id).eq('is_active',true).order('is_default',{ascending:false}).order('updated_at',{ascending:false});
+   if(addressResponse.error)throw addressResponse.error;
+   setUserId(session.user.id);setAddresses((addressResponse.data||[]) as ServiceAddress[]);
   }catch(error){setMessage(error instanceof Error?error.message:'Unable to load Service Addresses.');}
   finally{setLoading(false);}
+ }
+
+ async function load(){
+  void loadLocationCatalogue();
+  await loadCustomerAddresses();
  }
 
  function resetForm(){setEditingId(null);setLabel('Home');setHouse('');setRoad('');setAtollId('');setIslandId('');setPostalCode('');setAccessInstructions('');}
@@ -63,7 +82,7 @@ export default function ServiceAddressManager(){
   if(busy||a.is_default)return;setBusy(true);setMessage('Updating default Service Address…');
   try{
    const result=await supabase.from('user_service_addresses').update({is_default:true}).eq('id',a.id).eq('user_id',userId).eq('is_active',true).select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').single();
-   if(result.error)throw result.error;await syncProfile(result.data as ServiceAddress);await load();setMessage('Default Service Address updated.');
+   if(result.error)throw result.error;await syncProfile(result.data as ServiceAddress);await loadCustomerAddresses();setMessage('Default Service Address updated.');
   }catch(error){setMessage(error instanceof Error?error.message:'Unable to update default Service Address.');}finally{setBusy(false);}
  }
 
@@ -76,7 +95,7 @@ export default function ServiceAddressManager(){
    if(editingId){const result=await supabase.from('user_service_addresses').update(payload).eq('id',editingId).eq('user_id',userId).select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').single();if(result.error)throw result.error;saved=result.data as ServiceAddress;}
    else{const result=await supabase.from('user_service_addresses').insert({...payload,user_id:userId,is_default:addresses.length===0}).select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').single();if(result.error)throw result.error;saved=result.data as ServiceAddress;}
    if(addresses.length===0||existing?.is_default)await syncProfile({...saved,is_default:true});
-   resetForm();setShowForm(false);await load();setMessage(addresses.length===0?'Service Address saved as your default.':'Service Address saved.');
+   resetForm();setShowForm(false);await loadCustomerAddresses();setMessage(addresses.length===0?'Service Address saved as your default.':'Service Address saved.');
   }catch(error){setMessage(error instanceof Error?error.message:'Unable to save Service Address.');}finally{setBusy(false);}
  }
 
@@ -85,7 +104,7 @@ export default function ServiceAddressManager(){
   setBusy(true);setMessage('Deleting Service Address…');
   try{
    const result=await supabase.from('user_service_addresses').update({is_active:false,is_default:false}).eq('id',a.id).eq('user_id',userId);if(result.error)throw result.error;
-   await load();window.dispatchEvent(new Event('fixit:profile-updated'));setMessage(a.is_default?'Service Address deleted. The next saved address is now the default.':'Service Address deleted.');
+   await loadCustomerAddresses();window.dispatchEvent(new Event('fixit:profile-updated'));setMessage(a.is_default?'Service Address deleted. The next saved address is now the default.':'Service Address deleted.');
   }catch(error){setMessage(error instanceof Error?error.message:'Unable to delete Service Address.');}finally{setBusy(false);}
  }
 
