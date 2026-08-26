@@ -89,11 +89,11 @@ export default function ProfileClient(){
  }
 
  async function saveProfile(){
-  if(loading||saving)return;const trimmedName=name.trim();const normalizedPhone=phone.replace(/\D/g,'');
-  if(!trimmedName){setMessage('Enter your full name.');return;}if(normalizedPhone&&normalizedPhone.length!==7){setMessage('Enter a valid 7-digit Maldives phone number.');return;}if(!stateRegion){setMessage('Select an Atoll / Region.');return;}if(!city){setMessage('Select an Island / City.');return;}if(postalChoices.length&&!postalCode){setMessage('Select a Postal Code.');return;}
+  if(loading||saving)return;const trimmedName=name.trim();
+  if(!trimmedName){setMessage('Enter your full name.');return;}if(!stateRegion){setMessage('Select an Atoll / Region.');return;}if(!city){setMessage('Select an Island / City.');return;}if(postalChoices.length&&!postalCode){setMessage('Select a Postal Code.');return;}
   setSaving(true);setMessage('Saving profile…');const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),20000);
   try{
-   const form=new FormData();form.set('fullName',trimmedName);form.set('phoneNumber',normalizedPhone);form.set('primaryAddress',JSON.stringify({line1:line1.trim()||null,line2:line2.trim()||null,city:city.trim()||null,ward:ward.trim()||null,stateRegion:stateRegion.trim()||null,postalCode:postalCode.trim()||null,country:'Maldives'}));
+   const form=new FormData();form.set('fullName',trimmedName);form.set('primaryAddress',JSON.stringify({line1:line1.trim()||null,line2:line2.trim()||null,city:city.trim()||null,ward:ward.trim()||null,stateRegion:stateRegion.trim()||null,postalCode:postalCode.trim()||null,country:'Maldives'}));
    const response=await fetch('/api/user/profile',{method:'PUT',body:form,credentials:'same-origin',signal:controller.signal});const payload=await response.json().catch(()=>({}));if(response.status===401){window.location.replace('/login?next=%2Fprofile');return;}if(!response.ok)throw new Error(payload?.error||'Unable to update profile.');
    const next=await profileRequest();const normalized={...next,phone_number:localPhone(next.phone_number)};const saved=normalized.primaryAddress||{};
    if((saved.city||'')!==city.trim()||(saved.ward||'')!==(ward.trim()||'')||(saved.stateRegion||'')!==stateRegion.trim()||(saved.postalCode||'')!==(postalCode.trim()||''))throw new Error('Profile save could not be verified. Please try again.');
@@ -119,7 +119,7 @@ export default function ProfileClient(){
   <div className="profileContentColumn">
    <section className="profileEditCard" id="profile"><form onSubmit={event=>{event.preventDefault();void saveProfile();}} className="profileEditForm">
     <div className="profileFormSection"><h3>Personal Information</h3><div className="profileFormGrid"><label>Full Name<input value={name} onChange={e=>setName(e.target.value)} autoComplete="name" required disabled={loading}/></label><label>Email Address<input value={profile?.email||''} autoComplete="email" readOnly disabled/></label></div></div>
-    <div className="profileFormSection"><h3>Contact</h3><div className="profileFormGrid"><label>Phone Number (Maldives)<span className="profilePhoneField"><b>🇲🇻 +960</b><input type="tel" inputMode="numeric" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7XXXXXX" maxLength={7} autoComplete="tel-national" disabled={loading}/></span></label><label>Country / Region<input value="Maldives" autoComplete="country-name" readOnly disabled/></label></div></div>
+    <div className="profileFormSection"><h3>Contact</h3><div className="profileFormGrid"><label>Phone Number (verified)<span className="profilePhoneField"><b>🇲🇻 +960</b><input type="tel" inputMode="numeric" value={phone} readOnly aria-readonly="true" title="Verified phone number cannot be changed from Profile" /></span></label><label>Country / Region<input value="Maldives" autoComplete="country-name" readOnly disabled/></label></div></div>
     <div className="profileFormSection" id="service-addresses"><h3>Primary address</h3><div className="profileFormGrid">
      <label className="wide">House / Building Name<input value={line1} onChange={e=>setLine1(e.target.value)} onBlur={()=>{if(city&&stateRegion)void lookupPostalCode();}} placeholder="House or building name" autoComplete="address-line1" disabled={loading}/></label>
      <label>Street / Additional Address<input value={line2} onChange={e=>setLine2(e.target.value)} onBlur={()=>{if(city&&stateRegion)void lookupPostalCode();}} placeholder="Street, floor or apartment" autoComplete="address-line2" disabled={loading}/></label>
