@@ -1,0 +1,42 @@
+name: Fix customer location lookup once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-customer-location-lookup-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Patch CustomerPortal canonical location lookup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app/CustomerPortal.tsx')
+          s=p.read_text()
+          s=s.replace("const LOCATION_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/location-catalogue';", "const LOCATION_URL='/api/locations/catalog';")
+          old=""" async function loadCatalogue(jwt:string){try{const r=await fetch(LOCATION_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${jwt}`},body:'{}'});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Unable to load catalogue');const categories=(p.serviceCategories||[]) as ServiceCategory[];setAtolls(p.atolls||[]);setIslands(p.islands||[]);setUnits(p.locationUnits||[]);setServiceCategories(categories);setServiceCode(current=>{if(!current||categories.some(item=>item.code===current))return current;try{const raw=localStorage.getItem('fixit:create-draft');if(raw){const draft=JSON.parse(raw) as Draft;if(draft.serviceCode===current){draft.serviceCode='';localStorage.setItem('fixit:create-draft',JSON.stringify(draft));}}}catch{}setStep(1);setMode('home');setMessage('That service is no longer available. Please choose another service.');return'';});}catch(e){setMessage(e instanceof Error?e.message:'Unable to load services.');}}"""
+          new=""" async function loadCatalogue(_jwt:string){try{const [locationResponse,serviceResult]=await Promise.all([fetch(LOCATION_URL,{method:'GET',credentials:'same-origin',cache:'no-store'}),supabase.from('service_categories').select('id,code,name,sort_order').eq('is_active',true).is('parent_id',null).order('sort_order').order('name')]);const locationPayload=await locationResponse.json().catch(()=>({}));if(!locationResponse.ok)throw new Error(locationPayload?.error||'Unable to load Atoll / Region and Island / City selections.');if(serviceResult.error)throw serviceResult.error;const nextAtolls=(locationPayload.atolls||[]) as Atoll[];const nextIslands=(locationPayload.islands||[]) as Island[];const nextUnits=(locationPayload.wards||[]) as LocationUnit[];if(!nextAtolls.length)throw new Error('Atoll / Region list is empty.');if(!nextIslands.length)throw new Error('Island / City list is empty.');const categories=(serviceResult.data||[]) as ServiceCategory[];setAtolls(nextAtolls);setIslands(nextIslands);setUnits(nextUnits);setServiceCategories(categories);setServiceCode(current=>{if(!current||categories.some(item=>item.code===current))return current;try{const raw=localStorage.getItem('fixit:create-draft');if(raw){const draft=JSON.parse(raw) as Draft;if(draft.serviceCode===current){draft.serviceCode='';localStorage.setItem('fixit:create-draft',JSON.stringify(draft));}}}catch{}setStep(1);setMode('home');setMessage('That service is no longer available. Please choose another service.');return'';});}catch(e){setMessage(e instanceof Error?e.message:'Unable to load services and locations.');}}"""
+          if old not in s:
+              raise SystemExit('Expected loadCatalogue implementation not found; refusing unsafe patch')
+          s=s.replace(old,new)
+          p.write_text(s)
+          PY
+      - name: Commit patch
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/CustomerPortal.tsx
+          git commit -m 'Use canonical location API in customer portal'
+          git push origin HEAD:main
