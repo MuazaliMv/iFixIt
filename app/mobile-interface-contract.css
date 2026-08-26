@@ -369,11 +369,6 @@ textarea {
     padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
   }
 
-  /* During text entry the legacy floating nav may hide; the permanent iOS tab bar and wizard action dock remain managed by the shell. */
-  html.app-editing .mobileNav,
-  html.app-keyboard-open .mobileNav {
-    display: none !important;
-  }
 }
 
 /* Narrow phones: stack review rows and primary heading actions. */
