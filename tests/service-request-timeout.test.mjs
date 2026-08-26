@@ -12,3 +12,12 @@ test('service request submission cannot remain stuck forever',async()=>{
   assert.match(portal,/login session has expired/i);
   assert.match(portal,/response\.json\(\)\.catch/);
 });
+
+test('request wizard observer cannot create a disabled-attribute mutation loop',async()=>{
+  const runtime=await read('app/ACCustomIssueRuntime.tsx');
+  assert.match(runtime,/const disabled=!ready/);
+  assert.match(runtime,/if\(button\.disabled!==disabled\)button\.disabled=disabled/);
+  assert.doesNotMatch(runtime,/button\.disabled=!ready/);
+  assert.match(runtime,/button\.removeAttribute\('aria-disabled'\)/);
+  assert.match(runtime,/if\(status\.textContent!==statusText\)status\.textContent=statusText/);
+});
