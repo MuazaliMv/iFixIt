@@ -1,0 +1,245 @@
+/* Customer home usability v2 — mobile-first hierarchy and tap affordance */
+
+.c3Home{
+  gap:14px;
+  padding-top:12px;
+}
+
+.c3Home .c3Welcome{
+  position:relative;
+  overflow:hidden;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:16px;
+  min-height:0;
+  padding:22px;
+  border-radius:24px;
+  background:linear-gradient(145deg,#1769e8 0%,#0b55c7 100%);
+  box-shadow:0 14px 32px rgba(11,95,204,.16);
+}
+
+.c3Home .c3Welcome::after{
+  content:"";
+  position:absolute;
+  width:150px;
+  height:150px;
+  right:-62px;
+  top:-76px;
+  border-radius:50%;
+  background:rgba(255,255,255,.12);
+  pointer-events:none;
+}
+
+.c3Home .c3Welcome small{
+  font-size:11px;
+  letter-spacing:.12em;
+  opacity:.88;
+}
+
+.c3Home .c3Welcome h1{
+  max-width:620px;
+  margin:6px 0 6px;
+  font-size:clamp(28px,5vw,38px);
+  line-height:1.06;
+  letter-spacing:-1.15px;
+}
+
+.c3Home .c3Welcome p{
+  max-width:560px;
+  font-size:14px;
+  line-height:1.45;
+  opacity:.88;
+}
+
+.c3Home .c3Welcome .c3Primary{
+  position:relative;
+  z-index:1;
+  min-height:52px;
+  min-width:176px;
+  padding-inline:20px;
+  border-radius:15px;
+  font-size:15px;
+  white-space:nowrap;
+}
+
+.c3Home .c3Section{
+  padding:18px;
+  border:1px solid #e6eaf0;
+  border-radius:22px;
+  box-shadow:0 5px 18px rgba(30,55,90,.045);
+}
+
+.c3Home .c3SectionHead{
+  margin-bottom:12px;
+}
+
+.c3Home .c3SectionHead small{
+  font-size:11px;
+  letter-spacing:.11em;
+}
+
+.c3Home .c3SectionHead h2{
+  margin-top:4px;
+  font-size:22px;
+  line-height:1.12;
+}
+
+.c3Home .c3SectionHead p{
+  margin-top:4px;
+  max-width:560px;
+  font-size:13px;
+}
+
+.c3Home .c3ServiceGrid{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+}
+
+.c3Home .c3ServiceTile{
+  position:relative;
+  min-height:116px;
+  padding:14px;
+  border:1px solid #dfe4eb;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 2px 8px rgba(17,24,39,.025);
+  transition:transform .14s ease,border-color .14s ease,background .14s ease,box-shadow .14s ease;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+
+.c3Home .c3ServiceTile::after{
+  content:"›";
+  position:absolute;
+  right:12px;
+  bottom:10px;
+  color:#98a2b3;
+  font-size:20px;
+  line-height:1;
+}
+
+.c3Home .c3ServiceTile:hover,
+.c3Home .c3ServiceTile:focus-visible{
+  border-color:#9ec4f6;
+  background:#f7fbff;
+  box-shadow:0 5px 14px rgba(11,95,204,.08);
+  outline:none;
+}
+
+.c3Home .c3ServiceTile:active{
+  transform:scale(.985);
+  background:#eef6ff;
+}
+
+.c3Home .c3ServiceTile .c3ServiceIcon{
+  width:30px;
+  height:30px;
+  color:#101828;
+}
+
+.c3Home .c3ServiceTile strong{
+  padding-right:16px;
+  font-size:15px;
+  line-height:1.18;
+}
+
+.c3Home .c3ServiceTile span{
+  padding-right:16px;
+  font-size:10px;
+  font-weight:700;
+  color:#7c8798;
+}
+
+.c3Home .c3ActiveCard{
+  border-radius:18px;
+  background:#fbfcfe;
+}
+
+/* Keep the customer workspace visually focused: bottom nav already exposes mode switching. */
+body:has(.c3Home)>.topWorkspaceRoleLabel{
+  display:none!important;
+}
+
+@media(max-width:760px){
+  .c3Home{
+    gap:12px;
+    padding-top:10px;
+  }
+
+  .c3Home .c3Welcome{
+    grid-template-columns:1fr;
+    gap:14px;
+    padding:18px;
+    border-radius:20px;
+  }
+
+  .c3Home .c3Welcome h1{
+    max-width:330px;
+    margin:5px 0 5px;
+    font-size:30px;
+    line-height:1.04;
+  }
+
+  .c3Home .c3Welcome p{
+    max-width:350px;
+    font-size:13px;
+    line-height:1.4;
+  }
+
+  .c3Home .c3Welcome .c3Primary{
+    width:100%;
+    min-height:50px;
+    margin-top:1px;
+  }
+
+  .c3Home .c3Section{
+    padding:14px;
+    border-radius:20px;
+    box-shadow:none;
+  }
+
+  .c3Home .c3SectionHead{
+    margin-bottom:10px;
+  }
+
+  .c3Home .c3SectionHead h2{
+    font-size:21px;
+  }
+
+  .c3Home .c3SectionHead p{
+    font-size:12px;
+    line-height:1.35;
+  }
+
+  .c3Home .c3ServiceGrid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+
+  .c3Home .c3ServiceTile{
+    min-height:102px;
+    padding:12px;
+    border-radius:16px;
+  }
+
+  .c3Home .c3ServiceTile .c3ServiceIcon{
+    width:27px;
+    height:27px;
+  }
+
+  .c3Home .c3ServiceTile strong{
+    font-size:14px;
+  }
+
+  .c3Home .c3ServiceTile span{
+    font-size:10px;
+  }
+}
+
+@media(max-width:390px){
+  .c3Home .c3Welcome h1{font-size:28px}
+  .c3Home .c3ServiceTile{min-height:98px;padding:11px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .c3Home .c3ServiceTile{transition:none}
+}
