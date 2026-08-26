@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
-import './mobile-nav.css';
 
 const INSIGHTS_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-insights';
 type NavRole='customer'|'provider'|'admin';
