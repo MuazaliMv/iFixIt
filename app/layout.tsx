@@ -53,6 +53,7 @@ import MobileDateInputRuntime from './MobileDateInputRuntime';
 import MobileKeyboardRuntime from './MobileKeyboardRuntime';
 import PreferredDateRuntime from './PreferredDateRuntime';
 import SendRequestTapRuntime from './SendRequestTapRuntime';
+import CustomerServiceTapRuntime from './CustomerServiceTapRuntime';
 import RequestWizardSmartRuntime from './RequestWizardSmartRuntime';
 import WorkspaceThemeRuntime from './WorkspaceThemeRuntime';
 import ServerSessionSignOutSync from './ServerSessionSignOutSync';
@@ -91,6 +92,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <WorkspaceThemeRuntime/>
         <ServerSessionSignOutSync/>
         <SendRequestTapRuntime/>
+        <CustomerServiceTapRuntime/>
         <RequestWizardSmartRuntime/>
         <RoleAccessGuard/>
         <PreferredDateRuntime/>
