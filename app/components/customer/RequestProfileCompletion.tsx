@@ -71,27 +71,27 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
 
   async function persistAddress(){
     if(!validContact)throw new Error('Your account needs a name and OTP-verified Maldives phone number.');
-    if(!validAddress)throw new Error('Complete the service address before continuing.');
+    if(!validAddress)throw new Error('Complete the Service Address before continuing.');
     const form=new FormData();form.set('fullName',name.trim());form.set('phoneNumber',localPhone(phone));form.set('primaryAddress',JSON.stringify({line1:house.trim(),line2:road.trim(),city:selectedIsland!.display_name,stateRegion:selectedAtoll!.display_name,postalCode:postalCode.trim()||null,country:'Maldives'}));
     const response=await fetch('/api/user/profile',{method:'PUT',body:form,credentials:'same-origin'});const payload=await response.json().catch(()=>({})) as {error?:string};
-    if(!response.ok)throw new Error(payload.error||'Unable to save the service address.');
+    if(!response.ok)throw new Error(payload.error||'Unable to save the Service Address.');
     window.dispatchEvent(new Event('fixit:profile-updated'));await onSaved();setHasSavedAddress(true);setAddressMode('saved');
   }
 
   async function continueRequest(event?:FormEvent){
     event?.preventDefault();if(saving)return;
     if(!validContact){setMessage('Your account needs a name and OTP-verified Maldives phone number.');return;}
-    if(!addressMode){setMessage('Choose the service address before continuing.');return;}
-    if(!validAddress){setMessage('Complete the service address before continuing.');return;}
-    setSaving(true);setMessage(addressMode==='new'?'Saving service address…':'Confirming service address…');
-    try{if(addressMode==='new')await persistAddress();setMessage('Address confirmed. Sending your request…');onSaveAndSend();}
+    if(!addressMode){setMessage('Choose the Service Address before continuing.');return;}
+    if(!validAddress){setMessage('Complete the Service Address before continuing.');return;}
+    setSaving(true);setMessage(addressMode==='new'?'Saving Service Address…':'Confirming Service Address…');
+    try{if(addressMode==='new')await persistAddress();setMessage('Service Address confirmed. Sending your request…');onSaveAndSend();}
     catch(error){setMessage(error instanceof Error?error.message:'Unable to continue.');setSaving(false);}
   }
 
-  if(loading)return <section className="c3WizardCard c3ProfileCompletion" aria-label="Service address"><div className="c3Notice">Checking your verified account and saved address…</div></section>;
+  if(loading)return <section className="c3WizardCard c3ProfileCompletion" aria-label="Service Address"><div className="c3Notice">Checking your verified account and saved Service Address…</div></section>;
 
-  return <section className="c3WizardCard c3ProfileCompletion" aria-label="Service address">
-    <div className="c3SectionHead"><div><small>Required before booking</small><h2>Choose service address</h2><p>Your phone is taken from the OTP-verified login. Confirm a saved address or add a new one.</p></div></div>
+  return <section className="c3WizardCard c3ProfileCompletion" aria-label="Service Address">
+    <div className="c3SectionHead"><div><small>Required before booking</small><h2>Choose Service Address</h2><p>This is the location where the service will be performed. Confirm a saved Service Address or add a new Service Address.</p></div></div>
 
     <div className="c3Review" style={{marginBottom:16}}>
       <div className="c3ReviewRow"><span>Verified phone</span><strong>{phone?`+960 ${phone}`:'Not verified'}</strong></div>
@@ -99,8 +99,8 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
     </div>
 
     <div className="c3Urgency" style={{marginBottom:16}}>
-      <button type="button" className={addressMode==='saved'?'selected':''} onClick={chooseSaved} disabled={!hasSavedAddress||saving}><strong>Use saved address</strong><span>{hasSavedAddress?[house,road,selectedIsland?.display_name].filter(Boolean).join(', '):'No complete saved address yet'}</span></button>
-      <button type="button" className={addressMode==='new'?'selected':''} onClick={chooseNew} disabled={saving}><strong>Add new address</strong><span>Enter a different service location</span></button>
+      <button type="button" className={addressMode==='saved'?'selected':''} onClick={chooseSaved} disabled={!hasSavedAddress||saving}><strong>Use saved Service Address</strong><span>{hasSavedAddress?[house,road,selectedIsland?.display_name].filter(Boolean).join(', '):'No complete saved Service Address yet'}</span></button>
+      <button type="button" className={addressMode==='new'?'selected':''} onClick={chooseNew} disabled={saving}><strong>Add New Service Address</strong><span>Enter the location where this service should be performed</span></button>
     </div>
 
     {addressMode==='new'?<form className="c3Form" onSubmit={continueRequest}>
@@ -110,12 +110,12 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
       <label>Atoll / Region<select value={atollId} onChange={e=>{setAtollId(e.target.value);setIslandId('');setMessage('');}} disabled={saving} required><option value="">Select Atoll / Region</option>{atolls.map(a=><option key={a.id} value={a.id}>{a.display_name}</option>)}</select></label>
       <label>Island / City<select value={islandId} onChange={e=>{setIslandId(e.target.value);setMessage('');}} disabled={saving||!atollId} required><option value="">Select Island / City</option>{filteredIslands.map(i=><option key={i.id} value={i.id}>{i.display_name}</option>)}</select></label>
       <label>Postal code <span style={{fontWeight:500}}>optional</span><input value={postalCode} onChange={e=>setPostalCode(e.target.value)} inputMode="numeric" autoComplete="postal-code" placeholder="Postal code" disabled={saving}/></label>
-      <button className="c3Primary" type="submit" disabled={saving||!validContact||!validAddress}>{saving?'Saving…':'Save address & continue'}</button>
+      <button className="c3Primary" type="submit" disabled={saving||!validContact||!validAddress}>{saving?'Saving…':'Save Service Address & Continue'}</button>
     </form>:null}
 
     {addressMode==='saved'&&hasSavedAddress?<div>
-      <div className="c3Review"><div className="c3ReviewRow"><span>House / Apartment</span><strong>{house}</strong></div><div className="c3ReviewRow"><span>Road</span><strong>{road}</strong></div><div className="c3ReviewRow"><span>Atoll / Region</span><strong>{selectedAtoll?.display_name}</strong></div><div className="c3ReviewRow"><span>Island / City</span><strong>{selectedIsland?.display_name}</strong></div>{postalCode?<div className="c3ReviewRow"><span>Postal code</span><strong>{postalCode}</strong></div>:null}</div>
-      <button className="c3Primary" type="button" onClick={()=>void continueRequest()} disabled={saving||!validContact} style={{marginTop:16}}>{saving?'Confirming…':'Confirm address & send request'}</button>
+      <div className="c3Review"><div className="c3ReviewRow"><span>Service Address</span><strong>{[house,road].filter(Boolean).join(', ')}</strong></div><div className="c3ReviewRow"><span>Atoll / Region</span><strong>{selectedAtoll?.display_name}</strong></div><div className="c3ReviewRow"><span>Island / City</span><strong>{selectedIsland?.display_name}</strong></div>{postalCode?<div className="c3ReviewRow"><span>Postal code</span><strong>{postalCode}</strong></div>:null}</div>
+      <button className="c3Primary" type="button" onClick={()=>void continueRequest()} disabled={saving||!validContact} style={{marginTop:16}}>{saving?'Confirming…':'Use This Service Address & Send Request'}</button>
     </div>:null}
 
     {message?<p className="c3Notice" role="status">{message}</p>:null}
