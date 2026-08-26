@@ -38,6 +38,7 @@ import './mobile-section-pager.css';
 import './service-picker-ux.css';
 import './ios-web-app.css';
 import './global-shell.css';
+import './request-wizard-smart-fix.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
@@ -53,6 +54,7 @@ import MobileDateInputRuntime from './MobileDateInputRuntime';
 import MobileKeyboardRuntime from './MobileKeyboardRuntime';
 import PreferredDateRuntime from './PreferredDateRuntime';
 import SendRequestTapRuntime from './SendRequestTapRuntime';
+import RequestWizardSmartRuntime from './RequestWizardSmartRuntime';
 import WorkspaceThemeRuntime from './WorkspaceThemeRuntime';
 import ServerSessionSignOutSync from './ServerSessionSignOutSync';
 import IOSWebAppShell from './IOSWebAppShell';
@@ -90,6 +92,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <WorkspaceThemeRuntime/>
         <ServerSessionSignOutSync/>
         <SendRequestTapRuntime/>
+        <RequestWizardSmartRuntime/>
         <RoleAccessGuard/>
         <PreferredDateRuntime/>
         <GlobalRoleMenu/>

@@ -1,0 +1,64 @@
+/*
+ * Request wizard smart-flow safety layer.
+ * This is intentionally the final request-wizard stylesheet in layout.tsx.
+ * It replaces hard-coded mobile dock clearance with one measured CSS variable.
+ */
+:root{
+  --request-action-height:88px;
+  --request-action-gap:10px;
+}
+
+/* When Standard is the only available request type, the runtime selects it
+   automatically and removes the redundant scheduling choice from the customer UI. */
+.c3Urgency.smartSingleRequestType,
+.c3Question.smartAutoSection{
+  display:none!important;
+}
+
+@media(max-width:960px){
+  /* The global shell owns the bottom navigation. The request dock only needs to
+     sit above that navigation; its own measured height drives content clearance. */
+  body:has(.globalMenuHeaderWrap) .c3ActionDock{
+    left:12px!important;
+    right:12px!important;
+    bottom:calc(var(--global-bottom-nav-height) + var(--request-action-gap))!important;
+    width:auto!important;
+    max-width:none!important;
+    box-sizing:border-box!important;
+  }
+
+  body:has(.globalMenuHeaderWrap) .c3Wizard{
+    padding-bottom:calc(var(--request-action-height) + var(--request-action-gap) + 24px)!important;
+    scroll-padding-bottom:calc(var(--request-action-height) + var(--request-action-gap) + 24px)!important;
+  }
+
+  body:has(.globalMenuHeaderWrap) .c3WizardCard{
+    scroll-margin-bottom:calc(var(--request-action-height) + 24px)!important;
+  }
+
+  /* Validation targets should never settle behind the fixed action dock. */
+  body:has(.globalMenuHeaderWrap) .c3Field,
+  body:has(.globalMenuHeaderWrap) .c3Notice,
+  body:has(.globalMenuHeaderWrap) .c3Warning,
+  body:has(.globalMenuHeaderWrap) [role="alert"]{
+    scroll-margin-top:20px!important;
+    scroll-margin-bottom:calc(var(--request-action-height) + 28px)!important;
+  }
+
+  /* Keep actions large and predictable on narrow devices. */
+  .c3ActionInner{
+    grid-template-columns:minmax(88px,30%) minmax(0,1fr)!important;
+    gap:8px!important;
+  }
+  .c3ActionInner button,
+  .c3ActionInner .c3Primary,
+  .c3ActionInner .c3Secondary{
+    min-height:52px!important;
+    touch-action:manipulation;
+  }
+}
+
+@media(max-width:380px){
+  .c3ActionDock{left:8px!important;right:8px!important;}
+  .c3ActionInner{grid-template-columns:88px minmax(0,1fr)!important;}
+}
