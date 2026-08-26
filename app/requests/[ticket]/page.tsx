@@ -15,14 +15,31 @@ type RequestRow={id:string;ticket_number:string;service_name:string;service_loca
 type MessageRow={id:string;sender_role:string;sender_label?:string|null;message_text:string;created_at:string};
 type CompletionMedia={id:string;media_type:'BEFORE'|'AFTER';url?:string|null;created_at:string};
 
-function when(v?:string|null){if(!v)return'Not set';const d=new Date(v);return Number.isNaN(d.getTime())?v:d.toLocaleString(undefined,{day:'2-digit',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'});}
+function when(v?:string|null){
+ if(!v)return'Not set';
+ const d=new Date(v);
+ return Number.isNaN(d.getTime())?v:d.toLocaleString(undefined,{day:'2-digit',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'});
+}
 function pretty(v?:string|null){return String(v||'').replaceAll('_',' ').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());}
 
+function isNoProviderState(status:string){
+ return ['NO_PROVIDER','NO_PROVIDER_AVAILABLE','EXPIRED','SEARCH_EXHAUSTED','FAILED'].includes(status);
+}
+
+function customerStatus(status:string){
+ if(status==='COMPLETED')return'Completed';
+ if(status==='PROCESSING'||status==='IN_PROGRESS')return'Work in progress';
+ if(status==='ACCEPTED')return'Provider accepted';
+ if(isNoProviderState(status))return'No provider available';
+ return'Searching for provider';
+}
+
 function statusCopy(status:string,provider?:string|null){
- if(status==='COMPLETED')return{title:'Service completed',detail:'This request has been completed successfully.'};
- if(status==='PROCESSING'||status==='IN_PROGRESS')return{title:'Service in progress',detail:provider?`${provider} is currently working on your request.`:'Your provider is currently working on this request.'};
- if(status==='ACCEPTED')return{title:'Provider assigned',detail:provider?`${provider} accepted your request. No customer confirmation is required.`:'A provider accepted your request. No customer confirmation is required.'};
- return{title:'Finding a service provider',detail:'Your request is active. We are looking for an available provider and will update this page automatically.'};
+ if(status==='COMPLETED')return{title:'Service completed',detail:'Your service request has been completed.'};
+ if(status==='PROCESSING'||status==='IN_PROGRESS')return{title:'Service in progress',detail:provider?`${provider} is currently working on your request.`:'Your provider is currently working on your request.'};
+ if(status==='ACCEPTED')return{title:'Provider accepted your request',detail:provider?`${provider} accepted your request. You do not need to confirm again.`:'A provider accepted your request. You do not need to confirm again.'};
+ if(isNoProviderState(status))return{title:'No provider available right now',detail:'We could not find an available provider for this request. You can cancel this request or return to your requests list.'};
+ return{title:'Finding a service provider',detail:'We are looking for an available provider. No action is needed from you — this page will update automatically.'};
 }
 
 export default function RequestDetailPage(){
@@ -43,7 +60,7 @@ export default function RequestDetailPage(){
  async function cancelRequest(){if(!window.confirm('Cancel this service request?'))return;setBusy(true);try{await post(CANCEL_API,{ticketNumber:ticket,reason:'Cancelled by customer'});window.location.replace('/requests');}catch(e){setNotice(e instanceof Error?e.message:'Unable to cancel request.');}finally{setBusy(false);}}
  async function send(){if(!text.trim())return;setBusy(true);try{const p=await post(MESSAGE_API,{action:'send',ticketNumber:ticket,message:text.trim()});setMessages(p.messages||[]);setText('');}catch(e){setNotice(e instanceof Error?e.message:'Unable to send message.');}finally{setBusy(false);}}
 
- const canCancel=['NEW','PENDING','SEARCHING'].includes(request?.status||'');
+ const canCancel=['NEW','PENDING','SEARCHING','NO_PROVIDER','NO_PROVIDER_AVAILABLE','EXPIRED','SEARCH_EXHAUSTED','FAILED'].includes(request?.status||'');
  const progressSteps=['New','Accepted','Processing','Completed'];
  const status=request?.status||'NEW';
  const progressIndex=status==='COMPLETED'?3:status==='PROCESSING'||status==='IN_PROGRESS'?2:status==='ACCEPTED'?1:0;
@@ -54,23 +71,65 @@ export default function RequestDetailPage(){
  if(!request)return <main className="ifixPage"><div className="ifixLoading"><div className="ifixLogo"><span>Fix</span><b>It</b></div><p>{notice}</p></div></main>;
 
  return <main className="ifixPage"><div className="requestAppPanel">
-  <div className="requestAppHeading"><div><p className="eyebrow">{request.ticket_number}</p><h1>{request.service_name}</h1><p>Created {when(request.created_at)}</p></div><span className="heroStatus">{pretty(request.status)}</span></div>
+  <div className="requestAppHeading">
+   <div>
+    <h1>{request.service_name}</h1>
+    <p>{request.ticket_number} · {when(request.created_at)}</p>
+    <span className="heroStatus">{customerStatus(status)}</span>
+   </div>
+  </div>
+
   {notice?<p className="statusNotice">{notice}</p>:null}
 
-  <section className="activeHero"><div><span className="heroStatus">{pretty(request.status)}</span><h1>{current.title}</h1><p>{current.detail}</p><div className="heroMeta"><span>Last updated {when(request.updated_at)}</span></div></div><div className="activeHeroStep"><small>Current stage</small><strong>{progressSteps[progressIndex]}</strong></div></section>
+  <section className="activeHero">
+   <div>
+    <h1>{current.title}</h1>
+    <p>{current.detail}</p>
+    <div className="heroMeta"><span>Updated {when(request.updated_at)}</span></div>
+   </div>
+  </section>
 
-  <section className="screenCard"><div className="sectionHeading"><div><h2>Request Progress</h2><p>Your request updates automatically as the service moves forward.</p></div></div><div className="progressTimeline">{progressSteps.map((step,index)=><div className={`progressStep ${index<progressIndex?'done':index===progressIndex?'current':''}`} key={step}><span>{index<progressIndex?'✓':index===progressIndex?'●':'○'}</span><div><strong>{step}</strong><small>{step==='New'?'Request submitted':step==='Accepted'?'Provider accepted':step==='Processing'?'Service in progress':'Service completed'}</small></div></div>)}</div></section>
+  <section className="screenCard">
+   <div className="sectionHeading"><div><h2>Request Progress</h2><p>Follow your request from submission to completion.</p></div></div>
+   <div className="progressTimeline">
+    {progressSteps.map((step,index)=><div className={`progressStep ${index<progressIndex?'done':index===progressIndex?'current':''}`} key={step}>
+     <span>{index<progressIndex?'✓':index===progressIndex?'●':'○'}</span>
+     <div><strong>{step}</strong><small>{step==='New'?(isNoProviderState(status)?'Provider search finished without a match':'Searching for a provider'):step==='Accepted'?'Provider accepted':step==='Processing'?'Service in progress':'Service completed'}</small></div>
+    </div>)}
+   </div>
+  </section>
 
-  <section className="screenCard"><div className="sectionHeading"><div><h2>Service Provider</h2><p>{request.assigned_provider_label?'Assigned to this request':'Provider assignment'}</p></div></div>{request.assigned_provider_label?<div className="findingCard"><strong>{request.assigned_provider_label}</strong><p>{status==='ACCEPTED'?'Accepted this request and can proceed directly.':status==='PROCESSING'||status==='IN_PROGRESS'?'Currently working on this request.':status==='COMPLETED'?'Completed this service request.':'Assigned service provider.'}</p></div>:<div className="findingCard"><strong>Searching for a provider…</strong><p>We will show the assigned provider here automatically once someone accepts.</p></div>}</section>
+  {request.assigned_provider_label?<section className="screenCard">
+   <div className="sectionHeading"><div><h2>Service Provider</h2><p>Assigned to this request</p></div></div>
+   <div className="findingCard"><strong>{request.assigned_provider_label}</strong><p>{status==='ACCEPTED'?'Accepted this request and can proceed directly.':status==='PROCESSING'||status==='IN_PROGRESS'?'Currently working on your request.':status==='COMPLETED'?'Completed this service request.':'Assigned service provider.'}</p></div>
+  </section>:null}
 
-  <section className="screenCard"><div className="sectionHeading"><div><h2>Request Details</h2><p>Complete information for this service request.</p></div></div><div className="requestInfoGrid"><div><span>Request number</span><strong>{request.ticket_number}</strong></div><div><span>Service</span><strong>{request.service_name}</strong></div><div><span>Service address</span><strong>{request.service_location_text||'Not provided'}</strong></div><div><span>Status</span><strong>{pretty(request.status)}</strong></div><div><span>Created</span><strong>{when(request.created_at)}</strong></div><div><span>Last updated</span><strong>{when(request.updated_at)}</strong></div></div><div className="findingCard"><strong>Issue / description</strong><p>{request.problem_description||'No description provided.'}</p></div>{request.customer_notes?<div className="findingCard"><strong>Customer notes</strong><p>{request.customer_notes}</p></div>:null}</section>
+  <section className="screenCard">
+   <div className="sectionHeading"><div><h2>Request Details</h2><p>The information you submitted for this service request.</p></div></div>
+   <div className="requestInfoGrid"><div><span>Service address</span><strong>{request.service_location_text||'Not provided'}</strong></div>{request.urgency?<div><span>Priority</span><strong>{pretty(request.urgency)}</strong></div>:null}</div>
+   <div className="findingCard"><strong>Issue / description</strong><p>{request.problem_description||'No description provided.'}</p></div>
+   {request.customer_notes?<div className="findingCard"><strong>Customer notes</strong><p>{request.customer_notes}</p></div>:null}
+  </section>
 
-  {before.length||after.length?<section className="screenCard"><div className="sectionHeading"><div><h2>Service Photos</h2><p>Photos recorded for this request.</p></div></div><div className="completionMediaGrid">{before.length?<div><h3>Before</h3><div className="requestPhotoRow">{before.map(m=><img className="requestPhoto" key={m.id} src={m.url||''} alt="Before service"/>)}</div></div>:null}{after.length?<div><h3>After</h3><div className="requestPhotoRow">{after.map(m=><img className="requestPhoto" key={m.id} src={m.url||''} alt="After service"/>)}</div></div>:null}</div></section>:null}
+  {before.length||after.length?<section className="screenCard">
+   <div className="sectionHeading"><div><h2>Service Photos</h2><p>Photos recorded for this request.</p></div></div>
+   <div className="completionMediaGrid">{before.length?<div><h3>Before</h3><div className="requestPhotoRow">{before.map(m=><img className="requestPhoto" key={m.id} src={m.url||''} alt="Before service"/>)}</div></div>:null}{after.length?<div><h3>After</h3><div className="requestPhotoRow">{after.map(m=><img className="requestPhoto" key={m.id} src={m.url||''} alt="After service"/>)}</div></div>:null}</div>
+  </section>:null}
 
-  {request.assigned_provider_label?<section className="screenCard"><div className="sectionHeading"><div><h2>Messages</h2><p>Conversation with {request.assigned_provider_label}</p></div></div><div className="chatList">{messages.map(m=><div key={m.id} className={`chatBubble ${m.sender_role==='CUSTOMER'?'customer':''}`}><strong>{m.sender_label||pretty(m.sender_role)}</strong><p>{m.message_text}</p><time>{when(m.created_at)}</time></div>)}{!messages.length?<div className="emptyState">No messages yet.</div>:null}</div><div className="messageComposer"><input value={text} onChange={e=>setText(e.target.value)} placeholder="Write a message"/><button className="blueButton" onClick={()=>void send()} disabled={busy||!text.trim()}>Send</button></div></section>:null}
+  {request.assigned_provider_label?<section className="screenCard">
+   <div className="sectionHeading"><div><h2>Messages</h2><p>Conversation with {request.assigned_provider_label}</p></div></div>
+   <div className="chatList">{messages.map(m=><div key={m.id} className={`chatBubble ${m.sender_role==='CUSTOMER'?'customer':''}`}><strong>{m.sender_label||pretty(m.sender_role)}</strong><p>{m.message_text}</p><time>{when(m.created_at)}</time></div>)}{!messages.length?<div className="emptyState">No messages yet.</div>:null}</div>
+   <div className="messageComposer"><input value={text} onChange={e=>setText(e.target.value)} placeholder="Write a message"/><button className="blueButton" onClick={()=>void send()} disabled={busy||!text.trim()}>Send</button></div>
+  </section>:null}
 
-  {request.status==='COMPLETED'?<section className="screenCard serviceReport"><div className="sectionHeading"><div><h2>Completion Summary</h2><p>Completed {when(request.completed_at)}</p></div></div><div className="requestInfoGrid"><div><span>Service</span><strong>{request.service_name}</strong></div><div><span>Provider</span><strong>{request.assigned_provider_label||'Provider'}</strong></div><div><span>Location</span><strong>{request.service_location_text}</strong></div><div><span>Status</span><strong>Completed</strong></div></div></section>:null}
+  {request.status==='COMPLETED'?<section className="screenCard serviceReport">
+   <div className="sectionHeading"><div><h2>Completion Summary</h2><p>Completed {when(request.completed_at)}</p></div></div>
+   <div className="requestInfoGrid"><div><span>Service</span><strong>{request.service_name}</strong></div><div><span>Provider</span><strong>{request.assigned_provider_label||'Provider'}</strong></div><div><span>Location</span><strong>{request.service_location_text}</strong></div><div><span>Status</span><strong>Completed</strong></div></div>
+  </section>:null}
 
-  {canCancel?<section className="screenCard"><div className="sectionHeading"><div><h2>Request options</h2><p>You can cancel while the request is still waiting for a provider.</p></div></div><button className="dangerOutline" onClick={()=>void cancelRequest()} disabled={busy}>{busy?'Please wait…':'Cancel Request'}</button></section>:null}
+  {canCancel?<section className="screenCard">
+   <div className="sectionHeading"><div><h2>Request Options</h2><p>Cancel this request if you no longer need the service.</p></div></div>
+   <button className="dangerOutline" onClick={()=>void cancelRequest()} disabled={busy}>{busy?'Please wait…':'Cancel request'}</button>
+  </section>:null}
  </div></main>;
 }
