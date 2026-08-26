@@ -19,21 +19,39 @@ export default function ServiceAddressManager(){
 
  useEffect(()=>{void load();},[]);
 
- async function loadLocationCatalogue(){
+ async function loadAtolls(){
   try{
-   const[atollResponse,islandResponse]=await Promise.all([
-    supabase.from('atolls').select('id,display_name').eq('is_active',true).eq('is_serviceable',true).order('sort_order').order('display_name'),
-    supabase.from('islands').select('id,atoll_id,display_name').eq('is_active',true).eq('is_serviceable',true).order('sort_order').order('display_name')
-   ]);
-   if(atollResponse.error)throw atollResponse.error;
-   if(islandResponse.error)throw islandResponse.error;
-   const atollData=(atollResponse.data||[]) as Atoll[];
-   const islandData=(islandResponse.data||[]) as Island[];
-   if(!atollData.length)throw new Error('No active serviceable Atolls were returned.');
-   setAtolls(atollData);setIslands(islandData);
+   const response=await supabase
+    .from('atolls')
+    .select('id,display_name')
+    .eq('is_active',true)
+    .eq('is_serviceable',true)
+    .order('sort_order')
+    .order('display_name');
+   if(response.error)throw response.error;
+   const data=(response.data||[]) as Atoll[];
+   if(!data.length)throw new Error('No active serviceable Atolls were returned.');
+   setAtolls(data);
   }catch(error){
-   console.error('Unable to load location catalogue.',error);
-   setMessage(error instanceof Error?error.message:'Unable to load Atolls / Islands.');
+   console.error('Unable to load Atolls from canonical table.',error);
+   setMessage(error instanceof Error?error.message:'Unable to load Atolls / Regions.');
+  }
+ }
+
+ async function loadIslands(){
+  try{
+   const response=await supabase
+    .from('islands')
+    .select('id,atoll_id,display_name')
+    .eq('is_active',true)
+    .eq('is_serviceable',true)
+    .order('sort_order')
+    .order('display_name');
+   if(response.error)throw response.error;
+   setIslands((response.data||[]) as Island[]);
+  }catch(error){
+   console.error('Unable to load Islands from canonical table.',error);
+   setMessage(error instanceof Error?error.message:'Unable to load Islands / Cities.');
   }
  }
 
@@ -51,7 +69,8 @@ export default function ServiceAddressManager(){
  }
 
  async function load(){
-  void loadLocationCatalogue();
+  void loadAtolls();
+  void loadIslands();
   await loadCustomerAddresses();
  }
 
