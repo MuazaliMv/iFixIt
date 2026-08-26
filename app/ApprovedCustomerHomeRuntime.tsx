@@ -24,6 +24,17 @@ function serviceKey(name:string){
   return 'other';
 }
 
+function serviceIconSvg(key:string){
+  const common='class="c3ServiceIcon approvedServiceIcon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+  if(key==='ac')return `<svg ${common}><path d="M12 2v20M4.2 6.5l15.6 11M19.8 6.5l-15.6 11M7 3.8 12 7l5-3.2M7 20.2l5-3.2 5 3.2M3.7 9.2 8 12l-4.3 2.8M20.3 9.2 16 12l4.3 2.8"/></svg>`;
+  if(key==='plumbing')return `<svg ${common}><path d="M4 6h9v4H8v4H4zM13 8h4a3 3 0 0 1 3 3v2"/><path d="M20 16.5c0 1.4-1 2.5-2.3 2.5S15.4 17.9 15.4 16.5c0-1.1 1.1-2.7 2.3-4.2 1.2 1.5 2.3 3.1 2.3 4.2Z"/></svg>`;
+  if(key==='electrical')return `<svg ${common}><path d="M13.5 2 5 13h6l-1 9 8.5-11h-6z"/></svg>`;
+  if(key==='carpentry')return `<svg ${common}><path d="m14 5 5 5M12.5 6.5l2-2a2.1 2.1 0 0 1 3 0l2 2a2.1 2.1 0 0 1 0 3l-2 2M14.5 9.5 5 19l-3 1 1-3 9.5-9.5"/></svg>`;
+  if(key==='painting')return `<svg ${common}><path d="M4 4h12v5H4zM16 6h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-6v3M10 15h4v7h-4z"/></svg>`;
+  if(key==='cleaning')return `<svg ${common}><path d="m7 14 6-9 3 2-5 10M5 12l8 6M4 14l-2 5 5 3 4-4M17 4l1-2M19 6h2M17 8l1 2"/></svg>`;
+  return `<svg ${common}><path d="M4 5h16v12H8l-4 4z"/><path d="M8 9h8M8 13h5"/></svg>`;
+}
+
 function decorate(){
   const home=document.querySelector<HTMLElement>('.c3Home');
   if(!home)return false;
@@ -85,7 +96,12 @@ function decorate(){
         const name=(title?.textContent||'').trim();
         const key=serviceKey(name);
         tile.dataset.approvedService=key;
-        const existing=tile.querySelector<HTMLElement>('span');
+
+        tile.querySelectorAll('.c3ServiceIcon,.approvedServiceIcon').forEach(icon=>icon.remove());
+        tile.insertAdjacentHTML('afterbegin',serviceIconSvg(key));
+
+        const spans=[...tile.querySelectorAll<HTMLElement>('span')].filter(span=>!span.classList.contains('approvedServiceIcon'));
+        const existing=spans.find(span=>!span.closest('svg'));
         const copy=serviceCopy[name.toLowerCase()]||(
           key==='ac'?'Cooling solutions':key==='plumbing'?'Pipes & leaks':key==='electrical'?'Wiring & repairs':key==='carpentry'?'Woodwork & fixes':key==='painting'?'Interior & exterior':key==='cleaning'?'Home & office':'Tap to request'
         );
@@ -96,7 +112,7 @@ function decorate(){
       const card=document.createElement('button');
       card.type='button';
       card.className='approvedOtherIssue';
-      card.innerHTML='<span class="approvedOtherIcon" aria-hidden="true">▤</span><span class="approvedOtherText"><strong>Need something else?</strong><small>Describe your issue in your request</small></span><span class="approvedOtherArrow" aria-hidden="true">›</span>';
+      card.innerHTML='<span class="approvedOtherIcon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v12H8l-4 4z"/><path d="M8 9h8M8 13h5"/></svg></span><span class="approvedOtherText"><strong>Need something else?</strong><small>Describe your issue in your request</small></span><span class="approvedOtherArrow" aria-hidden="true">›</span>';
       card.addEventListener('click',()=>document.querySelector<HTMLButtonElement>('.approvedCreateButton')?.click());
       serviceSection.insertAdjacentElement('afterend',card);
     }
