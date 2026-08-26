@@ -1,0 +1,76 @@
+/* Approved customer home — exact visual direction from the owner-approved reference. */
+body.approvedCustomerHomeActive .c4App .c3Header{display:none!important}
+body.approvedCustomerHomeActive .c4App .c4Sidebar{display:none!important}
+body.approvedCustomerHomeActive .c4App .c4Main{margin:0!important}
+body.approvedCustomerHomeActive .c3Shell{width:min(100% - 28px,760px)!important;margin:0 auto!important}
+body.approvedCustomerHomeActive .approvedCustomerHome{padding:0 0 28px!important;gap:0!important}
+
+body.approvedCustomerHomeActive .globalMenuHeaderWrap{background:#fff!important;border-bottom:1px solid #edf0f5!important;box-shadow:none!important}
+body.approvedCustomerHomeActive .approvedCustomerHeader{height:100%!important;display:grid!important;grid-template-columns:1fr auto 1fr!important;align-items:center!important;padding:0 22px!important;background:#fff!important}
+body.approvedCustomerHomeActive .approvedCustomerHeader::after{content:'Customer'!important;position:static!important;grid-column:2!important;grid-row:1!important;transform:none!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:7px 15px!important;border-radius:13px!important;background:#f5f5f7!important;color:#111827!important;font-size:15px!important;font-weight:800!important;line-height:1!important;max-width:none!important;overflow:visible!important}
+body.approvedCustomerHomeActive .approvedCustomerHeader .globalMenuBrand{grid-column:1!important;grid-row:1!important;justify-self:start!important;display:flex!important;align-items:center!important;gap:10px!important;color:#2563eb!important;font-size:24px!important;font-weight:800!important;text-decoration:none!important}
+body.approvedCustomerHomeActive .approvedCustomerHeader .globalMenuBrandMark{width:38px!important;height:38px!important;border-radius:11px!important;background:#3564e9!important;color:#fff!important;display:grid!important;place-items:center!important;font-size:21px!important;font-weight:500!important;box-shadow:none!important}
+body.approvedCustomerHomeActive .approvedCustomerHeader .globalMenuHeaderActions{grid-column:3!important;grid-row:1!important;justify-self:end!important;display:flex!important;align-items:center!important}
+body.approvedCustomerHomeActive .approvedCustomerHeader .approvedHomeMenuHidden{display:none!important}
+body.approvedCustomerHomeActive .approvedNotificationButton{position:relative!important;width:42px!important;height:42px!important;display:grid!important;place-items:center!important;border:0!important;border-radius:14px!important;background:transparent!important;color:#111827!important;text-decoration:none!important}
+body.approvedCustomerHomeActive .approvedNotificationButton svg{width:24px!important;height:24px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+body.approvedCustomerHomeActive .approvedNotificationBadge{position:absolute!important;right:2px!important;top:2px!important;min-width:18px!important;height:18px!important;padding:0 5px!important;border-radius:999px!important;background:#ef4444!important;color:#fff!important;font-size:10px!important;font-weight:800!important;display:grid!important;place-items:center!important;border:2px solid #fff!important}
+
+body.approvedCustomerHomeActive .approvedHomeHero{position:relative!important;display:block!important;margin:0!important;padding:36px 28px 28px!important;border:0!important;border-radius:0 0 28px 28px!important;background:linear-gradient(155deg,#2f67ed 0%,#0f55cf 66%,#0b4dbd 100%)!important;color:#fff!important;box-shadow:none!important;overflow:hidden!important}
+body.approvedCustomerHomeActive .approvedHomeHero::after{content:''!important;position:absolute!important;width:165px!important;height:165px!important;right:-60px!important;top:-78px!important;border-radius:50%!important;background:rgba(255,255,255,.16)!important;opacity:1!important;pointer-events:none!important}
+body.approvedCustomerHomeActive .approvedHomeHero>div{position:relative!important;z-index:1!important}
+body.approvedCustomerHomeActive .approvedHomeHero small{display:block!important;margin:0 0 12px!important;color:#fff!important;opacity:.92!important;font-size:12px!important;font-weight:800!important;letter-spacing:.13em!important}
+body.approvedCustomerHomeActive .approvedHomeHero h1{margin:0 0 10px!important;max-width:none!important;color:#fff!important;font-size:clamp(35px,8vw,45px)!important;line-height:1.02!important;letter-spacing:-1.5px!important;font-weight:800!important}
+body.approvedCustomerHomeActive .approvedHomeHero p{margin:0!important;color:#fff!important;opacity:1!important;font-size:17px!important;line-height:1.55!important;font-weight:400!important}
+body.approvedCustomerHomeActive .approvedHomeHero p span{opacity:.95!important}
+body.approvedCustomerHomeActive .approvedCreateButton{position:relative!important;z-index:1!important;width:100%!important;min-width:0!important;min-height:60px!important;margin:28px 0 18px!important;border:0!important;border-radius:14px!important;background:#fff!important;color:#1454cc!important;box-shadow:0 8px 22px rgba(11,49,118,.16)!important;font-size:17px!important;font-weight:800!important;gap:10px!important}
+body.approvedCustomerHomeActive .approvedCreateButton:hover{background:#fff!important;color:#1454cc!important;transform:none!important}
+body.approvedCustomerHomeActive .approvedPlus{font-size:31px!important;line-height:1!important;font-weight:300!important;margin-top:-2px!important}
+body.approvedCustomerHomeActive .approvedRequestsLink{position:relative!important;z-index:1!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:18px!important;color:#fff!important;text-decoration:none!important;font-size:16px!important;font-weight:600!important;min-height:28px!important}
+
+body.approvedCustomerHomeActive .approvedServicesSection{margin:0!important;padding:28px 14px 0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3SectionHead{display:flex!important;align-items:center!important;justify-content:space-between!important;margin:0 0 15px!important;padding:0 2px!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3SectionHead>div{display:block!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3SectionHead h2{margin:0!important;color:#111827!important;font-size:21px!important;line-height:1.1!important;font-weight:800!important;letter-spacing:-.35px!important}
+body.approvedCustomerHomeActive .approvedViewAll{color:#2563eb!important;text-decoration:none!important;font-size:13px!important;font-weight:600!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceGrid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:11px!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile{position:relative!important;display:grid!important;grid-template-columns:48px minmax(0,1fr)!important;grid-template-rows:auto auto!important;column-gap:11px!important;row-gap:2px!important;align-items:center!important;justify-content:initial!important;min-height:84px!important;padding:12px 12px!important;border:1px solid #e1e6ef!important;border-radius:16px!important;background:#fff!important;color:#111827!important;box-shadow:0 1px 3px rgba(15,23,42,.025)!important;text-align:left!important;overflow:hidden!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile::before{content:''!important;grid-column:1!important;grid-row:1/3!important;width:44px!important;height:44px!important;border-radius:50%!important;background:#e6f0ff!important;align-self:center!important;justify-self:center!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile::after{display:none!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile .c3ServiceIcon{grid-column:1!important;grid-row:1/3!important;z-index:1!important;width:25px!important;height:25px!important;align-self:center!important;justify-self:center!important;color:#111827!important;stroke:currentColor!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile strong{grid-column:2!important;grid-row:1!important;align-self:end!important;padding:0!important;margin:0!important;color:#111827!important;font-size:14px!important;line-height:1.16!important;font-weight:800!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile .approvedServiceCopy{grid-column:2!important;grid-row:2!important;align-self:start!important;display:block!important;padding:0!important;margin:0!important;color:#667085!important;font-size:11px!important;line-height:1.25!important;font-weight:500!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile[data-approved-service='plumbing']::before{background:#def7e7!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile[data-approved-service='electrical']::before{background:#fff1c9!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile[data-approved-service='carpentry']::before{background:#ffe7d8!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile[data-approved-service='painting']::before{background:#eee5ff!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile[data-approved-service='cleaning']::before{background:#dff7f2!important}
+body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile:active{transform:scale(.985)!important;background:#f8fbff!important}
+
+body.approvedCustomerHomeActive .approvedOtherIssue{width:calc(100% - 28px)!important;margin:28px 14px 10px!important;min-height:68px!important;padding:11px 12px!important;display:grid!important;grid-template-columns:42px 1fr 34px!important;align-items:center!important;gap:10px!important;border:0!important;border-radius:14px!important;background:#eff5ff!important;color:#111827!important;text-align:left!important;box-shadow:none!important}
+body.approvedCustomerHomeActive .approvedOtherIcon{width:36px!important;height:36px!important;border-radius:10px!important;display:grid!important;place-items:center!important;color:#31435d!important;font-size:21px!important;background:transparent!important}
+body.approvedCustomerHomeActive .approvedOtherText{display:grid!important;gap:2px!important}
+body.approvedCustomerHomeActive .approvedOtherText strong{font-size:13px!important;font-weight:700!important;color:#111827!important}
+body.approvedCustomerHomeActive .approvedOtherText small{font-size:11px!important;color:#667085!important}
+body.approvedCustomerHomeActive .approvedOtherArrow{width:30px!important;height:30px!important;border-radius:50%!important;display:grid!important;place-items:center!important;background:#1459d9!important;color:#fff!important;font-size:25px!important;line-height:1!important}
+
+body.approvedCustomerHomeActive .approvedCustomerHome>.c3Notice{margin:14px!important;border-radius:14px!important}
+body.approvedCustomerHomeActive .approvedCustomerHome>.c3Section:not(.approvedServicesSection){margin:14px!important}
+
+body.approvedCustomerHomeActive>.topWorkspaceRoleLabel{display:none!important}
+
+@media(max-width:420px){
+  body.approvedCustomerHomeActive .approvedCustomerHeader{padding:0 18px!important}
+  body.approvedCustomerHomeActive .approvedCustomerHeader .globalMenuBrand{font-size:22px!important}
+  body.approvedCustomerHomeActive .approvedCustomerHeader .globalMenuBrandMark{width:36px!important;height:36px!important}
+  body.approvedCustomerHomeActive .approvedHomeHero{padding:32px 26px 26px!important}
+  body.approvedCustomerHomeActive .approvedHomeHero h1{font-size:36px!important}
+  body.approvedCustomerHomeActive .approvedHomeHero p{font-size:16px!important}
+  body.approvedCustomerHomeActive .approvedServicesSection{padding-left:12px!important;padding-right:12px!important}
+  body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceGrid{gap:9px!important}
+  body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile{grid-template-columns:43px minmax(0,1fr)!important;column-gap:8px!important;min-height:82px!important;padding:10px!important}
+  body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile::before{width:40px!important;height:40px!important}
+  body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile strong{font-size:13px!important}
+  body.approvedCustomerHomeActive .approvedServicesSection .c3ServiceTile .approvedServiceCopy{font-size:10px!important}
+  body.approvedCustomerHomeActive .approvedOtherIssue{width:calc(100% - 24px)!important;margin-left:12px!important;margin-right:12px!important}
+}
