@@ -74,12 +74,10 @@ export default function LoginPage(){
 
   void(async()=>{
    try{
-    // Restore a valid secure server session in the background. The sign-in form
-    // stays usable immediately, so a slow or broken session endpoint cannot freeze login.
-    const sessionResponse=await fetchWithTimeout('/api/auth/session',{retryAuth:false},3000);
-    if(!active||!sessionResponse.ok)return;
-
-    const profileResponse=await fetchWithTimeout('/api/user/profile',{},3000);
+    // A profile request is enough to prove the secure cookie session. apiFetch
+    // performs one serialized recovery attempt on 401, so probing /api/auth/session
+    // first only duplicates network work and can make the login screen feel stuck.
+    const profileResponse=await fetchWithTimeout('/api/user/profile',{},4500);
     if(!active||!profileResponse.ok)return;
 
     const payload=await profileResponse.json().catch(()=>({}));
@@ -150,18 +148,13 @@ export default function LoginPage(){
    const payload=await response.json().catch(()=>({}));
    if(!response.ok||!payload?.ok){setMessage(payload?.error||'Unable to sign in.');return;}
 
-   // The API sets authoritative HttpOnly cookies. Existing customer/provider screens
-   // still call Supabase Edge Functions directly with a browser access token, so keep
-   // that browser session synchronized before navigating. Without this handoff those
-   // screens immediately redirect the newly authenticated user back to /login.
+   // The login API already creates the authoritative HttpOnly cookie session.
+   // Keep the browser Supabase session synchronized only for legacy direct Edge
+   // Function callers, then navigate. The destination proxy is the authoritative
+   // post-login validation gate, so another /api/auth/session round-trip here is
+   // redundant and previously amplified slow-login/loop behavior.
    await syncBrowserSession(payload?.session as LoginSession|undefined);
    invalidateProfileCache();
-
-   // /api/auth/session can spend up to ~10 seconds validating the token and profile,
-   // so its verification timeout must be longer than either server-side fetch timeout.
-   const sessionCheck=await fetchWithTimeout('/api/auth/session',{retryAuth:false},12000);
-   if(!sessionCheck.ok)throw new Error('The login session could not be verified. Please try again.');
-
    await routeUser(payload?.profile as ExistingProfile|undefined);
   }catch(error){
    if(error instanceof DOMException&&error.name==='AbortError'){
