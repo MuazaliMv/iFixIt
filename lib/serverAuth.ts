@@ -21,7 +21,25 @@ export type ServerAuthResult={
  expiresIn:number;
 };
 
+type AmrEntry=string|{method?:unknown};
+
+function hasOtpAuthenticationMethod(token:string){
+ try{
+  const parts=token.split('.');
+  if(parts.length!==3)return false;
+  const encoded=parts[1].replace(/-/g,'+').replace(/_/g,'/');
+  const padded=encoded.padEnd(Math.ceil(encoded.length/4)*4,'=');
+  const payload=JSON.parse(atob(padded));
+  const amr=Array.isArray(payload?.amr)?payload.amr as AmrEntry[]:[];
+  return amr.some(entry=>{
+   if(typeof entry==='string')return entry.toLowerCase()==='otp';
+   return String(entry?.method||'').toLowerCase()==='otp';
+  });
+ }catch{return false;}
+}
+
 async function validateAccessToken(token:string){
+ if(!hasOtpAuthenticationMethod(token))return false;
  try{
   const response=await fetch(`${SUPABASE_URL}/auth/v1/user`,{
    headers:{apikey:SUPABASE_PUBLISHABLE_KEY,Authorization:`Bearer ${token}`},
@@ -41,17 +59,15 @@ async function refreshAccessToken(refreshToken:string):Promise<RefreshSession|nu
   });
   if(!response.ok)return null;
   const payload=await response.json().catch(()=>null);
-  return payload?.access_token?payload as RefreshSession:null;
+  if(!payload?.access_token||!hasOtpAuthenticationMethod(payload.access_token))return null;
+  return payload as RefreshSession;
  }catch{return null;}
 }
 
 export async function resolveServerAuth(request:NextRequest):Promise<ServerAuthResult|null>{
- const header=request.headers.get('authorization')||'';
- if(header.toLowerCase().startsWith('bearer ')){
-  const token=header.slice(7).trim();
-  if(token&&await validateAccessToken(token))return{authorization:`Bearer ${token}`,accessToken:token,refreshed:false,expiresIn:3600};
- }
-
+ // FixIt authentication is intentionally cookie-bound. A caller cannot promote an
+ // arbitrary Supabase bearer token into an application session. These cookies are
+ // issued by /api/auth/login only after successful OTP verification.
  const accessToken=request.cookies.get(ACCESS_COOKIE)?.value||'';
  const refreshToken=request.cookies.get(REFRESH_COOKIE)?.value||'';
  if(accessToken&&await validateAccessToken(accessToken))return{authorization:`Bearer ${accessToken}`,accessToken,refreshToken:refreshToken||undefined,refreshed:false,expiresIn:3600};
