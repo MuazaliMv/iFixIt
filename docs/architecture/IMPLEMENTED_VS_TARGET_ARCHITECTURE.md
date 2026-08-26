@@ -21,7 +21,7 @@
 | Auth sessions / attempts / security events | IMPLEMENTED FOUNDATION | `0002_auth_rbac.sql` |
 | Canonical Atolls / Islands | IMPLEMENTED FOUNDATION | `0001_core_domain.sql` |
 | Island aliases | IMPLEMENTED FOUNDATION | `0003_location_catalogue.sql` |
-| Category → Subcategory → Exact Service | IMPLEMENTED FOUNDATION | `0003_location_catalogue.sql` |
+| Top-level service groups | IMPLEMENTED | `0003_location_catalogue.sql` + `20260826_services_component_remove_subcategories.sql` |
 | FIXED_PRICE / DIAGNOSIS_REQUIRED metadata | IMPLEMENTED FOUNDATION | `0003_location_catalogue.sql` |
 | Provider profiles | IMPLEMENTED FOUNDATION | `0001_core_domain.sql` |
 | Legal registration vs operational base | IMPLEMENTED FOUNDATION | `0001_core_domain.sql` |

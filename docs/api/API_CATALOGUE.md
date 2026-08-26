@@ -60,10 +60,9 @@ The previous generic `/locations` marketplace contract is superseded by canonica
 
 ## 4. Service Catalogue — Foundation Implemented
 
-- `GET /service-categories`
-- `GET /service-subcategories?category_id=`
-- `GET /repair-services?subcategory_id=&q=`
-- `GET /repair-services/{service_id}`
+- `GET /service-categories` — top-level customer and provider service groups only
+
+Child service and exact-service selection endpoints are retired. Customers describe the required work in the request details instead.
 
 ---
 
@@ -341,11 +340,9 @@ Services:
 
 - `POST /admin/service-categories`
 - `PATCH /admin/service-categories/{id}`
-- `POST /admin/service-subcategories`
-- `PATCH /admin/service-subcategories/{id}`
-- `POST /admin/repair-services`
-- `PATCH /admin/repair-services/{id}`
-- `POST /admin/repair-services/{id}/archive`
+- `DELETE /admin/service-categories/{id}`
+
+Admin manages top-level service groups and their location availability. Child service management is retired.
 
 Canonical geography:
 

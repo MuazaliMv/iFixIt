@@ -12,7 +12,7 @@ const MESSAGE_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/request
 const MEDIA_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/completion-media';
 const CANCEL_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/customer-cancel-request';
 
-type RequestRow={id:string;ticket_number:string;service_name:string;service_subcategory_code?:string|null;service_location_text:string;preferred_date:string;problem_description:string;urgency?:string|null;customer_notes?:string|null;status:string;assigned_provider_label?:string|null;created_at:string;updated_at:string;accepted_at?:string|null;processing_at?:string|null;completed_at?:string|null};
+type RequestRow={id:string;ticket_number:string;service_name:string;service_location_text:string;preferred_date:string;problem_description:string;urgency?:string|null;customer_notes?:string|null;status:string;assigned_provider_label?:string|null;created_at:string;updated_at:string;accepted_at?:string|null;processing_at?:string|null;completed_at?:string|null};
 type MessageRow={id:string;sender_role:string;sender_label?:string|null;message_text:string;created_at:string};
 type Provider={userId:string;name:string;businessName?:string|null;profilePhotoUrl?:string|null;rating:number|null;reviewCount:number;completedJobs:number;verified:boolean;specialty:string[];qualityRating?:number|null;timeRating?:number|null;costRating?:number|null;rankingScore?:number|null;providerRank?:number|null;message?:string|null};
 type Inspection={preferred_slots:string[];scheduled_start?:string|null;duration_minutes?:number|null;status:string;provider_note?:string|null};

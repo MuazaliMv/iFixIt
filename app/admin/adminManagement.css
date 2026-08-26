@@ -45,10 +45,9 @@ body:has(.servicePanel) .adminManagementNav + .panel:not(.servicePanel){display:
 .serviceActions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px}
 .serviceActions button{min-height:38px;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;font-weight:750;font-size:12px;color:var(--text)}
 .serviceActions button:hover{border-color:#b9c7df;background:#f7faff}
-.serviceActions .subButton,.serviceActions .editButton{color:var(--brand)}
+.serviceActions .editButton{color:var(--brand)}
 .serviceActions .disableButton{color:#a14c00}
 .serviceActions .deleteButton{color:var(--danger)}
-.subPanel{border-radius:18px}
 
 @media(min-width:1050px){
  body:has(.adminManagementNav){background:#f7f9fc}

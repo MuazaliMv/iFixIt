@@ -89,13 +89,6 @@
 .c3Question h1{margin:var(--fx-space-sm) 0!important;font-size:var(--fx-font-h1)!important;line-height:1.2!important;letter-spacing:-.02em!important;}
 .c3Question p{max-width:680px;font-size:var(--fx-font-body-lg)!important;color:var(--fx-color-text-secondary)!important;}
 
-/* Subcategory chips */
-.c3Subchips{gap:var(--fx-space-sm)!important;padding:var(--fx-space-base) 0 var(--fx-space-xs)!important;scrollbar-width:none;}
-.c3Subchips::-webkit-scrollbar{display:none;}
-.c3Chip{min-height:40px!important;padding:8px 16px!important;border:1px solid var(--fx-color-border)!important;border-radius:999px!important;background:#fff!important;color:var(--fx-color-text)!important;font-size:14px!important;font-weight:600!important;}
-.c3Chip:hover{border-color:var(--fx-color-primary)!important;background:var(--fx-color-primary-soft)!important;}
-.c3Chip.selected{background:var(--fx-color-primary)!important;border-color:var(--fx-color-primary)!important;color:#fff!important;}
-
 /* Form layout */
 .c3Form{margin-top:var(--fx-space-xl)!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:var(--fx-space-base)!important;}
 .c3Field{gap:var(--fx-space-sm)!important;font-size:var(--fx-font-body-sm)!important;font-weight:700!important;color:var(--fx-color-text)!important;}

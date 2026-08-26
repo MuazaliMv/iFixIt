@@ -1,32 +1,24 @@
-.landingServiceCard{min-height:214px}
-.landingServiceCard .landingSubcategories{display:flex;flex-direction:row;flex-wrap:wrap;gap:7px;margin-top:auto;padding-top:16px}
-.landingSubcategory{display:inline-flex;align-items:center;min-height:30px;padding:0 10px;border:1px solid #dbe4f8;border-radius:9px;background:#fbfcff;color:#44516a;font-size:10px;font-weight:750;line-height:1;white-space:nowrap}
-.landingSubcategoryMore{background:#f3f6ff;color:#3157d5;border-color:#d5def8}
-.landingServiceCard:hover .landingSubcategory{border-color:#cbd7f6}
+.landingServiceCard{min-height:176px}
 
 @media(max-width:900px){
- .landingServiceCard{min-height:205px}
+ .landingServiceCard{min-height:168px}
 }
 
 @media(max-width:600px){
  .landingServices{padding-left:14px!important;padding-right:14px!important}
  .landingServices .landingSectionHead{margin-bottom:22px}
  .landingServiceGrid{grid-template-columns:1fr;gap:12px}
- .landingServiceCard{min-height:0;padding:15px;display:grid;grid-template-columns:52px minmax(0,1fr) 20px;grid-template-areas:"icon copy arrow" "subs subs subs";align-items:start;column-gap:12px;row-gap:12px;border-radius:18px;transform:none!important}
+ .landingServiceCard{min-height:0;padding:15px;display:grid;grid-template-columns:52px minmax(0,1fr) 20px;grid-template-areas:"icon copy arrow";align-items:start;column-gap:12px;border-radius:18px;transform:none!important}
  .landingServiceIcon{grid-area:icon;width:52px;height:52px;margin:0;font-size:22px;border-radius:14px}
- .landingServiceCard>div:not(.landingSubcategories){grid-area:copy;min-width:0;padding-top:2px}
+ .landingServiceCard>div{grid-area:copy;min-width:0;padding-top:2px}
  .landingServiceCard strong{font-size:16px;line-height:1.25}
  .landingServiceCard small{display:block;font-size:11px;line-height:1.4;margin-top:2px}
  .landingServiceCard>b{grid-area:arrow;position:static;align-self:start;justify-self:end;padding-top:3px;font-size:17px}
- .landingServiceCard .landingSubcategories{grid-area:subs;display:flex;flex-direction:row;flex-wrap:nowrap;gap:7px;margin:0;padding:0 0 2px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch}
- .landingServiceCard .landingSubcategories::-webkit-scrollbar{display:none}
- .landingSubcategory{flex:0 0 auto;min-height:32px;padding:0 11px;font-size:10px;scroll-snap-align:start}
- .landingDhivehi .landingServiceCard>div:not(.landingSubcategories){text-align:right}
+ .landingDhivehi .landingServiceCard>div{text-align:right}
 }
 
 @media(max-width:380px){
  .landingServiceCard{grid-template-columns:48px minmax(0,1fr) 18px;padding:13px;column-gap:10px}
  .landingServiceIcon{width:48px;height:48px}
  .landingServiceCard strong{font-size:15px}
- .landingSubcategory{min-height:30px;padding:0 9px}
 }
