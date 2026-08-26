@@ -1,0 +1,28 @@
+name: Apply Request Location Cleanup Once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-request-location-cleanup-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply request form cleanup
+        run: python scripts/cleanup_request_location.py
+      - name: Run tests
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/CustomerPortal.tsx app/page.tsx
+          git commit -m "Remove duplicate request location form"
+          git push
