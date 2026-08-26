@@ -1,6 +1,6 @@
 Trigger Railway deployment from the latest main head only.
-Updated: 2026-08-25T11:19:00+05:00
-Reason: force a fresh production deployment after deep deployment audit and ensure Railway builds the actual current main HEAD.
+Updated: 2026-08-26T12:55:00+05:00
+Reason: force production to deploy the latest customer Service Request Details usability improvements after the live site continued showing the older UI.
 
 Required production behavior:
 - Production source of truth is GitHub branch: main.
@@ -11,20 +11,14 @@ Required production behavior:
 - Railway must run the repository Dockerfile and start the Next.js server with npm start.
 
 Current target main HEAD at time of this trigger:
-- a1a54bcdef9028a72de3885af4d412bf05ad36fb
-- Includes the latest merged mobile profile save fix and prior iOS-style web-app usability changes.
-
-Deployment audit findings:
-- GitHub Build workflow for current main HEAD completed successfully.
-- npm install completed successfully.
-- npm run build completed successfully.
-- Dockerfile is valid for the Next.js production build and exposes port 3000.
-- railway.toml uses the Dockerfile builder and npm start.
-- The prior deployment trigger referenced an older main commit and has now been refreshed.
+- 4d20a302bccdf4b38af4c74e38c4d87ccf283a96
+- Adds the customer request Back to requests control and tabbed Overview / Activity / Messages UX.
+- Includes the compact request details redesign and collapsed customer-friendly activity timeline changes from the preceding commits.
 
 Expected production behavior:
 - Railway detects this new main commit and creates a fresh production deployment.
 - The deployment must use the newest GitHub main source, not a cached or older revision.
+- The live request details page must show the Back to requests button and tabs.
 - Existing Customer, Provider, and Admin functionality must remain unchanged.
 
-If the new Railway deployment succeeds but ifixmv.com is still unreachable, the remaining fault is outside the application codebase and must be corrected in Railway domain/DNS configuration.
+If the new Railway deployment succeeds but ifixmv.com still shows the previous request details UI, inspect Railway source commit, build cache, service branch selection, and production domain target before making further UI changes.
