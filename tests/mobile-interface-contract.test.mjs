@@ -4,6 +4,8 @@ import { access, readFile } from 'node:fs/promises';
 
 const layoutPath = new URL('../app/layout.tsx', import.meta.url);
 const contractPath = new URL('../app/mobile-interface-contract.css', import.meta.url);
+const shellPath = new URL('../app/global-shell.css', import.meta.url);
+const mobileNavPath = new URL('../app/MobileNav.tsx', import.meta.url);
 
 const retiredMobileLayers = [
   '../app/mobile-compliance-v2.css',
@@ -54,4 +56,21 @@ test('mobile contract protects touch, form, safe-area and overflow behavior', as
   assert.match(css, /\.messageComposer/);
   assert.match(css, /\.c3ReviewRow/);
   assert.match(css, /\.globalMenuSheet/);
+});
+
+test('global bottom navigation remains persistent during editing and keyboard states', async () => {
+  const [css, shell, mobileNav] = await Promise.all([
+    readFile(contractPath, 'utf8'),
+    readFile(shellPath, 'utf8'),
+    readFile(mobileNavPath, 'utf8'),
+  ]);
+  const hiddenNavigation = /html\.app-(?:editing|keyboard-open)[\s\S]{0,240}(?:\.mobileNav|\.iosTabBar)[\s\S]{0,240}(?:display:\s*none|visibility:\s*hidden|opacity:\s*0)/i;
+
+  assert.doesNotMatch(css, hiddenNavigation);
+  assert.doesNotMatch(shell, hiddenNavigation);
+  assert.doesNotMatch(mobileNav, /mobile-nav\.css/);
+  assert.match(
+    shell,
+    /body:has\(\.globalMenuHeaderWrap\)>\.iosTabBar\{[\s\S]*?position:fixed!important;[\s\S]*?bottom:0!important;[\s\S]*?z-index:2000!important;[\s\S]*?visibility:visible!important;[\s\S]*?opacity:1!important;/,
+  );
 });
