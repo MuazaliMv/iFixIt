@@ -5,7 +5,7 @@ const SUPABASE_KEY='sb_publishable_1sZEZgz9k2JACE_WzHtbCw_reiQEik6';
 
 async function readTable(path:string){
  const response=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
-  headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`},
+  headers:{apikey:SUPABASE_KEY},
   cache:'no-store',
   signal:AbortSignal.timeout(10000),
  });
