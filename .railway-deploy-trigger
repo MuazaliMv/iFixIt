@@ -1,6 +1,6 @@
 Trigger Railway deployment from the latest main head only.
-Updated: 2026-08-26T14:21:00+05:00
-Reason: deploy the new customer home usability screen after removing obsolete conflicting CSS layers.
+Updated: 2026-08-26T17:03:00+05:00
+Reason: deploy the owner-approved customer home screen matching the approved reference image.
 
 Required production behavior:
 - Production source of truth is GitHub branch: main.
@@ -10,13 +10,19 @@ Required production behavior:
 - ifixmv.com must point to the newest successful production deployment.
 - Railway must run the repository Dockerfile and start the Next.js server with npm start.
 
-Current target main HEAD at time of this trigger:
-- db148327457aac05bef0a790545ecaece164ebc7
-- Includes the new customer home usability CSS and removal of obsolete conflicting customer-home CSS files and imports.
+Current approved customer home behavior:
+- FixIt brand at left, centered Customer pill, notification bell at right.
+- Large blue hero with “FIXIT MALDIVES”, “Hello {name} 👋”, approved helper copy, white Create a request button, and View my requests link.
+- Popular Services section with two-column compact cards, colored circular icon backgrounds, and service subtitles.
+- Need something else helper card.
+- Existing fixed bottom navigation and request workflow remain functional.
+
+Current implementation commits include:
+- 28197eb0a5761280eea5637b9653d777bcdb6b32
+- c9ec131e6320c35d2f8a3b27838d15d084fe6b20
+- be6b2c90dcb78a5e23b00a7b67bb6a32b32594ec
 
 Expected production behavior:
-- Railway detects this new main commit and creates a fresh production deployment.
-- The live customer home screen must show the new usability model rather than the older conflicting layout.
-- Existing request wizard, provider assignment, messaging, cancellation rules, and global navigation must remain functional.
-
-If Railway completes successfully but ifixmv.com still shows the previous customer home UI, verify the Railway service source commit, branch selection, build cache, and production domain target.
+- Railway detects this main commit and creates a fresh production deployment.
+- The live customer home screen must match the approved “After (Improved)” visual model.
+- Existing authentication, request wizard, provider assignment, messaging, cancellation rules, and global navigation must remain functional.
