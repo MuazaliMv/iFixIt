@@ -1,6 +1,6 @@
 Trigger Railway deployment from the latest main head only.
-Updated: 2026-08-26T13:02:00+05:00
-Reason: deploy the approved customer Service Request Details mobile UI model shown to the project owner.
+Updated: 2026-08-26T14:21:00+05:00
+Reason: deploy the new customer home usability screen after removing obsolete conflicting CSS layers.
 
 Required production behavior:
 - Production source of truth is GitHub branch: main.
@@ -11,12 +11,12 @@ Required production behavior:
 - Railway must run the repository Dockerfile and start the Next.js server with npm start.
 
 Current target main HEAD at time of this trigger:
-- 4efd5dab70841e1965d135134746505b5f1929c6
-- Matches the approved mobile request detail model with Back to requests, Overview / Activity / Messages tabs, compact hero status, horizontal request progress, compact request detail rows, photos, and secondary cancel action.
+- db148327457aac05bef0a790545ecaece164ebc7
+- Includes the new customer home usability CSS and removal of obsolete conflicting customer-home CSS files and imports.
 
 Expected production behavior:
 - Railway detects this new main commit and creates a fresh production deployment.
-- The live Service Request Details screen must use the new approved mobile UI model.
-- Existing request workflow, provider assignment, messaging, cancellation rules, and global navigation must remain functional.
+- The live customer home screen must show the new usability model rather than the older conflicting layout.
+- Existing request wizard, provider assignment, messaging, cancellation rules, and global navigation must remain functional.
 
-If Railway completes successfully but ifixmv.com still shows the previous request details UI, verify the Railway service source commit, branch selection, build cache, and production domain target.
+If Railway completes successfully but ifixmv.com still shows the previous customer home UI, verify the Railway service source commit, branch selection, build cache, and production domain target.
