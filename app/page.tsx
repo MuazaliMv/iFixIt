@@ -4,38 +4,119 @@ import { useEffect, useState } from 'react';
 import './landing.css';
 import './landing-blue.css';
 
-type Lang='en'|'dv';
+type Lang = 'en' | 'dv';
 
-const copy={
- en:{
-  nav:['How it works','For providers'],signIn:'Sign in',request:'Request a service',eyebrow:'Maldives service marketplace',hero1:'Find trusted local help.',hero2:'Get it fixed.',heroText:'Find service providers across the Maldives for repairs, maintenance and everyday jobs — all from one simple place.',become:'Become a provider',trust:['Verified providers','Location matching','Ratings & reviews'],how:'HOW IFIX WORKS',howTitle:'From problem to solved, without the runaround.',howText:'One simple request puts you in touch with providers who can actually help.',trustTitle:'BUILT FOR TRUST',know:'Know who you’re hiring.',trustText:'iFix is built around verified provider profiles, clear service areas, ratings and transparent request tracking.',verify:'Provider verification',verifyText:'Designed to make trust visible',features:['Provider identity and business verification','Ratings from completed service requests','Location-based provider matching','Request status from start to completion'],forProviders:'FOR SERVICE PROVIDERS',providerTitle:'More local jobs. Less time looking for them.',providerText:'Join iFix as an individual professional or registered business. Set your services and locations, then receive requests that match what you do.',providerBullets:['Choose the services you provide','Set the locations you cover','Build your reputation with ratings'],join:'Join as a provider',ready:'READY WHEN YOU ARE',needFixed:'Need something fixed?',finalText:'Tell us what you need. We’ll help you find the right local provider.',footer:'Local services. One simple place.',rights:'All rights reserved.'},
- dv:{
-  nav:['ކިހިނެއް ކުރަނީ','ޕްރޮވައިޑަރުން'],signIn:'ސައިން އިން',request:'ޚިދުމަތެއް އެދޭ',eyebrow:'ދިވެހިރާއްޖޭގެ ޚިދުމަތް މާކެޓްޕްލޭސް',hero1:'އިތުބާރުހުރި ދިވެހި އެހީ ހޯދާ.',hero2:'މައްސަލަ ހައްލު ކުރާ.',heroText:'މަރާމާތު، މެއިންޓެނެންސް އަދި ދުވަހުން ދުވަހަށް ބޭނުންވާ މަސައްކަތްތަކަށް ދިވެހިރާއްޖޭގައި ޚިދުމަތްދޭ ފަރާތްތައް އެއް ތަނަކުން ހޯދާ.',become:'ޕްރޮވައިޑަރަކަށް ވާ',trust:['ވެރިފައިޑް ޕްރޮވައިޑަރުން','ތަނާ ގުޅޭ މެޗިންގ','ރޭޓިންގ އަދި ރިވިއު'],how:'IFIX ކިހިނެއް ކުރަނީ',howTitle:'މައްސަލައިން ހައްލަށް، ދަތިތަކެއް ނެތި.',howText:'އެއް ސާދާ ރިކުއެސްޓަކުން ތިބާއަށް އެހީވެދޭ ޕްރޮވައިޑަރުންނާ ގުޅުވައިދޭ.',trustTitle:'އިތުބާރަށް ބިނާކުރެވިފައި',know:'ތިބާ ހޮވަނީ ކާކުކަން ދަންނާ.',trustText:'iFix ބިނާކުރެވިފައިވަނީ ވެރިފައިޑް ޕްރޮވައިޑަރ ޕްރޮފައިލް، ސާފު ޚިދުމަތް ސަރަހައްދު، ރޭޓިންގ އަދި ރިކުއެސްޓް ޓްރެކިންގ މަތީގައެވެ.',verify:'ޕްރޮވައިޑަރ ވެރިފިކޭޝަން',verifyText:'އިތުބާރު ފެންނަ ގޮތަށް ހެދިފައި',features:['ޕްރޮވައިޑަރގެ އައިޑެންޓިޓީ އަދި ބިޒްނަސް ވެރިފިކޭޝަން','ނިމިފައިވާ ރިކުއެސްޓްތަކުން ރޭޓިންގ','ތަން ބަލައި ޕްރޮވައިޑަރ މެޗިންގ','ފެށުމުން ނިމުމަށް ރިކުއެސްޓް ސްޓޭޓަސް'],forProviders:'ޚިދުމަތްދޭ ފަރާތްތަކަށް',providerTitle:'ގިނަ ލޯކަލް މަސައްކަތް. ހޯދުމުގައި މަދު ވަގުތު.',providerText:'އިންޑިވިޖުއަލް ޕްރޮފެޝަނަލެއް ނުވަތަ ރަޖިސްޓަރޑް ބިޒްނަހަކަށް iFix އާ ގުޅޭ. ތިބާގެ ޚިދުމަތްތަކާ ތަންތަން ސެޓް ކޮށް، ތިބާ ކުރާ މަސައްކަތާ ގުޅޭ ރިކުއެސްޓްތައް ލިބޭ.',providerBullets:['ތިބާ ދޭ ޚިދުމަތްތައް ހޮވާ','ތިބާ ޚިދުމަތްދޭ ތަންތަން ސެޓް ކުރޭ','ރޭޓިންގތަކުން ތިބާގެ ރެޕިއުޓޭޝަން ބޮޑުކުރޭ'],join:'ޕްރޮވައިޑަރަކަށް ގުޅޭ',ready:'ތިބާ ތައްޔާރުވެގެން ހުންނަ އިރަށް',needFixed:'ކަމެއް ހައްދަން ބޭނުންތޯ؟',finalText:'ތިބާއަށް ބޭނުން ކަން ބުނެދޭ. މުނާސިބު ލޯކަލް ޕްރޮވައިޑަރެއް ހޯދުމަށް އެހީވެދޭނަން.',footer:'ލޯކަލް ޚިދުމަތް. އެއް ސާދާ ތަނެއް.',rights:'ހުރިހާ ޙައްޤެއް މަޙްފޫޒު.'}
+const copy = {
+  en: {
+    signIn: 'Sign in',
+    request: 'Request a service',
+    ready: 'READY WHEN YOU ARE',
+    needFixed: 'Need something fixed?',
+    heroText: 'Choose a service and we’ll connect you with a suitable local provider.',
+    how: 'HOW IT WORKS',
+    steps: [
+      ['01', 'Request', 'Tell us what you need.'],
+      ['02', 'Provider accepts', 'A suitable provider accepts the job.'],
+      ['03', 'Job completed', 'Track the request until the work is done.'],
+    ],
+    trust: 'VERIFIED PROVIDERS',
+    trustTitle: 'Service you can trust.',
+    trustText: 'Provider identity and business details are reviewed by iFix, with clear service areas and request tracking.',
+    trustPoints: ['Provider verification', 'Location-based matching', 'Request progress tracking'],
+    providerLink: 'Become a service provider',
+  },
+  dv: {
+    signIn: 'ސައިން އިން',
+    request: 'ޚިދުމަތެއް އެދޭ',
+    ready: 'ތިބާ ތައްޔާރުވެގެން ހުންނަ އިރަށް',
+    needFixed: 'ކަމެއް ހައްދަން ބޭނުންތޯ؟',
+    heroText: 'ޚިދުމަތެއް ހޮވާ. މުނާސިބު ލޯކަލް ޕްރޮވައިޑަރަކާ ގުޅުވައިދޭނަން.',
+    how: 'ކިހިނެއް ކުރަނީ',
+    steps: [
+      ['01', 'ރިކުއެސްޓް', 'ބޭނުން ޚިދުމަތް ބުނެދޭ.'],
+      ['02', 'ޕްރޮވައިޑަރ ޤަބޫލުކުރާ', 'މުނާސިބު ޕްރޮވައިޑަރެއް މަސައްކަތް ޤަބޫލުކުރާ.'],
+      ['03', 'މަސައްކަތް ނިމޭ', 'ނިމެންދެން ރިކުއެސްޓް ޓްރެކްކުރޭ.'],
+    ],
+    trust: 'ވެރިފައިޑް ޕްރޮވައިޑަރުން',
+    trustTitle: 'އިތުބާރާއެކު ޚިދުމަތް.',
+    trustText: 'ޕްރޮވައިޑަރގެ އައިޑެންޓިޓީ އަދި ބިޒްނަސް ތަފްޞީލު iFix އިން ބަލާ، ސާފު ޚިދުމަތް ސަރަހައްދާ ރިކުއެސްޓް ޓްރެކިންގ ދެއެވެ.',
+    trustPoints: ['ޕްރޮވައިޑަރ ވެރިފިކޭޝަން', 'ލޮކޭޝަން މެޗިންގ', 'ރިކުއެސްޓް ޕްރޮގްރެސް'],
+    providerLink: 'ޕްރޮވައިޑަރަކަށް ވާ',
+  },
 };
 
-const stepData={
- en:[['01','Tell us what you need','Choose the service, location and describe the job.'],['02','Get matched','iFix shares your request with suitable providers in your area.'],['03','Choose with confidence','Review provider details, responses and ratings before you decide.'],['04','Get it fixed','Confirm the provider, complete the work and leave a rating.']],
- dv:[['01','ބޭނުން ކަން ބުނެދޭ','ޚިދުމަތް އަދި ތަން ހޮވައި، މަސައްކަތް ތަފްޞީލު ކުރޭ.'],['02','މެޗް ކުރޭ','iFix އިން ތިބާގެ ސަރަހައްދުގައި ހުރި މުނާސިބު ޕްރޮވައިޑަރުންނާ ރިކުއެސްޓް ހިއްސާކުރާ.'],['03','އިތުބާރާއެކު ހޮވާ','ހޮވުމުގެ ކުރިން ޕްރޮވައިޑަރ ތަފްޞީލު، ޖަވާބު އަދި ރޭޓިންގ ބަލާ.'],['04','މަސައްކަތް ނިންމާ','ޕްރޮވައިޑަރ ކަށަވަރު ކޮށް، މަސައްކަތް ނިންމައި ރޭޓިންގެއް ދޭ.']]
-};
+export default function IndexPage() {
+  const [lang, setLang] = useState<Lang>('en');
 
-export default function IndexPage(){
- const[lang,setLang]=useState<Lang>('en');
- useEffect(()=>{try{const saved=localStorage.getItem('ifixmv-language');if(saved==='dv'||saved==='en')setLang(saved);}catch{}},[]);
- const change=(next:Lang)=>{setLang(next);try{localStorage.setItem('ifixmv-language',next);}catch{}};
- const t=copy[lang];const rtl=lang==='dv';
- return <div className={`landingPage${rtl?' landingDhivehi':''}`} dir={rtl?'rtl':'ltr'} lang={lang==='dv'?'dv':'en'}>
-  <header className="landingHeader">
-   <a className="landingBrand" href="/" aria-label="iFix Maldives home"><span className="landingBrandIcon">iF</span><span className="landingBrandText">iFix<span>Maldives</span></span></a>
-   <nav className="landingNav" aria-label="Primary navigation"><a href="#how-it-works">{t.nav[0]}</a><a href="#providers">{t.nav[1]}</a></nav>
-   <div className="landingHeaderActions"><div className="landingLanguage" role="group" aria-label="Language"><button type="button" className={lang==='en'?'active':''} onClick={()=>change('en')}>EN</button><button type="button" className={lang==='dv'?'active':''} onClick={()=>change('dv')}>ދިވެހި</button></div><a className="landingSignIn" href="/login">{t.signIn}</a><a className="landingHeaderCta" href="/login">{t.request}</a></div>
-  </header>
-  <main>
-   <section className="landingHero"><div className="landingHeroGlow"/><div className="landingHeroInner"><div className="landingHeroCopy"><div className="landingEyebrow"><span/>{t.eyebrow}</div><h1>{t.hero1}<br/><em>{t.hero2}</em></h1><p>{t.heroText}</p><div className="landingHeroActions"><a className="landingPrimary" href="/login">{t.request} <span>→</span></a><a className="landingSecondary" href="#providers">{t.become}</a></div><div className="landingTrustRow">{t.trust.map(x=><span key={x}><b>✓</b>{x}</span>)}</div></div></div></section>
-   <section className="landingHow" id="how-it-works"><div className="landingHowInner"><div className="landingSectionHead light"><div><small>{t.how}</small><h2>{t.howTitle}</h2></div><p>{t.howText}</p></div><div className="landingSteps">{stepData[lang].map(([n,title,text])=><div className="landingStep" key={n}><span>{n}</span><h3>{title}</h3><p>{text}</p></div>)}</div></div></section>
-   <section className="landingSection landingSafety"><div className="landingSafetyCard"><div className="landingSafetyVisual"><span className="landingShield">✓</span><div><strong>{t.verify}</strong><small>{t.verifyText}</small></div></div><div className="landingSafetyCopy"><small>{t.trustTitle}</small><h2>{t.know}</h2><p>{t.trustText}</p><div className="landingFeatureList">{t.features.map(x=><span key={x}><b>✓</b>{x}</span>)}</div></div></div></section>
-   <section className="landingProvider" id="providers"><div className="landingProviderInner"><div><small>{t.forProviders}</small><h2>{t.providerTitle}</h2><p>{t.providerText}</p><div className="landingProviderBullets">{t.providerBullets.map(x=><span key={x}>✓ {x}</span>)}</div><a className="landingProviderCta" href="/login">{t.join} <span>→</span></a></div><div className="landingProviderGraphic"><div className="landingProviderCard"><span>{lang==='dv'?'އާ ރިކުއެސްޓް':'New request'}</span><strong>{lang==='dv'?'އޭސީ ސާވިސް':'AC servicing'}</strong><small>Hulhumalé · Standard</small><b>{lang==='dv'?'މަސައްކަތް ބަލާ →':'View job →'}</b></div><div className="landingProviderCard second"><span>{lang==='dv'?'ނިމިފައި':'Completed'}</span><strong>{lang==='dv'?'ޕްލަމްބިންގ މަރާމާތު':'Plumbing repair'}</strong><small>Malé · ★ 5.0</small><b>{lang==='dv'?'ރަނގަޅު މަސައްކަތް':'Great work'}</b></div></div></div></section>
-   <section className="landingFinalCta"><div><small>{t.ready}</small><h2>{t.needFixed}</h2><p>{t.finalText}</p></div><a href="/login">{t.request} <span>→</span></a></section>
-  </main>
-  <footer className="landingFooter"><div className="landingFooterBrand"><span className="landingBrandIcon">iF</span><div><strong>iFix Maldives</strong><small>{t.footer}</small></div></div><div className="landingFooterLinks"><a href="#how-it-works">{t.nav[0]}</a><a href="#providers">{t.nav[1]}</a><a href="/login">{t.signIn}</a></div><small>© 2026 iFix Maldives. {t.rights}</small></footer>
- </div>;
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('ifixmv-language');
+      if (saved === 'dv' || saved === 'en') setLang(saved);
+    } catch {}
+  }, []);
+
+  const change = (next: Lang) => {
+    setLang(next);
+    try { localStorage.setItem('ifixmv-language', next); } catch {}
+  };
+
+  const t = copy[lang];
+  const rtl = lang === 'dv';
+
+  return (
+    <div className={`landingPage landingFocused${rtl ? ' landingDhivehi' : ''}`} dir={rtl ? 'rtl' : 'ltr'} lang={rtl ? 'dv' : 'en'}>
+      <header className="landingHeader">
+        <a className="landingBrand" href="/" aria-label="iFix Maldives home">
+          <span className="landingBrandIcon">iF</span>
+          <span className="landingBrandText">iFix<span>Maldives</span></span>
+        </a>
+        <div className="landingHeaderActions">
+          <div className="landingLanguage" role="group" aria-label="Language">
+            <button type="button" className={lang === 'en' ? 'active' : ''} onClick={() => change('en')}>EN</button>
+            <button type="button" className={lang === 'dv' ? 'active' : ''} onClick={() => change('dv')}>ދިވެހި</button>
+          </div>
+          <a className="landingSignIn" href="/login">{t.signIn}</a>
+        </div>
+      </header>
+
+      <main className="landingFocusedMain">
+        <section className="landingFinalCta landingFocusedHero">
+          <div>
+            <small>{t.ready}</small>
+            <h1>{t.needFixed}</h1>
+            <p>{t.heroText}</p>
+          </div>
+          <a href="/login">{t.request} <span>→</span></a>
+        </section>
+
+        <section className="landingFocusedSection" aria-labelledby="how-title">
+          <div className="landingFocusedHeading">
+            <small>{t.how}</small>
+            <h2 id="how-title">{rtl ? 'ރިކުއެސްޓުން ނިމުމަށް' : 'From request to completed.'}</h2>
+          </div>
+          <div className="landingSteps landingFocusedSteps">
+            {t.steps.map(([n, title, text]) => (
+              <div className="landingStep" key={n}>
+                <span>{n}</span>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="landingFocusedSection landingFocusedTrust">
+          <div className="landingSafetyCopy">
+            <small>{t.trust}</small>
+            <h2>{t.trustTitle}</h2>
+            <p>{t.trustText}</p>
+            <div className="landingFeatureList">
+              {t.trustPoints.map(point => <span key={point}><b>✓</b>{point}</span>)}
+            </div>
+          </div>
+          <a className="landingProviderTextLink" href="/provider/apply">{t.providerLink} <span>→</span></a>
+        </section>
+      </main>
+    </div>
+  );
 }
