@@ -38,6 +38,7 @@ import './ios-web-app.css';
 import './global-shell.css';
 import './request-wizard-smart-fix.css';
 import './customer-home-usability-v2.css';
+import './approved-customer-home.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
@@ -57,6 +58,7 @@ import RequestWizardSmartRuntime from './RequestWizardSmartRuntime';
 import WorkspaceThemeRuntime from './WorkspaceThemeRuntime';
 import ServerSessionSignOutSync from './ServerSessionSignOutSync';
 import IOSWebAppShell from './IOSWebAppShell';
+import ApprovedCustomerHomeRuntime from './ApprovedCustomerHomeRuntime';
 import ErrorRuntime from './ErrorRuntime';
 
 export const metadata: Metadata = {
@@ -99,6 +101,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <TopWorkspaceRoleLabel/>
         <GlobalCardPagination/>
         <MobileDateInputRuntime/>
+        <ApprovedCustomerHomeRuntime/>
         <ErrorRuntime/>
 
         <main id="main-content" className="globalMainWorkspace">
