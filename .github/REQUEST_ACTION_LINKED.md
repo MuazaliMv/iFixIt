@@ -1,0 +1,1 @@
+Request cards now route their Action/Continue/Open Details affordances to the full service request details route at /requests/{ticket}.
