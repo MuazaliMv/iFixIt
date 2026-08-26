@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 
 const read=path=>readFile(new URL(`../${path}`,import.meta.url),'utf8');
 
-// Request-specific address selection must not silently replace the user's profile default.
+// Current contract: request-specific address selection must not silently replace the user's profile default.
 test('Service Address send is gated by verified contact and an explicit selected address',async()=>{
  const source=await read('app/components/customer/RequestProfileCompletion.tsx');
  assert.match(source,/phone_confirmed_at/);
