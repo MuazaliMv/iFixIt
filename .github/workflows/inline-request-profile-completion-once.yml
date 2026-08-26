@@ -1,0 +1,68 @@
+name: Inline Request Profile Completion Once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/inline-request-profile-completion-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire profile completion into customer request wizard
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('app/CustomerPortal.tsx')
+          s=p.read_text()
+
+          import_anchor="import ServiceIcon from './components/customer/ServiceIcon';"
+          import_line="import RequestProfileCompletion from './components/customer/RequestProfileCompletion';"
+          if import_line not in s:
+              if import_anchor not in s:
+                  raise SystemExit('CustomerPortal import anchor not found')
+              s=s.replace(import_anchor,import_anchor+'\n'+import_line,1)
+
+          old_validate="function validateStep(current:Step){if(!profile)return'Please sign in first.';if(profileStatus&&!profileStatus.can_request)return'Complete the required profile fields first.';"
+          new_validate="function validateStep(current:Step,allowIncompleteProfile=false){if(!profile)return'Please sign in first.';if(!allowIncompleteProfile&&profileStatus&&!profileStatus.can_request)return'Complete the required profile fields first.';"
+          if old_validate in s:
+              s=s.replace(old_validate,new_validate,1)
+          elif new_validate not in s:
+              raise SystemExit('validateStep anchor not found')
+
+          old_submit="async function submitRequest(){const error=validateStep(5);"
+          new_submit="async function submitRequest(allowIncompleteProfile=false){const error=validateStep(5,allowIncompleteProfile);"
+          if old_submit in s:
+              s=s.replace(old_submit,new_submit,1)
+          elif new_submit not in s:
+              raise SystemExit('submitRequest anchor not found')
+
+          profile_status_anchor="async function loadProfileStatus(jwt:string){try{const r=await fetch(PROFILE_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${jwt}`},body:JSON.stringify({action:'status'})});const p=await r.json();if(r.ok)setProfileStatus(p);}catch{}}"
+          refresh_fn="async function refreshProfileCompletion(){const jwt=await token();const p=await loadAccountProfile();setProfile(p);if(p)await loadProfileStatus(jwt);}"
+          if refresh_fn not in s:
+              if profile_status_anchor not in s:
+                  raise SystemExit('loadProfileStatus anchor not found')
+              s=s.replace(profile_status_anchor,profile_status_anchor+'\n '+refresh_fn,1)
+
+          dock='<div className="c3ActionDock">'
+          inline="{step===5&&profileStatus&&!profileStatus.can_request?<RequestProfileCompletion onSaved={refreshProfileCompletion} onSaveAndSend={()=>void submitRequest(true)}/>:null}"
+          if inline not in s:
+              if dock not in s:
+                  raise SystemExit('Action dock anchor not found')
+              s=s.replace(dock,inline+dock,1)
+
+          p.write_text(s)
+          PY
+      - name: Verify request wizard regression tests
+        run: npm test
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/CustomerPortal.tsx
+          git commit -m "Complete customer profile inline before request submit"
+          git push
