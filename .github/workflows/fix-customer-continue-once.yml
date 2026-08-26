@@ -1,0 +1,51 @@
+name: Fix Customer Continue Once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-customer-continue-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix request wizard Continue gate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('app/CustomerPortal.tsx')
+          s=p.read_text()
+
+          old="function validateStep(current:Step,allowIncompleteProfile=false){if(!profile)return'Please sign in first.';if(!allowIncompleteProfile&&profileStatus&&!profileStatus.can_request)return'Complete the required profile fields first.';if(current>=1&&!serviceCode)return'Choose a service.';"
+          new="function validateStep(current:Step,allowIncompleteProfile=false){if(!allowIncompleteProfile&&profileStatus&&!profileStatus.can_request)return'Complete the required profile fields first.';if(current>=1&&!serviceCode)return'Choose a service.';"
+          if old not in s:
+              raise SystemExit('validateStep anchor not found')
+          s=s.replace(old,new,1)
+
+          old_btn="{step<5?<button className=\"c3Primary\" onClick={next}>{t('continue')}</button>:null}"
+          new_btn="{step<5?<button type=\"button\" className=\"c3Primary\" onClick={next}>{t('continue')}</button>:null}"
+          if old_btn not in s:
+              raise SystemExit('Continue button anchor not found')
+          s=s.replace(old_btn,new_btn,1)
+
+          old_back="<button className=\"c3Secondary\" onClick={back}>"
+          new_back="<button type=\"button\" className=\"c3Secondary\" onClick={back}>"
+          if old_back not in s:
+              raise SystemExit('Back button anchor not found')
+          s=s.replace(old_back,new_back,1)
+
+          p.write_text(s)
+          PY
+      - name: Run tests
+        run: npm test
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/CustomerPortal.tsx
+          git commit -m "Fix customer request Continue navigation"
+          git push
