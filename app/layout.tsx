@@ -38,6 +38,7 @@ import './mobile-section-pager.css';
 import './service-picker-ux.css';
 import './ios-web-app.css';
 import './global-shell.css';
+import './mobile-interface-contract.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
