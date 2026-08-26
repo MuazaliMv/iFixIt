@@ -1,10 +1,25 @@
 :root{--app-keyboard-inset:0px;--app-visual-viewport-height:100vh}
-html{scroll-padding-bottom:calc(var(--app-keyboard-inset) + 28px)}
+html{scroll-padding-bottom:calc(var(--app-keyboard-inset) + 28px);-webkit-text-size-adjust:100%}
 body{min-height:100dvh}
 input,textarea,select,[contenteditable="true"]{scroll-margin-top:96px;scroll-margin-bottom:120px}
 @supports(height:100dvh){.c3Page,.c4App,.c4Main{min-height:100dvh}}
 
 @media(max-width:900px){
+  /* Keep native mobile text metrics stable. iOS zoom/reflow on smaller control
+     text can visually separate the WebKit caret from the rendered value. */
+  input,textarea,select,[contenteditable="true"]{
+    font-size:16px!important;
+    line-height:1.25!important;
+    text-size-adjust:100%;
+    -webkit-text-size-adjust:100%;
+  }
+
+  input:focus,textarea:focus,select:focus,[contenteditable="true"]:focus{
+    transform:none!important;
+    translate:none!important;
+    scale:none!important;
+  }
+
   /* The focused control is the reliable signal. iOS 26/WebKit may report stale
      visualViewport geometry during keyboard animation, so do not depend on the
      calculated keyboard inset before protecting the field. */
@@ -25,6 +40,47 @@ input,textarea,select,[contenteditable="true"]{scroll-margin-top:96px;scroll-mar
 
   .c3Field:focus-within{position:relative;z-index:80;scroll-margin-top:96px;scroll-margin-bottom:160px}
   .c3Field input:focus,.c3Field textarea:focus,.c3Field select:focus{scroll-margin-top:96px;scroll-margin-bottom:160px}
+
+  /* Request profile/address form currently uses direct label > control markup.
+     Give it the same stable field geometry as the rest of the request wizard. */
+  .c3ProfileCompletion .c3Form>label{
+    display:grid;
+    gap:8px;
+    min-width:0;
+    color:#1d2939;
+    font-size:15px;
+    font-weight:750;
+  }
+  .c3ProfileCompletion .c3Form>label>input,
+  .c3ProfileCompletion .c3Form>label>select,
+  .c3ProfileCompletion .c3Form>label>textarea{
+    box-sizing:border-box;
+    width:100%;
+    min-width:0;
+    min-height:58px;
+    padding:14px 16px;
+    border:1px solid #d5d9e0;
+    border-radius:17px;
+    background:#fff;
+    color:#171a21;
+    font:inherit;
+    font-size:16px!important;
+    line-height:1.25!important;
+    vertical-align:middle;
+    box-shadow:none;
+    transform:none!important;
+  }
+  .c3ProfileCompletion .c3Form>label>textarea{
+    min-height:128px;
+    resize:vertical;
+  }
+  .c3ProfileCompletion .c3Form>label>input:focus,
+  .c3ProfileCompletion .c3Form>label>select:focus,
+  .c3ProfileCompletion .c3Form>label>textarea:focus{
+    outline:none;
+    border-color:#0071e3;
+    box-shadow:0 0 0 3px rgba(0,113,227,.12);
+  }
 }
 
 @media(max-width:900px) and (pointer:coarse){
