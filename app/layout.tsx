@@ -28,8 +28,6 @@ import './remove-save-draft.css';
 import './disable-request-urgency.css';
 import './mobile-viewport-hardening.css';
 import './mobile-keyboard-hardening.css';
-import './mobile-compliance-v2.css';
-import './mobile-compliance-v3.css';
 import './apple-request-wizard.css';
 import './apple-system.css';
 import './workspace-system.css';
