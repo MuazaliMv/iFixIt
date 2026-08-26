@@ -1,0 +1,39 @@
+name: Fix Inline Profile Final Step Once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-inline-profile-final-step-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Allow incomplete profile through wizard until final step
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('app/CustomerPortal.tsx')
+          s=p.read_text()
+          old="function next(){const error=validateStep(step);"
+          new="function next(){const error=validateStep(step,true);"
+          if old not in s:
+              if new in s:
+                  raise SystemExit('Already patched')
+              raise SystemExit('next() validation anchor not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Run tests
+        run: npm test
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/CustomerPortal.tsx
+          git commit -m "Show inline profile completion at final request step"
+          git push
