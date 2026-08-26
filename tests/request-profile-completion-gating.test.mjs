@@ -12,12 +12,13 @@ test('Service Address send is gated by verified contact and an explicit selected
  assert.match(source,/Use This Address & Continue/);
 });
 
-test('saved Service Addresses use canonical location ids instead of hidden profile-name matching',async()=>{
+test('saved Service Addresses use canonical location ids and authenticated location catalogue',async()=>{
  const source=await read('app/components/customer/RequestProfileCompletion.tsx');
  assert.match(source,/from\('user_service_addresses'\)/);
  assert.match(source,/service_atoll_id/);
  assert.match(source,/service_island_id/);
  assert.match(source,/default_service_address_id/);
+ assert.match(source,/\/api\/locations\/catalogue/);
  assert.doesNotMatch(source,/normalize\('NFKD'\)/);
 });
 
@@ -28,6 +29,7 @@ test('Service Address remediation is inline and supports multiple saved addresse
  assert.match(source,/Island \/ City/);
  assert.match(source,/<label>Name<input/);
  assert.match(source,/Access instructions/);
+ assert.match(source,/Enter the missing Service Address records/);
  assert.doesNotMatch(source,/href="\/profile#service-addresses"/);
 });
 
