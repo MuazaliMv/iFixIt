@@ -3,8 +3,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 
-const LOCATION_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/location-catalogue';
-
 type Atoll={id:string;code?:string|null;display_name:string;sort_order?:number};
 type Island={id:string;atoll_id:string;display_name:string;sort_order?:number};
 type ProfilePayload={profile?:{full_name?:string|null}|null;error?:string};
@@ -28,7 +26,7 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
   const[label,setLabel]=useState('Home');const[house,setHouse]=useState('');const[road,setRoad]=useState('');const[atollId,setAtollId]=useState('');const[islandId,setIslandId]=useState('');const[postalCode,setPostalCode]=useState('');const[accessInstructions,setAccessInstructions]=useState('');
   const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[message,setMessage]=useState('');
 
-  const filteredIslands=useMemo(()=>islands.filter(i=>!atollId||i.atoll_id===atollId),[islands,atollId]);
+  const filteredIslands=useMemo(()=>islands.filter(i=>i.atoll_id===atollId),[islands,atollId]);
   const selectedAtoll=useMemo(()=>atolls.find(a=>a.id===atollId)||null,[atolls,atollId]);
   const selectedIsland=useMemo(()=>islands.find(i=>i.id===islandId&&i.atoll_id===atollId)||null,[islands,islandId,atollId]);
   const selectedAddress=useMemo(()=>addresses.find(a=>a.id===selectedId)||null,[addresses,selectedId]);
@@ -43,19 +41,20 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
       const {data}=await supabase.auth.getSession();const session=data.session;
       if(!session)throw new Error('Your login session has expired. Please sign in again.');
       if(!session.user.phone||!session.user.phone_confirmed_at)throw new Error('OTP verification is required before you can create a service request. Please sign in again and verify your phone.');
-      const [profileResponse,locationResponse,addressResponse]=await Promise.all([
+      const [profileResponse,atollResponse,islandResponse,addressResponse]=await Promise.all([
         fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store'}),
-        fetch(LOCATION_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:'{}'}),
+        supabase.from('atolls').select('id,code,display_name,sort_order').eq('is_active',true).eq('is_serviceable',true).order('sort_order',{ascending:true}).order('display_name',{ascending:true}),
+        supabase.from('islands').select('id,atoll_id,display_name,sort_order').eq('is_active',true).eq('is_serviceable',true).order('sort_order',{ascending:true}).order('display_name',{ascending:true}),
         supabase.from('user_service_addresses').select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').eq('is_active',true).order('is_default',{ascending:false}).order('updated_at',{ascending:false})
       ]);
       const profilePayload=await profileResponse.json().catch(()=>({})) as ProfilePayload;
-      const locationPayload=await locationResponse.json().catch(()=>({})) as {atolls?:Atoll[];islands?:Island[];error?:string};
       if(!profileResponse.ok||!profilePayload.profile)throw new Error(profilePayload.error||'Unable to load profile.');
-      if(!locationResponse.ok)throw new Error(locationPayload.error||'Unable to load location selections.');
+      if(atollResponse.error)throw new Error(`Unable to load Atoll / Region selections: ${atollResponse.error.message}`);
+      if(islandResponse.error)throw new Error(`Unable to load Island / City selections: ${islandResponse.error.message}`);
       if(addressResponse.error)throw addressResponse.error;
       const nextAddresses=(addressResponse.data||[]) as ServiceAddress[];
       const nextSelected=(preferredId&&nextAddresses.some(a=>a.id===preferredId)?preferredId:'')||nextAddresses.find(a=>a.is_default)?.id||nextAddresses[0]?.id||'';
-      setUserId(session.user.id);setPhone(localPhone(session.user.phone));setName(profilePayload.profile.full_name||'');setAtolls(locationPayload.atolls||[]);setIslands(locationPayload.islands||[]);setAddresses(nextAddresses);setSelectedId(nextSelected);
+      setUserId(session.user.id);setPhone(localPhone(session.user.phone));setName(profilePayload.profile.full_name||'');setAtolls((atollResponse.data||[]) as Atoll[]);setIslands((islandResponse.data||[]) as Island[]);setAddresses(nextAddresses);setSelectedId(nextSelected);
       if(!nextAddresses.length)setShowForm(true);
       if(!(profilePayload.profile.full_name||'').trim())setMessage('Add your full name in Profile before sending the request.');
     }catch(error){setMessage(error instanceof Error?error.message:'Unable to load Service Addresses.');}
