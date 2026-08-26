@@ -88,16 +88,16 @@ export default function ProfileDataEntryCard(){
   }
 
   return <section className="profileSection" style={{marginBottom:16}}>
-    <div className="profileSectionHeader"><div><h3>Update profile information</h3><p className="sectionLead">Enter the customer details used for service requests.</p></div></div>
+    <div className="profileSectionHeader"><div><h3>Update profile information</h3><p className="sectionLead">Profile details are optional and can be completed later.</p></div></div>
     <form className="authForm" onSubmit={save}>
-      <label>Full name<input value={name} onChange={e=>setName(e.target.value)} autoComplete="name" required disabled={loading}/></label>
+      <label>Full name<input value={name} onChange={e=>setName(e.target.value)} autoComplete="name" placeholder="Full name (optional)" disabled={loading}/></label>
       <label>Email address<input value={email} readOnly disabled/></label>
       <label>Phone number<input type="tel" inputMode="numeric" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,7))} placeholder="7XXXXXX" maxLength={7} autoComplete="tel" disabled={loading}/></label>
-      <label>House / building<input value={line1} onChange={e=>setLine1(e.target.value)} placeholder="House or building name" autoComplete="address-line1" disabled={loading}/></label>
-      <label>Street / additional address<input value={line2} onChange={e=>setLine2(e.target.value)} placeholder="Street, floor or apartment" autoComplete="address-line2" disabled={loading}/></label>
-      <label>City / island<input value={city} onChange={e=>setCity(e.target.value)} placeholder="Island or city" autoComplete="address-level2" disabled={loading}/></label>
-      <label>Atoll / region<input value={stateRegion} onChange={e=>setStateRegion(e.target.value)} placeholder="Atoll or region" autoComplete="address-level1" disabled={loading}/></label>
-      <label>Postal code<input value={postalCode} onChange={e=>setPostalCode(e.target.value)} placeholder="Postal code" autoComplete="postal-code" disabled={loading}/></label>
+      <label>House / building<input value={line1} onChange={e=>setLine1(e.target.value)} placeholder="House or building name (optional)" autoComplete="address-line1" disabled={loading}/></label>
+      <label>Street / additional address<input value={line2} onChange={e=>setLine2(e.target.value)} placeholder="Street, floor or apartment (optional)" autoComplete="address-line2" disabled={loading}/></label>
+      <label>City / island<input value={city} onChange={e=>setCity(e.target.value)} placeholder="Island or city (optional)" autoComplete="address-level2" disabled={loading}/></label>
+      <label>Atoll / region<input value={stateRegion} onChange={e=>setStateRegion(e.target.value)} placeholder="Atoll or region (optional)" autoComplete="address-level1" disabled={loading}/></label>
+      <label>Postal code<input value={postalCode} onChange={e=>setPostalCode(e.target.value)} placeholder="Postal code (optional)" autoComplete="postal-code" disabled={loading}/></label>
       <label>Country<input value="Maldives" readOnly disabled/></label>
       <button className="primary" type="submit" disabled={loading||saving}>{saving?'Saving…':'Save Profile Information'}</button>
     </form>
