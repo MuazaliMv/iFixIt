@@ -130,7 +130,7 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
     </>:null}
 
     {showForm?<form className="c3Form" onSubmit={saveAddress}>
-      <label>Address label<input value={label} onChange={e=>setLabel(e.target.value)} placeholder="Home, Office, Apartment" disabled={saving} required/></label>
+      <label>Name<input value={label} onChange={e=>setLabel(e.target.value)} placeholder="Home, Office, Apartment" disabled={saving} required/></label>
       <label>House / Apartment<input value={house} onChange={e=>setHouse(e.target.value)} autoComplete="address-line1" placeholder="House or apartment" disabled={saving} required/></label>
       <label>Road<input value={road} onChange={e=>setRoad(e.target.value)} autoComplete="address-line2" placeholder="Road / street" disabled={saving} required/></label>
       <label>Atoll / Region<select value={atollId} onChange={e=>{setAtollId(e.target.value);setIslandId('');}} disabled={saving} required><option value="">Select Atoll / Region</option>{atolls.map(a=><option key={a.id} value={a.id}>{a.display_name}</option>)}</select></label>
