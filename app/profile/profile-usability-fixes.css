@@ -1,6 +1,57 @@
 #profile,#service-addresses{scroll-margin-top:104px}
 .profileSettingsNav a{min-height:48px}
 .profileSettingsNav a:focus-visible,.profileFormActions button:focus-visible,.profileSecurityActions a:focus-visible,.profileSecurityActions button:focus-visible{outline:3px solid var(--ws-primary-ring,rgba(37,99,235,.18));outline-offset:2px}
-.profileFormGrid input{font-size:16px}
+.profileFormGrid input,.profileFormGrid select{font-size:16px}
 .profileSaveState{min-height:18px}
-@media(max-width:640px){.profileSettingsNav a{min-height:48px}.profileRedesignTitlebar>div>p:last-child{line-height:1.5}.profileFormActions{gap:8px}}
+
+/* Approved profile UX refresh */
+.profileEditForm{display:flex;flex-direction:column}
+.profileEditCard,.profileSecurityCard{border-color:#e2e8f0;box-shadow:0 10px 28px rgba(15,23,42,.055)}
+.profileFormSection h3{letter-spacing:0;text-transform:none;font-size:17px;color:#172033;margin-bottom:16px}
+.profileFormSection#service-addresses{margin-top:28px;padding-top:24px;border-top:1px solid #e8edf5}
+.profileFormSection#service-addresses h3{font-size:20px;font-weight:800;display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.profileFormSection#service-addresses h3::before{content:'⌖';display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:#eef4ff;color:#3564e8;font-size:20px;font-weight:800}
+.profileFormSection#service-addresses h3::after{content:'This is where we’ll provide services';display:block;font-size:13px;font-weight:500;color:#718096;margin-left:2px}
+.profileFormGrid label{gap:8px;font-size:13px;font-weight:750;color:#344054}
+.profileFormGrid input,.profileFormGrid select{height:52px;border-radius:15px;background:#fff!important;border:1px solid #dce4ef;padding-left:14px;padding-right:14px;color:#172033}
+.profileFormGrid input:focus,.profileFormGrid select:focus{border-color:#3564e8!important;box-shadow:0 0 0 3px rgba(53,100,232,.12)!important;outline:none}
+.profileFormActions{order:5;display:grid;grid-template-columns:1fr;margin-top:14px;padding-top:0;border-top:0}
+.profileFormActions button.primary{width:100%;min-height:54px;border-radius:14px;font-size:16px;font-weight:800;box-shadow:0 8px 18px rgba(53,100,232,.18)}
+.profileFormActions::after{content:'🔒  Your profile information is stored securely.';display:block;text-align:center;color:#7b8799;font-size:11px;font-weight:600;margin-top:10px}
+.profileSaveState{order:4;margin-top:18px!important;padding:14px 15px;border:1px solid #b9dec9;border-radius:14px;background:#f4fbf7;color:#27824d!important;font-size:13px!important;font-weight:800!important;text-align:left!important;line-height:1.35}
+.profileSaveState::before{content:'✓';display:inline-grid;place-items:center;width:22px;height:22px;margin-right:8px;border:2px solid currentColor;border-radius:50%;font-size:12px;vertical-align:middle}
+.profileSecurityCard{align-items:center;padding-top:22px;padding-bottom:22px}
+.profileSecurityCard .profileInfoEyebrow{margin-bottom:5px;color:#78859a}
+.profileSecurityCard h2{font-size:20px}
+.profileContentColumn>.profileSecurityCard:nth-of-type(2)>div:first-child>p:last-child{font-size:0;margin-top:5px}
+.profileContentColumn>.profileSecurityCard:nth-of-type(2)>div:first-child>p:last-child::after{content:'Manage your account securely';font-size:12px;color:#718096}
+.profileSecurityActions a[href='/provider/subscription']{display:none!important}
+.profileContentColumn>.profileSecurityCard:nth-of-type(2) .profileSecurityActions button{border:1px solid #e2e8f0;background:#fff;color:#172033;min-height:50px;border-radius:14px;font-weight:800}
+
+@media(max-width:900px){
+ .profileSidebar{display:none}
+ .profileRedesignShell{max-width:760px}
+ .profileRedesignGrid{display:block}
+ .profileContentColumn{gap:16px}
+}
+
+@media(max-width:640px){
+ .profileRedesignPage{padding:18px 12px calc(108px + env(safe-area-inset-bottom));background:#f5f7fb}
+ .profileSettingsNav a{min-height:48px}
+ .profileRedesignTitlebar>div>p:last-child{line-height:1.5}
+ .profileEditCard,.profileInfoCard,.profileSecurityCard{border-radius:22px;box-shadow:0 6px 18px rgba(15,23,42,.045)}
+ .profileEditForm{padding:20px 18px}
+ .profileFormSection+.profileFormSection{margin-top:24px}
+ .profileFormSection#service-addresses{padding-top:22px}
+ .profileFormSection#service-addresses h3{flex-wrap:wrap}
+ .profileFormSection#service-addresses h3::after{width:100%;margin-left:44px;margin-top:-6px}
+ .profileFormGrid{gap:15px}
+ .profileFormGrid input,.profileFormGrid select{min-height:54px}
+ .profilePhoneField b{min-height:54px}
+ .profileFormActions{gap:8px}
+ .profileFormActions button.primary{min-height:56px;font-size:17px}
+ .profileSaveState{margin-top:16px!important;padding:14px}
+ .profileSecurityCard{gap:16px;padding:20px 18px}
+ .profileSecurityActions{width:100%;display:grid;grid-template-columns:1fr}
+ .profileContentColumn>.profileSecurityCard:nth-of-type(2) .profileSecurityActions button{width:100%;min-height:52px}
+}
