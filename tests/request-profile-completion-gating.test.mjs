@@ -9,7 +9,7 @@ test('Service Address send is gated by verified contact and an explicit selected
  assert.match(source,/phone_confirmed_at/);
  assert.match(source,/disabled=\{saving\|\|!validContact\|\|!selectedAddress\}/);
  assert.match(source,/Choose a Service Address before continuing/);
- assert.match(source,/Use This Service Address & Send Request/);
+ assert.match(source,/Use This Address & Continue/);
 });
 
 test('saved Service Addresses use canonical location ids instead of hidden profile-name matching',async()=>{
@@ -26,18 +26,20 @@ test('Service Address remediation is inline and supports multiple saved addresse
  assert.match(source,/\+ Add New Service Address/);
  assert.match(source,/Atoll \/ Region/);
  assert.match(source,/Island \/ City/);
- assert.match(source,/Address label/);
+ assert.match(source,/<label>Name<input/);
  assert.match(source,/Access instructions/);
  assert.doesNotMatch(source,/href="\/profile#service-addresses"/);
 });
 
-test('Service Address manager supports create edit soft-remove and default selection',async()=>{
+test('Service Address manager supports create edit soft-remove and explicit default selection',async()=>{
  const source=await read('app/components/customer/RequestProfileCompletion.tsx');
  assert.match(source,/insert\(\{\.\.\.payload,user_id:userId,is_default:false\}\)/);
  assert.match(source,/update\(payload\)\.eq\('id',editingId\)/);
  assert.match(source,/update\(\{is_active:false,is_default:false\}\)/);
  assert.match(source,/update\(\{is_default:false\}\)/);
  assert.match(source,/update\(\{is_default:true\}\)/);
- assert.match(source,/await makeDefault\(selectedAddress\)/);
+ assert.match(source,/setSelectedId\(address\.id\)/);
+ assert.match(source,/Your profile default has not changed/);
+ assert.match(source,/if\(address\.is_default&&remaining\.length\)await makeDefault\(remaining\[0\]\)/);
  assert.match(source,/onSaveAndSend\(\)/);
 });
