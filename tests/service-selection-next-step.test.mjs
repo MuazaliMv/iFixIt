@@ -7,7 +7,8 @@ const read=path=>readFile(new URL(`../${path}`,import.meta.url),'utf8');
 test('service selection runtime blocks Continue until selection is complete',async()=>{
  const runtime=await read('app/ACCustomIssueRuntime.tsx');
  assert.match(runtime,/const selectionComplete=Boolean\(category\).*children\.length===0.*Boolean\(subcategory\)/s);
- assert.match(runtime,/button\.disabled=!ready/);
+ assert.match(runtime,/const disabled=!ready/);
+ assert.match(runtime,/if\(button\.disabled!==disabled\)button\.disabled=disabled/);
  assert.match(runtime,/Select a service to continue\./);
  assert.match(runtime,/Now select a service type\./);
  assert.match(runtime,/Selection complete\. Continue to choose the service location\./);
