@@ -15,12 +15,13 @@ test('Service Address send is gated by verified contact and an explicit selected
 
 test('saved Service Addresses use canonical location ids and authenticated location catalogue',async()=>{
  const source=await read('app/components/customer/RequestProfileCompletion.tsx');
- assert.match(source,/from\('user_service_addresses'\)/);
+ assert.match(source,/\/api\/user\/service-addresses/);
  assert.match(source,/service_atoll_id/);
  assert.match(source,/service_island_id/);
- assert.match(source,/default_service_address_id/);
  assert.match(source,/\/api\/locations\/catalogue/);
  assert.doesNotMatch(source,/normalize\('NFKD'\)/);
+ assert.doesNotMatch(source,/supabase\.from\('user_service_addresses'\)/);
+ assert.doesNotMatch(source,/supabase\.from\('auth_profiles'\)/);
 });
 
 test('Service Address remediation is inline and supports multiple saved addresses',async()=>{
@@ -33,15 +34,29 @@ test('Service Address remediation is inline and supports multiple saved addresse
  assert.doesNotMatch(source,/href="\/profile#service-addresses"/);
 });
 
-test('Service Address manager supports create edit soft-remove and explicit default selection',async()=>{
+test('Service Address browser mutations are routed through authenticated server API',async()=>{
  const source=await read('app/components/customer/RequestProfileCompletion.tsx');
- assert.match(source,/insert\(\{\.\.\.payload,user_id:userId,is_default:false\}\)/);
- assert.match(source,/update\(payload\)\.eq\('id',editingId\)/);
- assert.match(source,/update\(\{is_active:false,is_default:false\}\)/);
- assert.match(source,/update\(\{is_default:false\}\)/);
- assert.match(source,/update\(\{is_default:true\}\)/);
+ const route=await read('app/api/user/service-addresses/route.ts');
+ assert.match(source,/addressApi\('GET'\)/);
+ assert.match(source,/addressApi\(editingId\?'PATCH':'POST'/);
+ assert.match(source,/addressApi\('DELETE',\{id:address\.id\}\)/);
+ assert.match(source,/action:'set_default'/);
  assert.match(source,/setSelectedId\(address\.id\)/);
  assert.match(source,/Your profile default has not changed/);
- assert.match(source,/if\(address\.is_default&&remaining\.length\)await makeDefault\(remaining\[0\]\)/);
  assert.match(source,/onSaveAndSend\(\)/);
+ assert.match(route,/resolveServerAuth\(request\)/);
+ assert.match(route,/SUPABASE_SERVICE_ROLE_KEY/);
+ assert.match(route,/eq\('user_id',user\.id\)/);
+ assert.match(route,/sameOrigin\(request\)/);
+});
+
+test('deleting a default Service Address promotes the next address or clears profile state',async()=>{
+ const route=await read('app/api/user/service-addresses/route.ts');
+ assert.match(route,/if\(existing\.data\.is_default\)/);
+ assert.match(route,/if\(next\.data\)await setDefault\(client,user\.id,next\.data\.id\);else await syncDefault\(client,user\.id,null\)/);
+ assert.match(route,/default_service_address_id:null/);
+ assert.match(route,/primary_atoll_id:null/);
+ assert.match(route,/primary_island_id:null/);
+ assert.match(route,/default_island_id:null/);
+ assert.match(route,/is_active:false,is_default:false/);
 });
