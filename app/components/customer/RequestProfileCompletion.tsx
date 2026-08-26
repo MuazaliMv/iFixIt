@@ -23,7 +23,7 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
   const[addresses,setAddresses]=useState<ServiceAddress[]>([]);const[selectedId,setSelectedId]=useState('');
   const[atolls,setAtolls]=useState<Atoll[]>([]);const[islands,setIslands]=useState<Island[]>([]);
   const[editingId,setEditingId]=useState<string|null>(null);const[showForm,setShowForm]=useState(false);
-  const[label,setLabel]=useState('Home');const[house,setHouse]=useState('');const[road,setRoad]=useState('');const[atollId,setAtollId]=useState('');const[islandId,setIslandId]=useState('');const[postalCode,setPostalCode]=useState('');const[accessInstructions,setAccessInstructions]=useState('');
+  const[label,setLabel]=useState('');const[house,setHouse]=useState('');const[road,setRoad]=useState('');const[atollId,setAtollId]=useState('');const[islandId,setIslandId]=useState('');const[postalCode,setPostalCode]=useState('');const[accessInstructions,setAccessInstructions]=useState('');
   const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[message,setMessage]=useState('');
 
   const filteredIslands=useMemo(()=>islands.filter(i=>i.atoll_id===atollId),[islands,atollId]);
@@ -61,7 +61,7 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
     finally{setLoading(false);}
   }
 
-  function resetForm(){setEditingId(null);setLabel('Home');setHouse('');setRoad('');setAtollId('');setIslandId('');setPostalCode('');setAccessInstructions('');}
+  function resetForm(){setEditingId(null);setLabel('');setHouse('');setRoad('');setAtollId('');setIslandId('');setPostalCode('');setAccessInstructions('');}
   function addNew(){resetForm();setShowForm(true);setMessage('');}
   function editAddress(address:ServiceAddress){setEditingId(address.id);setLabel(address.label);setHouse(address.address_line1);setRoad(address.address_line2||'');setAtollId(address.service_atoll_id||'');setIslandId(address.service_island_id||'');setPostalCode(address.postal_code||'');setAccessInstructions(address.access_instructions||'');setShowForm(true);setMessage('');}
   function cancelForm(){resetForm();setShowForm(false);setMessage('');}
@@ -143,7 +143,7 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
       <label>Island / City<select value={islandId} onChange={e=>setIslandId(e.target.value)} disabled={saving||!atollId} required><option value="">Select Island / City</option>{filteredIslands.map(i=><option key={i.id} value={i.id}>{i.display_name}</option>)}</select></label>
       <label>Postal code <span style={{fontWeight:500}}>optional</span><input value={postalCode} onChange={e=>setPostalCode(e.target.value)} inputMode="numeric" autoComplete="postal-code" placeholder="Postal code" disabled={saving}/></label>
       <label className="full">Access instructions <span style={{fontWeight:500}}>optional</span><textarea value={accessInstructions} onChange={e=>setAccessInstructions(e.target.value)} placeholder="Floor, unit, gate or directions for the provider" disabled={saving}/></label>
-      <div style={{display:'flex',gap:8}}>{addresses.length?<button className="c3Secondary" type="button" onClick={cancelForm} disabled={saving}>Cancel</button>:null}<button className="c3Primary" type="submit" disabled={saving||!validForm}>{saving?'Saving…':editingId?'Update Service Address':'Save & Use This Address'}</button></div>
+      <div style={{display:'flex',gap:8}}>{addresses.length?<button className="c3Secondary" type="button" onClick={cancelForm} disabled={saving}>Cancel</button>:null}<button className="c3Primary" type="submit" disabled={saving||!validForm}>{saving?'Saving…':editingId?'Update Service Address':'Save Service Address'}</button></div>
     </form>:null}
     {message?<p className="c3Notice" role="status">{message}</p>:null}
   </section>;
