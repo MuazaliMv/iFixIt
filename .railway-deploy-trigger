@@ -1,6 +1,6 @@
 Trigger Railway deployment from the latest main head only.
-Updated: 2026-08-26T12:55:00+05:00
-Reason: force production to deploy the latest customer Service Request Details usability improvements after the live site continued showing the older UI.
+Updated: 2026-08-26T13:02:00+05:00
+Reason: deploy the approved customer Service Request Details mobile UI model shown to the project owner.
 
 Required production behavior:
 - Production source of truth is GitHub branch: main.
@@ -11,14 +11,12 @@ Required production behavior:
 - Railway must run the repository Dockerfile and start the Next.js server with npm start.
 
 Current target main HEAD at time of this trigger:
-- 4d20a302bccdf4b38af4c74e38c4d87ccf283a96
-- Adds the customer request Back to requests control and tabbed Overview / Activity / Messages UX.
-- Includes the compact request details redesign and collapsed customer-friendly activity timeline changes from the preceding commits.
+- 4efd5dab70841e1965d135134746505b5f1929c6
+- Matches the approved mobile request detail model with Back to requests, Overview / Activity / Messages tabs, compact hero status, horizontal request progress, compact request detail rows, photos, and secondary cancel action.
 
 Expected production behavior:
 - Railway detects this new main commit and creates a fresh production deployment.
-- The deployment must use the newest GitHub main source, not a cached or older revision.
-- The live request details page must show the Back to requests button and tabs.
-- Existing Customer, Provider, and Admin functionality must remain unchanged.
+- The live Service Request Details screen must use the new approved mobile UI model.
+- Existing request workflow, provider assignment, messaging, cancellation rules, and global navigation must remain functional.
 
-If the new Railway deployment succeeds but ifixmv.com still shows the previous request details UI, inspect Railway source commit, build cache, service branch selection, and production domain target before making further UI changes.
+If Railway completes successfully but ifixmv.com still shows the previous request details UI, verify the Railway service source commit, branch selection, build cache, and production domain target.
