@@ -40,13 +40,13 @@ async function providerRequest(){
 }
 
 async function locationLookupRequest(){
- const[{data:atollData,error:atollError},{data:islandData,error:islandError},{data:wardData,error:wardError}]=await Promise.all([
-  supabase.from('atolls').select('id,official_name,display_name,sort_order').eq('is_active',true).order('sort_order').order('display_name'),
-  supabase.from('islands').select('id,atoll_id,canonical_name,display_name,location_kind,sort_order').eq('is_active',true).order('sort_order').order('display_name'),
-  supabase.from('location_units').select('id,island_id,display_name,canonical_name,sort_order').eq('is_active',true).eq('unit_type','WARD').order('sort_order').order('display_name')
- ]);
- if(atollError)throw atollError;if(islandError)throw islandError;if(wardError)throw wardError;
- return {atolls:(atollData||[]) as AtollLookup[],islands:(islandData||[]) as IslandLookup[],wards:(wardData||[]) as WardLookup[]};
+ const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);
+ try{
+  const response=await fetch('/api/locations/catalog',{credentials:'same-origin',cache:'no-store',signal:controller.signal});
+  const payload=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(payload?.error||'Unable to load Maldives location list.');
+  return {atolls:(Array.isArray(payload?.atolls)?payload.atolls:[]) as AtollLookup[],islands:(Array.isArray(payload?.islands)?payload.islands:[]) as IslandLookup[],wards:(Array.isArray(payload?.wards)?payload.wards:[]) as WardLookup[]};
+ }finally{clearTimeout(timer);}
 }
 
 export default function ProfileClient(){
