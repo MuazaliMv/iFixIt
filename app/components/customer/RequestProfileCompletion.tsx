@@ -68,12 +68,16 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
 
   async function makeDefault(address:ServiceAddress){
     if(!userId)throw new Error('Your login session has expired.');
+    const verifiedLocalPhone=localPhone(phone);
+    const phoneE164=verifiedLocalPhone?`+960${verifiedLocalPhone}`:null;
     const clear=await supabase.from('user_service_addresses').update({is_default:false}).eq('user_id',userId).eq('is_default',true);
     if(clear.error)throw clear.error;
     const chosen=await supabase.from('user_service_addresses').update({is_default:true}).eq('id',address.id).eq('user_id',userId);
     if(chosen.error)throw chosen.error;
-    const profile=await supabase.from('auth_profiles').update({default_service_address_id:address.id,address_line1:address.address_line1,address_line2:address.address_line2||null,city:address.city||null,state_region:address.state_region||null,postal_code:address.postal_code||null,country:address.country||'Maldives',primary_atoll_id:address.service_atoll_id||null,primary_island_id:address.service_island_id||null,primary_location_unit_id:address.service_location_unit_id||null}).eq('user_id',userId);
+    const profile=await supabase.from('auth_profiles').update({default_service_address_id:address.id,address_line1:address.address_line1,address_line2:address.address_line2||null,city:address.city||null,state_region:address.state_region||null,postal_code:address.postal_code||null,country:address.country||'Maldives',primary_atoll_id:address.service_atoll_id||null,primary_island_id:address.service_island_id||null,primary_location_unit_id:address.service_location_unit_id||null,phone_number:phoneE164,is_phone_verified:Boolean(phoneE164)}).eq('user_id',userId);
     if(profile.error)throw profile.error;
+    const legacyUser=await supabase.from('users').update({address_line1:address.address_line1,address_line2:address.address_line2||null,city:address.city||null,state_region:address.state_region||null,postal_code:address.postal_code||null,country:address.country||'Maldives',default_island_id:address.service_island_id||null,phone_e164:phoneE164,phone_number:verifiedLocalPhone||null,is_phone_verified:Boolean(phoneE164)}).eq('id',userId);
+    if(legacyUser.error)throw legacyUser.error;
     window.dispatchEvent(new Event('fixit:profile-updated'));await onSaved();
   }
 
@@ -88,11 +92,14 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
     if(!userId){setMessage('Your login session has expired.');return;}
     setSaving(true);setMessage(editingId?'Updating Service Address…':'Saving Service Address…');
     try{
+      const existingAddress=editingId?addresses.find(a=>a.id===editingId):null;
       const payload={label:label.trim(),address_line1:house.trim(),address_line2:road.trim(),city:selectedIsland!.display_name,state_region:selectedAtoll!.display_name,postal_code:postalCode.trim()||null,country:'Maldives',service_atoll_id:selectedAtoll!.id,service_island_id:selectedIsland!.id,service_location_unit_id:null,access_instructions:accessInstructions.trim()||null,is_active:true};
       let saved:ServiceAddress;
       if(editingId){const result=await supabase.from('user_service_addresses').update(payload).eq('id',editingId).eq('user_id',userId).select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').single();if(result.error)throw result.error;saved=result.data as ServiceAddress;}
       else{const result=await supabase.from('user_service_addresses').insert({...payload,user_id:userId,is_default:false}).select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').single();if(result.error)throw result.error;saved=result.data as ServiceAddress;}
-      await makeDefault(saved);resetForm();setShowForm(false);await load(saved.id);setMessage('Service Address saved and selected.');
+      const shouldBeDefault=addresses.length===0||Boolean(existingAddress?.is_default);
+      if(shouldBeDefault)await makeDefault(saved);
+      resetForm();setShowForm(false);await load(saved.id);setMessage(shouldBeDefault?'Service Address saved as your default profile address.':'Service Address saved. Select it to make it your default profile address.');
     }catch(error){setMessage(error instanceof Error?error.message:'Unable to save Service Address.');}
     finally{setSaving(false);}
   }
