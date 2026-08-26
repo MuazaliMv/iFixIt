@@ -1,0 +1,38 @@
+name: Fix Request Profile Submit Gate Once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-profile-submit-gate-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make profile completion the authoritative final gate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('app/CustomerPortal.tsx')
+          s=p.read_text()
+
+          old="{step===5&&profileStatus&&!profileStatus.can_request?<RequestProfileCompletion onSaved={refreshProfileCompletion} onSaveAndSend={()=>void submitRequest(true)}/>:null}<div className=\"c3ActionDock\"><div className=\"c3ActionInner\"><button className=\"c3Secondary\" onClick={back}>{step===1?t('cancel'):t('back')}</button>{step<5?<button className=\"c3Primary\" onClick={next}>{t('continue')}</button>:<button className=\"c3Primary\" onClick={()=>void submitRequest()} disabled={submitting||uploading}>{submitting?t('sending'):t('sendRequest')}</button>}</div></div>"
+          new="{step===5?<RequestProfileCompletion onSaved={refreshProfileCompletion} onSaveAndSend={()=>void submitRequest(true)}/>:null}<div className=\"c3ActionDock\"><div className=\"c3ActionInner\"><button className=\"c3Secondary\" onClick={back}>{step===1?t('cancel'):t('back')}</button>{step<5?<button className=\"c3Primary\" onClick={next}>{t('continue')}</button>:null}</div></div>"
+          if old not in s:
+              raise SystemExit('Final-step profile gate anchor not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Run tests
+        run: npm test
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/CustomerPortal.tsx
+          git commit -m "Use profile completion as final request gate"
+          git push
