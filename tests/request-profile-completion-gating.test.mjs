@@ -26,6 +26,8 @@ test('Service Address remediation is inline and supports multiple saved addresse
  assert.match(source,/\+ Add New Service Address/);
  assert.match(source,/Atoll \/ Region/);
  assert.match(source,/Island \/ City/);
+ assert.match(source,/Full name/);
+ assert.match(source,/Name for this Service Address/);
  assert.match(source,/Address label/);
  assert.match(source,/Access instructions/);
  assert.doesNotMatch(source,/href="\/profile#service-addresses"/);
@@ -39,5 +41,7 @@ test('Service Address manager supports create edit soft-remove and default selec
  assert.match(source,/update\(\{is_default:false\}\)/);
  assert.match(source,/update\(\{is_default:true\}\)/);
  assert.match(source,/await makeDefault\(selectedAddress\)/);
+ assert.match(source,/update\(\{full_name:name\.trim\(\)\}\)\.eq\('user_id',userId\)/);
+ assert.match(source,/<span>Name<\/span><strong>\{name\|\|'Missing'\}<\/strong>/);
  assert.match(source,/onSaveAndSend\(\)/);
 });

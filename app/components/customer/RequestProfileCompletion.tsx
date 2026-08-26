@@ -33,7 +33,7 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
   const selectedIsland=useMemo(()=>islands.find(i=>i.id===islandId&&i.atoll_id===atollId)||null,[islands,islandId,atollId]);
   const selectedAddress=useMemo(()=>addresses.find(a=>a.id===selectedId)||null,[addresses,selectedId]);
   const validContact=name.trim().length>=2&&localPhone(phone).length===7;
-  const validForm=Boolean(label.trim()&&house.trim()&&road.trim()&&selectedAtoll&&selectedIsland);
+  const validForm=Boolean(name.trim().length>=2&&label.trim()&&house.trim()&&road.trim()&&selectedAtoll&&selectedIsland);
 
   useEffect(()=>{void load();},[]);
 
@@ -85,10 +85,12 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
 
   async function saveAddress(event:FormEvent){
     event.preventDefault();if(saving)return;
-    if(!validForm){setMessage('Complete the Service Address before saving.');return;}
+    if(!validForm){setMessage(name.trim().length<2?'Enter the name for this Service Address.':'Complete the Service Address before saving.');return;}
     if(!userId){setMessage('Your login session has expired.');return;}
     setSaving(true);setMessage(editingId?'Updating Service Address…':'Saving Service Address…');
     try{
+      const profileResult=await supabase.from('auth_profiles').update({full_name:name.trim()}).eq('user_id',userId);
+      if(profileResult.error)throw profileResult.error;
       const payload={label:label.trim(),address_line1:house.trim(),address_line2:road.trim(),city:selectedIsland!.display_name,state_region:selectedAtoll!.display_name,postal_code:postalCode.trim()||null,country:'Maldives',service_atoll_id:selectedAtoll!.id,service_island_id:selectedIsland!.id,service_location_unit_id:null,access_instructions:accessInstructions.trim()||null,is_active:true};
       let saved:ServiceAddress;
       if(editingId){const result=await supabase.from('user_service_addresses').update(payload).eq('id',editingId).eq('user_id',userId).select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').single();if(result.error)throw result.error;saved=result.data as ServiceAddress;}
@@ -123,13 +125,14 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
     <div className="c3Review" style={{marginBottom:16}}><div className="c3ReviewRow"><span>Verified phone</span><strong>{phone?`+960 ${phone}`:'Not verified'}</strong></div><div className="c3ReviewRow"><span>Name</span><strong>{name||'Missing'}</strong></div></div>
 
     {!showForm?<>
-      {addresses.length?<div className="c3Urgency" style={{marginBottom:16}}>{addresses.map(address=><div key={address.id} style={{display:'grid',gap:8}}><button type="button" className={selectedId===address.id?'selected':''} onClick={()=>void selectAddress(address)} disabled={saving}><strong>{address.label}{address.is_default?' · Default':''}</strong><span>{addressText(address)}</span></button><div style={{display:'flex',gap:8}}><button type="button" className="c3Secondary" onClick={()=>editAddress(address)} disabled={saving}>Edit</button><button type="button" className="c3Secondary" onClick={()=>void removeAddress(address)} disabled={saving}>Remove</button></div></div>)}</div>:<div className="c3Notice">No saved Service Address yet.</div>}
+      {addresses.length?<div className="c3Urgency" style={{marginBottom:16}}>{addresses.map(address=><div key={address.id} style={{display:'grid',gap:8}}><button type="button" className={selectedId===address.id?'selected':''} onClick={()=>void selectAddress(address)} disabled={saving}><strong>{address.label}{address.is_default?' · Default':''}</strong><span>{name?`${name} · ${addressText(address)}`:addressText(address)}</span></button><div style={{display:'flex',gap:8}}><button type="button" className="c3Secondary" onClick={()=>editAddress(address)} disabled={saving}>Edit</button><button type="button" className="c3Secondary" onClick={()=>void removeAddress(address)} disabled={saving}>Remove</button></div></div>)}</div>:<div className="c3Notice">No saved Service Address yet.</div>}
       <button type="button" className="c3Secondary" onClick={addNew} disabled={saving}>+ Add New Service Address</button>
-      {selectedAddress?<div className="c3Review" style={{marginTop:16}}><div className="c3ReviewRow"><span>Selected Service Address</span><strong>{selectedAddress.label}</strong></div><div className="c3ReviewRow"><span>Location</span><strong>{addressText(selectedAddress)}</strong></div>{selectedAddress.postal_code?<div className="c3ReviewRow"><span>Postal code</span><strong>{selectedAddress.postal_code}</strong></div>:null}{selectedAddress.access_instructions?<div className="c3ReviewRow"><span>Access notes</span><strong>{selectedAddress.access_instructions}</strong></div>:null}</div>:null}
+      {selectedAddress?<div className="c3Review" style={{marginTop:16}}><div className="c3ReviewRow"><span>Selected Service Address</span><strong>{selectedAddress.label}</strong></div><div className="c3ReviewRow"><span>Name</span><strong>{name||'Missing'}</strong></div><div className="c3ReviewRow"><span>Location</span><strong>{addressText(selectedAddress)}</strong></div>{selectedAddress.postal_code?<div className="c3ReviewRow"><span>Postal code</span><strong>{selectedAddress.postal_code}</strong></div>:null}{selectedAddress.access_instructions?<div className="c3ReviewRow"><span>Access notes</span><strong>{selectedAddress.access_instructions}</strong></div>:null}</div>:null}
       <button className="c3Primary" type="button" onClick={()=>void continueRequest()} disabled={saving||!validContact||!selectedAddress} style={{marginTop:16}}>{saving?'Confirming…':'Use This Service Address & Send Request'}</button>
     </>:null}
 
     {showForm?<form className="c3Form" onSubmit={saveAddress}>
+      <label>Full name<input value={name} onChange={e=>{setName(e.target.value);setMessage('');}} autoComplete="name" placeholder="Name for this Service Address" disabled={saving} required/></label>
       <label>Address label<input value={label} onChange={e=>setLabel(e.target.value)} placeholder="Home, Office, Apartment" disabled={saving} required/></label>
       <label>House / Apartment<input value={house} onChange={e=>setHouse(e.target.value)} autoComplete="address-line1" placeholder="House or apartment" disabled={saving} required/></label>
       <label>Road<input value={road} onChange={e=>setRoad(e.target.value)} autoComplete="address-line2" placeholder="Road / street" disabled={saving} required/></label>
