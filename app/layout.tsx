@@ -39,6 +39,7 @@ import './service-picker-ux.css';
 import './ios-web-app.css';
 import './global-shell.css';
 import './request-wizard-smart-fix.css';
+import './customer-home-usability-v2.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
