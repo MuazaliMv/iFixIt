@@ -1,0 +1,265 @@
+/*
+  Final mobile interface contract.
+  This file is intentionally imported LAST from app/layout.tsx.
+  It provides a stable, mobile-first safety layer over legacy screen-specific CSS.
+*/
+
+:root {
+  --mobile-content-max: 720px;
+  --mobile-page-gutter: clamp(12px, 4vw, 20px);
+  --mobile-card-radius: 16px;
+  --mobile-control-height: 48px;
+  --mobile-touch-min: 44px;
+}
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+button,
+[role='button'],
+a.button,
+input[type='button'],
+input[type='submit'],
+input[type='reset'] {
+  min-height: var(--mobile-touch-min);
+}
+
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+/* Prevent iOS Safari from zooming the page when a form control receives focus. */
+@media (max-width: 960px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Main mobile content contract: one readable column with no accidental horizontal scroll. */
+@media (max-width: 960px) {
+  .globalMainWorkspace,
+  .globalMainWorkspace > *,
+  .globalMainWorkspace main,
+  .globalMainWorkspace section,
+  .globalMainWorkspace article,
+  .globalMainWorkspace form {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .globalMainWorkspace > * {
+    overflow-wrap: anywhere;
+  }
+
+  /* Common page/container patterns across customer, provider and admin screens. */
+  .globalMainWorkspace :is(
+      .page,
+      .pageShell,
+      .pageContainer,
+      .content,
+      .contentWrap,
+      .contentContainer,
+      .workspace,
+      .workspaceContent,
+      .adminPage,
+      .adminContent,
+      .providerModePage,
+      .providerPage,
+      .customerPage,
+      .c3Page,
+      .c4App,
+      .requestAppPanel,
+      .profilePage,
+      .messagesPage,
+      .notificationsPage
+    ) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* Keep primary screen content comfortably inside phone edges. */
+  .globalMainWorkspace :is(
+      .pageInner,
+      .pageContent,
+      .contentInner,
+      .workspaceInner,
+      .adminInner,
+      .providerInner,
+      .customerInner,
+      .requestContent,
+      .profileContent
+    ) {
+    width: min(100%, var(--mobile-content-max));
+    max-width: var(--mobile-content-max);
+    margin-inline: auto;
+    padding-inline: var(--mobile-page-gutter);
+  }
+
+  /* Any fixed-width desktop grid becomes a single readable column on phones. */
+  .globalMainWorkspace :is(
+      .grid,
+      .cardGrid,
+      .cardsGrid,
+      .serviceGrid,
+      .servicesGrid,
+      .statsGrid,
+      .summaryGrid,
+      .formGrid,
+      .detailGrid,
+      .adminGrid,
+      .providerGrid,
+      .requestGrid
+    ) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    min-width: 0 !important;
+  }
+
+  /* Forms must never render side-by-side fields too narrowly on phones. */
+  .globalMainWorkspace form :is(.row, .formRow, .fieldRow, .form-row, .fieldsRow) {
+    min-width: 0;
+  }
+
+  .globalMainWorkspace form :is(.row, .formRow, .fieldRow, .form-row, .fieldsRow) > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .globalMainWorkspace :is(input, select, textarea, button) {
+    max-width: 100%;
+  }
+
+  .globalMainWorkspace :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+    width: 100%;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  /* Desktop tables remain usable through contained horizontal scrolling, never page scrolling. */
+  .globalMainWorkspace :is(.tableWrap, .tableWrapper, .tableContainer, .dataTableWrap, .responsiveTable) {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .globalMainWorkspace table {
+    max-width: none;
+  }
+
+  /* Dialogs and sheets always fit inside the visual viewport and remain scrollable. */
+  .globalMainWorkspace :is([role='dialog'], .modal, .dialog, .sheet, .drawer),
+  body > :is([role='dialog'], .modal, .dialog, .sheet, .drawer) {
+    max-width: calc(100vw - (var(--mobile-page-gutter) * 2)) !important;
+    max-height: calc(100dvh - var(--global-top-nav-height, 0px) - var(--global-bottom-nav-height, 0px) - 24px) !important;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Cards should shrink with the viewport instead of forcing overflow. */
+  .globalMainWorkspace :is(
+      .card,
+      .panel,
+      .tile,
+      .serviceCard,
+      .requestCard,
+      .jobCard,
+      .profileCard,
+      .adminCard,
+      .c3WizardCard
+    ) {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Long IDs, request numbers, addresses and emails may wrap rather than overflow. */
+  .globalMainWorkspace :is(p, span, div, td, th, dd, dt, label, a, strong, small) {
+    overflow-wrap: anywhere;
+  }
+
+  /* Sticky/fixed action bars must sit above the persistent bottom navigation. */
+  .globalMainWorkspace :is(.stickyActions, .actionDock, .actionBar, .mobileActions, .formActions) {
+    max-width: calc(100vw - 24px);
+  }
+
+  /* Give long screens breathing room above the permanent tab bar. */
+  .globalMainWorkspace :is(.page, .pageShell, .pageContainer, .providerModePage, .c3Page, .requestAppPanel) {
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Preserve readable tap targets in dense admin/provider screens. */
+  .globalMainWorkspace :is(button, [role='button'], a.action, a.btn, .button, .btn) {
+    min-height: var(--mobile-touch-min);
+  }
+
+  /* Avoid clipped focus rings near phone edges. */
+  :focus-visible {
+    scroll-margin-block: 96px;
+  }
+}
+
+/* Extra-small phones: reduce decorative spacing before reducing touch target size. */
+@media (max-width: 380px) {
+  :root {
+    --mobile-page-gutter: 12px;
+  }
+
+  .globalMainWorkspace :is(.card, .panel, .tile, .serviceCard, .requestCard, .jobCard, .profileCard, .adminCard) {
+    border-radius: min(var(--mobile-card-radius), 14px);
+  }
+}
+
+/* Landscape phones: keep the shell compact while protecting content from the navigation bars. */
+@media (max-width: 960px) and (orientation: landscape) and (max-height: 520px) {
+  :root {
+    --global-top-nav-height: calc(60px + env(safe-area-inset-top, 0px));
+  }
+
+  body:has(.globalMenuHeaderWrap) > .globalMainWorkspace {
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* Accessibility: respect reduced-motion preferences globally. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
