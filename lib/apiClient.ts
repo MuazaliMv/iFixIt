@@ -3,16 +3,14 @@
 /**
  * Shared browser API client for authenticated FixIt requests.
  *
- * Authentication stays server-managed:
+ * Authentication is server-managed and OTP-backed:
  * Browser -> HttpOnly auth cookies -> same-origin Next.js API -> Supabase.
  *
- * A temporary compatibility bridge is kept for older browser Supabase sessions
- * so an already signed-in user can move between Customer and Provider workspaces
- * without being sent back to the login screen.
+ * Browser Supabase sessions are never promoted into application sessions.
  */
 
 type ApiRequestInit = RequestInit & {
-  /** Disable the one-time session recovery/retry for endpoints that should not retry. */
+  /** Disable the one-time session validation/retry for endpoints that should not retry. */
   retryAuth?: boolean;
 };
 
@@ -77,49 +75,12 @@ async function checkServerSession(): Promise<boolean> {
     .catch(() => false);
 }
 
-async function syncLegacyBrowserSession(): Promise<boolean> {
-  try {
-    const { supabase } = await import('./supabaseClient');
-    const { data, error } = await supabase.auth.getSession();
-    if (error || !data.session?.access_token) return false;
-
-    const response = await fetch('/api/auth/session/sync', {
-      method: 'POST',
-      credentials: 'same-origin',
-      cache: 'no-store',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        accessToken: data.session.access_token,
-        refreshToken: data.session.refresh_token || null,
-        expiresIn: data.session.expires_in || 3600,
-      }),
-    });
-
-    return response.ok;
-  } catch {
-    return false;
-  }
-}
-
 async function recoverSession(): Promise<boolean> {
   if (!sessionRecovery) {
-    sessionRecovery = (async () => {
-      // First let the secure HttpOnly-cookie session validate/refresh itself.
-      if (await checkServerSession()) return true;
-
-      // Older signed-in screens may still have a valid Supabase browser session.
-      // Re-hydrate the secure same-origin cookie session once, then continue
-      // without asking the user to sign in again.
-      if (!(await syncLegacyBrowserSession())) return false;
-      return checkServerSession();
-    })().finally(() => {
+    sessionRecovery = checkServerSession().finally(() => {
       sessionRecovery = null;
     });
   }
-
   return sessionRecovery;
 }
 
@@ -157,7 +118,7 @@ async function performApiFetch(input: RequestInfo | URL, init: ApiRequestInit = 
 
 /**
  * Fetch a same-origin API route using the secure HttpOnly-cookie session.
- * A 401 gets one serialized session-recovery attempt, then the request is retried once.
+ * A 401 gets one serialized server-session validation attempt, then the request is retried once.
  * Profile reads are additionally deduplicated and briefly cached so global shell
  * components do not race the same endpoint during route transitions.
  */
