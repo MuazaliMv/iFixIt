@@ -141,10 +141,33 @@ export default function ApprovedCustomerHomeRuntime(){
   useEffect(()=>{
     document.body.classList.remove('approvedCustomerHomeActive');
     if(path!=='/'&&path!=='/home')return;
-    if(decorate())return;
-    const observer=new MutationObserver(()=>{if(decorate())observer.disconnect();});
+
+    let frame=0;
+    const sync=()=>{
+      frame=0;
+      const home=document.querySelector<HTMLElement>('.c3Home');
+      if(!home){
+        document.body.classList.remove('approvedCustomerHomeActive');
+        return;
+      }
+      if(home.classList.contains('approvedCustomerHome')){
+        document.body.classList.add('approvedCustomerHomeActive');
+        return;
+      }
+      decorate();
+    };
+
+    sync();
+    const observer=new MutationObserver(()=>{
+      if(frame)return;
+      frame=window.requestAnimationFrame(sync);
+    });
     observer.observe(document.body,{childList:true,subtree:true});
-    return()=>observer.disconnect();
+    return()=>{
+      observer.disconnect();
+      if(frame)window.cancelAnimationFrame(frame);
+      document.body.classList.remove('approvedCustomerHomeActive');
+    };
   },[path]);
   return null;
 }
