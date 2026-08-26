@@ -155,14 +155,24 @@ body:has(.globalMenuHeaderWrap)>.iosWorkspaceOverlay>.iosWorkspaceSheet{
     display:grid!important;
   }
 
-  /* Keep wizard Back/Continue/Submit controls fully above the persistent global tab bar. */
+  /* Customer request wizard: keep Back / Continue / Submit permanently above the global nav. */
   body:has(.globalMenuHeaderWrap) .c3ActionDock{
-    bottom:calc(var(--global-bottom-nav-height) + 10px)!important;
+    position:fixed!important;
+    left:12px!important;
+    right:12px!important;
+    top:auto!important;
+    bottom:calc(var(--global-bottom-nav-height) + 8px)!important;
     z-index:1900!important;
+    margin:0!important;
   }
 
+  /* Reserve enough scroll room so the last service/form card clears the fixed action dock. */
   body:has(.globalMenuHeaderWrap) .c3Wizard{
-    padding-bottom:calc(var(--global-bottom-nav-height) + 100px)!important;
+    padding-bottom:calc(var(--global-bottom-nav-height) + 128px)!important;
+  }
+
+  body:has(.globalMenuHeaderWrap) .c3WizardCard:last-child{
+    margin-bottom:12px;
   }
 }
 
@@ -223,4 +233,10 @@ body:has(>.globalMainWorkspace .landingPage)>.globalMainWorkspace{
     top:0!important;
     margin-top:0!important;
   }
+}
+
+/* Customer request detail: remove the Overview / Messages / Cancel / Close button strip.
+   Messages remain reachable from the existing header message control; request data and flow are unchanged. */
+body:has(.globalMenuHeaderWrap) .requestAppPanel>.requestTabs{
+  display:none!important;
 }
