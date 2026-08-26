@@ -16,7 +16,8 @@ test('canonical services manager owns service-group CRUD without subcategories',
  assert.match(page,/catalog_update_category/);
  assert.match(page,/catalog_delete_category/);
  assert.doesNotMatch(page,/subcategor/i);
- assert.match(page,/Tap to select/);
+ assert.match(page,/onClick=\{\(\)=>selectCategory\(c\.id\)\}/);
+ assert.match(page,/className="cardMain"/);
 });
 
 test('database migration retires every supported subcategory representation',async()=>{
