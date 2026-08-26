@@ -90,9 +90,9 @@ export default async function proxy(request:NextRequest){
 export const config={
  matcher:[
   // Public exceptions are deliberately narrow: OTP/login APIs, Railway health,
-  // and framework/static assets. The location catalogue is excluded from the
-  // proxy only because its route performs the same OTP-backed server auth itself;
-  // this prevents a stale refresh token from being consumed twice in one request.
-  '/((?!login(?:/|$)|api/auth(?:/|$)|api/health$|api/locations/catalog$|_next/static|_next/image|favicon.ico$|robots.txt$|sitemap.xml$|manifest.webmanifest$|.*\\.[^/]+$).*)',
+  // and framework/static assets. Both location-catalogue URLs are excluded from
+  // the proxy because their shared route handler performs the same OTP-backed
+  // server auth itself; this prevents refresh-token double consumption.
+  '/((?!login(?:/|$)|api/auth(?:/|$)|api/health$|api/locations/catalog$|api/locations/catalogue$|_next/static|_next/image|favicon.ico$|robots.txt$|sitemap.xml$|manifest.webmanifest$|.*\\.[^/]+$).*)',
  ],
 };
