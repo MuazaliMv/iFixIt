@@ -16,13 +16,6 @@ function sameOrigin(request:NextRequest){
   return false;
  }catch{return false;}
 }
-function normalizeProfilePhone(value:unknown){
- const raw=String(value??'').trim().replace(/[\s()-]/g,'');
- if(!raw)return '';
- if(/^\d{7}$/.test(raw))return `+960${raw}`;
- if(/^960\d{7}$/.test(raw))return `+${raw}`;
- return raw;
-}
 function localProfilePhone(value:unknown){const raw=String(value??'').trim();return /^\+960\d{7}$/.test(raw)?raw.slice(4):raw;}
 function forceMaldivesAddress(value:unknown){if(!value)return value;try{const parsed=typeof value==='string'?JSON.parse(value):value;if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))return value;return {...parsed,country:FIXED_COUNTRY};}catch{return value;}}
 function forceMaldivesServiceAddresses(value:unknown){if(!value)return value;try{const parsed=typeof value==='string'?JSON.parse(value):value;if(!Array.isArray(parsed))return value;return parsed.map(address=>address&&typeof address==='object'?{...address,country:FIXED_COUNTRY}:address);}catch{return value;}}
@@ -54,9 +47,9 @@ export async function PUT(request:NextRequest){
  try{
   let response:Response;
   if(contentType.includes('multipart/form-data')){
-   const form=await request.formData();form.set('action','profile_update');const phone=form.get('phoneNumber');if(phone!==null)form.set('phoneNumber',normalizeProfilePhone(phone));const primaryAddress=form.get('primaryAddress');if(primaryAddress!==null)form.set('primaryAddress',JSON.stringify(forceMaldivesAddress(primaryAddress)));const providerAddress=form.get('providerAddress');if(providerAddress!==null)form.set('providerAddress',JSON.stringify(forceMaldivesAddress(providerAddress)));const serviceAddresses=form.get('serviceAddresses');if(serviceAddresses!==null)form.set('serviceAddresses',JSON.stringify(forceMaldivesServiceAddresses(serviceAddresses)));response=await fetch(AUTH_API,{method:'POST',headers:{Authorization:auth.authorization},body:form,signal:AbortSignal.timeout(15000)});
+   const form=await request.formData();form.set('action','profile_update');form.delete('phoneNumber');const primaryAddress=form.get('primaryAddress');if(primaryAddress!==null)form.set('primaryAddress',JSON.stringify(forceMaldivesAddress(primaryAddress)));const providerAddress=form.get('providerAddress');if(providerAddress!==null)form.set('providerAddress',JSON.stringify(forceMaldivesAddress(providerAddress)));const serviceAddresses=form.get('serviceAddresses');if(serviceAddresses!==null)form.set('serviceAddresses',JSON.stringify(forceMaldivesServiceAddresses(serviceAddresses)));response=await fetch(AUTH_API,{method:'POST',headers:{Authorization:auth.authorization},body:form,signal:AbortSignal.timeout(15000)});
   }else{
-   const body=await request.json().catch(()=>({}));if('phoneNumber' in body)body.phoneNumber=normalizeProfilePhone(body.phoneNumber);if('primaryAddress' in body)body.primaryAddress=forceMaldivesAddress(body.primaryAddress);if('providerAddress' in body)body.providerAddress=forceMaldivesAddress(body.providerAddress);if('serviceAddresses' in body)body.serviceAddresses=forceMaldivesServiceAddresses(body.serviceAddresses);response=await fetch(AUTH_API,{method:'POST',headers:{'Content-Type':'application/json',Authorization:auth.authorization},body:JSON.stringify({action:'profile_update',...body}),signal:AbortSignal.timeout(15000)});
+   const body=await request.json().catch(()=>({}));delete body.phoneNumber;if('primaryAddress' in body)body.primaryAddress=forceMaldivesAddress(body.primaryAddress);if('providerAddress' in body)body.providerAddress=forceMaldivesAddress(body.providerAddress);if('serviceAddresses' in body)body.serviceAddresses=forceMaldivesServiceAddresses(body.serviceAddresses);response=await fetch(AUTH_API,{method:'POST',headers:{'Content-Type':'application/json',Authorization:auth.authorization},body:JSON.stringify({action:'profile_update',...body}),signal:AbortSignal.timeout(15000)});
   }
   const payload=await response.json().catch(()=>({error:'Unable to update profile.'}));return applyAuthCookies(NextResponse.json(payload,{status:response.status}),auth);
  }catch(error){return applyAuthCookies(NextResponse.json({error:error instanceof Error?error.message:'Unable to update profile.'},{status:503}),auth);}
