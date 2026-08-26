@@ -13,11 +13,9 @@ test('service request submission cannot remain stuck forever',async()=>{
   assert.match(portal,/response\.json\(\)\.catch/);
 });
 
-test('request wizard observer cannot create a disabled-attribute mutation loop',async()=>{
-  const runtime=await read('app/ACCustomIssueRuntime.tsx');
-  assert.match(runtime,/const disabled=!ready/);
-  assert.match(runtime,/if\(button\.disabled!==disabled\)button\.disabled=disabled/);
-  assert.doesNotMatch(runtime,/button\.disabled=!ready/);
-  assert.match(runtime,/button\.removeAttribute\('aria-disabled'\)/);
-  assert.match(runtime,/if\(status\.textContent!==statusText\)status\.textContent=statusText/);
+test('request wizard no longer mounts the legacy service-selection observer',async()=>{
+  const layout=await read('app/layout.tsx');
+  const portal=await read('app/CustomerPortal.tsx');
+  assert.doesNotMatch(layout,/ACCustomIssueRuntime/);
+  assert.doesNotMatch(portal,/MutationObserver/);
 });

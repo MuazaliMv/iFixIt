@@ -30,16 +30,16 @@ Users, OTP challenges, auth sessions, roles, permissions, user-role mappings and
 Atolls, islands and search aliases. Canonical atoll/island IDs are authoritative; free-text names are never matching keys.
 
 ### Service Catalogue
-Category → Subcategory → Exact Service, workflow type and pricing presentation defaults.
+Top-level service groups with location availability. Legacy child-service tables and columns are retained only for forward-compatible history and cannot receive new active application data.
 
 ### Provider
-Provider profile, legal registration location, operational base, exact services, service-specific pricing, approved service islands, availability, verification documents and status history.
+Provider profile, legal registration location, operational base, service groups, approved service islands, availability, verification documents and status history.
 
 ### Customer
 Customer profile/preferences, saved locations and favourites. Customer-owned private data remains separate from public provider projections.
 
 ### Repair Request
-Customer demand record, requested exact service, booking model, service location, urgency, scheduling preference and matching authorization.
+Customer demand record, requested service group, booking model, service location, urgency, scheduling preference and matching authorization.
 
 ### Matching & Lead
 Matching attempts, candidate snapshots, ranking metrics, provider offers/leads, Direct Booking fallback decisions and exclusive assignments.

@@ -1,4 +1,4 @@
-/* Services UI/UX — mobile-first, tap-first and consistent across parent + child selections. */
+/* Services UI/UX — mobile-first and tap-first. */
 .servicePickerUX{display:none}
 
 /* Shared service selection language */
@@ -7,7 +7,7 @@
 .c3WizardCard:has(.c3ServiceGrid) .c3Question small{display:inline-flex;align-items:center;gap:6px}
 .c3WizardCard:has(.c3ServiceGrid) .c3Question small:before{content:'1';display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--c3-blue);color:#fff;font-size:11px;font-weight:900;letter-spacing:0}
 
-/* Parent service cards */
+/* Service cards */
 .c3Wizard .c3ServiceGrid{align-items:stretch}
 .c3Wizard .c3ServiceTile{position:relative;min-width:0;height:100%;border:1px solid #e3e8ef;background:#fff;box-shadow:0 2px 8px rgba(16,24,40,.035);transition:border-color .16s ease,background .16s ease,box-shadow .16s ease,transform .12s ease}
 .c3Wizard .c3ServiceTile .c3ServiceIcon{flex:0 0 auto}
@@ -15,23 +15,14 @@
 .c3Wizard .c3ServiceTile span{font-weight:700}
 .c3Wizard .c3ServiceTile.selected{border-color:#79aef0;background:#f3f8ff;box-shadow:0 0 0 3px rgba(11,95,204,.09)}
 .c3Wizard .c3ServiceTile.selected span{color:var(--c3-blue)}
-.c3Wizard .c3ServiceTile:focus-visible,.c3Subchips .c3Chip:focus-visible{outline:3px solid rgba(11,95,204,.22);outline-offset:2px}
-.c3Wizard .c3ServiceTile:active,.c3Subchips .c3Chip:active{transform:scale(.985)}
-
-/* Subcategory stage uses the same interaction model as parent services. */
-.c3Subchips{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;overflow:visible!important;align-items:stretch!important;margin-top:18px!important;padding:18px 0 0!important;border-top:1px solid var(--c3-line)}
-.c3Subchips:before{content:'Choose the service type';grid-column:1/-1;color:var(--c3-text);font-size:15px;font-weight:850;letter-spacing:-.15px;margin-bottom:1px}
-.c3Subchips .c3Chip{position:relative;width:100%!important;min-width:0!important;min-height:92px!important;height:100%!important;padding:14px 34px 14px 14px!important;border:1px solid #dfe5ed!important;border-radius:18px!important;background:#fff!important;color:#273244!important;white-space:normal!important;line-height:1.3!important;text-align:left!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;overflow-wrap:anywhere!important;font-size:14px!important;font-weight:800!important;box-shadow:0 2px 8px rgba(16,24,40,.035)!important;transition:border-color .16s ease,background .16s ease,box-shadow .16s ease,transform .12s ease!important}
-.c3Subchips .c3Chip:after{content:'›';position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:22px;font-weight:500;color:#98a2b3}
-.c3Subchips .c3Chip.selected{background:#f3f8ff!important;border-color:#79aef0!important;color:#0b5fcc!important;box-shadow:0 0 0 3px rgba(11,95,204,.09)!important}
-.c3Subchips .c3Chip.selected:after{content:'✓';font-size:15px;font-weight:950;color:#0b5fcc}
+.c3Wizard .c3ServiceTile:focus-visible{outline:3px solid rgba(11,95,204,.22);outline-offset:2px}
+.c3Wizard .c3ServiceTile:active{transform:scale(.985)}
 
 /* Keep the Continue action calm until the user has made the required choice. */
 .c3WizardCard:has(.c3ServiceGrid) + .c3Notice{max-width:680px}
 
 @media(hover:hover) and (pointer:fine){
  .c3Wizard .c3ServiceTile:hover{border-color:#bdd4ef;background:#f8fbff;transform:translateY(-1px)}
- .c3Subchips .c3Chip:hover{border-color:#bdd4ef!important;background:#f8fbff!important;transform:translateY(-1px)}
 }
 
 @media(max-width:760px){
@@ -40,7 +31,7 @@
  .c3WizardCard:has(.c3ServiceGrid) .c3Question h1{font-size:26px!important;line-height:1.08!important;letter-spacing:-.65px!important;margin:6px 0 5px!important}
  .c3WizardCard:has(.c3ServiceGrid) .c3Question p{font-size:14px!important;line-height:1.4!important;margin:0!important;color:#667085!important}
 
- /* Parent services: two-column equal cards, easier to scan and tap. */
+ /* Two-column equal cards, easier to scan and tap. */
  .c3Wizard .c3ServiceGrid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;margin-top:14px!important}
  .c3Wizard .c3ServiceTile{min-height:118px!important;width:100%!important;padding:13px!important;border-radius:17px!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:space-between!important;gap:9px!important;text-align:left!important}
  .c3Wizard .c3ServiceTile .c3ServiceIcon{width:38px!important;height:38px!important;padding:8px!important;border-radius:12px!important;background:#f1f5f9!important;color:#344054!important}
@@ -49,20 +40,14 @@
  .c3Wizard .c3ServiceTile.selected .c3ServiceIcon{background:#e5f0ff!important;color:#0b5fcc!important}
  .c3Wizard .c3ServiceTile.selected strong{color:#0b5fcc!important}
 
- /* Child services: same-size cards with no horizontal scrolling. */
- .c3Subchips{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;margin-top:16px!important;padding-top:16px!important}
- .c3Subchips:before{font-size:14px;margin-bottom:2px}
- .c3Subchips .c3Chip{min-height:96px!important;padding:13px 32px 13px 13px!important;border-radius:16px!important;font-size:13px!important}
 }
 
 @media(max-width:390px){
  .c3Wizard .c3ServiceGrid{gap:8px!important}
  .c3Wizard .c3ServiceTile{min-height:112px!important;padding:11px!important}
  .c3Wizard .c3ServiceTile strong{font-size:13px!important}
- .c3Subchips{grid-template-columns:1fr!important;gap:8px!important}
- .c3Subchips .c3Chip{min-height:68px!important}
 }
 
 @media(prefers-reduced-motion:reduce){
- .c3Wizard .c3ServiceTile,.c3Subchips .c3Chip{transition:none!important}
+ .c3Wizard .c3ServiceTile{transition:none!important}
 }

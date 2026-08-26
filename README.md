@@ -42,7 +42,7 @@ The Markdown context diagrams use repo-native Mermaid so they remain reviewable 
 
 1. [`migrations/0001_core_domain.sql`](migrations/0001_core_domain.sql) — Users, canonical Atolls/Islands, Provider Profiles and Repair Requests.
 2. [`migrations/0002_auth_rbac.sql`](migrations/0002_auth_rbac.sql) — OTP/authentication foundation, sessions, roles, permissions and security events.
-3. [`migrations/0003_location_catalogue.sql`](migrations/0003_location_catalogue.sql) — Island aliases and Category → Subcategory → Exact Service catalogue.
+3. [`migrations/0003_location_catalogue.sql`](migrations/0003_location_catalogue.sql) — Island aliases and the original service-catalogue foundation. The active application now exposes top-level service groups only; [`migrations/20260826_services_component_remove_subcategories.sql`](migrations/20260826_services_component_remove_subcategories.sql) retires the legacy child-service paths without deleting historical columns.
 4. [`migrations/0004_provider_onboarding_service_areas_availability.sql`](migrations/0004_provider_onboarding_service_areas_availability.sql) — Provider exact services, pricing, service areas, availability and verification metadata.
 5. [`migrations/0005_search_tier_matching_engine.sql`](migrations/0005_search_tier_matching_engine.sql) — Tier 0–3 search/matching, matching audit, leads, assignments and atomic acceptance.
 6. [`migrations/0006_repair_jobs_lifecycle.sql`](migrations/0006_repair_jobs_lifecycle.sql) — Repair jobs, job state machine, schedule/status history, progress timeline, request/job synchronization and safe reassignment linkage.

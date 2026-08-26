@@ -4,19 +4,18 @@ import { readFile } from 'node:fs/promises';
 
 const read=path=>readFile(new URL(`../${path}`,import.meta.url),'utf8');
 
-test('service selection runtime blocks Continue until selection is complete',async()=>{
- const runtime=await read('app/ACCustomIssueRuntime.tsx');
- assert.match(runtime,/const selectionComplete=Boolean\(category\).*children\.length===0.*Boolean\(subcategory\)/s);
- assert.match(runtime,/const disabled=!ready/);
- assert.match(runtime,/if\(button\.disabled!==disabled\)button\.disabled=disabled/);
- assert.match(runtime,/Select a service to continue\./);
- assert.match(runtime,/Now select a service type\./);
- assert.match(runtime,/Selection complete\. Continue to choose the service location\./);
+test('customer request selection proceeds with one service group',async()=>{
+ const portal=await read('app/CustomerPortal.tsx');
+ assert.match(portal,/if\(current>=1&&!serviceCode\)return'Choose a service\.'/);
+ assert.match(portal,/onClick=\{\(\)=>setServiceCode\(item\.code\)\}/);
+ assert.doesNotMatch(portal,/subcategor/i);
+ assert.doesNotMatch(portal,/serviceSubcategoryCode/);
+ assert.doesNotMatch(portal,/c3Subchips/);
 });
 
-test('custom AC issue remains required and limited to 30 characters',async()=>{
- const runtime=await read('app/ACCustomIssueRuntime.tsx');
- assert.match(runtime,/input\.maxLength=30/);
- assert.match(runtime,/Describe your issue to continue\./);
- assert.match(runtime,/const customValid=!ownIssueSelected/);
+test('landing and global runtime no longer expose child service choices',async()=>{
+ const landing=await read('app/page.tsx');
+ const layout=await read('app/layout.tsx');
+ assert.doesNotMatch(landing,/subcategor/i);
+ assert.doesNotMatch(layout,/ACCustomIssueRuntime/);
 });
