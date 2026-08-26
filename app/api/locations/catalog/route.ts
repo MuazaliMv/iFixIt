@@ -1,32 +1,27 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
+import { applyAuthCookies, resolveServerAuth } from '../../../../lib/serverAuth';
 
-const FALLBACK_SUPABASE_URL='https://yzlhlilxiszefneshatm.supabase.co';
+const SUPABASE_URL='https://yzlhlilxiszefneshatm.supabase.co';
+const CATALOG_API=`${SUPABASE_URL}/functions/v1/location-catalog`;
 
-function adminClient(){
- const url=process.env.SUPABASE_URL?.trim()||process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()||FALLBACK_SUPABASE_URL;
- const key=process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
- if(!key)throw new Error('Location catalogue server configuration is incomplete.');
- return createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
-}
-
-export async function GET(){
+export async function GET(request:NextRequest){
+ const auth=await resolveServerAuth(request);
+ if(!auth)return NextResponse.json({error:'OTP-verified authentication required.'},{status:401,headers:{'Cache-Control':'no-store'}});
  try{
-  const client=adminClient();
-  const [atollResult,islandResult,wardResult]=await Promise.all([
-   client.from('atolls').select('id,official_name,display_name,sort_order').eq('is_active',true).order('sort_order').order('display_name'),
-   client.from('islands').select('id,atoll_id,canonical_name,display_name,location_kind,sort_order').eq('is_active',true).order('sort_order').order('display_name'),
-   client.from('location_units').select('id,island_id,display_name,canonical_name,sort_order').eq('is_active',true).eq('unit_type','WARD').order('sort_order').order('display_name'),
-  ]);
-  if(atollResult.error)throw atollResult.error;
-  if(islandResult.error)throw islandResult.error;
-  if(wardResult.error)throw wardResult.error;
-  const atolls=atollResult.data||[];
-  const islands=islandResult.data||[];
-  const wards=wardResult.data||[];
-  if(!atolls.length)throw new Error('No active atolls were returned from the location catalogue.');
-  return NextResponse.json({atolls,islands,wards,counts:{atolls:atolls.length,islands:islands.length,wards:wards.length}},{headers:{'Cache-Control':'no-store'}});
+  const response=await fetch(CATALOG_API,{
+   method:'GET',
+   headers:{Authorization:auth.authorization},
+   cache:'no-store',
+   signal:AbortSignal.timeout(12000),
+  });
+  const payload=await response.json().catch(()=>({error:'Unable to load location catalogue.'}));
+  if(!response.ok)return applyAuthCookies(NextResponse.json(payload,{status:response.status,headers:{'Cache-Control':'no-store'}}),auth);
+  if(!Array.isArray(payload?.atolls)||payload.atolls.length===0){
+   return applyAuthCookies(NextResponse.json({error:'Location catalogue returned no atolls.'},{status:503,headers:{'Cache-Control':'no-store'}}),auth);
+  }
+  return applyAuthCookies(NextResponse.json(payload,{headers:{'Cache-Control':'no-store'}}),auth);
  }catch(error){
-  return NextResponse.json({error:error instanceof Error?error.message:'Unable to load location catalogue.'},{status:503,headers:{'Cache-Control':'no-store'}});
+  const timedOut=error instanceof Error&&(error.name==='TimeoutError'||error.name==='AbortError');
+  return applyAuthCookies(NextResponse.json({error:timedOut?'Location catalogue timed out. Please retry.':error instanceof Error?error.message:'Unable to load location catalogue.'},{status:503,headers:{'Cache-Control':'no-store'}}),auth);
  }
 }
