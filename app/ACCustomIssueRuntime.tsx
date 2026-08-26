@@ -76,17 +76,27 @@ export default function ACCustomIssueRuntime(){
    const customValid=!ownIssueSelected||Boolean(field?.value.trim()||ownIssue.trim());
    const selectionComplete=Boolean(category)&&(children.length===0||Boolean(subcategory));
    const ready=selectionComplete&&customValid;
+   const disabled=!ready;
 
-   button.disabled=!ready;
-   button.setAttribute('aria-disabled',String(!ready));
+   // This component observes the disabled attribute below. Rewriting the same
+   // reflected property on every observer pass can schedule another mutation
+   // indefinitely and starve the browser main thread (especially in WebKit).
+   // Only mutate the DOM when the state actually changes.
+   if(button.disabled!==disabled)button.disabled=disabled;
+   if(disabled){
+    if(button.getAttribute('aria-disabled')!=='true')button.setAttribute('aria-disabled','true');
+   }else if(button.hasAttribute('aria-disabled')){
+    button.removeAttribute('aria-disabled');
+   }
    button.title=ready?'Continue to service location':!category?'Select a service first':children.length&&!subcategory?'Select a service type first':'Describe your issue first';
 
    const status=ensureStatus();
    if(!status)return;
-   if(!category)status.textContent='Select a service to continue.';
-   else if(children.length&&!subcategory)status.textContent='Now select a service type.';
-   else if(ownIssueSelected&&!customValid)status.textContent='Describe your issue to continue.';
-   else status.textContent='Selection complete. Continue to choose the service location.';
+   const statusText=!category?'Select a service to continue.'
+    :children.length&&!subcategory?'Now select a service type.'
+    :ownIssueSelected&&!customValid?'Describe your issue to continue.'
+    :'Selection complete. Continue to choose the service location.';
+   if(status.textContent!==statusText)status.textContent=statusText;
    status.style.color=ready?'var(--c3-green, #14915b)':'var(--c3-muted, #667085)';
   }
 
