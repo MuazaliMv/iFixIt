@@ -81,9 +81,9 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
     window.dispatchEvent(new Event('fixit:profile-updated'));await onSaved();
   }
 
-  async function selectAddress(address:ServiceAddress){
-    setSelectedId(address.id);setMessage('');
-    if(!address.is_default){setSaving(true);try{await makeDefault(address);await load(address.id);}catch(error){setMessage(error instanceof Error?error.message:'Unable to select Service Address.');}finally{setSaving(false);}}
+  function selectAddress(address:ServiceAddress){
+    setSelectedId(address.id);
+    setMessage(address.is_default?'Default Service Address selected for this request.':'Service Address selected for this request. Your profile default has not changed.');
   }
 
   async function saveAddress(event:FormEvent){
@@ -99,7 +99,7 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
       else{const result=await supabase.from('user_service_addresses').insert({...payload,user_id:userId,is_default:false}).select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').single();if(result.error)throw result.error;saved=result.data as ServiceAddress;}
       const shouldBeDefault=addresses.length===0||Boolean(existingAddress?.is_default);
       if(shouldBeDefault)await makeDefault(saved);
-      resetForm();setShowForm(false);await load(saved.id);setMessage(shouldBeDefault?'Service Address saved as your default profile address.':'Service Address saved. Select it to make it your default profile address.');
+      resetForm();setShowForm(false);await load(saved.id);setMessage(shouldBeDefault?'Service Address saved as your default and selected for this request.':'New Service Address saved and selected for this request. Your profile default has not changed.');
     }catch(error){setMessage(error instanceof Error?error.message:'Unable to save Service Address.');}
     finally{setSaving(false);}
   }
@@ -117,22 +117,22 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
 
   async function continueRequest(){
     if(saving)return;if(!validContact){setMessage('Your account needs a name and OTP-verified Maldives phone number.');return;}if(!selectedAddress){setMessage('Choose a Service Address before continuing.');return;}
-    setSaving(true);setMessage('Confirming Service Address…');
-    try{await makeDefault(selectedAddress);setMessage('Service Address confirmed. Sending your request…');onSaveAndSend();}
+    setSaving(true);setMessage('Service Address confirmed. Sending your request…');
+    try{onSaveAndSend();}
     catch(error){setMessage(error instanceof Error?error.message:'Unable to confirm Service Address.');setSaving(false);}
   }
 
   if(loading)return <section className="c3WizardCard c3ProfileCompletion" aria-label="Service Address"><div className="c3Notice">Loading saved Service Addresses…</div></section>;
 
   return <section className="c3WizardCard c3ProfileCompletion" aria-label="Service Address">
-    <div className="c3SectionHead"><div><small>Required before booking</small><h2>Choose Service Address</h2><p>Select where the provider should perform this service. You can save multiple Service Addresses.</p></div></div>
+    <div className="c3SectionHead"><div><small>Required before booking</small><h2>Choose Service Address</h2><p>Select a saved address for this service, or add a new Service Address.</p></div></div>
     <div className="c3Review" style={{marginBottom:16}}><div className="c3ReviewRow"><span>Verified phone</span><strong>{phone?`+960 ${phone}`:'Not verified'}</strong></div><div className="c3ReviewRow"><span>Name</span><strong>{name||'Missing'}</strong></div></div>
 
     {!showForm?<>
-      {addresses.length?<div className="c3Urgency" style={{marginBottom:16}}>{addresses.map(address=><div key={address.id} style={{display:'grid',gap:8}}><button type="button" className={selectedId===address.id?'selected':''} onClick={()=>void selectAddress(address)} disabled={saving}><strong>{address.label}{address.is_default?' · Default':''}</strong><span>{addressText(address)}</span></button><div style={{display:'flex',gap:8}}><button type="button" className="c3Secondary" onClick={()=>editAddress(address)} disabled={saving}>Edit</button><button type="button" className="c3Secondary" onClick={()=>void removeAddress(address)} disabled={saving}>Remove</button></div></div>)}</div>:<div className="c3Notice">No saved Service Address yet.</div>}
+      {addresses.length?<div className="c3Urgency" style={{marginBottom:16}}>{addresses.map(address=><div key={address.id} style={{display:'grid',gap:8}}><button type="button" className={selectedId===address.id?'selected':''} onClick={()=>selectAddress(address)} disabled={saving}><strong>{address.label}{address.is_default?' · Default':''}</strong><span>{addressText(address)}</span></button><div style={{display:'flex',gap:8}}><button type="button" className="c3Secondary" onClick={()=>editAddress(address)} disabled={saving}>Edit</button><button type="button" className="c3Secondary" onClick={()=>void removeAddress(address)} disabled={saving}>Remove</button></div></div>)}</div>:<div className="c3Notice">No saved Service Address yet.</div>}
       <button type="button" className="c3Secondary" onClick={addNew} disabled={saving}>+ Add New Service Address</button>
-      {selectedAddress?<div className="c3Review" style={{marginTop:16}}><div className="c3ReviewRow"><span>Selected Service Address</span><strong>{selectedAddress.label}</strong></div><div className="c3ReviewRow"><span>Location</span><strong>{addressText(selectedAddress)}</strong></div>{selectedAddress.postal_code?<div className="c3ReviewRow"><span>Postal code</span><strong>{selectedAddress.postal_code}</strong></div>:null}{selectedAddress.access_instructions?<div className="c3ReviewRow"><span>Access notes</span><strong>{selectedAddress.access_instructions}</strong></div>:null}</div>:null}
-      <button className="c3Primary" type="button" onClick={()=>void continueRequest()} disabled={saving||!validContact||!selectedAddress} style={{marginTop:16}}>{saving?'Confirming…':'Use This Service Address & Send Request'}</button>
+      {selectedAddress?<div className="c3Review" style={{marginTop:16}}><div className="c3ReviewRow"><span>Selected for this service</span><strong>{selectedAddress.label}</strong></div><div className="c3ReviewRow"><span>Location</span><strong>{addressText(selectedAddress)}</strong></div>{selectedAddress.postal_code?<div className="c3ReviewRow"><span>Postal code</span><strong>{selectedAddress.postal_code}</strong></div>:null}{selectedAddress.access_instructions?<div className="c3ReviewRow"><span>Access notes</span><strong>{selectedAddress.access_instructions}</strong></div>:null}</div>:null}
+      <button className="c3Primary" type="button" onClick={()=>void continueRequest()} disabled={saving||!validContact||!selectedAddress} style={{marginTop:16}}>{saving?'Confirming…':'Use This Address & Continue'}</button>
     </>:null}
 
     {showForm?<form className="c3Form" onSubmit={saveAddress}>
@@ -143,7 +143,7 @@ export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
       <label>Island / City<select value={islandId} onChange={e=>setIslandId(e.target.value)} disabled={saving||!atollId} required><option value="">Select Island / City</option>{filteredIslands.map(i=><option key={i.id} value={i.id}>{i.display_name}</option>)}</select></label>
       <label>Postal code <span style={{fontWeight:500}}>optional</span><input value={postalCode} onChange={e=>setPostalCode(e.target.value)} inputMode="numeric" autoComplete="postal-code" placeholder="Postal code" disabled={saving}/></label>
       <label className="full">Access instructions <span style={{fontWeight:500}}>optional</span><textarea value={accessInstructions} onChange={e=>setAccessInstructions(e.target.value)} placeholder="Floor, unit, gate or directions for the provider" disabled={saving}/></label>
-      <div style={{display:'flex',gap:8}}>{addresses.length?<button className="c3Secondary" type="button" onClick={cancelForm} disabled={saving}>Cancel</button>:null}<button className="c3Primary" type="submit" disabled={saving||!validForm}>{saving?'Saving…':editingId?'Update Service Address':'Save Service Address'}</button></div>
+      <div style={{display:'flex',gap:8}}>{addresses.length?<button className="c3Secondary" type="button" onClick={cancelForm} disabled={saving}>Cancel</button>:null}<button className="c3Primary" type="submit" disabled={saving||!validForm}>{saving?'Saving…':editingId?'Update Service Address':'Save & Use This Address'}</button></div>
     </form>:null}
     {message?<p className="c3Notice" role="status">{message}</p>:null}
   </section>;
