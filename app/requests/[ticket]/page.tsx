@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
 import RequestTimelinePanel from './RequestTimelinePanel';
 import './marketplace.css';
 import './completion-media.css';
+import './request-tabs.css';
 
 const DETAIL_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/customer-requests';
 const MESSAGE_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/request-messages';
@@ -15,6 +16,7 @@ const CANCEL_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/customer
 type RequestRow={id:string;ticket_number:string;service_name:string;service_location_text:string;preferred_date:string;problem_description:string;urgency?:string|null;customer_notes?:string|null;status:string;assigned_provider_label?:string|null;created_at:string;updated_at:string;accepted_at?:string|null;processing_at?:string|null;completed_at?:string|null};
 type MessageRow={id:string;sender_role:string;sender_label?:string|null;message_text:string;created_at:string};
 type CompletionMedia={id:string;media_type:'BEFORE'|'AFTER';url?:string|null;created_at:string};
+type RequestTab='overview'|'activity'|'messages';
 
 function when(v?:string|null){
  if(!v)return'Not set';
@@ -45,6 +47,7 @@ function statusCopy(status:string,provider?:string|null){
 
 export default function RequestDetailPage(){
  const params=useParams<{ticket:string}>();
+ const router=useRouter();
  const ticket=decodeURIComponent(String(params.ticket||'')).toUpperCase();
  const[request,setRequest]=useState<RequestRow|null>(null);
  const[messages,setMessages]=useState<MessageRow[]>([]);
@@ -52,6 +55,7 @@ export default function RequestDetailPage(){
  const[busy,setBusy]=useState(false);
  const[notice,setNotice]=useState('Loading request…');
  const[text,setText]=useState('');
+ const[activeTab,setActiveTab]=useState<RequestTab>('overview');
 
  useEffect(()=>{if(!ticket)return;void load();const id=window.setInterval(()=>void load(false),30000);return()=>window.clearInterval(id);},[ticket]);
 
@@ -68,10 +72,15 @@ export default function RequestDetailPage(){
  const current=statusCopy(status,request?.assigned_provider_label);
  const before=media.filter(x=>x.media_type==='BEFORE'&&x.url);
  const after=media.filter(x=>x.media_type==='AFTER'&&x.url);
+ const hasProvider=Boolean(request?.assigned_provider_label);
 
  if(!request)return <main className="ifixPage"><div className="ifixLoading"><div className="ifixLogo"><span>Fix</span><b>It</b></div><p>{notice}</p></div></main>;
 
  return <main className="ifixPage"><div className="requestAppPanel">
+  <div className="requestTopBar">
+   <button type="button" className="requestBackButton" onClick={()=>router.push('/requests')} aria-label="Back to service requests"><span aria-hidden="true">←</span><span>Back to requests</span></button>
+  </div>
+
   <div className="requestAppHeading">
    <div>
     <h1>{request.service_name}</h1>
@@ -82,57 +91,67 @@ export default function RequestDetailPage(){
 
   {notice?<p className="statusNotice">{notice}</p>:null}
 
-  <section className="activeHero">
-   <div>
-    <h1>{current.title}</h1>
-    <p>{current.detail}</p>
-    <div className="heroMeta"><span>Updated {when(request.updated_at)}</span></div>
-   </div>
-  </section>
+  <nav className="requestTabs" role="tablist" aria-label="Service request sections">
+   <button type="button" role="tab" aria-selected={activeTab==='overview'} className={`requestTab ${activeTab==='overview'?'active':''}`} onClick={()=>setActiveTab('overview')}>Overview</button>
+   <button type="button" role="tab" aria-selected={activeTab==='activity'} className={`requestTab ${activeTab==='activity'?'active':''}`} onClick={()=>setActiveTab('activity')}>Activity</button>
+   {hasProvider?<button type="button" role="tab" aria-selected={activeTab==='messages'} className={`requestTab ${activeTab==='messages'?'active':''}`} onClick={()=>setActiveTab('messages')}>Messages{messages.length?` (${messages.length})`:''}</button>:null}
+  </nav>
 
-  <section className="screenCard">
-   <div className="sectionHeading"><div><h2>Request Progress</h2><p>Follow your request from submission to completion.</p></div></div>
-   <div className="progressTimeline">
-    {progressSteps.map((step,index)=><div className={`progressStep ${index<progressIndex?'done':index===progressIndex?'current':''}`} key={step}>
-     <span>{index<progressIndex?'✓':index===progressIndex?'●':'○'}</span>
-     <div><strong>{step}</strong><small>{step==='New'?(isNoProviderState(status)?'Provider search finished without a match':'Searching for a provider'):step==='Accepted'?'Provider accepted':step==='Processing'?'Service in progress':'Service completed'}</small></div>
-    </div>)}
-   </div>
-  </section>
+  {activeTab==='overview'?<div className="requestTabPanel" role="tabpanel">
+   <section className="activeHero">
+    <div>
+     <h1>{current.title}</h1>
+     <p>{current.detail}</p>
+     <div className="heroMeta"><span>Updated {when(request.updated_at)}</span></div>
+    </div>
+   </section>
 
-  {request.assigned_provider_label?<section className="screenCard">
-   <div className="sectionHeading"><div><h2>Service Provider</h2><p>Assigned to this request</p></div></div>
-   <div className="findingCard"><strong>{request.assigned_provider_label}</strong><p>{status==='ACCEPTED'?'Accepted this request and can proceed directly.':status==='PROCESSING'||status==='IN_PROGRESS'?'Currently working on your request.':status==='COMPLETED'?'Completed this service request.':'Assigned service provider.'}</p></div>
-  </section>:null}
+   <section className="screenCard">
+    <div className="sectionHeading"><div><h2>Request Progress</h2><p>Follow your request from submission to completion.</p></div></div>
+    <div className="progressTimeline">
+     {progressSteps.map((step,index)=><div className={`progressStep ${index<progressIndex?'done':index===progressIndex?'current':''}`} key={step}>
+      <span>{index<progressIndex?'✓':index===progressIndex?'●':'○'}</span>
+      <div><strong>{step}</strong><small>{step==='New'?(isNoProviderState(status)?'Provider search finished without a match':'Searching for a provider'):step==='Accepted'?'Provider accepted':step==='Processing'?'Service in progress':'Service completed'}</small></div>
+     </div>)}
+    </div>
+   </section>
 
-  <section className="screenCard">
-   <div className="sectionHeading"><div><h2>Request Details</h2><p>The information you submitted for this service request.</p></div></div>
-   <div className="requestInfoGrid"><div><span>Service address</span><strong>{request.service_location_text||'Not provided'}</strong></div>{request.urgency?<div><span>Priority</span><strong>{pretty(request.urgency)}</strong></div>:null}</div>
-   <div className="findingCard"><strong>Issue / description</strong><p>{request.problem_description||'No description provided.'}</p></div>
-   {request.customer_notes?<div className="findingCard"><strong>Customer notes</strong><p>{request.customer_notes}</p></div>:null}
-  </section>
+   {request.assigned_provider_label?<section className="screenCard">
+    <div className="sectionHeading"><div><h2>Service Provider</h2><p>Assigned to this request</p></div></div>
+    <div className="findingCard"><strong>{request.assigned_provider_label}</strong><p>{status==='ACCEPTED'?'Accepted this request and can proceed directly.':status==='PROCESSING'||status==='IN_PROGRESS'?'Currently working on your request.':status==='COMPLETED'?'Completed this service request.':'Assigned service provider.'}</p></div>
+   </section>:null}
 
-  {before.length||after.length?<section className="screenCard">
-   <div className="sectionHeading"><div><h2>Service Photos</h2><p>Photos recorded for this request.</p></div></div>
-   <div className="completionMediaGrid">{before.length?<div><h3>Before</h3><div className="requestPhotoRow">{before.map(m=><img className="requestPhoto" key={m.id} src={m.url||''} alt="Before service"/>)}</div></div>:null}{after.length?<div><h3>After</h3><div className="requestPhotoRow">{after.map(m=><img className="requestPhoto" key={m.id} src={m.url||''} alt="After service"/>)}</div></div>:null}</div>
-  </section>:null}
+   <section className="screenCard">
+    <div className="sectionHeading"><div><h2>Request Details</h2><p>The information you submitted for this service request.</p></div></div>
+    <div className="requestInfoGrid"><div><span>Service address</span><strong>{request.service_location_text||'Not provided'}</strong></div>{request.urgency?<div><span>Priority</span><strong>{pretty(request.urgency)}</strong></div>:null}</div>
+    <div className="findingCard"><strong>Issue / description</strong><p>{request.problem_description||'No description provided.'}</p></div>
+    {request.customer_notes?<div className="findingCard"><strong>Customer notes</strong><p>{request.customer_notes}</p></div>:null}
+   </section>
 
-  {request.assigned_provider_label?<section className="screenCard">
-   <div className="sectionHeading"><div><h2>Messages</h2><p>Conversation with {request.assigned_provider_label}</p></div></div>
-   <div className="chatList">{messages.map(m=><div key={m.id} className={`chatBubble ${m.sender_role==='CUSTOMER'?'customer':''}`}><strong>{m.sender_label||pretty(m.sender_role)}</strong><p>{m.message_text}</p><time>{when(m.created_at)}</time></div>)}{!messages.length?<div className="emptyState">No messages yet.</div>:null}</div>
-   <div className="messageComposer"><input value={text} onChange={e=>setText(e.target.value)} placeholder="Write a message"/><button className="blueButton" onClick={()=>void send()} disabled={busy||!text.trim()}>Send</button></div>
-  </section>:null}
+   {before.length||after.length?<section className="screenCard">
+    <div className="sectionHeading"><div><h2>Service Photos</h2><p>Photos recorded for this request.</p></div></div>
+    <div className="completionMediaGrid">{before.length?<div><h3>Before</h3><div className="requestPhotoRow">{before.map(m=><img className="requestPhoto" key={m.id} src={m.url||''} alt="Before service"/>)}</div></div>:null}{after.length?<div><h3>After</h3><div className="requestPhotoRow">{after.map(m=><img className="requestPhoto" key={m.id} src={m.url||''} alt="After service"/>)}</div></div>:null}</div>
+   </section>:null}
 
-  {request.status==='COMPLETED'?<section className="screenCard serviceReport">
-   <div className="sectionHeading"><div><h2>Completion Summary</h2><p>Completed {when(request.completed_at)}</p></div></div>
-   <div className="requestInfoGrid"><div><span>Service</span><strong>{request.service_name}</strong></div><div><span>Provider</span><strong>{request.assigned_provider_label||'Provider'}</strong></div><div><span>Location</span><strong>{request.service_location_text}</strong></div><div><span>Status</span><strong>Completed</strong></div></div>
-  </section>:null}
+   {request.status==='COMPLETED'?<section className="screenCard serviceReport">
+    <div className="sectionHeading"><div><h2>Completion Summary</h2><p>Completed {when(request.completed_at)}</p></div></div>
+    <div className="requestInfoGrid"><div><span>Service</span><strong>{request.service_name}</strong></div><div><span>Provider</span><strong>{request.assigned_provider_label||'Provider'}</strong></div><div><span>Location</span><strong>{request.service_location_text}</strong></div><div><span>Status</span><strong>Completed</strong></div></div>
+   </section>:null}
 
-  <RequestTimelinePanel/>
+   {canCancel?<section className="screenCard">
+    <div className="sectionHeading"><div><h2>Request Options</h2><p>Cancel this request if you no longer need the service.</p></div></div>
+    <button className="dangerOutline" onClick={()=>void cancelRequest()} disabled={busy}>{busy?'Please wait…':'Cancel request'}</button>
+   </section>:null}
+  </div>:null}
 
-  {canCancel?<section className="screenCard">
-   <div className="sectionHeading"><div><h2>Request Options</h2><p>Cancel this request if you no longer need the service.</p></div></div>
-   <button className="dangerOutline" onClick={()=>void cancelRequest()} disabled={busy}>{busy?'Please wait…':'Cancel request'}</button>
-  </section>:null}
+  {activeTab==='activity'?<div className="requestTabPanel" role="tabpanel"><RequestTimelinePanel/></div>:null}
+
+  {activeTab==='messages'&&hasProvider?<div className="requestTabPanel" role="tabpanel">
+   <section className="screenCard">
+    <div className="sectionHeading"><div><h2>Messages</h2><p>Conversation with {request.assigned_provider_label}</p></div></div>
+    <div className="chatList">{messages.map(m=><div key={m.id} className={`chatBubble ${m.sender_role==='CUSTOMER'?'customer':''}`}><strong>{m.sender_label||pretty(m.sender_role)}</strong><p>{m.message_text}</p><time>{when(m.created_at)}</time></div>)}{!messages.length?<div className="emptyState">No messages yet.</div>:null}</div>
+    <div className="messageComposer"><input value={text} onChange={e=>setText(e.target.value)} placeholder="Write a message"/><button className="blueButton" onClick={()=>void send()} disabled={busy||!text.trim()}>Send</button></div>
+   </section>
+  </div>:null}
  </div></main>;
 }
