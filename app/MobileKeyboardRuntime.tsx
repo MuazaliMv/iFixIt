@@ -16,40 +16,13 @@ export default function MobileKeyboardRuntime() {
   useEffect(() => {
     const root = document.documentElement;
     const viewport = window.visualViewport;
-    const timers = new Set<number>();
+    let blurTimer: number | null = null;
 
-    const clearTimers = () => {
-      timers.forEach(id => window.clearTimeout(id));
-      timers.clear();
-    };
-
-    const ensureActiveFieldVisible = () => {
-      const active = document.activeElement;
-      if (!isEditable(active) || !isPhoneSizedViewport()) return;
-
-      // iOS/WebKit can report stale viewport geometry while the keyboard animates.
-      // scrollIntoView is therefore intentionally retried after focus/viewport changes.
-      const rect = active.getBoundingClientRect();
-      const vv = window.visualViewport;
-      const visibleHeight = vv?.height ?? window.innerHeight;
-      const visibleTop = Math.max(0, vv?.offsetTop ?? 0);
-      const topGuard = 88;
-      const bottomGuard = 36;
-      const visibleBottom = visibleTop + visibleHeight;
-
-      if (rect.top < visibleTop + topGuard || rect.bottom > visibleBottom - bottomGuard) {
-        active.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
+    const clearBlurTimer = () => {
+      if (blurTimer !== null) {
+        window.clearTimeout(blurTimer);
+        blurTimer = null;
       }
-    };
-
-    const scheduleVisibilityChecks = () => {
-      [0, 80, 220, 420, 700].forEach(delay => {
-        const id = window.setTimeout(() => {
-          timers.delete(id);
-          ensureActiveFieldVisible();
-        }, delay);
-        timers.add(id);
-      });
     };
 
     const updateViewportState = () => {
@@ -64,35 +37,34 @@ export default function MobileKeyboardRuntime() {
       root.style.setProperty('--app-keyboard-inset', `${keyboardInset}px`);
       root.classList.toggle('app-keyboard-open', keyboardOpen);
       root.classList.toggle('app-editing', focusedEditable);
-
-      if (focusedEditable) scheduleVisibilityChecks();
     };
 
     const onFocusIn = (event: FocusEvent) => {
       if (!isEditable(event.target as Element | null) || !isPhoneSizedViewport()) return;
-      clearTimers();
-      // Do not wait for visualViewport resize: on iOS 26/WKWebView it can be late,
-      // stale, or not match the actual visual pan while the keyboard animates.
+      clearBlurTimer();
+
+      // Let iOS/WebKit own the focused-field pan. Repeated scrollIntoView calls while
+      // the keyboard and VisualViewport are animating can move the layout underneath
+      // the native caret, which makes typed text and the visible cursor look detached.
       root.classList.add('app-editing', 'app-keyboard-open');
       updateViewportState();
-      scheduleVisibilityChecks();
     };
 
     const onFocusOut = () => {
-      clearTimers();
-      const id = window.setTimeout(() => {
-        timers.delete(id);
+      clearBlurTimer();
+      blurTimer = window.setTimeout(() => {
+        blurTimer = null;
         if (!isEditable(document.activeElement)) {
           root.classList.remove('app-editing', 'app-keyboard-open');
         }
         updateViewportState();
       }, 180);
-      timers.add(id);
     };
 
     const onViewportChange = () => {
+      // Viewport events are state-only. Do not force-scroll the focused element;
+      // Safari already positions it relative to the keyboard.
       updateViewportState();
-      if (isEditable(document.activeElement)) scheduleVisibilityChecks();
     };
 
     updateViewportState();
@@ -104,7 +76,7 @@ export default function MobileKeyboardRuntime() {
     viewport?.addEventListener('scroll', onViewportChange);
 
     return () => {
-      clearTimers();
+      clearBlurTimer();
       document.removeEventListener('focusin', onFocusIn);
       document.removeEventListener('focusout', onFocusOut);
       window.removeEventListener('resize', onViewportChange);
