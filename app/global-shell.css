@@ -155,8 +155,14 @@ body:has(.globalMenuHeaderWrap)>.iosWorkspaceOverlay>.iosWorkspaceSheet{
     display:grid!important;
   }
 
+  /* Keep wizard Back/Continue/Submit controls fully above the persistent global tab bar. */
   body:has(.globalMenuHeaderWrap) .c3ActionDock{
-    bottom:0!important;
+    bottom:calc(var(--global-bottom-nav-height) + 10px)!important;
+    z-index:1900!important;
+  }
+
+  body:has(.globalMenuHeaderWrap) .c3Wizard{
+    padding-bottom:calc(var(--global-bottom-nav-height) + 100px)!important;
   }
 }
 
