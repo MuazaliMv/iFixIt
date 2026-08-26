@@ -17,8 +17,8 @@ function loginUrl(request:NextRequest){
  return url;
 }
 
-function apiError(message:string,status:number){
- return NextResponse.json({error:message},{status});
+function apiError(message:string,status:number,code?:string){
+ return NextResponse.json({error:message,...(code?{code}:{})},{status,headers:{'Cache-Control':'no-store'}});
 }
 
 async function resolveAccessProfile(authorization:string):Promise<AccessProfile|null>{
@@ -44,25 +44,23 @@ async function resolveAccessProfile(authorization:string):Promise<AccessProfile|
 export default async function proxy(request:NextRequest){
  const path=request.nextUrl.pathname;
  const providerApplicationRoute=isProviderApplicationRoute(path);
- const customerRoute=path==='/home'||path.startsWith('/home/')||path==='/requests'||path.startsWith('/requests/')||path==='/messages'||path.startsWith('/messages/');
  const providerRoute=!providerApplicationRoute&&(path==='/provider'||path.startsWith('/provider/'));
  const adminRoute=path==='/admin'||path.startsWith('/admin/');
+ const apiRoute=path==='/api'||path.startsWith('/api/');
  const adminApi=path==='/api/admin'||path.startsWith('/api/admin/');
  const providerApi=path==='/api/provider'||path.startsWith('/api/provider/');
- const customerApi=path==='/api/service-requests'||path.startsWith('/api/service-requests/');
- const protectedApi=adminApi||providerApi||customerApi;
- const protectedRoute=customerRoute||providerRoute||adminRoute||providerApplicationRoute||protectedApi;
- if(!protectedRoute)return NextResponse.next();
 
+ // Global invariant: every matched application page and API requires a valid,
+ // OTP-backed server session before any role or business authorization runs.
  const auth=await resolveServerAuth(request);
  if(!auth){
-  if(protectedApi)return apiError('Authentication required.',401);
+  if(apiRoute)return apiError('OTP-verified authentication required.',401,'OTP_LOGIN_REQUIRED');
   return NextResponse.redirect(loginUrl(request));
  }
 
- // Customer workspace routes, customer-owned request APIs, and provider application
- // require an authenticated session. Data ownership is still enforced downstream.
- if(customerRoute||customerApi||providerApplicationRoute){
+ // Most application surfaces only need the global authenticated-session gate here;
+ // ownership and business rules continue to be enforced in their route handlers.
+ if(!adminRoute&&!providerRoute&&!adminApi&&!providerApi){
   return applyAuthCookies(NextResponse.next(),auth);
  }
 
@@ -91,13 +89,8 @@ export default async function proxy(request:NextRequest){
 
 export const config={
  matcher:[
-  '/home/:path*',
-  '/requests/:path*',
-  '/messages/:path*',
-  '/provider/:path*',
-  '/admin/:path*',
-  '/api/service-requests/:path*',
-  '/api/provider/:path*',
-  '/api/admin/:path*',
+  // Public exceptions are deliberately narrow: OTP/login APIs, Railway health,
+  // and framework/static assets. Everything else is authenticated globally.
+  '/((?!login(?:/|$)|api/auth(?:/|$)|api/health$|_next/static|_next/image|favicon.ico$|robots.txt$|sitemap.xml$|manifest.webmanifest$|.*\\.[^/]+$).*)',
  ],
 };

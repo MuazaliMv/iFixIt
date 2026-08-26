@@ -24,13 +24,14 @@ test('provider portal access honors both provider role and approved provider ent
  assert.match(proxy,/NextResponse\.redirect\(new URL\('\/home'/);
 });
 
-test('role-protected routes fail closed and protected APIs reject missing sessions',async()=>{
+test('role-protected routes fail closed and all matched APIs reject missing OTP-backed sessions',async()=>{
  const proxy=await read('proxy.ts');
- assert.match(proxy,/const protectedApi=adminApi\|\|providerApi\|\|customerApi/);
- assert.match(proxy,/if\(protectedApi\)return apiError\('Authentication required\.',401\)/);
+ assert.match(proxy,/const apiRoute=path==='\/api'\|\|path\.startsWith\('\/api\/'\)/);
+ assert.match(proxy,/if\(apiRoute\)return apiError\('OTP-verified authentication required\.',401,'OTP_LOGIN_REQUIRED'\)/);
  assert.match(proxy,/Unable to verify account permissions\.',503/);
  assert.match(proxy,/NextResponse\.redirect\(new URL\('\/home',request\.url\)\)/);
- assert.match(proxy,/\/api\/service-requests\/:path\*/);
+ assert.match(proxy,/api\/auth/);
+ assert.match(proxy,/api\/health/);
 });
 
 test('admin and provider APIs return explicit 403 permission errors',async()=>{
