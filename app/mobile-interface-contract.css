@@ -27,8 +27,16 @@ body {
 img,
 video,
 canvas,
-svg {
+svg,
+iframe {
   max-width: 100%;
+}
+
+pre,
+code {
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 button,
@@ -77,6 +85,16 @@ textarea {
 
   .globalMainWorkspace > * {
     overflow-wrap: anywhere;
+  }
+
+  .globalMainWorkspace h1 {
+    font-size: clamp(26px, 8vw, 38px);
+    line-height: 1.08;
+  }
+
+  .globalMainWorkspace h2 {
+    font-size: clamp(20px, 6vw, 30px);
+    line-height: 1.15;
   }
 
   /* Common page/container patterns across customer, provider and admin screens. */
@@ -137,7 +155,10 @@ textarea {
       .detailGrid,
       .adminGrid,
       .providerGrid,
-      .requestGrid
+      .requestGrid,
+      .requestInfoGrid,
+      .estimateMoneyGrid,
+      .completionMediaGrid
     ) {
     grid-template-columns: minmax(0, 1fr) !important;
     min-width: 0 !important;
@@ -161,12 +182,67 @@ textarea {
     width: 100%;
   }
 
+  .globalMainWorkspace :is(input[type='date'], input[type='time'], input[type='datetime-local']) {
+    min-width: 0;
+    width: 100%;
+    line-height: 1.2;
+  }
+
   textarea {
     resize: vertical;
   }
 
+  /* Shared action rows wrap predictably instead of squeezing or overflowing. */
+  .globalMainWorkspace :is(
+      .actions,
+      .buttonRow,
+      .button-row,
+      .formActions,
+      .form-actions,
+      .requestActions,
+      .request-actions,
+      .providerActions,
+      .jobActions,
+      .adminActions
+    ) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .globalMainWorkspace :is(
+      .actions,
+      .buttonRow,
+      .button-row,
+      .formActions,
+      .form-actions,
+      .requestActions,
+      .request-actions,
+      .providerActions,
+      .jobActions,
+      .adminActions
+    ) > * {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+
+  /* Message composer remains usable on narrow screens. */
+  .globalMainWorkspace .messageComposer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .globalMainWorkspace .messageComposer input,
+  .globalMainWorkspace .messageComposer button {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
   /* Desktop tables remain usable through contained horizontal scrolling, never page scrolling. */
-  .globalMainWorkspace :is(.tableWrap, .tableWrapper, .tableContainer, .dataTableWrap, .responsiveTable) {
+  .globalMainWorkspace :is(.tableWrap, .tableWrapper, .tableContainer, .dataTableWrap, .responsiveTable, .table-wrap, .table-container, .adminTableWrap, .userTableWrap) {
     width: 100%;
     max-width: 100%;
     overflow-x: auto !important;
@@ -176,6 +252,14 @@ textarea {
 
   .globalMainWorkspace table {
     max-width: none;
+  }
+
+  /* Logs/code scroll locally rather than widening the whole page. */
+  .globalMainWorkspace :is(pre, .logViewer, .log-viewer, .jsonViewer, .json-viewer) {
+    width: 100%;
+    max-width: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Dialogs and sheets always fit inside the visual viewport and remain scrollable. */
@@ -198,14 +282,17 @@ textarea {
       .jobCard,
       .profileCard,
       .adminCard,
-      .c3WizardCard
+      .c3WizardCard,
+      .screenCard,
+      .providerSummaryCard,
+      .progressCard
     ) {
     min-width: 0 !important;
     max-width: 100% !important;
   }
 
   /* Long IDs, request numbers, addresses and emails may wrap rather than overflow. */
-  .globalMainWorkspace :is(p, span, div, td, th, dd, dt, label, a, strong, small) {
+  .globalMainWorkspace :is(p, span, div, td, th, dd, dt, label, a, strong, small, li) {
     overflow-wrap: anywhere;
   }
 
@@ -219,6 +306,44 @@ textarea {
     padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
   }
 
+  /* Request wizard/photo compatibility retained from the previous mobile patch layers. */
+  .globalMainWorkspace .c3WizardCard {
+    overflow: visible;
+  }
+
+  .globalMainWorkspace .c3ReviewRow {
+    align-items: flex-start;
+  }
+
+  .globalMainWorkspace :is(.c3PhotoGrid, .requestPhotoRow, .completionMediaGrid) {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .globalMainWorkspace :is(.requestPhoto, .c3Photo img) {
+    max-width: 100%;
+    object-fit: cover;
+  }
+
+  /* Horizontal tab/filter groups scroll locally. */
+  .globalMainWorkspace :is(.c3Filters, .c3Subchips, .requestTabs, .tabs, .filterTabs) {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .globalMainWorkspace :is(.c3Filters, .c3Subchips, .requestTabs, .tabs, .filterTabs)::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Dense search/filter groups stack instead of squeezing. */
+  .globalMainWorkspace :is(.toolbar, .filterRow, .filters, .adminFilters, .providerFilters) :is(input, select) {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
   /* Preserve readable tap targets in dense admin/provider screens. */
   .globalMainWorkspace :is(button, [role='button'], a.action, a.btn, .button, .btn) {
     min-height: var(--mobile-touch-min);
@@ -227,6 +352,58 @@ textarea {
   /* Avoid clipped focus rings near phone edges. */
   :focus-visible {
     scroll-margin-block: 96px;
+  }
+
+  /* Full-screen menu surfaces remain scrollable on short phones. */
+  .globalMenuBackdrop {
+    max-height: 100dvh;
+  }
+
+  .globalMenuSheet {
+    max-height: 100dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .globalMenuFooter {
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+
+  /* During text entry the legacy floating nav may hide; the permanent iOS tab bar and wizard action dock remain managed by the shell. */
+  html.app-editing .mobileNav,
+  html.app-keyboard-open .mobileNav {
+    display: none !important;
+  }
+}
+
+/* Narrow phones: stack review rows and primary heading actions. */
+@media (max-width: 430px) {
+  .globalMainWorkspace .c3ReviewRow {
+    display: block !important;
+  }
+
+  .globalMainWorkspace .c3ReviewRow span,
+  .globalMainWorkspace .c3ReviewRow strong {
+    display: block !important;
+    max-width: 100% !important;
+    text-align: left !important;
+  }
+
+  .globalMainWorkspace .c3ReviewRow strong {
+    margin-top: 4px !important;
+  }
+
+  .globalMainWorkspace :is(.requestAppHeading, .sectionHeading, .c3SectionHead, .c3RequestsTop) {
+    display: block !important;
+  }
+
+  .globalMainWorkspace :is(.requestAppHeading, .sectionHeading, .c3SectionHead, .c3RequestsTop) > :is(button, a) {
+    width: 100% !important;
+    margin-top: 10px !important;
+  }
+
+  .globalMainWorkspace .c3PhotoGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
 
@@ -241,6 +418,12 @@ textarea {
   }
 }
 
+@media (max-width: 360px) {
+  .globalMainWorkspace .c3PhotoGrid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
 /* Landscape phones: keep the shell compact while protecting content from the navigation bars. */
 @media (max-width: 960px) and (orientation: landscape) and (max-height: 520px) {
   :root {
@@ -249,6 +432,17 @@ textarea {
 
   body:has(.globalMenuHeaderWrap) > .globalMainWorkspace {
     overscroll-behavior-y: contain;
+  }
+
+  .globalMenuSheet {
+    max-height: 100dvh;
+  }
+}
+
+@media (max-width: 900px) and (pointer: coarse) {
+  .globalMainWorkspace :is(.actions, .card, .screenCard) :is(button, a) {
+    visibility: visible;
+    opacity: 1;
   }
 }
 
