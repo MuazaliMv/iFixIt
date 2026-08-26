@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 
 const OTHER_LABEL='or describe your own issue';
 const FIELD_ID='ac-custom-issue-field';
+const STATUS_ID='service-selection-status';
 const PREFIX='AC issue: ';
 
 function textOf(element:Element|null){
@@ -15,13 +16,29 @@ export default function ACCustomIssueRuntime(){
   let ownIssue='';
   let ownIssueSelected=false;
 
+  function subcategoryButtons(){
+   return Array.from(document.querySelectorAll<HTMLButtonElement>('.c3Subchips button'));
+  }
+
   function otherChip(){
-   return Array.from(document.querySelectorAll<HTMLButtonElement>('.c3Subchips button')).find(button=>textOf(button)===OTHER_LABEL)||null;
+   return subcategoryButtons().find(button=>textOf(button).includes(OTHER_LABEL))||null;
+  }
+
+  function selectedCategory(){
+   return document.querySelector<HTMLButtonElement>('.c3WizardCard .c3ServiceGrid .c3ServiceTile.selected');
+  }
+
+  function selectedSubcategory(){
+   return subcategoryButtons().find(button=>button.classList.contains('selected'))||null;
+  }
+
+  function continueButton(){
+   return Array.from(document.querySelectorAll<HTMLButtonElement>('.c3ActionDock button')).find(button=>textOf(button)==='continue')||null;
   }
 
   function placeSubcategoriesBelowSelectedCategory(){
    const chips=document.querySelector<HTMLElement>('.c3Subchips');
-   const selectedTile=document.querySelector<HTMLButtonElement>('.c3WizardCard .c3ServiceGrid .c3ServiceTile.selected');
+   const selectedTile=selectedCategory();
    if(!chips||!selectedTile)return;
    if(chips.previousElementSibling!==selectedTile)selectedTile.insertAdjacentElement('afterend',chips);
    chips.style.gridColumn='1 / -1';
@@ -30,11 +47,47 @@ export default function ACCustomIssueRuntime(){
    chips.style.marginBottom='8px';
   }
 
+  function ensureStatus(){
+   const dock=document.querySelector<HTMLElement>('.c3ActionDock .c3ActionInner');
+   if(!dock)return null;
+   let status=document.getElementById(STATUS_ID) as HTMLDivElement|null;
+   if(status)return status;
+   status=document.createElement('div');
+   status.id=STATUS_ID;
+   status.setAttribute('role','status');
+   status.setAttribute('aria-live','polite');
+   status.style.gridColumn='1 / -1';
+   status.style.fontSize='12px';
+   status.style.fontWeight='700';
+   status.style.lineHeight='1.35';
+   status.style.color='var(--c3-muted, #667085)';
+   status.style.padding='0 2px 2px';
+   dock.prepend(status);
+   return status;
+  }
+
   function updateContinue(){
-   const field=document.getElementById(FIELD_ID);
-   if(!field)return;
-   const continueButton=Array.from(document.querySelectorAll<HTMLButtonElement>('.c3ActionDock button')).find(button=>textOf(button)==='continue');
-   if(continueButton)continueButton.disabled=!ownIssue.trim();
+   const button=continueButton();
+   if(!button)return;
+   const category=selectedCategory();
+   const children=subcategoryButtons();
+   const subcategory=selectedSubcategory();
+   const field=document.querySelector<HTMLInputElement>(`#${FIELD_ID} input`);
+   const customValid=!ownIssueSelected||Boolean(field?.value.trim()||ownIssue.trim());
+   const selectionComplete=Boolean(category)&&(children.length===0||Boolean(subcategory));
+   const ready=selectionComplete&&customValid;
+
+   button.disabled=!ready;
+   button.setAttribute('aria-disabled',String(!ready));
+   button.title=ready?'Continue to service location':!category?'Select a service first':children.length&&!subcategory?'Select a service type first':'Describe your issue first';
+
+   const status=ensureStatus();
+   if(!status)return;
+   if(!category)status.textContent='Select a service to continue.';
+   else if(children.length&&!subcategory)status.textContent='Now select a service type.';
+   else if(ownIssueSelected&&!customValid)status.textContent='Describe your issue to continue.';
+   else status.textContent='Selection complete. Continue to choose the service location.';
+   status.style.color=ready?'var(--c3-green, #14915b)':'var(--c3-muted, #667085)';
   }
 
   function injectField(){
@@ -71,6 +124,7 @@ export default function ACCustomIssueRuntime(){
 
    wrapper.append(input,count);
    chips.insertAdjacentElement('afterend',wrapper);
+   queueMicrotask(()=>input.focus({preventScroll:true}));
    updateContinue();
   }
 
@@ -101,13 +155,19 @@ export default function ACCustomIssueRuntime(){
     document.getElementById(FIELD_ID)?.remove();
    }
    applyToProblemField();
+   updateContinue();
   }
 
   const observer=new MutationObserver(()=>queueMicrotask(sync));
-  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','disabled']});
   document.addEventListener('click',sync,true);
   sync();
-  return()=>{observer.disconnect();document.removeEventListener('click',sync,true);document.getElementById(FIELD_ID)?.remove();};
+  return()=>{
+   observer.disconnect();
+   document.removeEventListener('click',sync,true);
+   document.getElementById(FIELD_ID)?.remove();
+   document.getElementById(STATUS_ID)?.remove();
+  };
  },[]);
  return null;
 }
