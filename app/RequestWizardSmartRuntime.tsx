@@ -3,16 +3,17 @@
 import { useEffect } from 'react';
 
 /**
- * Keeps the customer request wizard usable across iOS/Android viewport sizes.
- * - measures the fixed action dock instead of relying on guessed padding
- * - auto-selects Standard when it is the only visible request type
- * - removes the now-redundant scheduling prompt
- * - brings validation feedback/its field into view after Continue/Submit
+ * Keeps the customer request wizard usable across iOS/Android viewport sizes
+ * without continuously mutating/observing the whole document.
  */
 export default function RequestWizardSmartRuntime() {
   useEffect(() => {
     let dockObserver: ResizeObserver | null = null;
+    let observedDock: HTMLElement | null = null;
     let mutationObserver: MutationObserver | null = null;
+    let refreshScheduled = false;
+
+    const wizardRoot = () => document.querySelector<HTMLElement>('.c3Wizard');
 
     const isVisible = (element: HTMLElement) => {
       const style = window.getComputedStyle(element);
@@ -20,14 +21,20 @@ export default function RequestWizardSmartRuntime() {
     };
 
     const measureDock = () => {
-      const dock = document.querySelector<HTMLElement>('.c3ActionDock');
-      if (!dock || !isVisible(dock)) return;
+      const wizard = wizardRoot();
+      const dock = wizard?.querySelector<HTMLElement>('.c3ActionDock') || null;
+      if (!dock || !isVisible(dock)) {
+        document.documentElement.style.removeProperty('--request-action-height');
+        return;
+      }
       const height = Math.ceil(dock.getBoundingClientRect().height);
       if (height > 0) document.documentElement.style.setProperty('--request-action-height', `${height}px`);
     };
 
     const simplifySingleRequestType = () => {
-      document.querySelectorAll<HTMLElement>('.c3Urgency').forEach(group => {
+      const wizard = wizardRoot();
+      if (!wizard) return;
+      wizard.querySelectorAll<HTMLElement>('.c3Urgency').forEach(group => {
         const buttons = Array.from(group.querySelectorAll<HTMLButtonElement>('button')).filter(isVisible);
         if (buttons.length !== 1) {
           group.classList.remove('smartSingleRequestType');
@@ -38,6 +45,7 @@ export default function RequestWizardSmartRuntime() {
         const label = (only.textContent || '').trim().toLowerCase();
         if (!label.includes('standard')) return;
 
+        // Avoid synthetic clicks unless React state is genuinely out of sync.
         if (!only.classList.contains('selected') && only.getAttribute('aria-pressed') !== 'true') {
           only.click();
         }
@@ -54,7 +62,9 @@ export default function RequestWizardSmartRuntime() {
     };
 
     const relevantValidationNode = () => {
-      const nodes = Array.from(document.querySelectorAll<HTMLElement>('.c3Notice,.c3Warning,[role="alert"]'));
+      const wizard = wizardRoot();
+      if (!wizard) return null;
+      const nodes = Array.from(wizard.querySelectorAll<HTMLElement>('.c3Notice,.c3Warning,[role="alert"]'));
       return nodes.find(node => {
         if (!isVisible(node)) return false;
         const text = (node.textContent || '').trim().toLowerCase();
@@ -67,13 +77,15 @@ export default function RequestWizardSmartRuntime() {
     };
 
     const fieldForMessage = (message: string) => {
+      const wizard = wizardRoot();
+      if (!wizard) return null;
       const text = message.toLowerCase();
       const selector = text.includes('contact name') ? 'input[name*="contact" i], input[placeholder*="name" i]' :
         text.includes('phone') ? 'input[type="tel"], input[name*="phone" i]' :
         text.includes('preferred date') ? 'input[type="date"]' :
         text.includes('problem') ? 'textarea' :
         text.includes('service') ? '.c3ServiceTile' : null;
-      return selector ? document.querySelector<HTMLElement>(selector) : null;
+      return selector ? wizard.querySelector<HTMLElement>(selector) : null;
     };
 
     const revealValidation = () => {
@@ -91,26 +103,61 @@ export default function RequestWizardSmartRuntime() {
 
     const onActionClick = (event: Event) => {
       const target = event.target as Element | null;
-      if (!target?.closest('.c3ActionInner button')) return;
+      if (!target?.closest('.c3Wizard .c3ActionInner button')) return;
       revealValidation();
     };
 
     const attachDockObserver = () => {
+      const wizard = wizardRoot();
+      const dock = wizard?.querySelector<HTMLElement>('.c3ActionDock') || null;
+      if (dock === observedDock) {
+        measureDock();
+        return;
+      }
       dockObserver?.disconnect();
-      const dock = document.querySelector<HTMLElement>('.c3ActionDock');
-      if (!dock) return;
+      observedDock = dock;
+      if (!dock) {
+        document.documentElement.style.removeProperty('--request-action-height');
+        return;
+      }
       dockObserver = new ResizeObserver(measureDock);
       dockObserver.observe(dock);
       measureDock();
     };
 
     const refresh = () => {
+      refreshScheduled = false;
+      if (!wizardRoot()) {
+        dockObserver?.disconnect();
+        dockObserver = null;
+        observedDock = null;
+        document.documentElement.style.removeProperty('--request-action-height');
+        return;
+      }
       attachDockObserver();
       simplifySingleRequestType();
     };
 
-    mutationObserver = new MutationObserver(() => refresh());
-    mutationObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+    const scheduleRefresh = () => {
+      if (refreshScheduled) return;
+      refreshScheduled = true;
+      window.requestAnimationFrame(refresh);
+    };
+
+    // Observe structural React changes only. Watching class/style mutations caused
+    // this runtime to observe its own mutations and could starve the main thread.
+    mutationObserver = new MutationObserver(mutations => {
+      const relevant = mutations.some(mutation =>
+        Array.from(mutation.addedNodes).some(node =>
+          node instanceof HTMLElement &&
+          (node.matches('.c3Wizard,.c3ActionDock,.c3Urgency,.c3Notice') || Boolean(node.querySelector?.('.c3Wizard,.c3ActionDock,.c3Urgency,.c3Notice')))
+        ) ||
+        Array.from(mutation.removedNodes).some(node => node instanceof HTMLElement && (node.matches('.c3Wizard') || Boolean(node.querySelector?.('.c3Wizard'))))
+      );
+      if (relevant) scheduleRefresh();
+    });
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+
     document.addEventListener('click', onActionClick, true);
     window.addEventListener('resize', measureDock, { passive: true });
     window.visualViewport?.addEventListener('resize', measureDock, { passive: true });
