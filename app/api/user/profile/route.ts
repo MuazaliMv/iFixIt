@@ -30,6 +30,7 @@ function parseAddress(value:unknown):PrimaryAddress|null{
  if(!value)return null;
  try{const parsed=typeof value==='string'?JSON.parse(value):value;return parsed&&typeof parsed==='object'&&!Array.isArray(parsed)?parsed as PrimaryAddress:null;}catch{return null;}
 }
+function hasLocationSelection(address:PrimaryAddress|null){return Boolean(String(address?.stateRegion||'').trim()&&String(address?.city||'').trim());}
 function forceMaldivesAddress(value:unknown){const parsed=parseAddress(value);return parsed?{...parsed,country:FIXED_COUNTRY}:value;}
 function forceMaldivesServiceAddresses(value:unknown){if(!value)return value;try{const parsed=typeof value==='string'?JSON.parse(value):value;if(!Array.isArray(parsed))return value;return parsed.map(address=>address&&typeof address==='object'?{...address,country:FIXED_COUNTRY}:address);}catch{return value;}}
 function normalizeProfileResponse(payload:any){
@@ -43,8 +44,7 @@ function normalizeProfileResponse(payload:any){
 }
 async function resolvePrimaryLocation(client:ReturnType<typeof adminClient>,address:PrimaryAddress):Promise<ResolvedLocation>{
  const atollName=String(address.stateRegion||'').trim();const islandName=String(address.city||'').trim();const wardName=String(address.ward||'').trim();
- if(!atollName)throw new Error('Select an Atoll / Region.');
- if(!islandName)throw new Error('Select an Island / City.');
+ if(!atollName||!islandName)throw new Error('Both Atoll / Region and Island / City are required only when saving a location.');
  const atoll=await client.from('atolls').select('id,display_name,official_name').eq('is_active',true).or(`display_name.eq.${JSON.stringify(atollName)},official_name.eq.${JSON.stringify(atollName)}`).limit(1).maybeSingle();
  if(atoll.error)throw atoll.error;if(!atoll.data)throw new Error('The selected Atoll / Region is not in the location catalogue.');
  const island=await client.from('islands').select('id,display_name,canonical_name,atoll_id').eq('is_active',true).eq('atoll_id',atoll.data.id).or(`display_name.eq.${JSON.stringify(islandName)},canonical_name.eq.${JSON.stringify(islandName)}`).limit(1).maybeSingle();
@@ -78,22 +78,28 @@ export async function PUT(request:NextRequest){
  if(!auth)return NextResponse.json({error:'Authentication required.'},{status:401});
  const contentType=request.headers.get('content-type')||'';
  try{
-  let response:Response;let primaryAddress:PrimaryAddress|null=null;let resolvedLocation:ResolvedLocation|null=null;
-  const client=adminClient();
+  let response:Response;let primaryAddress:PrimaryAddress|null=null;let resolvedLocation:ResolvedLocation|null=null;let client:ReturnType<typeof adminClient>|null=null;
   if(contentType.includes('multipart/form-data')){
    const form=await request.formData();form.set('action','profile_update');form.delete('phoneNumber');
-   const rawPrimary=form.get('primaryAddress');primaryAddress=parseAddress(rawPrimary);if(primaryAddress){resolvedLocation=await resolvePrimaryLocation(client,primaryAddress);form.set('primaryAddress',JSON.stringify({...primaryAddress,country:FIXED_COUNTRY}));}
+   const rawPrimary=form.get('primaryAddress');primaryAddress=parseAddress(rawPrimary);
+   if(primaryAddress){
+    if(hasLocationSelection(primaryAddress)){client=adminClient();resolvedLocation=await resolvePrimaryLocation(client,primaryAddress);}
+    form.set('primaryAddress',JSON.stringify({...primaryAddress,country:FIXED_COUNTRY}));
+   }
    const providerAddress=form.get('providerAddress');if(providerAddress!==null)form.set('providerAddress',JSON.stringify(forceMaldivesAddress(providerAddress)));
    const serviceAddresses=form.get('serviceAddresses');if(serviceAddresses!==null)form.set('serviceAddresses',JSON.stringify(forceMaldivesServiceAddresses(serviceAddresses)));
    response=await fetch(AUTH_API,{method:'POST',headers:{Authorization:auth.authorization},body:form,signal:AbortSignal.timeout(15000)});
   }else{
    const body=await request.json().catch(()=>({}));delete body.phoneNumber;
-   if('primaryAddress' in body){primaryAddress=parseAddress(body.primaryAddress);if(primaryAddress){resolvedLocation=await resolvePrimaryLocation(client,primaryAddress);body.primaryAddress={...primaryAddress,country:FIXED_COUNTRY};}}
+   if('primaryAddress' in body){
+    primaryAddress=parseAddress(body.primaryAddress);
+    if(primaryAddress){if(hasLocationSelection(primaryAddress)){client=adminClient();resolvedLocation=await resolvePrimaryLocation(client,primaryAddress);}body.primaryAddress={...primaryAddress,country:FIXED_COUNTRY};}
+   }
    if('providerAddress' in body)body.providerAddress=forceMaldivesAddress(body.providerAddress);if('serviceAddresses' in body)body.serviceAddresses=forceMaldivesServiceAddresses(body.serviceAddresses);
    response=await fetch(AUTH_API,{method:'POST',headers:{'Content-Type':'application/json',Authorization:auth.authorization},body:JSON.stringify({action:'profile_update',...body}),signal:AbortSignal.timeout(15000)});
   }
   const payload=await response.json().catch(()=>({error:'Unable to update profile.'}));
-  if(response.ok&&resolvedLocation)await savePrimaryLocationIds(client,auth.accessToken,resolvedLocation);
+  if(response.ok&&resolvedLocation&&client)await savePrimaryLocationIds(client,auth.accessToken,resolvedLocation);
   return applyAuthCookies(NextResponse.json(payload,{status:response.status}),auth);
  }catch(error){return applyAuthCookies(NextResponse.json({error:error instanceof Error?error.message:'Unable to update profile.'},{status:503}),auth);}
 }
