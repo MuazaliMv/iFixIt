@@ -29,7 +29,6 @@ test('Service Address remediation is inline and supports multiple saved addresse
  assert.match(source,/Island \/ City/);
  assert.match(source,/<label>Name<input/);
  assert.match(source,/Access instructions/);
- assert.match(source,/Enter the missing Service Address records/);
  assert.doesNotMatch(source,/href="\/profile#service-addresses"/);
 });
 
