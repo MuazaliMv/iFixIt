@@ -7,9 +7,9 @@ const LOCATION_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/locati
 
 type Atoll={id:string;code?:string|null;display_name:string;sort_order?:number};
 type Island={id:string;atoll_id:string;display_name:string;sort_order?:number};
-type ProfilePayload={profile?:{full_name?:string|null;phone_number?:string|null;primaryAddress?:{line1?:string|null;line2?:string|null;city?:string|null;stateRegion?:string|null;postalCode?:string|null}|null}|null;error?:string};
+type ProfilePayload={profile?:{full_name?:string|null}|null;error?:string};
+type ServiceAddress={id:string;user_id:string;label:string;address_line1:string;address_line2?:string|null;city?:string|null;state_region?:string|null;postal_code?:string|null;country?:string|null;service_atoll_id?:string|null;service_island_id?:string|null;service_location_unit_id?:string|null;access_instructions?:string|null;is_default:boolean;is_active:boolean;updated_at?:string|null};
 type Props={onSaved:()=>Promise<void>|void;onSaveAndSend:()=>void};
-type AddressMode='saved'|'new'|null;
 
 function localPhone(value:unknown){
   const digits=String(value??'').replace(/\D/g,'');
@@ -18,106 +18,127 @@ function localPhone(value:unknown){
   return digits;
 }
 
-function normalizeLocation(value:unknown){
-  return String(value??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').replace(/\b(atoll|region|island|city|maldives)\b/g,' ').replace(/\s+/g,' ').trim();
-}
-function sameLocationName(left:unknown,right:unknown){const a=normalizeLocation(left);const b=normalizeLocation(right);return Boolean(a&&b&&a===b);}
-function findAtoll(atolls:Atoll[],value:unknown){const target=normalizeLocation(value);if(!target)return null;return atolls.find(a=>sameLocationName(a.display_name,target)||sameLocationName(a.code,target))||null;}
-function findIsland(islands:Island[],value:unknown,atollId?:string|null){const matches=islands.filter(i=>sameLocationName(i.display_name,value));if(atollId){const inAtoll=matches.find(i=>i.atoll_id===atollId);if(inAtoll)return inAtoll;}return matches.length===1?matches[0]:null;}
+function addressText(address:ServiceAddress){return [address.address_line1,address.address_line2,address.city,address.state_region].filter(Boolean).join(', ');}
 
 export default function RequestProfileCompletion({onSaved,onSaveAndSend}:Props){
-  const[name,setName]=useState('');const[phone,setPhone]=useState('');const[house,setHouse]=useState('');const[road,setRoad]=useState('');const[postalCode,setPostalCode]=useState('');
-  const[atolls,setAtolls]=useState<Atoll[]>([]);const[islands,setIslands]=useState<Island[]>([]);const[atollId,setAtollId]=useState('');const[islandId,setIslandId]=useState('');
-  const[addressMode,setAddressMode]=useState<AddressMode>(null);const[hasSavedAddress,setHasSavedAddress]=useState(false);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[message,setMessage]=useState('');
+  const[name,setName]=useState('');const[phone,setPhone]=useState('');const[userId,setUserId]=useState('');
+  const[addresses,setAddresses]=useState<ServiceAddress[]>([]);const[selectedId,setSelectedId]=useState('');
+  const[atolls,setAtolls]=useState<Atoll[]>([]);const[islands,setIslands]=useState<Island[]>([]);
+  const[editingId,setEditingId]=useState<string|null>(null);const[showForm,setShowForm]=useState(false);
+  const[label,setLabel]=useState('Home');const[house,setHouse]=useState('');const[road,setRoad]=useState('');const[atollId,setAtollId]=useState('');const[islandId,setIslandId]=useState('');const[postalCode,setPostalCode]=useState('');const[accessInstructions,setAccessInstructions]=useState('');
+  const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[message,setMessage]=useState('');
 
+  const filteredIslands=useMemo(()=>islands.filter(i=>!atollId||i.atoll_id===atollId),[islands,atollId]);
   const selectedAtoll=useMemo(()=>atolls.find(a=>a.id===atollId)||null,[atolls,atollId]);
   const selectedIsland=useMemo(()=>islands.find(i=>i.id===islandId&&i.atoll_id===atollId)||null,[islands,islandId,atollId]);
-  const filteredIslands=useMemo(()=>islands.filter(i=>!atollId||i.atoll_id===atollId),[islands,atollId]);
+  const selectedAddress=useMemo(()=>addresses.find(a=>a.id===selectedId)||null,[addresses,selectedId]);
   const validContact=name.trim().length>=2&&localPhone(phone).length===7;
-  const validAddress=Boolean(house.trim()&&road.trim()&&selectedAtoll&&selectedIsland);
+  const validForm=Boolean(label.trim()&&house.trim()&&road.trim()&&selectedAtoll&&selectedIsland);
 
   useEffect(()=>{void load();},[]);
 
-  async function load(){
+  async function load(preferredId?:string){
     setLoading(true);
     try{
       const {data}=await supabase.auth.getSession();const session=data.session;
       if(!session)throw new Error('Your login session has expired. Please sign in again.');
       if(!session.user.phone||!session.user.phone_confirmed_at)throw new Error('OTP verification is required before you can create a service request. Please sign in again and verify your phone.');
-      const [profileResponse,locationResponse]=await Promise.all([
+      const [profileResponse,locationResponse,addressResponse]=await Promise.all([
         fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store'}),
-        fetch(LOCATION_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:'{}'})
+        fetch(LOCATION_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:'{}'}),
+        supabase.from('user_service_addresses').select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').eq('is_active',true).order('is_default',{ascending:false}).order('updated_at',{ascending:false})
       ]);
       const profilePayload=await profileResponse.json().catch(()=>({})) as ProfilePayload;
       const locationPayload=await locationResponse.json().catch(()=>({})) as {atolls?:Atoll[];islands?:Island[];error?:string};
       if(!profileResponse.ok||!profilePayload.profile)throw new Error(profilePayload.error||'Unable to load profile.');
       if(!locationResponse.ok)throw new Error(locationPayload.error||'Unable to load location selections.');
-
-      const p=profilePayload.profile;const nextAtolls=locationPayload.atolls||[];const nextIslands=locationPayload.islands||[];
-      const nextName=p.full_name||'';const nextPhone=localPhone(session.user.phone);const nextHouse=p.primaryAddress?.line1||'';const nextRoad=p.primaryAddress?.line2||'';const nextPostal=p.primaryAddress?.postalCode||'';
-      let matchedAtoll=findAtoll(nextAtolls,p.primaryAddress?.stateRegion);let matchedIsland=findIsland(nextIslands,p.primaryAddress?.city,matchedAtoll?.id);
-      if(!matchedAtoll&&matchedIsland)matchedAtoll=nextAtolls.find(a=>a.id===matchedIsland?.atoll_id)||null;
-      if(matchedAtoll&&!matchedIsland)matchedIsland=findIsland(nextIslands,p.primaryAddress?.city,matchedAtoll.id);
-      const savedReady=Boolean(nextHouse.trim()&&nextRoad.trim()&&matchedAtoll&&matchedIsland);
-
-      setAtolls(nextAtolls);setIslands(nextIslands);setName(nextName);setPhone(nextPhone);setHouse(nextHouse);setRoad(nextRoad);setPostalCode(nextPostal);setAtollId(matchedAtoll?.id||'');setIslandId(matchedIsland?.id||'');setHasSavedAddress(savedReady);setAddressMode(savedReady?'saved':'new');
-      if(!nextName.trim())setMessage('Enter your full name before continuing.');
-    }catch(error){setMessage(error instanceof Error?error.message:'Unable to load your details.');}
+      if(addressResponse.error)throw addressResponse.error;
+      const nextAddresses=(addressResponse.data||[]) as ServiceAddress[];
+      const nextSelected=(preferredId&&nextAddresses.some(a=>a.id===preferredId)?preferredId:'')||nextAddresses.find(a=>a.is_default)?.id||nextAddresses[0]?.id||'';
+      setUserId(session.user.id);setPhone(localPhone(session.user.phone));setName(profilePayload.profile.full_name||'');setAtolls(locationPayload.atolls||[]);setIslands(locationPayload.islands||[]);setAddresses(nextAddresses);setSelectedId(nextSelected);
+      if(!nextAddresses.length)setShowForm(true);
+      if(!(profilePayload.profile.full_name||'').trim())setMessage('Add your full name in Profile before sending the request.');
+    }catch(error){setMessage(error instanceof Error?error.message:'Unable to load Service Addresses.');}
     finally{setLoading(false);}
   }
 
-  function chooseSaved(){if(!hasSavedAddress)return;setAddressMode('saved');setMessage('');}
-  function chooseNew(){setAddressMode('new');if(hasSavedAddress){setHouse('');setRoad('');setPostalCode('');setAtollId('');setIslandId('');}setMessage('');}
+  function resetForm(){setEditingId(null);setLabel('Home');setHouse('');setRoad('');setAtollId('');setIslandId('');setPostalCode('');setAccessInstructions('');}
+  function addNew(){resetForm();setShowForm(true);setMessage('');}
+  function editAddress(address:ServiceAddress){setEditingId(address.id);setLabel(address.label);setHouse(address.address_line1);setRoad(address.address_line2||'');setAtollId(address.service_atoll_id||'');setIslandId(address.service_island_id||'');setPostalCode(address.postal_code||'');setAccessInstructions(address.access_instructions||'');setShowForm(true);setMessage('');}
+  function cancelForm(){resetForm();setShowForm(false);setMessage('');}
 
-  async function persistAddress(){
-    if(!validContact)throw new Error('Your account needs a name and OTP-verified Maldives phone number.');
-    if(!validAddress)throw new Error('Complete the Service Address before continuing.');
-    const form=new FormData();form.set('fullName',name.trim());form.set('phoneNumber',localPhone(phone));form.set('primaryAddress',JSON.stringify({line1:house.trim(),line2:road.trim(),city:selectedIsland!.display_name,stateRegion:selectedAtoll!.display_name,postalCode:postalCode.trim()||null,country:'Maldives'}));
-    const response=await fetch('/api/user/profile',{method:'PUT',body:form,credentials:'same-origin'});const payload=await response.json().catch(()=>({})) as {error?:string};
-    if(!response.ok)throw new Error(payload.error||'Unable to save the Service Address.');
-    window.dispatchEvent(new Event('fixit:profile-updated'));await onSaved();setHasSavedAddress(true);setAddressMode('saved');
+  async function makeDefault(address:ServiceAddress){
+    if(!userId)throw new Error('Your login session has expired.');
+    const clear=await supabase.from('user_service_addresses').update({is_default:false}).eq('user_id',userId).eq('is_default',true);
+    if(clear.error)throw clear.error;
+    const chosen=await supabase.from('user_service_addresses').update({is_default:true}).eq('id',address.id).eq('user_id',userId);
+    if(chosen.error)throw chosen.error;
+    const profile=await supabase.from('auth_profiles').update({default_service_address_id:address.id,address_line1:address.address_line1,address_line2:address.address_line2||null,city:address.city||null,state_region:address.state_region||null,postal_code:address.postal_code||null,country:address.country||'Maldives',primary_atoll_id:address.service_atoll_id||null,primary_island_id:address.service_island_id||null,primary_location_unit_id:address.service_location_unit_id||null}).eq('user_id',userId);
+    if(profile.error)throw profile.error;
+    window.dispatchEvent(new Event('fixit:profile-updated'));await onSaved();
   }
 
-  async function continueRequest(event?:FormEvent){
-    event?.preventDefault();if(saving)return;
-    if(!validContact){setMessage('Your account needs a name and OTP-verified Maldives phone number.');return;}
-    if(!addressMode){setMessage('Choose the Service Address before continuing.');return;}
-    if(!validAddress){setMessage('Complete the Service Address before continuing.');return;}
-    setSaving(true);setMessage(addressMode==='new'?'Saving Service Address…':'Confirming Service Address…');
-    try{if(addressMode==='new')await persistAddress();setMessage('Service Address confirmed. Sending your request…');onSaveAndSend();}
-    catch(error){setMessage(error instanceof Error?error.message:'Unable to continue.');setSaving(false);}
+  async function selectAddress(address:ServiceAddress){
+    setSelectedId(address.id);setMessage('');
+    if(!address.is_default){setSaving(true);try{await makeDefault(address);await load(address.id);}catch(error){setMessage(error instanceof Error?error.message:'Unable to select Service Address.');}finally{setSaving(false);}}
   }
 
-  if(loading)return <section className="c3WizardCard c3ProfileCompletion" aria-label="Service Address"><div className="c3Notice">Checking your verified account and saved Service Address…</div></section>;
+  async function saveAddress(event:FormEvent){
+    event.preventDefault();if(saving)return;
+    if(!validForm){setMessage('Complete the Service Address before saving.');return;}
+    if(!userId){setMessage('Your login session has expired.');return;}
+    setSaving(true);setMessage(editingId?'Updating Service Address…':'Saving Service Address…');
+    try{
+      const payload={label:label.trim(),address_line1:house.trim(),address_line2:road.trim(),city:selectedIsland!.display_name,state_region:selectedAtoll!.display_name,postal_code:postalCode.trim()||null,country:'Maldives',service_atoll_id:selectedAtoll!.id,service_island_id:selectedIsland!.id,service_location_unit_id:null,access_instructions:accessInstructions.trim()||null,is_active:true};
+      let saved:ServiceAddress;
+      if(editingId){const result=await supabase.from('user_service_addresses').update(payload).eq('id',editingId).eq('user_id',userId).select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').single();if(result.error)throw result.error;saved=result.data as ServiceAddress;}
+      else{const result=await supabase.from('user_service_addresses').insert({...payload,user_id:userId,is_default:false}).select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').single();if(result.error)throw result.error;saved=result.data as ServiceAddress;}
+      await makeDefault(saved);resetForm();setShowForm(false);await load(saved.id);setMessage('Service Address saved and selected.');
+    }catch(error){setMessage(error instanceof Error?error.message:'Unable to save Service Address.');}
+    finally{setSaving(false);}
+  }
+
+  async function removeAddress(address:ServiceAddress){
+    if(saving)return;setSaving(true);setMessage('Removing Service Address…');
+    try{
+      const result=await supabase.from('user_service_addresses').update({is_active:false,is_default:false}).eq('id',address.id).eq('user_id',userId);if(result.error)throw result.error;
+      const remaining=addresses.filter(a=>a.id!==address.id);
+      if(address.is_default&&remaining.length)await makeDefault(remaining[0]);
+      await load(remaining[0]?.id);setMessage(remaining.length?'Service Address removed.':'Service Address removed. Add a Service Address to continue.');
+    }catch(error){setMessage(error instanceof Error?error.message:'Unable to remove Service Address.');}
+    finally{setSaving(false);}
+  }
+
+  async function continueRequest(){
+    if(saving)return;if(!validContact){setMessage('Your account needs a name and OTP-verified Maldives phone number.');return;}if(!selectedAddress){setMessage('Choose a Service Address before continuing.');return;}
+    setSaving(true);setMessage('Confirming Service Address…');
+    try{await makeDefault(selectedAddress);setMessage('Service Address confirmed. Sending your request…');onSaveAndSend();}
+    catch(error){setMessage(error instanceof Error?error.message:'Unable to confirm Service Address.');setSaving(false);}
+  }
+
+  if(loading)return <section className="c3WizardCard c3ProfileCompletion" aria-label="Service Address"><div className="c3Notice">Loading saved Service Addresses…</div></section>;
 
   return <section className="c3WizardCard c3ProfileCompletion" aria-label="Service Address">
-    <div className="c3SectionHead"><div><small>Required before booking</small><h2>Choose Service Address</h2><p>This is the location where the service will be performed. Confirm a saved Service Address or add a new Service Address.</p></div></div>
+    <div className="c3SectionHead"><div><small>Required before booking</small><h2>Choose Service Address</h2><p>Select where the provider should perform this service. You can save multiple Service Addresses.</p></div></div>
+    <div className="c3Review" style={{marginBottom:16}}><div className="c3ReviewRow"><span>Verified phone</span><strong>{phone?`+960 ${phone}`:'Not verified'}</strong></div><div className="c3ReviewRow"><span>Name</span><strong>{name||'Missing'}</strong></div></div>
 
-    <div className="c3Review" style={{marginBottom:16}}>
-      <div className="c3ReviewRow"><span>Verified phone</span><strong>{phone?`+960 ${phone}`:'Not verified'}</strong></div>
-      <div className="c3ReviewRow"><span>Name</span><strong>{name||'Missing'}</strong></div>
-    </div>
+    {!showForm?<>
+      {addresses.length?<div className="c3Urgency" style={{marginBottom:16}}>{addresses.map(address=><div key={address.id} style={{display:'grid',gap:8}}><button type="button" className={selectedId===address.id?'selected':''} onClick={()=>void selectAddress(address)} disabled={saving}><strong>{address.label}{address.is_default?' · Default':''}</strong><span>{addressText(address)}</span></button><div style={{display:'flex',gap:8}}><button type="button" className="c3Secondary" onClick={()=>editAddress(address)} disabled={saving}>Edit</button><button type="button" className="c3Secondary" onClick={()=>void removeAddress(address)} disabled={saving}>Remove</button></div></div>)}</div>:<div className="c3Notice">No saved Service Address yet.</div>}
+      <button type="button" className="c3Secondary" onClick={addNew} disabled={saving}>+ Add New Service Address</button>
+      {selectedAddress?<div className="c3Review" style={{marginTop:16}}><div className="c3ReviewRow"><span>Selected Service Address</span><strong>{selectedAddress.label}</strong></div><div className="c3ReviewRow"><span>Location</span><strong>{addressText(selectedAddress)}</strong></div>{selectedAddress.postal_code?<div className="c3ReviewRow"><span>Postal code</span><strong>{selectedAddress.postal_code}</strong></div>:null}{selectedAddress.access_instructions?<div className="c3ReviewRow"><span>Access notes</span><strong>{selectedAddress.access_instructions}</strong></div>:null}</div>:null}
+      <button className="c3Primary" type="button" onClick={()=>void continueRequest()} disabled={saving||!validContact||!selectedAddress} style={{marginTop:16}}>{saving?'Confirming…':'Use This Service Address & Send Request'}</button>
+    </>:null}
 
-    <div className="c3Urgency" style={{marginBottom:16}}>
-      <button type="button" className={addressMode==='saved'?'selected':''} onClick={chooseSaved} disabled={!hasSavedAddress||saving}><strong>Use saved Service Address</strong><span>{hasSavedAddress?[house,road,selectedIsland?.display_name].filter(Boolean).join(', '):'No complete saved Service Address yet'}</span></button>
-      <button type="button" className={addressMode==='new'?'selected':''} onClick={chooseNew} disabled={saving}><strong>Add New Service Address</strong><span>Enter the location where this service should be performed</span></button>
-    </div>
-
-    {addressMode==='new'?<form className="c3Form" onSubmit={continueRequest}>
-      {name.trim().length<2?<label>Full name<input value={name} onChange={e=>{setName(e.target.value);setMessage('');}} autoComplete="name" disabled={saving} required/></label>:null}
-      <label>House / Apartment<input value={house} onChange={e=>{setHouse(e.target.value);setMessage('');}} autoComplete="address-line1" placeholder="House or apartment" disabled={saving} required/></label>
-      <label>Road<input value={road} onChange={e=>{setRoad(e.target.value);setMessage('');}} autoComplete="address-line2" placeholder="Road / street" disabled={saving} required/></label>
-      <label>Atoll / Region<select value={atollId} onChange={e=>{setAtollId(e.target.value);setIslandId('');setMessage('');}} disabled={saving} required><option value="">Select Atoll / Region</option>{atolls.map(a=><option key={a.id} value={a.id}>{a.display_name}</option>)}</select></label>
-      <label>Island / City<select value={islandId} onChange={e=>{setIslandId(e.target.value);setMessage('');}} disabled={saving||!atollId} required><option value="">Select Island / City</option>{filteredIslands.map(i=><option key={i.id} value={i.id}>{i.display_name}</option>)}</select></label>
+    {showForm?<form className="c3Form" onSubmit={saveAddress}>
+      <label>Address label<input value={label} onChange={e=>setLabel(e.target.value)} placeholder="Home, Office, Apartment" disabled={saving} required/></label>
+      <label>House / Apartment<input value={house} onChange={e=>setHouse(e.target.value)} autoComplete="address-line1" placeholder="House or apartment" disabled={saving} required/></label>
+      <label>Road<input value={road} onChange={e=>setRoad(e.target.value)} autoComplete="address-line2" placeholder="Road / street" disabled={saving} required/></label>
+      <label>Atoll / Region<select value={atollId} onChange={e=>{setAtollId(e.target.value);setIslandId('');}} disabled={saving} required><option value="">Select Atoll / Region</option>{atolls.map(a=><option key={a.id} value={a.id}>{a.display_name}</option>)}</select></label>
+      <label>Island / City<select value={islandId} onChange={e=>setIslandId(e.target.value)} disabled={saving||!atollId} required><option value="">Select Island / City</option>{filteredIslands.map(i=><option key={i.id} value={i.id}>{i.display_name}</option>)}</select></label>
       <label>Postal code <span style={{fontWeight:500}}>optional</span><input value={postalCode} onChange={e=>setPostalCode(e.target.value)} inputMode="numeric" autoComplete="postal-code" placeholder="Postal code" disabled={saving}/></label>
-      <button className="c3Primary" type="submit" disabled={saving||!validContact||!validAddress}>{saving?'Saving…':'Save Service Address & Continue'}</button>
+      <label className="full">Access instructions <span style={{fontWeight:500}}>optional</span><textarea value={accessInstructions} onChange={e=>setAccessInstructions(e.target.value)} placeholder="Floor, unit, gate or directions for the provider" disabled={saving}/></label>
+      <div style={{display:'flex',gap:8}}>{addresses.length?<button className="c3Secondary" type="button" onClick={cancelForm} disabled={saving}>Cancel</button>:null}<button className="c3Primary" type="submit" disabled={saving||!validForm}>{saving?'Saving…':editingId?'Update Service Address':'Save Service Address'}</button></div>
     </form>:null}
-
-    {addressMode==='saved'&&hasSavedAddress?<div>
-      <div className="c3Review"><div className="c3ReviewRow"><span>Service Address</span><strong>{[house,road].filter(Boolean).join(', ')}</strong></div><div className="c3ReviewRow"><span>Atoll / Region</span><strong>{selectedAtoll?.display_name}</strong></div><div className="c3ReviewRow"><span>Island / City</span><strong>{selectedIsland?.display_name}</strong></div>{postalCode?<div className="c3ReviewRow"><span>Postal code</span><strong>{postalCode}</strong></div>:null}</div>
-      <button className="c3Primary" type="button" onClick={()=>void continueRequest()} disabled={saving||!validContact} style={{marginTop:16}}>{saving?'Confirming…':'Use This Service Address & Send Request'}</button>
-    </div>:null}
-
     {message?<p className="c3Notice" role="status">{message}</p>:null}
   </section>;
 }
