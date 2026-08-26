@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
+import RequestTimelinePanel from './RequestTimelinePanel';
 import './marketplace.css';
 import './completion-media.css';
 
@@ -126,6 +127,8 @@ export default function RequestDetailPage(){
    <div className="sectionHeading"><div><h2>Completion Summary</h2><p>Completed {when(request.completed_at)}</p></div></div>
    <div className="requestInfoGrid"><div><span>Service</span><strong>{request.service_name}</strong></div><div><span>Provider</span><strong>{request.assigned_provider_label||'Provider'}</strong></div><div><span>Location</span><strong>{request.service_location_text}</strong></div><div><span>Status</span><strong>Completed</strong></div></div>
   </section>:null}
+
+  <RequestTimelinePanel/>
 
   {canCancel?<section className="screenCard">
    <div className="sectionHeading"><div><h2>Request Options</h2><p>Cancel this request if you no longer need the service.</p></div></div>
