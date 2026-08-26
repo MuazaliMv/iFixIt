@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import './landing.css';
 import './landing-blue.css';
+import './landing-focused.css';
 
 type Lang = 'en' | 'dv';
 
