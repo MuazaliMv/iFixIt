@@ -24,11 +24,7 @@ function when(v?:string|null){
  return Number.isNaN(d.getTime())?v:d.toLocaleString(undefined,{day:'2-digit',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'});
 }
 function pretty(v?:string|null){return String(v||'').replaceAll('_',' ').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());}
-
-function isNoProviderState(status:string){
- return ['NO_PROVIDER','NO_PROVIDER_AVAILABLE','EXPIRED','SEARCH_EXHAUSTED','FAILED'].includes(status);
-}
-
+function isNoProviderState(status:string){return ['NO_PROVIDER','NO_PROVIDER_AVAILABLE','EXPIRED','SEARCH_EXHAUSTED','FAILED'].includes(status);}
 function customerStatus(status:string){
  if(status==='COMPLETED')return'Completed';
  if(status==='PROCESSING'||status==='IN_PROGRESS')return'Work in progress';
@@ -36,13 +32,12 @@ function customerStatus(status:string){
  if(isNoProviderState(status))return'No provider available';
  return'Searching for provider';
 }
-
 function statusCopy(status:string,provider?:string|null){
- if(status==='COMPLETED')return{title:'Service completed',detail:'Your service request has been completed.'};
- if(status==='PROCESSING'||status==='IN_PROGRESS')return{title:'Service in progress',detail:provider?`${provider} is currently working on your request.`:'Your provider is currently working on your request.'};
- if(status==='ACCEPTED')return{title:'Provider accepted your request',detail:provider?`${provider} accepted your request. You do not need to confirm again.`:'A provider accepted your request. You do not need to confirm again.'};
- if(isNoProviderState(status))return{title:'No provider available right now',detail:'We could not find an available provider for this request. You can cancel this request or return to your requests list.'};
- return{title:'Finding a service provider',detail:'We are looking for an available provider. No action is needed from you — this page will update automatically.'};
+ if(status==='COMPLETED')return{title:'Service completed',detail:'Your service request has been completed.',action:'Your service is complete.'};
+ if(status==='PROCESSING'||status==='IN_PROGRESS')return{title:'Service in progress',detail:provider?`${provider} is currently working on your request.`:'Your provider is currently working on your request.',action:'You can follow progress here.'};
+ if(status==='ACCEPTED')return{title:'Provider accepted your request',detail:provider?`${provider} accepted your request.`:'A provider accepted your request.',action:'No confirmation is needed from you.'};
+ if(isNoProviderState(status))return{title:'No provider available right now',detail:'We could not find an available provider for this request.',action:'You can cancel the request or return to your requests list.'};
+ return{title:'Finding a service provider',detail:'We’re looking for an available provider near your location.',action:'No action is needed from you.'};
 }
 
 export default function RequestDetailPage(){
@@ -73,75 +68,78 @@ export default function RequestDetailPage(){
  const before=media.filter(x=>x.media_type==='BEFORE'&&x.url);
  const after=media.filter(x=>x.media_type==='AFTER'&&x.url);
  const hasProvider=Boolean(request?.assigned_provider_label);
+ const photoCount=before.length+after.length;
 
  if(!request)return <main className="ifixPage"><div className="ifixLoading"><div className="ifixLogo"><span>Fix</span><b>It</b></div><p>{notice}</p></div></main>;
 
- return <main className="ifixPage"><div className="requestAppPanel">
+ return <main className="ifixPage"><div className="requestAppPanel requestModel">
   <div className="requestTopBar">
    <button type="button" className="requestBackButton" onClick={()=>router.push('/requests')} aria-label="Back to service requests"><span aria-hidden="true">←</span><span>Back to requests</span></button>
   </div>
 
-  <div className="requestAppHeading">
-   <div>
+  <header className="requestModelHeader">
+   <div className="requestServiceIcon" aria-hidden="true">🔧</div>
+   <div className="requestModelTitle">
     <h1>{request.service_name}</h1>
-    <p>{request.ticket_number} · {when(request.created_at)}</p>
-    <span className="heroStatus">{customerStatus(status)}</span>
+    <p>{request.ticket_number} <span>·</span> {when(request.created_at)}</p>
+    <span className="heroStatus modelStatus">⌕ {customerStatus(status)}</span>
    </div>
-  </div>
+  </header>
 
   {notice?<p className="statusNotice">{notice}</p>:null}
 
-  <nav className="requestTabs" role="tablist" aria-label="Service request sections">
+  <nav className="requestTabs modelTabs" role="tablist" aria-label="Service request sections">
    <button type="button" role="tab" aria-selected={activeTab==='overview'} className={`requestTab ${activeTab==='overview'?'active':''}`} onClick={()=>setActiveTab('overview')}>Overview</button>
    <button type="button" role="tab" aria-selected={activeTab==='activity'} className={`requestTab ${activeTab==='activity'?'active':''}`} onClick={()=>setActiveTab('activity')}>Activity</button>
-   {hasProvider?<button type="button" role="tab" aria-selected={activeTab==='messages'} className={`requestTab ${activeTab==='messages'?'active':''}`} onClick={()=>setActiveTab('messages')}>Messages{messages.length?` (${messages.length})`:''}</button>:null}
+   {hasProvider?<button type="button" role="tab" aria-selected={activeTab==='messages'} className={`requestTab ${activeTab==='messages'?'active':''}`} onClick={()=>setActiveTab('messages')}>Messages{messages.length?<span className="tabCount">{messages.length}</span>:null}</button>:null}
   </nav>
 
   {activeTab==='overview'?<div className="requestTabPanel" role="tabpanel">
-   <section className="activeHero">
-    <div>
+   <section className="activeHero modelHero">
+    <div className="modelHeroIcon" aria-hidden="true">⌕</div>
+    <div className="modelHeroCopy">
      <h1>{current.title}</h1>
      <p>{current.detail}</p>
-     <div className="heroMeta"><span>Updated {when(request.updated_at)}</span></div>
+     <div className="heroMeta"><span>◷ Updated {when(request.updated_at)}</span></div>
+     <div className="modelActionNote"><span aria-hidden="true">i</span><div><strong>{current.action}</strong>{!isNoProviderState(status)&&status!=='COMPLETED'?<p>We’ll notify you as soon as your request moves forward.</p>:null}</div></div>
     </div>
    </section>
 
-   <section className="screenCard">
-    <div className="sectionHeading"><div><h2>Request Progress</h2><p>Follow your request from submission to completion.</p></div></div>
-    <div className="progressTimeline">
-     {progressSteps.map((step,index)=><div className={`progressStep ${index<progressIndex?'done':index===progressIndex?'current':''}`} key={step}>
-      <span>{index<progressIndex?'✓':index===progressIndex?'●':'○'}</span>
-      <div><strong>{step}</strong><small>{step==='New'?(isNoProviderState(status)?'Provider search finished without a match':'Searching for a provider'):step==='Accepted'?'Provider accepted':step==='Processing'?'Service in progress':'Service completed'}</small></div>
+   <section className="modelSection">
+    <h2>Request progress</h2>
+    <div className="modelProgress" aria-label="Request progress">
+     {progressSteps.map((step,index)=><div className={`modelProgressStep ${index<progressIndex?'done':index===progressIndex?'current':''}`} key={step}>
+      <div className="modelProgressTrack"><span className="modelDot">{index<progressIndex?'✓':''}</span>{index<progressSteps.length-1?<i/>:null}</div>
+      <strong>{step}</strong>
      </div>)}
     </div>
    </section>
 
-   {request.assigned_provider_label?<section className="screenCard">
-    <div className="sectionHeading"><div><h2>Service Provider</h2><p>Assigned to this request</p></div></div>
-    <div className="findingCard"><strong>{request.assigned_provider_label}</strong><p>{status==='ACCEPTED'?'Accepted this request and can proceed directly.':status==='PROCESSING'||status==='IN_PROGRESS'?'Currently working on your request.':status==='COMPLETED'?'Completed this service request.':'Assigned service provider.'}</p></div>
+   {request.assigned_provider_label?<section className="screenCard modelProviderCard">
+    <div className="modelDetailRow"><span className="modelRowIcon">👤</span><div><small>Service provider</small><strong>{request.assigned_provider_label}</strong></div><span className="providerState">{customerStatus(status)}</span></div>
    </section>:null}
 
-   <section className="screenCard">
-    <div className="sectionHeading"><div><h2>Request Details</h2><p>The information you submitted for this service request.</p></div></div>
-    <div className="requestInfoGrid"><div><span>Service address</span><strong>{request.service_location_text||'Not provided'}</strong></div>{request.urgency?<div><span>Priority</span><strong>{pretty(request.urgency)}</strong></div>:null}</div>
-    <div className="findingCard"><strong>Issue / description</strong><p>{request.problem_description||'No description provided.'}</p></div>
-    {request.customer_notes?<div className="findingCard"><strong>Customer notes</strong><p>{request.customer_notes}</p></div>:null}
+   <section className="modelSection">
+    <h2>Request details</h2>
+    <div className="screenCard modelDetailsCard">
+     <div className="modelDetailRow"><span className="modelRowIcon">🔧</span><strong>Service</strong><span>{request.service_name}</span></div>
+     <div className="modelDetailRow"><span className="modelRowIcon">⌖</span><strong>Location</strong><span>{request.service_location_text||'Not provided'}</span></div>
+     <div className="modelDetailRow"><span className="modelRowIcon">▤</span><strong>Description</strong><span>{request.problem_description||'No description provided.'}</span></div>
+     {request.urgency?<div className="modelDetailRow"><span className="modelRowIcon">⚑</span><strong>Priority</strong><span className="priorityPill">{pretty(request.urgency)}</span></div>:null}
+     <div className="modelDetailRow"><span className="modelRowIcon">▣</span><strong>Created</strong><span>{when(request.created_at)}</span></div>
+     {photoCount?<div className="modelDetailRow photoRow"><span className="modelRowIcon">▧</span><strong>Photos ({photoCount})</strong><div className="modelThumbs">{[...before,...after].slice(0,3).map(m=><img key={m.id} src={m.url||''} alt="Service request"/>)}</div></div>:null}
+     {request.customer_notes?<div className="modelDetailRow notesRow"><span className="modelRowIcon">✎</span><strong>Notes</strong><span>{request.customer_notes}</span></div>:null}
+    </div>
    </section>
-
-   {before.length||after.length?<section className="screenCard">
-    <div className="sectionHeading"><div><h2>Service Photos</h2><p>Photos recorded for this request.</p></div></div>
-    <div className="completionMediaGrid">{before.length?<div><h3>Before</h3><div className="requestPhotoRow">{before.map(m=><img className="requestPhoto" key={m.id} src={m.url||''} alt="Before service"/>)}</div></div>:null}{after.length?<div><h3>After</h3><div className="requestPhotoRow">{after.map(m=><img className="requestPhoto" key={m.id} src={m.url||''} alt="After service"/>)}</div></div>:null}</div>
-   </section>:null}
 
    {request.status==='COMPLETED'?<section className="screenCard serviceReport">
     <div className="sectionHeading"><div><h2>Completion Summary</h2><p>Completed {when(request.completed_at)}</p></div></div>
     <div className="requestInfoGrid"><div><span>Service</span><strong>{request.service_name}</strong></div><div><span>Provider</span><strong>{request.assigned_provider_label||'Provider'}</strong></div><div><span>Location</span><strong>{request.service_location_text}</strong></div><div><span>Status</span><strong>Completed</strong></div></div>
    </section>:null}
 
-   {canCancel?<section className="screenCard">
-    <div className="sectionHeading"><div><h2>Request Options</h2><p>Cancel this request if you no longer need the service.</p></div></div>
-    <button className="dangerOutline" onClick={()=>void cancelRequest()} disabled={busy}>{busy?'Please wait…':'Cancel request'}</button>
-   </section>:null}
+   {canCancel?<button type="button" className="modelCancelCard" onClick={()=>void cancelRequest()} disabled={busy}>
+    <span className="cancelIcon">⌫</span><span><strong>{busy?'Please wait…':'Cancel request'}</strong><small>You can cancel this request while it is still eligible.</small></span><span className="cancelChevron">›</span>
+   </button>:null}
   </div>:null}
 
   {activeTab==='activity'?<div className="requestTabPanel" role="tabpanel"><RequestTimelinePanel/></div>:null}
