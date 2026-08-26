@@ -20,9 +20,9 @@ input,textarea,select,[contenteditable="true"]{scroll-margin-top:96px;scroll-mar
     scale:none!important;
   }
 
-  /* The focused control is the reliable signal. iOS 26/WebKit may report stale
-     visualViewport geometry during keyboard animation, so do not depend on the
-     calculated keyboard inset before protecting the field. */
+  /* Only actual keyboard-editable controls trigger keyboard layout protection.
+     Native select pickers are intentionally excluded so iOS can open and use
+     the Atoll / Region and Island / City pull menus without a page reflow. */
   html.app-editing,html.app-editing body,
   html.app-keyboard-open,html.app-keyboard-open body{scroll-padding-bottom:140px}
 
@@ -84,8 +84,8 @@ input,textarea,select,[contenteditable="true"]{scroll-margin-top:96px;scroll-mar
 }
 
 @media(max-width:900px) and (pointer:coarse){
-  /* CSS fallback if JavaScript/visualViewport events are delayed. Supported by
-     modern iOS Safari and Chromium-based Android browsers. */
-  .c3Wizard:has(input:focus,textarea:focus,select:focus,[contenteditable="true"]:focus) .c3ActionDock{display:none!important}
-  .c3Wizard:has(input:focus,textarea:focus,select:focus,[contenteditable="true"]:focus) .c3WizardCard{padding-bottom:140px!important}
+  /* CSS fallback for software-keyboard controls only. Native select menus must
+     remain outside this rule or iOS can dismiss/reposition the picker. */
+  .c3Wizard:has(input:focus,textarea:focus,[contenteditable="true"]:focus) .c3ActionDock{display:none!important}
+  .c3Wizard:has(input:focus,textarea:focus,[contenteditable="true"]:focus) .c3WizardCard{padding-bottom:140px!important}
 }
