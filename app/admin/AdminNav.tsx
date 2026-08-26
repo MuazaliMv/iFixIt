@@ -1,13 +1,25 @@
 'use client';
 
-/**
- * Legacy admin operations-console navigation removed.
- *
- * Admin pages may still import <AdminNav /> while the application is being
- * cleaned up. Keeping this no-op component avoids breaking those imports,
- * while ensuring the obsolete header, primary navigation, submenu tabs,
- * theme toggle, and related console chrome are not rendered anywhere.
- */
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
 export default function AdminNav() {
-  return null;
+  const path=usePathname()??'';
+  const links=[
+    {label:'Dashboard',href:'/admin',active:path==='/admin'},
+    {label:'Users',href:'/admin/users',active:path.startsWith('/admin/users')},
+    {label:'Service Categories',href:'/admin/service-categories',active:path.startsWith('/admin/service-categories')},
+    {label:'Providers',href:'/admin/providers',active:path.startsWith('/admin/providers')},
+  ];
+  return (
+    <nav className="adminNav">
+      <ul>
+        {links.map(item=>(
+          <li key={item.href} className={item.active?'active':''}>
+            <Link href={item.href}>{item.label}</Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
 }
