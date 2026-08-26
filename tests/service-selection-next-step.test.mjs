@@ -6,8 +6,9 @@ const read=path=>readFile(new URL(`../${path}`,import.meta.url),'utf8');
 
 test('customer request selection proceeds with one service group',async()=>{
  const portal=await read('app/CustomerPortal.tsx');
- assert.match(portal,/if\(current>=1&&!serviceCode\)return'Choose a service\.'/);
+ assert.match(portal,/if\(current>=1&&\(!serviceCode\|\|!selectedCategory\)\)return'Choose an available service\.'/);
  assert.match(portal,/onClick=\{\(\)=>setServiceCode\(item\.code\)\}/);
+ assert.match(portal,/That service is no longer available\. Please choose another service\./);
  assert.doesNotMatch(portal,/subcategor/i);
  assert.doesNotMatch(portal,/serviceSubcategoryCode/);
  assert.doesNotMatch(portal,/c3Subchips/);
