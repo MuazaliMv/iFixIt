@@ -2,7 +2,11 @@
 
 import { useEffect } from 'react';
 
-const EDITABLE_SELECTOR = 'input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]), textarea, select, [contenteditable="true"]';
+// Only controls that can summon the software keyboard belong in the keyboard
+// runtime. Native <select> menus must be left entirely to iOS/WebKit; treating
+// them as keyboard-editable changes page layout while the picker is opening and
+// can make the Atoll / Region and Island / City menus appear unresponsive.
+const EDITABLE_SELECTOR = 'input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]), textarea, [contenteditable="true"]';
 
 function isEditable(element: Element | null): element is HTMLElement {
   return !!element && element instanceof HTMLElement && element.matches(EDITABLE_SELECTOR);
