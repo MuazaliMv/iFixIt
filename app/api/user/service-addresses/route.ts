@@ -37,9 +37,8 @@ async function currentUser(client:ReturnType<typeof adminClient>,token:string){
 }
 async function syncDefault(client:ReturnType<typeof adminClient>,userId:string,address:any|null){
  const profileValues=address?{default_service_address_id:address.id,address_line1:address.address_line1,address_line2:address.address_line2||null,city:address.city||null,state_region:address.state_region||null,postal_code:address.postal_code||null,country:'Maldives',primary_atoll_id:address.service_atoll_id||null,primary_island_id:address.service_island_id||null,primary_location_unit_id:address.service_location_unit_id||null}:{default_service_address_id:null,address_line1:null,address_line2:null,city:null,state_region:null,postal_code:null,primary_atoll_id:null,primary_island_id:null,primary_location_unit_id:null};
- const legacyValues=address?{address_line1:address.address_line1,address_line2:address.address_line2||null,city:address.city||null,state_region:address.state_region||null,postal_code:address.postal_code||null,country:'Maldives',default_island_id:address.service_island_id||null}:{address_line1:null,address_line2:null,city:null,state_region:null,postal_code:null,default_island_id:null};
- const [profile,legacy]=await Promise.all([client.from('auth_profiles').update(profileValues).eq('user_id',userId),client.from('users').update(legacyValues).eq('id',userId)]);
- if(profile.error)throw profile.error;if(legacy.error)throw legacy.error;
+ const profile=await client.from('auth_profiles').update(profileValues).eq('user_id',userId);
+ if(profile.error)throw profile.error;
 }
 async function setDefault(client:ReturnType<typeof adminClient>,userId:string,addressId:string){
  const selected=await client.from('user_service_addresses').select(ADDRESS_COLUMNS).eq('id',addressId).eq('user_id',userId).eq('is_active',true).single();
