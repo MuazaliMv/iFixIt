@@ -23,13 +23,26 @@ type RequestRow={ticket_number:string;service_name:string;service_location_text:
 type HistoryRow={id:string;event_type:string;severity:string;entity_type?:string|null;created_at:string;metadata?:Record<string,unknown>|null};
 type Summary={serviceAreas:ServiceArea[];subscription:Subscription|null;requests:RequestRow[];history:HistoryRow[]};
 type ProviderStatus='APPROVED'|'REJECTED'|'SUSPENDED'|'SUBMITTED';
+type FactIcon='person'|'briefcase'|'status';
 
 const dayNames=['','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const pretty=(value:string)=>value.replaceAll('_',' ').toLowerCase().replace(/(^|\s)\S/g,s=>s.toUpperCase());
 const when=(value?:string|null)=>value?new Date(value).toLocaleString():'—';
 
-function Fact({label,value}:{label:string;value:string|number}){
-  return <div className="providerFact"><span>{label}</span><strong>{value}</strong></div>;
+function FactIconGraphic({icon}:{icon:FactIcon}){
+  if(icon==='briefcase')return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7V5.5A1.5 1.5 0 0 1 9.5 4h5A1.5 1.5 0 0 1 16 5.5V7M4 8h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Zm0 4h16M10 12v2h4v-2"/></svg>;
+  if(icon==='status')return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v16l-7-3-7 3V5a2 2 0 0 1 2-2Zm5 4v5m0 4h.01"/></svg>;
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 9a7 7 0 0 1 14 0"/></svg>;
+}
+
+function Fact({label,value,icon}:{label:string;value:string|number;icon:FactIcon}){
+  return <div className="providerFact"><span className="factIcon"><FactIconGraphic icon={icon}/></span><div className="factCopy"><span>{label}</span><strong>{value}</strong></div></div>;
+}
+
+function ActionIcon({kind}:{kind:'approve'|'reject'|'suspend'}){
+  if(kind==='reject')return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/></svg>;
+  if(kind==='suspend')return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 9v6m4-6v6"/></svg>;
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.5 3.1 7.7 7.5 9.5 4.4-1.8 7.5-5 7.5-9.5V6L12 3Z"/><path d="m9 12 2 2 4-4"/></svg>;
 }
 
 export default function AdminProviderDetailPage(){
@@ -130,7 +143,7 @@ export default function AdminProviderDetailPage(){
   }
 
   if(!detail){
-    return <main className="shell adminProviderDetail"><header className="topbar"><div><a className="brand" href="/admin">FixIt</a><p className="tagline">Admin • Providers</p></div></header><AdminNav/><section className="providerSection"><p className="formMessage">{message}</p></section></main>;
+    return <main className="shell adminProviderDetail"><AdminNav/><section className="providerSection"><p className="formMessage">{message}</p></section></main>;
   }
 
   const p=detail.onboarding;
@@ -140,26 +153,24 @@ export default function AdminProviderDetailPage(){
   const statusBusy=busyStatus!==null;
 
   return <main className="shell adminProviderDetail">
-    <header className="topbar"><div><a className="brand" href="/admin">FixIt</a><p className="tagline">Admin • Providers</p></div></header>
     <AdminNav/>
 
     <section className="providerHero">
       <div className="providerHeroHead">
-        <div className="providerIdentity"><p className="eyebrow">PROVIDER RECORD</p><h1>{detail.account.phone_number?.trim()||'Contact number missing'}</h1><p className="muted">{detail.account.email||'No email'}</p></div>
-        <div className="providerBadges"><span className="pill">{pretty(status)}</span>{subscription?<span className="pill">Subscription: {pretty(subscription.status)}</span>:null}</div>
+        <div className="providerIdentity"><p className="eyebrow">PROVIDER RECORD</p><h1>{detail.account.phone_number?.trim()||'Contact number missing'}</h1><p className="muted providerEmail">{detail.account.email||'No email'}</p></div>
+        <div className="providerBadges"><span className="pill statusPill"><span className="statusDot" aria-hidden="true"/>{pretty(status)}</span>{subscription?<span className="pill">Subscription: {pretty(subscription.status)}</span>:null}</div>
       </div>
-      <p className="providerMessage" role="status" aria-live="polite">{message}</p>
+      <p className="providerMessage" role="status" aria-live="polite"><span className="messageCheck" aria-hidden="true">✓</span>{message}</p>
       <div className="providerActions">
-        <button type="button" className="primary" disabled={statusBusy||status==='APPROVED'} onClick={()=>void setStatus('APPROVED')}>{busyStatus==='APPROVED'?'Approving…':status==='APPROVED'?'Approved':'Approve Provider'}</button>
-        <button type="button" className="secondary" disabled={statusBusy||status==='SUBMITTED'} onClick={()=>void setStatus('SUBMITTED')}>{busyStatus==='SUBMITTED'?'Saving…':status==='SUBMITTED'?'Submitted':'Mark Submitted'}</button>
-        <button type="button" className="secondary rejectAction" disabled={statusBusy||status==='REJECTED'} onClick={()=>void setStatus('REJECTED')}>{busyStatus==='REJECTED'?'Rejecting…':status==='REJECTED'?'Rejected':'Reject'}</button>
-        <button type="button" className="secondary suspendAction" disabled={statusBusy||status==='SUSPENDED'} onClick={()=>void setStatus('SUSPENDED')}>{busyStatus==='SUSPENDED'?'Suspending…':status==='SUSPENDED'?'Suspended':'Suspend'}</button>
+        <button type="button" className="primary" disabled={statusBusy||status==='APPROVED'} onClick={()=>void setStatus('APPROVED')}><ActionIcon kind="approve"/>{busyStatus==='APPROVED'?'Approving…':status==='APPROVED'?'Approved':'Approve Provider'}</button>
+        <button type="button" className="secondary rejectAction" disabled={statusBusy||status==='REJECTED'} onClick={()=>void setStatus('REJECTED')}><ActionIcon kind="reject"/>{busyStatus==='REJECTED'?'Rejecting…':status==='REJECTED'?'Rejected':'Reject'}</button>
+        <button type="button" className="secondary suspendAction" disabled={statusBusy||status==='SUSPENDED'} onClick={()=>void setStatus('SUSPENDED')}><ActionIcon kind="suspend"/>{busyStatus==='SUSPENDED'?'Suspending…':status==='SUSPENDED'?'Suspended':'Suspend'}</button>
       </div>
     </section>
 
-    <section className="providerSection">
+    <section className="providerSection providerProfileSection">
       <div className="providerSectionHeader"><div><p className="eyebrow">PROFILE</p><h2>Provider Information</h2></div></div>
-      {p?<><div className="providerFacts"><Fact label="Provider type" value={pretty(p.provider_type)}/><Fact label="Business" value={p.business_name||'—'}/><Fact label="Experience" value={`${p.experience_years} years`}/><Fact label="Availability" value={pretty(p.availability_status)}/><Fact label="Accepting requests" value={p.accepting_leads?'Yes':'No'}/><Fact label="Submitted" value={when(p.submitted_at)}/><Fact label="Approved" value={when(p.approved_at)}/></div>{p.description?<p className="providerDescription">{p.description}</p>:null}</>:<div className="emptyQueue">This provider has not completed onboarding yet.</div>}
+      {p?<><div className="providerFacts"><Fact icon="person" label="Provider type" value={pretty(p.provider_type)}/><Fact icon="briefcase" label="Business" value={p.business_name||'—'}/><Fact icon="status" label="Registration status" value={pretty(status)}/></div>{p.description?<p className="providerDescription">{p.description}</p>:null}</>:<div className="emptyQueue">This provider has not completed onboarding yet.</div>}
     </section>
 
     <section className="providerSection">
