@@ -48,6 +48,8 @@ test('Service Address entry uses a progressive two-step mobile wizard',async()=>
  assert.match(source,/Next Step →/);
  assert.match(source,/Specifics & Access/);
  assert.match(source,/Save and Proceed/);
+ assert.ok(source.indexOf('<label>Ward')<source.indexOf('Next Step →'),'Ward must be shown on Step 1 before Next Step');
+ assert.ok(source.indexOf('Access Instructions')>source.indexOf('Next Step →'),'Access Instructions must remain on Step 2');
 });
 
 test('Service Address Ward selection is dependent on Island and persists canonical location unit id',async()=>{
