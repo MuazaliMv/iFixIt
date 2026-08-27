@@ -27,9 +27,11 @@ test('saved Service Addresses use canonical location ids and authenticated locat
 test('Service Address remediation is inline and supports multiple saved addresses',async()=>{
  const source=await read('app/components/customer/RequestProfileCompletion.tsx');
  assert.match(source,/\+ Add New Service Address/);
+ assert.match(source,/House \/ Apartment Name/);
+ assert.match(source,/Road \/ Street/);
  assert.match(source,/Atoll \/ Region/);
  assert.match(source,/Island \/ City/);
- assert.match(source,/<label>Name<input/);
+ assert.doesNotMatch(source,/<label>Name<input/);
  assert.match(source,/Access instructions/);
  assert.doesNotMatch(source,/href="\/profile#service-addresses"/);
 });
