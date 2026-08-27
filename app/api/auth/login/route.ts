@@ -39,14 +39,15 @@ export async function POST(request:NextRequest){
    return NextResponse.json(payload?.error?payload:{error:'Unable to create an authenticated session.'},{status:response.ok?500:response.status,headers:{'Cache-Control':'no-store'}});
   }
 
-  const verifiedPhone=payload?.profile?.is_phone_verified===true&&payload?.profile?.phone_number===phone;
+  const phoneVerifiedAt=String(payload?.profile?.phone_verified_at||'').trim();
+  const verifiedPhone=Boolean(phoneVerifiedAt)&&payload?.profile?.phone_number===phone;
   if(!verifiedPhone){
    return NextResponse.json({error:'Phone verification was not recorded. Please verify the OTP again.'},{status:500,headers:{'Cache-Control':'no-store'}});
   }
 
   const role=String(payload?.profile?.role||payload?.user?.role||'CUSTOMER').toUpperCase();
   const normalizedRole=role==='ADMIN'?'ADMIN':role==='PROVIDER'?'PROVIDER':'CUSTOMER';
-  const responsePayload={...payload,ok:true,profile:{...(payload?.profile||{}),role:normalizedRole,phone_number:phone,is_phone_verified:true}};
+  const responsePayload={...payload,ok:true,profile:{...(payload?.profile||{}),role:normalizedRole,phone_number:phone,phone_verified_at:phoneVerifiedAt}};
   const next=NextResponse.json(responsePayload,{status:200,headers:{'Cache-Control':'no-store'}});
   const secure=secureCookie(request);
   next.cookies.set(ACCESS_COOKIE,payload.session.access_token,{httpOnly:true,secure,sameSite:'lax',path:'/',maxAge:Number(payload.session.expires_in)||3600});
