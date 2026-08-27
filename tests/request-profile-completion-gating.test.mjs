@@ -5,11 +5,13 @@ import { readFile } from 'node:fs/promises';
 const read=path=>readFile(new URL(`../${path}`,import.meta.url),'utf8');
 
 // Current contract: request-specific address selection must not silently replace the user's profile default.
-test('Service Address send is gated by verified contact and an explicit selected address',async()=>{
+test('Service Address send requires profile name and an explicit selected address, not phone OTP verification',async()=>{
  const source=await read('app/components/customer/RequestProfileCompletion.tsx');
- assert.match(source,/phone_confirmed_at/);
+ assert.doesNotMatch(source,/phone_confirmed_at/);
+ assert.match(source,/const validContact=name\.trim\(\)\.length>=2/);
  assert.match(source,/disabled=\{saving\|\|!validContact\|\|!selectedAddress\}/);
  assert.match(source,/Choose a Service Address before continuing/);
+ assert.match(source,/Add your full name in Profile before sending the request/);
  assert.match(source,/'Proceed'/);
 });
 
