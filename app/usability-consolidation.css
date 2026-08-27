@@ -47,11 +47,6 @@ body {
   display: none !important;
 }
 
-/* Primary mobile navigation is the bottom app bar; secondary top shortcuts create two competing hierarchies. */
-.globalMenuSecondary {
-  display: none !important;
-}
-
 /* Phone + OTP is the account security model. Legacy password routes must not be advertised in navigation. */
 .fixitModalRow[href='/change-password'] {
   display: none !important;

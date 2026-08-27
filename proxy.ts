@@ -105,9 +105,9 @@ export const config={
  matcher:[
   // Public exceptions are deliberately narrow: OTP/login APIs, Railway health,
   // and framework/static assets. Everything else is authenticated globally.
-  // Both location-catalogue URLs are excluded from this proxy only because their
-  // shared route handler performs the same OTP-backed server auth itself, which
+  // The location catalogue is excluded from this proxy only because its route
+  // handler performs the same OTP-backed server auth itself, which
   // prevents refresh-token double consumption without weakening authentication.
-  '/((?!login(?:/|$)|api/auth(?:/|$)|api/health$|api/locations/catalog$|api/locations/catalogue$|_next/static|_next/image|favicon.ico$|robots.txt$|sitemap.xml$|manifest.webmanifest$|.*\\.[^/]+$).*)',
+  '/((?!login(?:/|$)|api/auth(?:/|$)|api/health$|api/locations/catalogue$|_next/static|_next/image|favicon.ico$|robots.txt$|sitemap.xml$|manifest.webmanifest$|.*\\.[^/]+$).*)',
  ],
 };
