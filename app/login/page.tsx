@@ -30,6 +30,13 @@ function workspaceDestination(workspace:Workspace){
  return '/home';
 }
 
+function canHonorRequestedDestination(role:AccountRole,requested:string){
+ if(!requested.startsWith('/')||requested.startsWith('//'))return false;
+ if(role==='ADMIN')return requested==='/admin'||requested.startsWith('/admin/');
+ if(role==='PROVIDER')return requested==='/provider'||requested.startsWith('/provider/');
+ return !requested.startsWith('/admin')&&!requested.startsWith('/provider');
+}
+
 function rememberWorkspace(workspace:Workspace,role:AccountRole){
  try{
   localStorage.setItem('ifixmv-login-workspace',workspace);
@@ -74,18 +81,12 @@ export default function LoginPage(){
 
   void(async()=>{
    try{
-    // A profile request is enough to prove the secure cookie session. apiFetch
-    // performs one serialized recovery attempt on 401, so probing /api/auth/session
-    // first only duplicates network work and can make the login screen feel stuck.
     const profileResponse=await fetchWithTimeout('/api/user/profile',{},4500);
     if(!active||!profileResponse.ok)return;
-
     const payload=await profileResponse.json().catch(()=>({}));
     if(!active)return;
     await routeUser(payload?.profile as ExistingProfile|undefined);
-   }catch{
-    // A timeout/network failure simply leaves the usable sign-in form on screen.
-   }
+   }catch{}
   })();
 
   return()=>{active=false;};
@@ -105,8 +106,8 @@ export default function LoginPage(){
   const role=normalizeRole(profile?.role);
   const workspace=defaultWorkspace(role);
   rememberWorkspace(workspace,role);
-  const requested=new URLSearchParams(window.location.search).get('next');
-  if(requested&&requested.startsWith('/')&&!requested.startsWith('//')){
+  const requested=new URLSearchParams(window.location.search).get('next')||'';
+  if(requested&&canHonorRequestedDestination(role,requested)){
    window.location.replace(requested);
    return;
   }
@@ -147,12 +148,6 @@ export default function LoginPage(){
    },16000);
    const payload=await response.json().catch(()=>({}));
    if(!response.ok||!payload?.ok){setMessage(payload?.error||'Unable to sign in.');return;}
-
-   // The login API already creates the authoritative HttpOnly cookie session.
-   // Keep the browser Supabase session synchronized only for legacy direct Edge
-   // Function callers, then navigate. The destination proxy is the authoritative
-   // post-login validation gate, so another /api/auth/session round-trip here is
-   // redundant and previously amplified slow-login/loop behavior.
    await syncBrowserSession(payload?.session as LoginSession|undefined);
    invalidateProfileCache();
    await routeUser(payload?.profile as ExistingProfile|undefined);
