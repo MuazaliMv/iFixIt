@@ -15,14 +15,15 @@ function rememberedRole():NavRole|null{
 export default function RouteMobileNav(){
  const path=usePathname();
  const[sharedRole,setSharedRole]=useState<NavRole|null>(rememberedRole);
- const customerRoute=path==='/'||path==='/requests'||path.startsWith('/requests/');
- const providerRoute=path.startsWith('/provider');
+ const providerApplicationRoute=path==='/provider/onboarding'||path.startsWith('/provider/onboarding/');
+ const customerRoute=path==='/'||path==='/home'||path.startsWith('/home/')||path==='/requests'||path.startsWith('/requests/');
+ const providerRoute=path.startsWith('/provider')&&!providerApplicationRoute;
  const adminRoute=path.startsWith('/admin');
  const sharedRoute=path==='/messages'||path==='/profile';
  useEffect(()=>{
   let active=true;
   async function resolveRole(){
-   let role:NavRole|null=adminRoute?'admin':providerRoute?'provider':customerRoute?'customer':null;
+   let role:NavRole|null=adminRoute?'admin':providerRoute?'provider':customerRoute||providerApplicationRoute?'customer':null;
    if(sharedRoute){
     try{
      const controller=new AbortController();
@@ -39,9 +40,9 @@ export default function RouteMobileNav(){
    try{localStorage.setItem('fixit:mobile-nav-role',role);if(role!=='admin')localStorage.setItem('fixit:app-mode',role);}catch{}
   }
   void resolveRole();return()=>{active=false;};
- },[customerRoute,providerRoute,adminRoute,sharedRoute,path]);
+ },[customerRoute,providerRoute,adminRoute,sharedRoute,providerApplicationRoute,path]);
  if(path.startsWith('/requests/'))return <><DispatchLivePanel/><MobileNav role="customer"/></>;
- if(path==='/'||path==='/requests')return <MobileNav role="customer"/>;
+ if(customerRoute||providerApplicationRoute)return <MobileNav role="customer"/>;
  if(providerRoute)return <MobileNav role="provider"/>;
  if(adminRoute)return <MobileNav role="admin"/>;
  if(sharedRoute&&sharedRole)return <MobileNav role={sharedRole}/>;
