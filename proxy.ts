@@ -11,6 +11,10 @@ function isProviderApplicationRoute(path:string){
  return path==='/provider/onboarding'||path.startsWith('/provider/onboarding/');
 }
 
+function isAdminProviderRoute(path:string){
+ return path==='/admin/providers'||path.startsWith('/admin/providers/');
+}
+
 function loginUrl(request:NextRequest){
  const url=new URL('/login',request.url);
  url.searchParams.set('next',`${request.nextUrl.pathname}${request.nextUrl.search}`);
@@ -19,6 +23,15 @@ function loginUrl(request:NextRequest){
 
 function apiError(message:string,status:number,code?:string){
  return NextResponse.json({error:message,...(code?{code}:{})},{status,headers:{'Cache-Control':'no-store'}});
+}
+
+function applyProviderNoStore(response:NextResponse,path:string){
+ if(!isAdminProviderRoute(path))return response;
+ response.headers.set('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+ response.headers.set('Pragma','no-cache');
+ response.headers.set('Expires','0');
+ response.headers.set('Surrogate-Control','no-store');
+ return response;
 }
 
 async function resolveAccessProfile(authorization:string):Promise<AccessProfile|null>{
@@ -84,7 +97,8 @@ export default async function proxy(request:NextRequest){
   return applyAuthCookies(NextResponse.redirect(new URL('/home',request.url)),auth);
  }
 
- return applyAuthCookies(NextResponse.next(),auth);
+ const response=applyAuthCookies(NextResponse.next(),auth);
+ return applyProviderNoStore(response,path);
 }
 
 export const config={
