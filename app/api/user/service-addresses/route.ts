@@ -13,8 +13,8 @@ function sameOrigin(request:NextRequest){
 }
 function userClient(token:string){
  const url=process.env.SUPABASE_URL?.trim()||process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()||FALLBACK_SUPABASE_URL;
- const key=process.env.SUPABASE_ANON_KEY?.trim()||process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
- if(!key)throw new Error('Supabase public client configuration is incomplete.');
+ const key=process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+ if(!key)throw new Error('Supabase service-role configuration is incomplete.');
  return createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:`Bearer ${token}`}}});
 }
 function clean(value:unknown){return String(value??'').trim();}
