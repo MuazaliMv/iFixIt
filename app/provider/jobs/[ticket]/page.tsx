@@ -9,87 +9,85 @@ import { useProviderMode } from '../../useProviderMode';
 const MARKET_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-marketplace';
 const FLOW_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-job-flow';
 
+type RequestPhoto={id:string;url?:string|null};
 type Job={
  ticket_number:string;
  service_name:string;
  service_location_text:string;
- preferred_date?:string|null;
  problem_description?:string|null;
+ customer_notes?:string|null;
  status:string;
  contactUnlocked?:boolean;
  customer?:{name?:string|null;phone?:string|null}|null;
  onSiteContact?:{sameAsCustomer?:boolean;name?:string|null;phone?:string|null}|null;
- inspection?:{preferred_slots?:string[]|null;scheduled_start?:string|null}|null;
+ media?:RequestPhoto[];
 };
 
-const stages=['ACCEPTED','PROCESSING','COMPLETED'];
-
-function label(job:Job){
- if(job.status==='COMPLETED')return'COMPLETED';
- if(job.status==='PROCESSING'||job.status==='IN_PROGRESS'||job.status==='INSPECTION_SCHEDULED')return'PROCESSING';
- return'ACCEPTED';
-}
-function slotDate(value:string){const normalized=value.includes('T')?value:value.replace(' ','T');const d=new Date(normalized.length===16?`${normalized}:00`:normalized);return Number.isNaN(d.getTime())?null:d;}
-function formatPreferredSlot(value:string){const d=slotDate(value);return d?d.toLocaleString():value;}
-function toDateTimeLocal(value:string){const normalized=value.includes('T')?value:value.replace(' ','T');if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(normalized))return normalized;const d=new Date(normalized);if(Number.isNaN(d.getTime()))return'';const pad=(n:number)=>String(n).padStart(2,'0');return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;}
-function localNowMin(){const d=new Date();const pad=(n:number)=>String(n).padStart(2,'0');return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;}
+const stages=['ACCEPTED','PROCESSING','COMPLETED'] as const;
+function canonicalStage(status:string){const value=String(status||'').toUpperCase();if(value==='COMPLETED')return'COMPLETED';if(['PROCESSING','IN_PROGRESS','INSPECTION_SCHEDULED'].includes(value))return'PROCESSING';return'ACCEPTED';}
 
 export default function ProviderJobDetailPage(){
  const mode=useProviderMode(true);
  const params=useParams<{ticket:string}>();
  const ticket=decodeURIComponent(String(params?.ticket||''));
  const[job,setJob]=useState<Job|null>(null);
- const[schedule,setSchedule]=useState('');
  const[busy,setBusy]=useState(true);
  const[message,setMessage]=useState('Loading customer job…');
  useEffect(()=>{if(mode.ready)void load();},[mode.ready,ticket]);
+
  async function session(){const{data}=await supabase.auth.getSession();if(!data.session){window.location.href='/login';return null;}return data.session;}
- async function load(){setBusy(true);try{const s=await session();if(!s)return;const headers={'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`};const mr=await fetch(MARKET_URL,{method:'POST',headers,body:JSON.stringify({action:'dashboard'})});const mp=await mr.json();if(!mr.ok)throw new Error(mp?.error||'Unable to load job');const found=(mp.requests||[]).find((x:Job)=>x.ticket_number===ticket&&['ACCEPTED','PROCESSING','INSPECTION_SCHEDULED','IN_PROGRESS','COMPLETED'].includes(x.status));if(!found)throw new Error('This customer job is not assigned to you.');setJob(found);setMessage('');}catch(e){setJob(null);setMessage(e instanceof Error?e.message:'Unable to load customer job.');}finally{setBusy(false);}}
- async function flow(action:'schedule'|'start'|'complete',scheduledStart?:string){const s=await session();if(!s)throw new Error('Session expired');const r=await fetch(FLOW_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`},body:JSON.stringify({action,ticketNumber:ticket,scheduledStart})});let p:any={};try{p=await r.json();}catch{}if(!r.ok)throw new Error(p?.error||`Unable to ${action} job (${r.status})`);return p;}
- async function act(action:'schedule'|'start'|'complete',scheduledOverride?:string){
-  setBusy(true);setMessage(action==='schedule'?'Saving visit time…':action==='start'?'Starting work…':'Completing work…');
+ async function load(){
+  setBusy(true);
   try{
-   if(action==='schedule'){
-    const d=slotDate(scheduledOverride||schedule);
-    if(!d||d.getTime()<=Date.now())throw new Error('Choose a future visit time first.');
-    await flow('schedule',d.toISOString());
-    setMessage('Visit time confirmed.');
-   }else if(action==='start'){
-    await flow('start');
-    setMessage('Work started.');
-   }else{
-    if(job?.status==='INSPECTION_SCHEDULED')await flow('start');
-    await flow('complete');
-    setMessage('Work completed.');
-   }
-   await load();
-  }catch(e){setMessage(e instanceof Error?e.message:'Unable to update job.');}finally{setBusy(false);}
+   const s=await session();if(!s)return;
+   const headers={'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`};
+   const mr=await fetch(MARKET_URL,{method:'POST',headers,body:JSON.stringify({action:'dashboard'})});
+   const mp=await mr.json().catch(()=>({}));if(!mr.ok)throw new Error(mp?.error||'Unable to load job');
+   const found=(mp.requests||[]).find((x:Job)=>x.ticket_number===ticket&&['ACCEPTED','PROCESSING','INSPECTION_SCHEDULED','IN_PROGRESS','COMPLETED'].includes(String(x.status).toUpperCase()));
+   if(!found)throw new Error('This customer job is not assigned to you.');
+   setJob(found);setMessage('');
+  }catch(e){setJob(null);setMessage(e instanceof Error?e.message:'Unable to load customer job.');}
+  finally{setBusy(false);}
  }
+ async function flow(action:'start'|'complete'){
+  const s=await session();if(!s)throw new Error('Session expired');
+  const r=await fetch(FLOW_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`},body:JSON.stringify({action,ticketNumber:ticket})});
+  const p=await r.json().catch(()=>({}));if(!r.ok)throw new Error(p?.error||`Unable to ${action} job (${r.status})`);return p;
+ }
+ async function act(action:'start'|'complete'){
+  setBusy(true);setMessage(action==='start'?'Starting work…':'Completing work…');
+  try{await flow(action);setMessage(action==='start'?'Work started. Status is now PROCESSING.':'Work completed. Status is now COMPLETED.');await load();}
+  catch(e){setMessage(e instanceof Error?e.message:'Unable to update job.');}
+  finally{setBusy(false);}
+ }
+
  if(mode.loading||busy&&!job)return <main className="providerModePage"><div className="providerModeShell"><div className="providerModeCard">Loading customer job…</div></div></main>;
- const stage=job?label(job):'';
+ const stage=job?canonicalStage(job.status):'ACCEPTED';
  const index=Math.max(0,stages.indexOf(stage));
- const contactUnlocked=Boolean(job?.contactUnlocked)||stage!=='ACCEPTED';
- const scheduledInternal=job?.status==='INSPECTION_SCHEDULED';
- const workingInternal=stage==='PROCESSING';
  const closed=stage==='COMPLETED';
- const preferredSlots=Array.from(new Set((job?.inspection?.preferred_slots||[]).filter(Boolean)));
- const futureSlots=preferredSlots.filter(slot=>{const d=slotDate(slot);return Boolean(d&&d.getTime()>Date.now());});
- const expiredSlots=preferredSlots.filter(slot=>!futureSlots.includes(slot));
- const scheduleDate=slotDate(schedule);const scheduleValid=Boolean(scheduleDate&&scheduleDate.getTime()>Date.now());
+ const requestPhotos=(job?.media||[]).filter(photo=>photo.url).slice(0,5);
+ const contactName=job?.onSiteContact?.name||job?.customer?.name||'Customer';
+ const contactPhone=job?.onSiteContact?.phone||job?.customer?.phone||null;
  const directions=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job?.service_location_text||'')}`;
- return <main className="providerModePage"><div className="providerModeShell"><header className="providerModeTop"><div><span className="modeBadge provider"><span className="modeDot provider"/>Provider</span><h1>{job?.service_name||'Customer Job'}</h1><p>{ticket}</p></div><AppModeSwitch mode="provider" compact/></header>{job?<>
-  <section className="providerModeCard providerJobHero"><div><span className="modeBadge provider">{stage}</span><h2>{job.service_name}</h2><p>{job.service_location_text}</p></div><a className="secondary" href="/provider/jobs?tab=active">Back to jobs</a></section>
-  <section className="providerModeCard"><div className="providerProgressCompact">{stages.map((item,i)=><div className={i<index?'done':i===index?'current':''} key={item}><span>{i<index?'✓':i+1}</span><small>{item}</small></div>)}</div></section>
-  <section className="providerModeCard providerNextAction"><div className="providerSectionHead"><div><h2>{closed?'Job completed':'Next action'}</h2><p>{stage==='ACCEPTED'?'This request is accepted. Start work when you begin the service.':stage==='PROCESSING'?'Work is active. Mark Work Done when the service is finished.':'This service request is completed.'}</p></div></div>
-   {message?<p className="statusNotice" role="status" style={{marginBottom:12}}>{message}</p>:null}
-   {stage==='ACCEPTED'&&futureSlots.length?<div style={{marginBottom:16}}><strong>Customer preferred times</strong><div className="providerActionRow" style={{marginTop:10,flexWrap:'wrap'}}>{futureSlots.map((slot,i)=>{const local=toDateTimeLocal(slot);return <button key={`${slot}-${i}`} type="button" className="secondary" disabled={busy||!local} onClick={()=>{setSchedule(local);void act('schedule',local);}}>{busy?'Saving…':`Schedule ${formatPreferredSlot(slot)}`}</button>;})}</div></div>:null}
-   {stage==='ACCEPTED'&&expiredSlots.length?<p className="statusNotice">The customer preferred time has expired. You can set another future visit time or start work now.</p>:null}
-   {stage==='ACCEPTED'?<><div className="providerActionRow"><input aria-label="Visit time" type="datetime-local" min={localNowMin()} value={schedule} onChange={e=>setSchedule(e.target.value)}/><button className="secondary" disabled={busy||!scheduleValid} onClick={()=>void act('schedule')}>{busy?'Saving…':'Set Visit Time'}</button></div><div className="providerActionRow" style={{marginTop:12,flexWrap:'wrap'}}><button className="primary providerPrimaryAction" disabled={busy} onClick={()=>void act('start')}>{busy?'Starting…':'Start Work'}</button></div></>:null}
-   {stage==='PROCESSING'&&scheduledInternal?<div className="providerActionRow" style={{flexWrap:'wrap'}}><button className="primary providerPrimaryAction" disabled={busy} onClick={()=>void act('start')}>{busy?'Starting…':'Start Work'}</button><button className="success providerPrimaryAction" disabled={busy} onClick={()=>void act('complete')}>{busy?'Updating…':'Work Done'}</button></div>:null}
-   {stage==='PROCESSING'&&workingInternal&&!scheduledInternal?<button className="success providerPrimaryAction" disabled={busy} onClick={()=>void act('complete')}>{busy?'Updating…':'Work Done'}</button>:null}
-   {closed?<span className="modeBadge customer">Completed</span>:null}
+
+ return <main className="providerModePage frozenProviderFlow"><div className="providerModeShell"><header className="providerModeTop"><div><span className="modeBadge provider"><span className="modeDot provider"/>Provider</span><h1>{job?.service_name||'Customer Job'}</h1><p>Request {ticket}</p></div><AppModeSwitch mode="provider" compact/></header>{job?<>
+  <section className="providerModeCard providerJobHero frozenJobHero"><div><small>{stage==='ACCEPTED'?'ACCEPTED REQUEST':stage==='PROCESSING'?'SERVICE IN PROGRESS':'COMPLETED REQUEST'}</small><span className="modeBadge provider">{stage}</span><h2>{job.service_name}</h2><p>{job.service_location_text}</p></div><a className="secondary" href="/provider/jobs?tab=active">← Requests</a></section>
+
+  <section className="providerModeCard frozenProgressCard"><small>CURRENT PROGRESS</small><div className="providerProgressCompact">{stages.map((item,i)=><div className={i<index?'done':i===index?'current':''} key={item}><span>{i<=index?'✓':i+1}</span><small>{item}</small></div>)}</div></section>
+
+  <section className="providerModeCard frozenNextAction"><div className="providerSectionHead"><div><small>NEXT ACTION</small><h2>{closed?'Job completed':stage==='ACCEPTED'?'Start the service':'Finish the service'}</h2><p>{stage==='ACCEPTED'?'Start work only when service work actually begins.':stage==='PROCESSING'?'Mark the request completed when the service is finished.':'This request has completed the frozen service lifecycle.'}</p></div></div>
+   {message?<p className="statusNotice" role="status">{message}</p>:null}
+   {stage==='ACCEPTED'?<button className="primary providerPrimaryAction" disabled={busy} onClick={()=>void act('start')}>{busy?'Starting…':'Start Work'}</button>:null}
+   {stage==='PROCESSING'?<button className="success providerPrimaryAction" disabled={busy} onClick={()=>void act('complete')}>{busy?'Completing…':'Complete Service'}</button>:null}
+   {closed?<span className="modeBadge customer">COMPLETED ✓</span>:null}
   </section>
-  <section className="providerJobColumns"><div className="providerModeCard"><div className="providerSectionHead"><div><h2>Customer</h2><p>{contactUnlocked?'Contact details are available.':'Customer contact will become available with the assigned job.'}</p></div></div>{contactUnlocked?<><div className="providerContactIdentity"><strong>{job.customer?.name||'Customer'}</strong><span>{job.customer?.phone||'Phone not provided'}</span></div><div className="providerContactActions">{job.customer?.phone?<a className="secondary" href={`tel:${job.customer.phone}`}>Call customer</a>:null}<a className="secondary" href={`/provider/messages?ticket=${encodeURIComponent(ticket)}`}>Message</a></div></>:<div className="providerLockedContact">Customer contact is not available yet.</div>}</div><div className="providerModeCard"><div className="providerSectionHead"><div><h2>On-site contact</h2><p>{contactUnlocked?'Use this person for arrival and access.':'On-site contact will become available with the assigned job.'}</p></div></div>{contactUnlocked&&job.onSiteContact?<><div className="providerContactIdentity"><strong>{job.onSiteContact.name||'On-site contact'}</strong><span>{job.onSiteContact.sameAsCustomer?'Same as customer':job.onSiteContact.phone||'Phone not provided'}</span></div><div className="providerContactActions">{job.onSiteContact.phone?<a className="secondary" href={`tel:${job.onSiteContact.phone}`}>Call on-site</a>:null}<a className="secondary" href={directions} target="_blank" rel="noreferrer">Directions</a></div></>:<div className="providerLockedContact">On-site contact is not available yet.</div>}</div></section>
-  <section className="providerJobColumns"><div className="providerModeCard"><div className="providerSectionHead"><div><h2>Visit</h2></div></div><dl className="providerReadableData"><div><dt>Location</dt><dd>{job.service_location_text}</dd></div><div><dt>Preferred date</dt><dd>{job.preferred_date?new Date(job.preferred_date+'T00:00:00').toLocaleDateString():'Not specified'}</dd></div><div><dt>Customer preferred times</dt><dd>{futureSlots.length?<div>{futureSlots.map((slot,i)=><div key={`${slot}-visit-${i}`}>{formatPreferredSlot(slot)}</div>)}</div>:expiredSlots.length?'Expired — set another time or start work now':'Not submitted'}</dd></div><div><dt>Visit time</dt><dd>{job.inspection?.scheduled_start?new Date(job.inspection.scheduled_start).toLocaleString():'Not scheduled'}</dd></div></dl></div><div className="providerModeCard"><div className="providerSectionHead"><div><h2>Job</h2></div></div><dl className="providerReadableData"><div><dt>Service</dt><dd>{job.service_name}</dd></div><div><dt>Reference</dt><dd>{ticket}</dd></div></dl>{job.problem_description?<div className="providerJobProblem providerProblemClean"><small>Customer request</small><p>{job.problem_description}</p></div>:null}</div></section>
+
+  <section className="providerModeCard frozenDetailCard"><small>PROBLEM</small><p className="frozenProblemText">{job.problem_description||'No problem description supplied.'}</p>{requestPhotos.length?<div className="frozenPhotoGrid">{requestPhotos.map((photo,index)=><a href={photo.url||'#'} target="_blank" rel="noreferrer" key={photo.id}><img src={photo.url||''} alt={`Customer request photo ${index+1}`} loading="lazy"/></a>)}</div>:null}</section>
+
+  <section className="providerModeCard frozenDetailCard"><div className="providerSectionHead"><div><small>SERVICE LOCATION</small><h2>{job.service_location_text}</h2></div><a className="secondary" href={directions} target="_blank" rel="noreferrer">Directions</a></div></section>
+
+  <section className="providerModeCard frozenDetailCard"><small>CONTACT ON SITE</small>{job.contactUnlocked||contactPhone?<div className="providerContactIdentity"><strong>{contactName}</strong><span>{contactPhone||'Phone not provided'}</span></div>:<div className="providerLockedContact">Contact details will appear when the job is accepted.</div>}{contactPhone?<div className="providerContactActions"><a className="secondary" href={`tel:${contactPhone}`}>Call</a><a className="secondary" href={`/provider/messages?ticket=${encodeURIComponent(ticket)}`}>Message</a></div>:null}</section>
+
+  {job.customer_notes?<section className="providerModeCard frozenDetailCard"><small>ACCESS NOTES</small><p className="frozenProblemText">{job.customer_notes}</p></section>:null}
  </>:<section className="providerModeCard"><div className="providerEmptyState"><h3>Job unavailable</h3><p>{message}</p><a className="primary" href="/provider/jobs">Customer Work</a></div></section>}</div></main>;
 }
