@@ -18,6 +18,8 @@ test('saved Service Addresses use canonical location ids and authenticated locat
  assert.match(source,/\/api\/user\/service-addresses/);
  assert.match(source,/service_atoll_id/);
  assert.match(source,/service_island_id/);
+ assert.match(source,/service_location_unit_id/);
+ assert.match(source,/payload\.wards\|\|\[\]/);
  assert.match(source,/\/api\/locations\/catalogue/);
  assert.doesNotMatch(source,/normalize\('NFKD'\)/);
  assert.doesNotMatch(source,/supabase\.from\('user_service_addresses'\)/);
@@ -31,9 +33,19 @@ test('Service Address remediation is inline and supports multiple saved addresse
  assert.match(source,/Road \/ Street/);
  assert.match(source,/Atoll \/ Region/);
  assert.match(source,/Island \/ City/);
+ assert.match(source,/<label>Ward<select/);
+ assert.match(source,/Select Ward/);
  assert.doesNotMatch(source,/<label>Name<input/);
  assert.match(source,/Access instructions/);
  assert.doesNotMatch(source,/href="\/profile#service-addresses"/);
+});
+
+test('Service Address Ward selection is dependent on Island and persists canonical location unit id',async()=>{
+ const source=await read('app/components/customer/RequestProfileCompletion.tsx');
+ assert.match(source,/wards\.filter\(w=>w\.island_id===islandId\)/);
+ assert.match(source,/setIslandId\(e\.target\.value\);setWardId\(''\)/);
+ assert.match(source,/service_location_unit_id:selectedWard\?\.id\|\|null/);
+ assert.match(source,/No ward required for this island/);
 });
 
 test('Service Address browser mutations are routed through authenticated server API',async()=>{
