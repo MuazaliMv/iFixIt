@@ -10,11 +10,13 @@ import './request-tabs.css';
 
 const DETAIL_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/customer-requests';
 const MESSAGE_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/request-messages';
-const MEDIA_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/completion-media';
+const REQUEST_MEDIA_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/request-media';
+const COMPLETION_MEDIA_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/completion-media';
 const CANCEL_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/customer-cancel-request';
 
 type RequestRow={id:string;ticket_number:string;service_name:string;service_location_text:string;preferred_date:string;problem_description:string;urgency?:string|null;customer_notes?:string|null;status:string;assigned_provider_label?:string|null;created_at:string;updated_at:string;accepted_at?:string|null;processing_at?:string|null;completed_at?:string|null};
 type MessageRow={id:string;sender_role:string;sender_label?:string|null;message_text:string;created_at:string};
+type RequestMedia={id:string;media_type:'PHOTO'|string;url?:string|null;created_at:string};
 type CompletionMedia={id:string;media_type:'BEFORE'|'AFTER';url?:string|null;created_at:string};
 type RequestTab='overview'|'activity'|'messages';
 
@@ -46,7 +48,8 @@ export default function RequestDetailPage(){
  const ticket=decodeURIComponent(String(params.ticket||'')).toUpperCase();
  const[request,setRequest]=useState<RequestRow|null>(null);
  const[messages,setMessages]=useState<MessageRow[]>([]);
- const[media,setMedia]=useState<CompletionMedia[]>([]);
+ const[requestMedia,setRequestMedia]=useState<RequestMedia[]>([]);
+ const[completionMedia,setCompletionMedia]=useState<CompletionMedia[]>([]);
  const[busy,setBusy]=useState(false);
  const[notice,setNotice]=useState('Loading request…');
  const[text,setText]=useState('');
@@ -56,7 +59,7 @@ export default function RequestDetailPage(){
 
  async function token(){const{data}=await supabase.auth.getSession();if(!data.session){window.location.href='/login';return'';}return data.session.access_token;}
  async function post(url:string,body:Record<string,unknown>){const t=await token();const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify(body)});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Request failed');return p;}
- async function load(showBusy=true){if(showBusy)setBusy(true);try{const t=await token();if(!t)return;const headers={'Content-Type':'application/json','Authorization':`Bearer ${t}`};const[dr,mr,cr]=await Promise.all([fetch(DETAIL_API,{method:'POST',headers,body:JSON.stringify({action:'detail',ticketNumber:ticket})}),fetch(MESSAGE_API,{method:'POST',headers,body:JSON.stringify({action:'list',ticketNumber:ticket})}),fetch(MEDIA_API,{method:'POST',headers,body:JSON.stringify({action:'list',ticketNumber:ticket})})]);const[d,m,c]=await Promise.all([dr.json(),mr.json(),cr.json()]);if(!dr.ok)throw new Error(d?.error||'Unable to load request');setRequest(d.request);if(mr.ok)setMessages(m.messages||[]);if(cr.ok)setMedia(c.media||[]);setNotice('');}catch(e){setNotice(e instanceof Error?e.message:'Unable to load request.');}finally{if(showBusy)setBusy(false);}}
+ async function load(showBusy=true){if(showBusy)setBusy(true);try{const t=await token();if(!t)return;const headers={'Content-Type':'application/json','Authorization':`Bearer ${t}`};const[dr,mr,rr,cr]=await Promise.all([fetch(DETAIL_API,{method:'POST',headers,body:JSON.stringify({action:'detail',ticketNumber:ticket})}),fetch(MESSAGE_API,{method:'POST',headers,body:JSON.stringify({action:'list',ticketNumber:ticket})}),fetch(REQUEST_MEDIA_API,{method:'POST',headers,body:JSON.stringify({action:'list',ticketNumber:ticket})}),fetch(COMPLETION_MEDIA_API,{method:'POST',headers,body:JSON.stringify({action:'list',ticketNumber:ticket})})]);const[d,m,r,c]=await Promise.all([dr.json(),mr.json(),rr.json(),cr.json()]);if(!dr.ok)throw new Error(d?.error||'Unable to load request');setRequest(d.request);if(mr.ok)setMessages(m.messages||[]);if(rr.ok)setRequestMedia(r.media||[]);if(cr.ok)setCompletionMedia(c.media||[]);setNotice('');}catch(e){setNotice(e instanceof Error?e.message:'Unable to load request.');}finally{if(showBusy)setBusy(false);}}
  async function cancelRequest(){if(!window.confirm('Cancel this service request?'))return;setBusy(true);try{await post(CANCEL_API,{ticketNumber:ticket,reason:'Cancelled by customer'});window.location.replace('/requests');}catch(e){setNotice(e instanceof Error?e.message:'Unable to cancel request.');}finally{setBusy(false);}}
  async function send(){if(!text.trim())return;setBusy(true);try{const p=await post(MESSAGE_API,{action:'send',ticketNumber:ticket,message:text.trim()});setMessages(p.messages||[]);setText('');}catch(e){setNotice(e instanceof Error?e.message:'Unable to send message.');}finally{setBusy(false);}}
 
@@ -65,10 +68,10 @@ export default function RequestDetailPage(){
  const status=request?.status||'NEW';
  const progressIndex=status==='COMPLETED'?3:status==='PROCESSING'||status==='IN_PROGRESS'?2:status==='ACCEPTED'?1:0;
  const current=statusCopy(status,request?.assigned_provider_label);
- const before=media.filter(x=>x.media_type==='BEFORE'&&x.url);
- const after=media.filter(x=>x.media_type==='AFTER'&&x.url);
+ const attachedPhotos=requestMedia.filter(x=>x.url);
+ const before=completionMedia.filter(x=>x.media_type==='BEFORE'&&x.url);
+ const after=completionMedia.filter(x=>x.media_type==='AFTER'&&x.url);
  const hasProvider=Boolean(request?.assigned_provider_label);
- const photoCount=before.length+after.length;
 
  if(!request)return <main className="ifixPage"><div className="ifixLoading"><div className="ifixLogo"><span>Fix</span><b>It</b></div><p>{notice}</p></div></main>;
 
@@ -127,10 +130,18 @@ export default function RequestDetailPage(){
      <div className="modelDetailRow"><span className="modelRowIcon">▤</span><strong>Description</strong><span>{request.problem_description||'No description provided.'}</span></div>
      {request.urgency?<div className="modelDetailRow"><span className="modelRowIcon">⚑</span><strong>Priority</strong><span className="priorityPill">{pretty(request.urgency)}</span></div>:null}
      <div className="modelDetailRow"><span className="modelRowIcon">▣</span><strong>Created</strong><span>{when(request.created_at)}</span></div>
-     {photoCount?<div className="modelDetailRow photoRow"><span className="modelRowIcon">▧</span><strong>Photos ({photoCount})</strong><div className="modelThumbs">{[...before,...after].slice(0,3).map(m=><img key={m.id} src={m.url||''} alt="Service request"/>)}</div></div>:null}
+     {attachedPhotos.length?<div className="modelDetailRow photoRow"><span className="modelRowIcon">▧</span><strong>Attached photos ({attachedPhotos.length})</strong><div className="modelThumbs">{attachedPhotos.slice(0,3).map(m=><img key={m.id} src={m.url||''} alt="Customer request attachment"/>)}</div></div>:null}
      {request.customer_notes?<div className="modelDetailRow notesRow"><span className="modelRowIcon">✎</span><strong>Notes</strong><span>{request.customer_notes}</span></div>:null}
     </div>
    </section>
+
+   {(before.length||after.length)?<section className="modelSection">
+    <h2>Provider photos</h2>
+    <div className="screenCard modelDetailsCard">
+     {before.length?<div className="modelDetailRow photoRow"><span className="modelRowIcon">▧</span><strong>Before ({before.length})</strong><div className="modelThumbs">{before.slice(0,3).map(m=><img key={m.id} src={m.url||''} alt="Before service"/>)}</div></div>:null}
+     {after.length?<div className="modelDetailRow photoRow"><span className="modelRowIcon">▧</span><strong>After ({after.length})</strong><div className="modelThumbs">{after.slice(0,3).map(m=><img key={m.id} src={m.url||''} alt="After service"/>)}</div></div>:null}
+    </div>
+   </section>:null}
 
    {request.status==='COMPLETED'?<section className="screenCard serviceReport">
     <div className="sectionHeading"><div><h2>Completion Summary</h2><p>Completed {when(request.completed_at)}</p></div></div>
