@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { applyAuthCookies, resolveServerAuth } from '../../../../lib/serverAuth';
 
 const FALLBACK_SUPABASE_URL='https://yzlhlilxiszefneshatm.supabase.co';
-const ADDRESS_COLUMNS='id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at';
+const ADDRESS_COLUMNS='id,user_id,label,address_line1,address_line2,city,ward,state_region,postal_code,country,service_atoll_id,service_island_id,access_instructions,is_default,is_active,updated_at';
 const PRODUCTION_ORIGINS=new Set(['https://ifixmv.com','https://www.ifixmv.com']);
 
 function sameOrigin(request:NextRequest){
@@ -21,22 +21,23 @@ function clean(value:unknown){return String(value??'').trim();}
 function payloadFrom(body:Record<string,unknown>){
  return {
   label:clean(body.label),address_line1:clean(body.address_line1),address_line2:clean(body.address_line2),
-  city:clean(body.city),state_region:clean(body.state_region),postal_code:clean(body.postal_code)||null,country:'Maldives',
+  city:clean(body.city),ward:clean(body.ward)||null,state_region:clean(body.state_region),postal_code:clean(body.postal_code)||null,country:'Maldives',
   service_atoll_id:clean(body.service_atoll_id)||null,service_island_id:clean(body.service_island_id)||null,
-  service_location_unit_id:clean(body.service_location_unit_id)||null,access_instructions:clean(body.access_instructions)||null,is_active:true,
+  access_instructions:clean(body.access_instructions)||null,is_active:true,
  };
 }
 function validateAddress(input:ReturnType<typeof payloadFrom>){
  const missing:string[]=[];
  if(!input.label)missing.push('Name');if(!input.address_line1)missing.push('House / Apartment');if(!input.address_line2)missing.push('Road');
  if(!input.service_atoll_id)missing.push('Atoll / Region');if(!input.service_island_id)missing.push('Island / City');
+ if(input.ward&&input.ward.length>120)missing.push('Ward (120 characters maximum)');
  return missing;
 }
 async function currentUser(client:ReturnType<typeof userClient>,token:string){
  const {data,error}=await client.auth.getUser(token);if(error||!data.user)throw new Error('Authentication required.');return data.user;
 }
 async function syncDefault(client:ReturnType<typeof userClient>,userId:string,address:any|null){
- const profileValues=address?{default_service_address_id:address.id,address_line1:address.address_line1,address_line2:address.address_line2||null,city:address.city||null,state_region:address.state_region||null,postal_code:address.postal_code||null,country:'Maldives',primary_atoll_id:address.service_atoll_id||null,primary_island_id:address.service_island_id||null,primary_location_unit_id:address.service_location_unit_id||null}:{default_service_address_id:null,address_line1:null,address_line2:null,city:null,state_region:null,postal_code:null,primary_atoll_id:null,primary_island_id:null,primary_location_unit_id:null};
+ const profileValues=address?{default_service_address_id:address.id,address_line1:address.address_line1,address_line2:address.address_line2||null,city:address.city||null,ward:address.ward||null,state_region:address.state_region||null,postal_code:address.postal_code||null,country:'Maldives',primary_atoll_id:address.service_atoll_id||null,primary_island_id:address.service_island_id||null}:{default_service_address_id:null,address_line1:null,address_line2:null,city:null,ward:null,state_region:null,postal_code:null,primary_atoll_id:null,primary_island_id:null};
  const profile=await client.from('auth_profiles').update(profileValues).eq('user_id',userId);
  if(profile.error)throw profile.error;
 }

@@ -48,7 +48,7 @@ GRANT UPDATE (
   country,
   primary_atoll_id,
   primary_island_id,
-  primary_location_unit_id
+  ward
 ) ON public.auth_profiles TO authenticated;
 
 DROP POLICY IF EXISTS auth_profiles_update_own_service_address ON public.auth_profiles;
