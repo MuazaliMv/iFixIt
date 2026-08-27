@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
 
       - name: Patch provider onboarding UX
         shell: bash
@@ -73,7 +76,7 @@ jobs:
 
       - name: Verify application
         run: |
-          npm ci
+          npm install
           npm run verify
 
       - name: Commit verified fix
