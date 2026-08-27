@@ -7,10 +7,11 @@ import AdminNav from '../../AdminNav';
 import './provider-detail.css';
 
 const ADMIN_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/admin-operations';
+const ADMIN_USERS_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/admin-users';
 const SUMMARY_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-admin-summary';
 const REQUEST_TIMEOUT_MS=15000;
 
-type Account={user_id:string;email?:string|null;full_name?:string|null;provider_approved:boolean;created_at:string;updated_at:string};
+type Account={user_id:string;email?:string|null;full_name?:string|null;phone_number?:string|null;provider_approved:boolean;created_at:string;updated_at:string};
 type Onboarding={provider_type:string;public_name:string;business_name?:string|null;description?:string|null;experience_years:number;service_area_text:string;availability_status:string;accepting_leads:boolean;onboarding_status:string;submitted_at?:string|null;approved_at?:string|null;created_at:string;updated_at:string};
 type Category={category_id:string;name:string;is_active:boolean};
 type Hours={day_of_week:number;is_working:boolean;start_time?:string|null;end_time?:string|null;timezone_name:string};
@@ -68,8 +69,9 @@ export default function AdminProviderDetailPage(){
   }
 
   async function refreshDetail(){
-    const d=await call(ADMIN_URL,{action:'provider_detail',providerUserId:userId});
-    setDetail(d as Detail);
+    const [d,usersPayload]=await Promise.all([call(ADMIN_URL,{action:'provider_detail',providerUserId:userId}),call(ADMIN_USERS_URL,{})]);
+    const userRow=(usersPayload?.users||[]).find((u:any)=>u.user_id===userId);
+    setDetail({...d,account:{...d.account,phone_number:userRow?.phone_number||null}} as Detail);
   }
 
   async function load(){
@@ -143,7 +145,7 @@ export default function AdminProviderDetailPage(){
 
     <section className="providerHero">
       <div className="providerHeroHead">
-        <div className="providerIdentity"><p className="eyebrow">PROVIDER RECORD</p><h1>{p?.public_name||detail.account.full_name||'Unnamed provider'}</h1><p className="muted">{detail.account.email||'No email'}</p></div>
+        <div className="providerIdentity"><p className="eyebrow">PROVIDER RECORD</p><h1>{detail.account.phone_number?.trim()||'Contact number missing'}</h1><p className="muted">{detail.account.email||'No email'}</p></div>
         <div className="providerBadges"><span className="pill">{pretty(status)}</span>{subscription?<span className="pill">Subscription: {pretty(subscription.status)}</span>:null}</div>
       </div>
       <p className="providerMessage" role="status" aria-live="polite">{message}</p>
