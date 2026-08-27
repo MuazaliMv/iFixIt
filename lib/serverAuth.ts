@@ -1,9 +1,14 @@
+import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
 const SUPABASE_URL='https://yzlhlilxiszefneshatm.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_1sZEZgz9k2JACE_WzHtbCw_reiQEik6';
 export const ACCESS_COOKIE='ifixmv_access_token';
 export const REFRESH_COOKIE='ifixmv_refresh_token';
+
+const authClient=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
+ auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},
+});
 
 type RefreshSession={
  access_token:string;
@@ -16,37 +21,30 @@ type RefreshSession={
 export type ServerAuthResult={
  authorization:string;
  accessToken:string;
+ userId:string;
  refreshToken?:string;
  refreshed:boolean;
  expiresIn:number;
 };
 
 type AmrEntry=string|{method?:unknown};
+type JwtClaims={sub?:unknown;amr?:unknown};
 
-function hasOtpAuthenticationMethod(token:string){
- try{
-  const parts=token.split('.');
-  if(parts.length!==3)return false;
-  const encoded=parts[1].replace(/-/g,'+').replace(/_/g,'/');
-  const padded=encoded.padEnd(Math.ceil(encoded.length/4)*4,'=');
-  const payload=JSON.parse(atob(padded));
-  const amr=Array.isArray(payload?.amr)?payload.amr as AmrEntry[]:[];
-  return amr.some(entry=>{
-   if(typeof entry==='string')return entry.toLowerCase()==='otp';
-   return String(entry?.method||'').toLowerCase()==='otp';
-  });
- }catch{return false;}
+function hasOtpAuthenticationMethod(claims:JwtClaims){
+ const amr=Array.isArray(claims.amr)?claims.amr as AmrEntry[]:[];
+ return amr.some(entry=>{
+  if(typeof entry==='string')return entry.toLowerCase()==='otp';
+  return String(entry?.method||'').toLowerCase()==='otp';
+ });
 }
 
-async function validateAccessToken(token:string){
- if(!hasOtpAuthenticationMethod(token))return false;
+async function verifiedClaims(token:string):Promise<JwtClaims|null>{
  try{
-  const response=await fetch(`${SUPABASE_URL}/auth/v1/user`,{
-   headers:{apikey:SUPABASE_PUBLISHABLE_KEY,Authorization:`Bearer ${token}`},
-   cache:'no-store',signal:AbortSignal.timeout(5000),
-  });
-  return response.ok;
- }catch{return false;}
+  const {data,error}=await authClient.auth.getClaims(token);
+  const claims=data?.claims as JwtClaims|undefined;
+  if(error||!claims||typeof claims.sub!=='string'||!claims.sub||!hasOtpAuthenticationMethod(claims))return null;
+  return claims;
+ }catch{return null;}
 }
 
 async function refreshAccessToken(refreshToken:string):Promise<RefreshSession|null>{
@@ -59,25 +57,32 @@ async function refreshAccessToken(refreshToken:string):Promise<RefreshSession|nu
   });
   if(!response.ok)return null;
   const payload=await response.json().catch(()=>null);
-  if(!payload?.access_token||!hasOtpAuthenticationMethod(payload.access_token))return null;
+  if(!payload?.access_token)return null;
   return payload as RefreshSession;
  }catch{return null;}
 }
 
 export async function resolveServerAuth(request:NextRequest):Promise<ServerAuthResult|null>{
- // FixIt authentication is intentionally cookie-bound. A caller cannot promote an
- // arbitrary Supabase bearer token into an application session. These cookies are
- // issued by /api/auth/login only after successful OTP verification.
+ // Authentication stays cookie-bound. Tokens are accepted only from HttpOnly cookies
+ // issued after OTP login, and their signatures/expiry are verified before use.
+ // getClaims() avoids the previous /auth/v1/user request for asymmetric Supabase JWTs
+ // by using Supabase's cached JWKS verification path.
  const accessToken=request.cookies.get(ACCESS_COOKIE)?.value||'';
  const refreshToken=request.cookies.get(REFRESH_COOKIE)?.value||'';
- if(accessToken&&await validateAccessToken(accessToken))return{authorization:`Bearer ${accessToken}`,accessToken,refreshToken:refreshToken||undefined,refreshed:false,expiresIn:3600};
+ if(accessToken){
+  const claims=await verifiedClaims(accessToken);
+  if(claims)return{authorization:`Bearer ${accessToken}`,accessToken,userId:String(claims.sub),refreshToken:refreshToken||undefined,refreshed:false,expiresIn:3600};
+ }
  if(!refreshToken)return null;
 
  const refreshed=await refreshAccessToken(refreshToken);
  if(!refreshed)return null;
+ const claims=await verifiedClaims(refreshed.access_token);
+ if(!claims)return null;
  return{
   authorization:`Bearer ${refreshed.access_token}`,
   accessToken:refreshed.access_token,
+  userId:String(claims.sub),
   refreshToken:refreshed.refresh_token||refreshToken,
   refreshed:true,
   expiresIn:Number(refreshed.expires_in)||3600,
