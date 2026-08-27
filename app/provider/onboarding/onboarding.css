@@ -16,3 +16,26 @@
 .submitActions{margin-top:0}
 .submitActions .primary{width:100%;min-height:52px}
 @media(max-width:480px){.categoryGrid{grid-template-columns:1fr;gap:8px}.categoryChoice{min-height:52px;padding:11px 14px}.submitPanel{margin-bottom:10px}.submitSummary{gap:8px}.submitSummary>div{padding:11px 12px}}
+
+/* provider-onboarding-professional-state-ui-v3 */
+/* Keep document replacement available without making an uploaded document look incomplete. */
+.panel label.secondary:has(input[type="file"]){min-height:36px!important;padding:8px 12px!important;border-radius:10px!important;font-size:13px!important;font-weight:700!important;background:transparent!important;box-shadow:none!important}
+.panel label.secondary:has(input[type="file"]):hover{background:var(--surface-alt)!important}
+.panel label.secondary:has(input[type="file"]):focus-within{outline:3px solid color-mix(in srgb,var(--brand) 18%,transparent);outline-offset:2px}
+.panel label.secondary:has(input[type="file"]) + .muted{font-size:12px;line-height:1.4}
+
+/* Uploaded/ready badges should read as completed metadata, not another primary action. */
+.panel .pill{white-space:nowrap;align-self:flex-start}
+
+/* Make the pending state look deliberate and stable rather than disabled/broken. */
+.submitPanel .submitActions .primary:disabled{opacity:1;cursor:default;background:color-mix(in srgb,var(--brand) 46%,#dfe6f3);border-color:transparent;color:#fff;box-shadow:none}
+.submitPanel .sectionLead{max-width:38rem}
+.submitPanel .formMessage{margin-top:12px}
+
+@media(max-width:480px){
+ .panel label.secondary:has(input[type="file"]){width:auto!important;min-height:34px!important;padding:7px 10px!important;font-size:12px!important}
+ .submitPanel .panelHeader{gap:12px}
+ .submitPanel .panelHeader h2{font-size:clamp(27px,8vw,34px);line-height:1.04}
+ .submitPanel .sectionLead{font-size:15px;line-height:1.5}
+ .submitPanel .submitActions .primary{min-height:50px;border-radius:14px}
+}
