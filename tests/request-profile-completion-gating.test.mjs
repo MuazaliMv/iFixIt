@@ -15,13 +15,14 @@ test('Service Address send requires profile name and an explicit selected addres
  assert.match(source,/'Proceed'/);
 });
 
-test('saved Service Addresses use canonical location ids and authenticated location catalogue',async()=>{
+test('saved Service Addresses use canonical atoll/island ids and optional Ward text',async()=>{
  const source=await read('app/components/customer/RequestProfileCompletion.tsx');
  assert.match(source,/\/api\/user\/service-addresses/);
  assert.match(source,/service_atoll_id/);
  assert.match(source,/service_island_id/);
- assert.match(source,/service_location_unit_id/);
- assert.match(source,/payload\.wards\|\|\[\]/);
+ assert.match(source,/ward:ward\.trim\(\)\|\|null/);
+ assert.doesNotMatch(source,/service_location_unit_id/);
+ assert.doesNotMatch(source,/payload\.wards/);
  assert.match(source,/\/api\/locations\/catalogue/);
  assert.doesNotMatch(source,/normalize\('NFKD'\)/);
  assert.doesNotMatch(source,/supabase\.from\('user_service_addresses'\)/);
@@ -35,8 +36,8 @@ test('Service Address remediation is inline and supports multiple saved addresse
  assert.match(source,/Road \/ Street/);
  assert.match(source,/Atoll \/ Region/);
  assert.match(source,/Island \/ City/);
- assert.match(source,/>Ward /);
- assert.match(source,/Select Ward/);
+ assert.match(source,/Ward \/ Locality/);
+ assert.match(source,/optional/);
  assert.doesNotMatch(source,/<label>Name<input/);
  assert.match(source,/Access Instructions/);
  assert.doesNotMatch(source,/Postal code <span/);
@@ -54,12 +55,13 @@ test('Service Address entry uses a progressive two-step mobile wizard',async()=>
  assert.ok(source.indexOf('Access Instructions')>source.indexOf('Next Step →'),'Access Instructions must remain on Step 2');
 });
 
-test('Service Address Ward selection is dependent on Island and persists canonical location unit id',async()=>{
+test('Service Address Ward is optional text and never gates progression',async()=>{
  const source=await read('app/components/customer/RequestProfileCompletion.tsx');
- assert.match(source,/wards\.filter\(w=>w\.island_id===islandId\)/);
- assert.match(source,/setIslandId\(e\.target\.value\);setWardId\(''\)/);
- assert.match(source,/service_location_unit_id:selectedWard\?\.id\|\|null/);
- assert.match(source,/No ward required for this island/);
+ assert.match(source,/Ward \/ Locality/);
+ assert.match(source,/setWard\(e\.target\.value\.slice\(0,120\)\)/);
+ assert.match(source,/ward:ward\.trim\(\)\|\|null/);
+ assert.doesNotMatch(source,/missing\.push\('Ward'\)/);
+ assert.doesNotMatch(source,/service_location_unit_id|LocationUnit|wardRequired|selectedWard/);
 });
 
 test('Service Address browser mutations are routed through authenticated server API',async()=>{
@@ -73,9 +75,14 @@ test('Service Address browser mutations are routed through authenticated server 
  assert.match(source,/Your profile default has not changed/);
  assert.match(source,/onSaveAndSend\(\)/);
  assert.match(route,/resolveServerAuth\(request\)/);
- assert.match(route,/SUPABASE_SERVICE_ROLE_KEY/);
+ assert.match(route,/SUPABASE_ANON_KEY/);
+ assert.match(route,/Authorization:`Bearer \$\{token\}`/);
+ assert.doesNotMatch(route,/SUPABASE_SERVICE_ROLE_KEY/);
  assert.match(route,/eq\('user_id',user\.id\)/);
  assert.match(route,/sameOrigin\(request\)/);
+ assert.match(route,/city,ward,state_region/);
+ assert.match(route,/ward:clean\(body\.ward\)\|\|null/);
+ assert.doesNotMatch(route,/service_location_unit_id|primary_location_unit_id|location_units/);
 });
 
 test('deleting a default Service Address promotes the next address or clears canonical profile state',async()=>{
@@ -85,6 +92,8 @@ test('deleting a default Service Address promotes the next address or clears can
  assert.match(route,/default_service_address_id:null/);
  assert.match(route,/primary_atoll_id:null/);
  assert.match(route,/primary_island_id:null/);
+ assert.match(route,/ward:null/);
+ assert.doesNotMatch(route,/primary_location_unit_id/);
  assert.doesNotMatch(route,/default_island_id:null/);
  assert.doesNotMatch(route,/from\('users'\)/);
  assert.match(route,/is_active:false,is_default:false/);

@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabaseClient';
 import './login.css';
 
 type Step='phone'|'otp';
-type ExistingProfile={role?:string|null};
+type ExistingProfile={role?:string|null;provider_approved?:boolean|null};
 type AccountRole='CUSTOMER'|'PROVIDER'|'ADMIN';
 type Workspace='customer'|'provider'|'admin';
 type LoginSession={access_token?:string|null;refresh_token?:string|null};
@@ -18,9 +18,9 @@ function normalizeRole(value:unknown):AccountRole{
  return 'CUSTOMER';
 }
 
-function defaultWorkspace(role:AccountRole):Workspace{
+function defaultWorkspace(role:AccountRole,providerApproved=false):Workspace{
  if(role==='ADMIN')return 'admin';
- if(role==='PROVIDER')return 'provider';
+ if(providerApproved)return 'provider';
  return 'customer';
 }
 
@@ -30,10 +30,10 @@ function workspaceDestination(workspace:Workspace){
  return '/home';
 }
 
-function canHonorRequestedDestination(role:AccountRole,requested:string){
+function canHonorRequestedDestination(role:AccountRole,providerApproved:boolean,requested:string){
  if(!requested.startsWith('/')||requested.startsWith('//'))return false;
  if(role==='ADMIN')return requested==='/admin'||requested.startsWith('/admin/');
- if(role==='PROVIDER')return requested==='/provider'||requested.startsWith('/provider/');
+ if(providerApproved)return requested==='/provider'||requested.startsWith('/provider/');
  return !requested.startsWith('/admin')&&!requested.startsWith('/provider');
 }
 
@@ -104,10 +104,11 @@ export default function LoginPage(){
    }catch{}
   }
   const role=normalizeRole(profile?.role);
-  const workspace=defaultWorkspace(role);
+  const providerApproved=Boolean(profile?.provider_approved);
+  const workspace=defaultWorkspace(role,providerApproved);
   rememberWorkspace(workspace,role);
   const requested=new URLSearchParams(window.location.search).get('next')||'';
-  if(requested&&canHonorRequestedDestination(role,requested)){
+  if(requested&&canHonorRequestedDestination(role,providerApproved,requested)){
    window.location.replace(requested);
    return;
   }

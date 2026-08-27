@@ -16,12 +16,22 @@ test('provider portal access honors both provider role and approved provider ent
  const proxy=await read('proxy.ts');
  const guard=await read('app/RoleAccessGuard.tsx');
  const switcher=await read('app/GlobalModeSwitch.tsx');
- assert.match(access,/portal==='provider'\)return role==='PROVIDER'\|\|role==='ADMIN'\|\|providerApproved/);
+ assert.match(access,/portal==='provider'\)return role==='ADMIN'\|\|providerApproved/);
+ assert.doesNotMatch(access,/portal==='provider'\)return role==='PROVIDER'/);
  assert.match(proxy,/providerApproved:Boolean\(payload\?\.profile\?\.provider_approved\)/);
  assert.match(guard,/canAccessPortal\(role,'provider',providerApproved\)/);
  assert.match(switcher,/canAccessPortal\(accountRole,'provider',providerApproved\)/);
  assert.match(proxy,/Service Provider permission required/);
  assert.match(proxy,/NextResponse\.redirect\(new URL\('\/home'/);
+});
+
+test('approved Provider entitlement controls login landing and provider profile data',async()=>{
+ const login=await read('app/login/page.tsx');
+ const profile=await read('app/profile/ProfileClient.tsx');
+ assert.match(login,/providerApproved=Boolean\(profile\?\.provider_approved\)/);
+ assert.match(login,/defaultWorkspace\(role,providerApproved\)/);
+ assert.match(profile,/if\(normalized\.provider_approved\)void refreshProviderData\(\)/);
+ assert.match(profile,/profile\?\.provider_approved\?<><section/);
 });
 
 test('role-protected routes fail closed and all matched APIs reject missing OTP-backed sessions',async()=>{
