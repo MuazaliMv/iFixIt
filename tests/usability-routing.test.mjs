@@ -24,11 +24,10 @@ test('client sign-out events clear the server session too',async()=>{
 });
 
 test('customers get a provider application route instead of a blocked provider switch',async()=>{
- const source=await read('app/GlobalModeSwitch.tsx');
- assert.match(source,/Become a Service Provider/);
- assert.match(source,/href="\/provider\/onboarding"/);
- assert.match(source,/canUseProvider\?<Link/);
- assert.doesNotMatch(source,/href="\/login"[^>]*>\s*<span[^>]*>[^<]*Service Provider/s);
+ const source=await read('app/GlobalRoleMenu.tsx');
+ assert.match(source,/Become a Provider/);
+ assert.match(source,/href:'\/provider\/onboarding'/);
+ assert.doesNotMatch(source,/href:'\/login'[^\n]*Service Provider/);
 });
 
 test('cancelled requests stay out of normal customer request views and counters',async()=>{
