@@ -15,19 +15,19 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Patch provider onboarding UX
+        shell: bash
         run: |
-          python - <<'PY'
+          python <<'PY'
           from pathlib import Path
           import re
 
-          page = Path('app/provider/onboarding/page.tsx')
+          page = Path("app/provider/onboarding/page.tsx")
           s = page.read_text()
 
-          # Lock an application after submission/approval so duplicate submissions are impossible.
           anchor = " const selectedCount=useMemo(()=>selected.length,[selected]);\n"
           if "const isApplicationLocked=" not in s:
               if anchor not in s:
-                  raise SystemExit('selectedCount anchor not found')
+                  raise SystemExit("selectedCount anchor not found")
               s = s.replace(anchor, anchor + " const isApplicationLocked=status==='SUBMITTED'||status==='APPROVED';\n", 1)
 
           old_toggle = " function toggleCategory(id:string){setSelected(current=>current.includes(id)?current.filter(x=>x!==id):[...current,id]);}"
@@ -35,65 +35,40 @@ jobs:
           if old_toggle in s:
               s = s.replace(old_toggle, new_toggle, 1)
 
-          # Guard save() itself as well as the button, so the protection is not UI-only.
           save_anchor = " async function save(submit:boolean){if(publicName.trim().length<2)return setMessage('Enter your public provider name.');"
           if save_anchor in s and "if(submit&&isApplicationLocked)" not in s:
-              s = s.replace(
-                  save_anchor,
-                  " async function save(submit:boolean){if(submit&&isApplicationLocked)return setMessage(status==='APPROVED'?'Provider account is already approved.':'Provider application is already pending Admin approval.');if(publicName.trim().length<2)return setMessage('Enter your public provider name.');",
-                  1,
-              )
+              s = s.replace(save_anchor, " async function save(submit:boolean){if(submit&&isApplicationLocked)return setMessage(status==='APPROVED'?'Provider account is already approved.':'Provider application is already pending Admin approval.');if(publicName.trim().length<2)return setMessage('Enter your public provider name.');", 1)
 
-          old_categories = '''<div className="categoryGrid">{categories.map(c=><button type="button" key={c.id} className={selected.includes(c.id)?'categoryChoice selected':'categoryChoice'} onClick={()=>toggleCategory(c.id)}>{c.name}</button>)}{!categories.length?<div className="emptyQueue">No service categories available.</div>:null}</div>'''
-          new_categories = '''<div className="categoryGrid">{categories.map(c=><button type="button" key={c.id} aria-pressed={selected.includes(c.id)} disabled={isApplicationLocked} className={selected.includes(c.id)?'categoryChoice selected':'categoryChoice'} onClick={()=>toggleCategory(c.id)}><span>{c.name}</span></button>)}{!categories.length?<div className="emptyQueue">No service categories available.</div>:null}</div>'''
+          old_categories = """<div className=\"categoryGrid\">{categories.map(c=><button type=\"button\" key={c.id} className={selected.includes(c.id)?'categoryChoice selected':'categoryChoice'} onClick={()=>toggleCategory(c.id)}>{c.name}</button>)}{!categories.length?<div className=\"emptyQueue\">No service categories available.</div>:null}</div>"""
+          new_categories = """<div className=\"categoryGrid\">{categories.map(c=><button type=\"button\" key={c.id} aria-pressed={selected.includes(c.id)} disabled={isApplicationLocked} className={selected.includes(c.id)?'categoryChoice selected':'categoryChoice'} onClick={()=>toggleCategory(c.id)}><span>{c.name}</span></button>)}{!categories.length?<div className=\"emptyQueue\">No service categories available.</div>:null}</div>"""
           if old_categories in s:
               s = s.replace(old_categories, new_categories, 1)
 
-          old_submit = '''  <section className="panel"><div className="panelHeader"><div><p className="eyebrow">5 · SUBMIT</p><h2>Send for Admin approval</h2><p className="sectionLead">One approval only. Supporting documents are optional.</p></div></div><div className="actions"><button className="primary" disabled={busy||Boolean(uploading)} onClick={()=>save(true)}>{busy?'Submitting…':'Submit for Approval'}</button></div><p className="localNotice">After Admin approves the application, Provider access is enabled on this same account.</p></section>'''
-          new_submit = '''  <section className="panel submitPanel"><div className="panelHeader"><div><p className="eyebrow">FINAL STEP</p><h2>Submit for Admin Approval</h2><p className="sectionLead">Your provider account only needs to be approved once. Supporting documents are optional.</p></div><span className="pill">{status==='SUBMITTED'?'Pending':status==='APPROVED'?'Approved':'Ready'}</span></div><div className="submitSummary" aria-label="Application summary"><div><strong>{selectedCount}</strong><span>service{selectedCount===1?'':'s'} selected</span></div><div><strong>{serviceAreas.length}</strong><span>service area{serviceAreas.length===1?'':'s'}</span></div></div><div className="actions submitActions"><button className="primary" disabled={busy||Boolean(uploading)||isApplicationLocked} onClick={()=>save(true)}>{busy?'Submitting…':status==='SUBMITTED'?'Pending Admin Approval':status==='APPROVED'?'Provider Approved':'Submit for Approval'}</button></div><p className="localNotice">{status==='SUBMITTED'?'Your application has been sent. You can keep using your Customer account while Admin reviews it.':status==='APPROVED'?'Provider access is enabled on this account.':'After Admin approval, Provider access will be enabled on this same account.'}</p></section>'''
-          if old_submit not in s and 'className="panel submitPanel"' not in s:
-              raise SystemExit('Current submission section not found')
+          old_submit = """  <section className=\"panel\"><div className=\"panelHeader\"><div><p className=\"eyebrow\">5 · SUBMIT</p><h2>Send for Admin approval</h2><p className=\"sectionLead\">One approval only. Supporting documents are optional.</p></div></div><div className=\"actions\"><button className=\"primary\" disabled={busy||Boolean(uploading)} onClick={()=>save(true)}>{busy?'Submitting…':'Submit for Approval'}</button></div><p className=\"localNotice\">After Admin approves the application, Provider access is enabled on this same account.</p></section>"""
+          new_submit = """  <section className=\"panel submitPanel\"><div className=\"panelHeader\"><div><p className=\"eyebrow\">FINAL STEP</p><h2>Submit for Admin Approval</h2><p className=\"sectionLead\">Your provider account only needs to be approved once. Supporting documents are optional.</p></div><span className=\"pill\">{status==='SUBMITTED'?'Pending':status==='APPROVED'?'Approved':'Ready'}</span></div><div className=\"submitSummary\" aria-label=\"Application summary\"><div><strong>{selectedCount}</strong><span>service{selectedCount===1?'':'s'} selected</span></div><div><strong>{serviceAreas.length}</strong><span>service area{serviceAreas.length===1?'':'s'}</span></div></div><div className=\"actions submitActions\"><button className=\"primary\" disabled={busy||Boolean(uploading)||isApplicationLocked} onClick={()=>save(true)}>{busy?'Submitting…':status==='SUBMITTED'?'Pending Admin Approval':status==='APPROVED'?'Provider Approved':'Submit for Approval'}</button></div><p className=\"localNotice\">{status==='SUBMITTED'?'Your application has been sent. You can keep using your Customer account while Admin reviews it.':status==='APPROVED'?'Provider access is enabled on this account.':'After Admin approval, Provider access will be enabled on this same account.'}</p></section>"""
           if old_submit in s:
               s = s.replace(old_submit, new_submit, 1)
+          elif 'className="panel submitPanel"' not in s:
+              raise SystemExit("submit section not found")
 
-          # Correct the visual/semantic step order: 1 Basic, 2 Area, 3 Services, 4 Documents, Final Step.
-          if s.find('4 · OPTIONAL DOCUMENTS') < s.find('2 · SERVICE AREA'):
-              doc_re = re.compile(r'''\n  <section className="panel"><div className="panelHeader"><div><p className="eyebrow">4 · OPTIONAL DOCUMENTS</p>.*?</section>''', re.S)
-              m = doc_re.search(s)
-              if not m:
-                  raise SystemExit('Optional documents section not found')
-              doc_section = m.group(0)
-              s = s[:m.start()] + s[m.end():]
-              submit_pos = s.find('\n  <section className="panel submitPanel">')
-              if submit_pos < 0:
-                  raise SystemExit('Submit section insertion point not found')
-              s = s[:submit_pos] + doc_section + s[submit_pos:]
+          if s.find("4 · OPTIONAL DOCUMENTS") != -1 and s.find("2 · SERVICE AREA") != -1 and s.find("4 · OPTIONAL DOCUMENTS") < s.find("2 · SERVICE AREA"):
+              pattern = re.compile(r'\n  <section className="panel"><div className="panelHeader"><div><p className="eyebrow">4 · OPTIONAL DOCUMENTS</p>.*?</section>', re.S)
+              m = pattern.search(s)
+              if m:
+                  docs = m.group(0)
+                  s = s[:m.start()] + s[m.end():]
+                  pos = s.find('\n  <section className="panel submitPanel">')
+                  if pos >= 0:
+                      s = s[:pos] + docs + s[pos:]
 
           page.write_text(s)
 
-          css = Path('app/provider/onboarding/onboarding.css')
+          css = Path("app/provider/onboarding/onboarding.css")
           c = css.read_text()
-          marker = '/* provider-onboarding-mobile-ux-v2 */'
+          marker = "/* provider-onboarding-mobile-ux-v2 */"
           if marker not in c:
-              c += r'''
-
-/* provider-onboarding-mobile-ux-v2 */
-.categoryGrid{gap:10px;margin-top:14px}
-.categoryChoice{min-height:54px;padding:12px 14px;border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;line-height:1.25;box-shadow:none;transition:border-color .16s ease,background-color .16s ease,transform .16s ease}
-.categoryChoice:active:not(:disabled){transform:scale(.99)}
-.categoryChoice.selected::after{content:'✓';font-size:18px;font-weight:800;line-height:1}
-.categoryChoice:disabled{cursor:default;opacity:.78}
-.submitPanel{scroll-margin-bottom:120px}
-.submitPanel .panelHeader{align-items:flex-start}
-.submitSummary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 16px}
-.submitSummary>div{min-width:0;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface-alt);display:grid;gap:2px}
-.submitSummary strong{font-size:20px;line-height:1.1;color:var(--text)}
-.submitSummary span{font-size:13px;color:var(--muted)}
-.submitActions{margin-top:0}
-.submitActions .primary{width:100%;min-height:52px}
-@media(max-width:480px){.categoryGrid{grid-template-columns:1fr;gap:8px}.categoryChoice{min-height:52px;padding:11px 14px}.submitPanel{margin-bottom:10px}.submitSummary{gap:8px}.submitSummary>div{padding:11px 12px}}
-'''
-              css.write_text(c)
+              rules = "\n\n/* provider-onboarding-mobile-ux-v2 */\n.categoryGrid{gap:10px;margin-top:14px}\n.categoryChoice{min-height:54px;padding:12px 14px;border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;line-height:1.25;box-shadow:none;transition:border-color .16s ease,background-color .16s ease,transform .16s ease}\n.categoryChoice:active:not(:disabled){transform:scale(.99)}\n.categoryChoice.selected::after{content:'✓';font-size:18px;font-weight:800;line-height:1}\n.categoryChoice:disabled{cursor:default;opacity:.78}\n.submitPanel{scroll-margin-bottom:120px}\n.submitPanel .panelHeader{align-items:flex-start}\n.submitSummary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 16px}\n.submitSummary>div{min-width:0;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface-alt);display:grid;gap:2px}\n.submitSummary strong{font-size:20px;line-height:1.1;color:var(--text)}\n.submitSummary span{font-size:13px;color:var(--muted)}\n.submitActions{margin-top:0}\n.submitActions .primary{width:100%;min-height:52px}\n@media(max-width:480px){.categoryGrid{grid-template-columns:1fr;gap:8px}.categoryChoice{min-height:52px;padding:11px 14px}.submitPanel{margin-bottom:10px}.submitSummary{gap:8px}.submitSummary>div{padding:11px 12px}}\n"
+              css.write_text(c + rules)
           PY
 
       - name: Verify application
