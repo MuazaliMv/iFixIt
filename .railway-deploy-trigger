@@ -1,6 +1,6 @@
 Trigger Railway deployment from the latest main head only.
-Updated: 2026-08-26T17:03:00+05:00
-Reason: deploy the owner-approved customer home screen matching the approved reference image.
+Updated: 2026-08-27T23:17:00+05:00
+Reason: production provider approval screen is serving a stale UI where the Approve Provider action does not execute; redeploy latest main with the current provider-admin action wiring and mobile tap-target fixes.
 
 Required production behavior:
 - Production source of truth is GitHub branch: main.
@@ -10,19 +10,19 @@ Required production behavior:
 - ifixmv.com must point to the newest successful production deployment.
 - Railway must run the repository Dockerfile and start the Next.js server with npm start.
 
-Current approved customer home behavior:
-- FixIt brand at left, centered Customer pill, notification bell at right.
-- Large blue hero with “FIXIT MALDIVES”, “Hello {name} 👋”, approved helper copy, white Create a request button, and View my requests link.
-- Popular Services section with two-column compact cards, colored circular icon backgrounds, and service subtitles.
-- Need something else helper card.
-- Existing fixed bottom navigation and request workflow remain functional.
+Provider approval production requirements:
+- Admin Provider Record must use the current main implementation in app/admin/providers/[userId]/page.tsx.
+- Approve Provider must execute the authenticated admin-operations action and refresh the provider record after success.
+- Reject and Suspend must remain functional.
+- The obsolete disabled Submitted action tile must not be rendered as an action button.
+- Mobile tap targets must remain interactive above global navigation overlays.
+- Preserve the latest provider/admin UI styling and all current authentication and role rules.
 
-Current implementation commits include:
-- 28197eb0a5761280eea5637b9653d777bcdb6b32
-- c9ec131e6320c35d2f8a3b27838d15d084fe6b20
-- be6b2c90dcb78a5e23b00a7b67bb6a32b32594ec
+Latest main commits to include:
+- 273882d966aa144b00015f38dd8d1ad7dc9f7f02 — Fix provider approval button tap target on mobile
+- 78e431a00b720974d922d01ed54d9d4225e7cd28 — Show provider application context in top workspace label
 
 Expected production behavior:
 - Railway detects this main commit and creates a fresh production deployment.
-- The live customer home screen must match the approved “After (Improved)” visual model.
-- Existing authentication, request wizard, provider assignment, messaging, cancellation rules, and global navigation must remain functional.
+- ifixmv.com serves the latest main build, not the stale provider approval screen currently visible.
+- Provider approval changes SUBMITTED -> APPROVED and synchronizes provider_approved/role through the existing admin-operations backend.
