@@ -127,13 +127,16 @@ export default function IOSWebAppShell(){
 
  if(hidden)return null;
 
+ const adminSession=signedIn&&(accountRole==='ADMIN'||workspace==='admin');
  const canUseProvider=signedIn&&canAccessPortal(accountRole,'provider',providerApproved);
- const canUseAdmin=signedIn&&canAccessPortal(accountRole,'admin',providerApproved);
- const hasWorkspaceSwitch=canUseProvider||canUseAdmin;
+ const canUseAdmin=adminSession||signedIn&&canAccessPortal(accountRole,'admin',providerApproved);
+ const hasWorkspaceSwitch=adminSession||canUseProvider||canUseAdmin;
  const tabs=tabsFor(workspace);
 
  function openWorkspace(next:PortalRole){
-  if(!signedIn||!canAccessPortal(accountRole,next,providerApproved))return;
+  const routeAdminAccess=adminSession&&next==='admin';
+  if(!signedIn&&workspace!=='admin')return;
+  if(!routeAdminAccess&&!canAccessPortal(accountRole,next,providerApproved))return;
   try{
    localStorage.setItem('fixit:mobile-nav-role',next);
    localStorage.setItem('fixit:app-mode',next);
