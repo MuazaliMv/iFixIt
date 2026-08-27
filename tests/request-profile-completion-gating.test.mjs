@@ -81,7 +81,8 @@ test('Service Address browser mutations are routed through authenticated server 
 test('deleting a default Service Address promotes the next address or clears canonical profile state',async()=>{
  const route=await read('app/api/user/service-addresses/route.ts');
  assert.match(route,/if\(existing\.data\.is_default\)/);
- assert.match(route,/if\(next\.data\)await setDefault\(client,user\.id,next\.data\.id\);else await syncDefault\(client,user\.id,null\)/);
+ assert.match(route,/const admin=adminClient\(\)/);
+ assert.match(route,/if\(next\.data\)await setDefault\(client,admin,user\.id,next\.data\.id\);else await syncDefault\(admin,user\.id,null\)/);
  assert.match(route,/default_service_address_id:null/);
  assert.match(route,/primary_atoll_id:null/);
  assert.match(route,/primary_island_id:null/);
