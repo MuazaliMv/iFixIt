@@ -13,4 +13,11 @@ drop trigger if exists trg_sync_provider_onboarding_from_auth_profile
 
 drop function if exists public.sync_provider_onboarding_from_auth_profile();
 
+-- This function is intended to run only as a trigger. Keep SECURITY DEFINER
+-- so the trigger can synchronize the protected onboarding row, but prevent
+-- direct RPC execution by public/anon/authenticated callers.
+revoke all on function public.sync_onboarding_from_provider_approval() from public;
+revoke all on function public.sync_onboarding_from_provider_approval() from anon;
+revoke all on function public.sync_onboarding_from_provider_approval() from authenticated;
+
 commit;
