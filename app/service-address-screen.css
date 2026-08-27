@@ -1,0 +1,20 @@
+/* Service Address is its own wizard screen.
+   Step 5 must replace the previous problem/review card instead of appearing below it. */
+.c3Wizard:has(> .c3ProfileCompletion) > .c3WizardCard {
+  display: none;
+}
+
+.c3Wizard:has(> .c3ProfileCompletion) > .c3ProfileCompletion {
+  margin-top: 0;
+  width: 100%;
+}
+
+.c3Wizard:has(> .c3ProfileCompletion) {
+  scroll-margin-top: 0;
+}
+
+@media (max-width: 768px) {
+  .c3Wizard:has(> .c3ProfileCompletion) > .c3ProfileCompletion {
+    min-height: calc(100dvh - var(--global-topbar-height, 64px) - var(--global-bottombar-height, 72px) - 96px);
+  }
+}
