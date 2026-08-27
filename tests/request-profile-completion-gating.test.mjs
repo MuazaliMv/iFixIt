@@ -74,7 +74,8 @@ test('Service Address browser mutations are routed through authenticated server 
  assert.match(source,/onSaveAndSend\(\)/);
  assert.match(route,/resolveServerAuth\(request\)/);
  assert.match(route,/SUPABASE_SERVICE_ROLE_KEY/);
- assert.match(route,/eq\('user_id',user\.id\)/);
+ assert.match(route,/eq\('user_id',auth\.userId\)/);
+ assert.doesNotMatch(route,/auth\.getUser\(auth\.accessToken\)/);
  assert.match(route,/sameOrigin\(request\)/);
 });
 
@@ -82,7 +83,7 @@ test('deleting a default Service Address promotes the next address or clears can
  const route=await read('app/api/user/service-addresses/route.ts');
  assert.match(route,/if\(existing\.data\.is_default\)/);
  assert.match(route,/const admin=adminClient\(\)/);
- assert.match(route,/if\(next\.data\)await setDefault\(client,admin,user\.id,next\.data\.id\);else await syncDefault\(admin,user\.id,null\)/);
+ assert.match(route,/if\(next\.data\)await setDefault\(client,admin,auth\.userId,next\.data\.id\);else await syncDefault\(admin,auth\.userId,null\)/);
  assert.match(route,/default_service_address_id:null/);
  assert.match(route,/primary_atoll_id:null/);
  assert.match(route,/primary_island_id:null/);
