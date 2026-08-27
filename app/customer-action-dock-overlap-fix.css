@@ -1,0 +1,24 @@
+/* Prevent the fixed customer request action dock from covering review content on mobile. */
+@media (max-width: 760px) {
+  .frozenCustomerFlow.c3Page {
+    padding-bottom: calc(340px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .frozenCustomerFlow .c3Wizard {
+    padding-bottom: calc(270px + env(safe-area-inset-bottom)) !important;
+    scroll-padding-bottom: calc(270px + env(safe-area-inset-bottom));
+  }
+
+  .frozenCustomerFlow .c3WizardCard {
+    margin-bottom: 190px;
+  }
+
+  .frozenCustomerFlow .c3ActionDock {
+    bottom: calc(88px + env(safe-area-inset-bottom)) !important;
+    max-height: none;
+  }
+
+  .frozenCustomerFlow .c3ActionInner {
+    align-items: stretch;
+  }
+}
