@@ -10,6 +10,9 @@ export function normalizeAccountRole(value:unknown):AccountRole{
 
 export function canAccessPortal(role:AccountRole,portal:PortalRole,providerApproved=false):boolean{
  if(portal==='customer')return true;
- if(portal==='provider')return role==='PROVIDER'||role==='ADMIN'||providerApproved;
+ // Provider capability is additive and approval-gated. Admin status alone must
+ // never grant provider access; an Admin can use the provider portal only after
+ // the same provider approval applied to any other account.
+ if(portal==='provider')return role==='PROVIDER'||providerApproved;
  return role==='ADMIN';
 }
