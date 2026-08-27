@@ -24,22 +24,25 @@ export default function RouteMobileNav(){
   async function resolveRole(){
    let role:NavRole|null=adminRoute?'admin':providerRoute?'provider':customerRoute?'customer':null;
    if(sharedRoute){
-    try{
-     const controller=new AbortController();
-     const timer=setTimeout(()=>controller.abort(),7000);
-     const r=await fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store',signal:controller.signal});
-     clearTimeout(timer);
-     if(r.ok){const p=await r.json();const accountRole=String(p?.profile?.role||'').toUpperCase();role=accountRole==='ADMIN'?'admin':accountRole==='PROVIDER'?'provider':'customer';}
-     else if(r.status===401){role=null;}
-    }catch{}
-    role=role||rememberedRole()||'customer';
+    role=rememberedRole();
+    if(!role){
+     try{
+      const controller=new AbortController();
+      const timer=setTimeout(()=>controller.abort(),5000);
+      const r=await fetch('/api/user/profile',{credentials:'same-origin',cache:'no-store',signal:controller.signal});
+      clearTimeout(timer);
+      if(r.ok){const p=await r.json();const accountRole=String(p?.profile?.role||'').toUpperCase();role=accountRole==='ADMIN'?'admin':accountRole==='PROVIDER'?'provider':'customer';}
+      else if(r.status===401){role=null;}
+     }catch{}
+    }
+    role=role||'customer';
    }
    if(!role||!active)return;
    setSharedRole(role);
    try{localStorage.setItem('fixit:mobile-nav-role',role);if(role!=='admin')localStorage.setItem('fixit:app-mode',role);}catch{}
   }
   void resolveRole();return()=>{active=false;};
- },[customerRoute,providerRoute,adminRoute,sharedRoute,path]);
+ },[customerRoute,providerRoute,adminRoute,sharedRoute]);
  if(path.startsWith('/requests/'))return <><DispatchLivePanel/><MobileNav role="customer"/></>;
  if(path==='/'||path==='/requests')return <MobileNav role="customer"/>;
  if(providerRoute)return <MobileNav role="provider"/>;
