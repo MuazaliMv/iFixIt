@@ -52,6 +52,11 @@ body {
   display: none !important;
 }
 
+/* Phone + OTP is the account security model. Legacy password routes must not be advertised in navigation. */
+.fixitModalRow[href='/change-password'] {
+  display: none !important;
+}
+
 .globalMenuHeader,
 .c4Main > header,
 .c3Page > header {
