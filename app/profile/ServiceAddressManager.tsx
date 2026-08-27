@@ -1,131 +1,42 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
 import './service-address-manager.css';
 
 type Atoll={id:string;display_name:string};
 type Island={id:string;atoll_id:string;display_name:string};
 type ServiceAddress={id:string;user_id:string;label:string;address_line1:string;address_line2?:string|null;city?:string|null;state_region?:string|null;postal_code?:string|null;country?:string|null;service_atoll_id?:string|null;service_island_id?:string|null;service_location_unit_id?:string|null;access_instructions?:string|null;is_default:boolean;is_active:boolean;updated_at?:string|null};
 
-const emptyForm={label:'Home',house:'',road:'',atollId:'',islandId:'',postalCode:'',accessInstructions:''};
-
 export default function ServiceAddressManager(){
- const[userId,setUserId]=useState('');const[addresses,setAddresses]=useState<ServiceAddress[]>([]);const[atolls,setAtolls]=useState<Atoll[]>([]);const[islands,setIslands]=useState<Island[]>([]);
+ const[addresses,setAddresses]=useState<ServiceAddress[]>([]);const[atolls,setAtolls]=useState<Atoll[]>([]);const[islands,setIslands]=useState<Island[]>([]);
  const[loading,setLoading]=useState(true);const[busy,setBusy]=useState(false);const[editingId,setEditingId]=useState<string|null>(null);const[showForm,setShowForm]=useState(false);const[message,setMessage]=useState('');
- const[label,setLabel]=useState(emptyForm.label);const[house,setHouse]=useState('');const[road,setRoad]=useState('');const[atollId,setAtollId]=useState('');const[islandId,setIslandId]=useState('');const[postalCode,setPostalCode]=useState('');const[accessInstructions,setAccessInstructions]=useState('');
+ const[label,setLabel]=useState('Home');const[house,setHouse]=useState('');const[road,setRoad]=useState('');const[atollId,setAtollId]=useState('');const[islandId,setIslandId]=useState('');const[postalCode,setPostalCode]=useState('');const[accessInstructions,setAccessInstructions]=useState('');
  const filteredIslands=useMemo(()=>islands.filter(i=>i.atoll_id===atollId),[islands,atollId]);
  const selectedAtoll=atolls.find(a=>a.id===atollId)||null;const selectedIsland=islands.find(i=>i.id===islandId&&i.atoll_id===atollId)||null;
 
  useEffect(()=>{void load();},[]);
 
- async function loadAtolls(){
-  try{
-   const response=await supabase
-    .from('atolls')
-    .select('id,display_name')
-    .eq('is_active',true)
-    .eq('is_serviceable',true)
-    .order('sort_order')
-    .order('display_name');
-   if(response.error)throw response.error;
-   const data=(response.data||[]) as Atoll[];
-   if(!data.length)throw new Error('No active serviceable Atolls were returned.');
-   setAtolls(data);
-  }catch(error){
-   console.error('Unable to load Atolls from canonical table.',error);
-   setMessage(error instanceof Error?error.message:'Unable to load Atolls / Regions.');
-  }
+ async function api(method:'GET'|'POST'|'PATCH'|'DELETE',body?:Record<string,unknown>){
+  const response=await fetch('/api/user/service-addresses',{method,credentials:'same-origin',cache:'no-store',headers:body?{'Content-Type':'application/json'}:undefined,body:body?JSON.stringify(body):undefined});
+  const payload=await response.json().catch(()=>({}));if(response.status===401){window.location.replace('/login?next=%2Fprofile');throw new Error('Authentication required.');}if(!response.ok)throw new Error(payload?.error||'Unable to update Service Address.');return payload;
  }
-
- async function loadIslands(){
-  try{
-   const response=await supabase
-    .from('islands')
-    .select('id,atoll_id,display_name')
-    .eq('is_active',true)
-    .eq('is_serviceable',true)
-    .order('sort_order')
-    .order('display_name');
-   if(response.error)throw response.error;
-   setIslands((response.data||[]) as Island[]);
-  }catch(error){
-   console.error('Unable to load Islands from canonical table.',error);
-   setMessage(error instanceof Error?error.message:'Unable to load Islands / Cities.');
-  }
+ async function loadLocations(){
+  const response=await fetch('/api/locations/catalog',{credentials:'same-origin',cache:'no-store'});const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error(payload?.error||'Unable to load Maldives locations.');
+  setAtolls((payload.atolls||[]).map((x:any)=>({id:String(x.id),display_name:String(x.display_name||x.official_name||'')})).filter((x:Atoll)=>x.id&&x.display_name));
+  setIslands((payload.islands||[]).map((x:any)=>({id:String(x.id),atoll_id:String(x.atoll_id),display_name:String(x.display_name||x.canonical_name||'')})).filter((x:Island)=>x.id&&x.atoll_id&&x.display_name));
  }
-
- async function loadCustomerAddresses(){
-  setLoading(true);
-  try{
-   const{data}=await supabase.auth.getSession();const session=data.session;
-   if(!session)throw new Error('Sign in to manage Service Addresses.');
-   if(!session.user.phone||!session.user.phone_confirmed_at)throw new Error('OTP verification is required to manage Service Addresses.');
-   const addressResponse=await supabase.from('user_service_addresses').select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').eq('user_id',session.user.id).eq('is_active',true).order('is_default',{ascending:false}).order('updated_at',{ascending:false});
-   if(addressResponse.error)throw addressResponse.error;
-   setUserId(session.user.id);setAddresses((addressResponse.data||[]) as ServiceAddress[]);
-  }catch(error){setMessage(error instanceof Error?error.message:'Unable to load Service Addresses.');}
-  finally{setLoading(false);}
- }
-
- async function load(){
-  void loadAtolls();
-  void loadIslands();
-  await loadCustomerAddresses();
- }
+ async function loadAddresses(){const payload=await api('GET');setAddresses((payload.addresses||[]) as ServiceAddress[]);}
+ async function load(){setLoading(true);try{await Promise.all([loadLocations(),loadAddresses()]);setMessage('');}catch(error){setMessage(error instanceof Error?error.message:'Unable to load Service Addresses.');}finally{setLoading(false);}}
 
  function resetForm(){setEditingId(null);setLabel('Home');setHouse('');setRoad('');setAtollId('');setIslandId('');setPostalCode('');setAccessInstructions('');}
  function startAdd(){resetForm();setShowForm(true);setMessage('');}
  function startEdit(a:ServiceAddress){setEditingId(a.id);setLabel(a.label);setHouse(a.address_line1);setRoad(a.address_line2||'');setAtollId(a.service_atoll_id||'');setIslandId(a.service_island_id||'');setPostalCode(a.postal_code||'');setAccessInstructions(a.access_instructions||'');setShowForm(true);setMessage('');}
+ function validate(){if(label.trim().length<2||label.trim().length>40)return'Name must be between 2 and 40 characters.';if(house.trim().length<2||house.trim().length>120)return'Enter a valid House / Apartment.';if(road.trim().length<2||road.trim().length>120)return'Enter a valid Road.';if(!selectedAtoll)return'Select an Atoll / Region.';if(!selectedIsland)return'Select an Island / City from the selected Atoll / Region.';if(postalCode.trim()&&!/^\d{4,10}$/.test(postalCode.trim()))return'Postal code must contain 4 to 10 digits.';if(accessInstructions.trim().length>240)return'Access instructions must be 240 characters or fewer.';return'';}
+ function body(){return{label:label.trim(),address_line1:house.trim(),address_line2:road.trim(),city:selectedIsland?.display_name||'',state_region:selectedAtoll?.display_name||'',postal_code:postalCode.trim()||null,country:'Maldives',service_atoll_id:selectedAtoll?.id||null,service_island_id:selectedIsland?.id||null,service_location_unit_id:null,access_instructions:accessInstructions.trim()||null};}
 
- function validate(){
-  if(label.trim().length<2||label.trim().length>40)return 'Name must be between 2 and 40 characters.';
-  if(house.trim().length<2||house.trim().length>120)return 'Enter a valid House / Apartment.';
-  if(road.trim().length<2||road.trim().length>120)return 'Enter a valid Road.';
-  if(!selectedAtoll)return 'Select an Atoll / Region.';
-  if(!selectedIsland)return 'Select an Island / City from the selected Atoll / Region.';
-  if(postalCode.trim()&&!/^\d{4,10}$/.test(postalCode.trim()))return 'Postal code must contain 4 to 10 digits.';
-  if(accessInstructions.trim().length>240)return 'Access instructions must be 240 characters or fewer.';
-  return '';
- }
-
- async function syncProfile(a:ServiceAddress){
-  const profile=await supabase.from('auth_profiles').update({default_service_address_id:a.id,address_line1:a.address_line1,address_line2:a.address_line2||null,city:a.city||null,state_region:a.state_region||null,postal_code:a.postal_code||null,country:a.country||'Maldives',primary_atoll_id:a.service_atoll_id||null,primary_island_id:a.service_island_id||null,primary_location_unit_id:a.service_location_unit_id||null}).eq('user_id',userId);
-  if(profile.error)throw profile.error;
-  const legacy=await supabase.from('users').update({address_line1:a.address_line1,address_line2:a.address_line2||null,city:a.city||null,state_region:a.state_region||null,postal_code:a.postal_code||null,country:a.country||'Maldives',default_island_id:a.service_island_id||null}).eq('id',userId);
-  if(legacy.error)throw legacy.error;
-  window.dispatchEvent(new Event('fixit:profile-updated'));
- }
-
- async function makeDefault(a:ServiceAddress){
-  if(busy||a.is_default)return;setBusy(true);setMessage('Updating default Service Address…');
-  try{
-   const result=await supabase.from('user_service_addresses').update({is_default:true}).eq('id',a.id).eq('user_id',userId).eq('is_active',true).select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').single();
-   if(result.error)throw result.error;await syncProfile(result.data as ServiceAddress);await loadCustomerAddresses();setMessage('Default Service Address updated.');
-  }catch(error){setMessage(error instanceof Error?error.message:'Unable to update default Service Address.');}finally{setBusy(false);}
- }
-
- async function save(event:FormEvent){
-  event.preventDefault();if(busy)return;const validation=validate();if(validation){setMessage(validation);return;}if(!userId){setMessage('Your login session has expired.');return;}
-  setBusy(true);setMessage(editingId?'Updating Service Address…':'Saving Service Address…');
-  try{
-   const payload={label:label.trim(),address_line1:house.trim(),address_line2:road.trim(),city:selectedIsland!.display_name,state_region:selectedAtoll!.display_name,postal_code:postalCode.trim()||null,country:'Maldives',service_atoll_id:selectedAtoll!.id,service_island_id:selectedIsland!.id,service_location_unit_id:null,access_instructions:accessInstructions.trim()||null,is_active:true};
-   let saved:ServiceAddress;const existing=editingId?addresses.find(a=>a.id===editingId):null;
-   if(editingId){const result=await supabase.from('user_service_addresses').update(payload).eq('id',editingId).eq('user_id',userId).select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').single();if(result.error)throw result.error;saved=result.data as ServiceAddress;}
-   else{const result=await supabase.from('user_service_addresses').insert({...payload,user_id:userId,is_default:addresses.length===0}).select('id,user_id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,updated_at').single();if(result.error)throw result.error;saved=result.data as ServiceAddress;}
-   if(addresses.length===0||existing?.is_default)await syncProfile({...saved,is_default:true});
-   resetForm();setShowForm(false);await loadCustomerAddresses();setMessage(addresses.length===0?'Service Address saved as your default.':'Service Address saved.');
-  }catch(error){setMessage(error instanceof Error?error.message:'Unable to save Service Address.');}finally{setBusy(false);}
- }
-
- async function remove(a:ServiceAddress){
-  if(busy)return;if(!window.confirm(`Delete ${a.label}?${a.is_default?' The next saved address will automatically become your default.':''}`))return;
-  setBusy(true);setMessage('Deleting Service Address…');
-  try{
-   const result=await supabase.from('user_service_addresses').update({is_active:false,is_default:false}).eq('id',a.id).eq('user_id',userId);if(result.error)throw result.error;
-   await loadCustomerAddresses();window.dispatchEvent(new Event('fixit:profile-updated'));setMessage(a.is_default?'Service Address deleted. The next saved address is now the default.':'Service Address deleted.');
-  }catch(error){setMessage(error instanceof Error?error.message:'Unable to delete Service Address.');}finally{setBusy(false);}
- }
+ async function makeDefault(a:ServiceAddress){if(busy||a.is_default)return;setBusy(true);setMessage('Updating default Service Address…');try{await api('PATCH',{id:a.id,action:'set_default'});await loadAddresses();window.dispatchEvent(new Event('fixit:profile-updated'));setMessage('Default Service Address updated.');}catch(error){setMessage(error instanceof Error?error.message:'Unable to update default Service Address.');}finally{setBusy(false);}}
+ async function save(event:FormEvent){event.preventDefault();if(busy)return;const validation=validate();if(validation){setMessage(validation);return;}setBusy(true);setMessage(editingId?'Updating Service Address…':'Saving Service Address…');try{if(editingId)await api('PATCH',{id:editingId,...body()});else await api('POST',body());resetForm();setShowForm(false);await loadAddresses();window.dispatchEvent(new Event('fixit:profile-updated'));setMessage('Service Address saved.');}catch(error){setMessage(error instanceof Error?error.message:'Unable to save Service Address.');}finally{setBusy(false);}}
+ async function remove(a:ServiceAddress){if(busy)return;if(!window.confirm(`Delete ${a.label}?${a.is_default?' The next saved address will automatically become your default.':''}`))return;setBusy(true);setMessage('Deleting Service Address…');try{await api('DELETE',{id:a.id});await loadAddresses();window.dispatchEvent(new Event('fixit:profile-updated'));setMessage(a.is_default?'Service Address deleted. The next saved address is now the default.':'Service Address deleted.');}catch(error){setMessage(error instanceof Error?error.message:'Unable to delete Service Address.');}finally{setBusy(false);}}
 
  return <section className="serviceAddressManager" id="manage-service-addresses" aria-labelledby="service-address-manager-title">
   <div className="serviceAddressManagerHead"><div><small>SERVICE ADDRESSES</small><h2 id="service-address-manager-title">Manage service addresses</h2><p>Choose a default address for your profile, or keep additional addresses for future service requests.</p></div>{!showForm?<button type="button" className="samPrimary" onClick={startAdd} disabled={loading||busy}>+ Add Address</button>:null}</div>
