@@ -10,7 +10,7 @@ test('Service Address send is gated by verified contact and an explicit selected
  assert.match(source,/phone_confirmed_at/);
  assert.match(source,/disabled=\{saving\|\|!validContact\|\|!selectedAddress\}/);
  assert.match(source,/Choose a Service Address before continuing/);
- assert.match(source,/>Proceed</);
+ assert.match(source,/'Proceed'/);
 });
 
 test('saved Service Addresses use canonical location ids and authenticated location catalogue',async()=>{
