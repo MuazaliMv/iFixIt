@@ -3,8 +3,9 @@
 import { usePathname } from 'next/navigation';
 
 function labelForPath(path:string){
+  if(path==='/provider/onboarding'||path.startsWith('/provider/onboarding/'))return 'Provider Application';
   if(path.startsWith('/admin'))return 'Admin';
-  if(path.startsWith('/provider')&&!path.startsWith('/provider/onboarding'))return 'Service Provider';
+  if(path.startsWith('/provider'))return 'Service Provider';
   return 'Customer';
 }
 
