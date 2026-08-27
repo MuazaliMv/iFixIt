@@ -12,13 +12,14 @@ test('phone OTP login creates the authoritative secure application session',asyn
 
  assert.match(login,/Testing code: 9999/);
  assert.match(route,/body:JSON\.stringify\(\{action:'login',phone,otp\}\)/);
+ assert.match(route,/phone_verified_at/);
  assert.match(route,/next\.cookies\.set\(ACCESS_COOKIE/);
  assert.match(route,/next\.cookies\.set\(REFRESH_COOKIE/);
  assert.match(login,/supabase\.auth\.setSession\(\{access_token:accessToken,refresh_token:refreshToken\}\)/);
  assert.match(login,/invalidateProfileCache\(\)/);
  assert.match(proxy,/const auth=await resolveServerAuth\(request\)/);
- assert.match(serverAuth,/hasOtpAuthenticationMethod/);
- assert.match(serverAuth,/entry\.toLowerCase\(\)==='otp'/);
+ assert.match(serverAuth,/auth\/v1\/user/);
+ assert.doesNotMatch(serverAuth,/hasOtpAuthenticationMethod/,'server auth must trust only OTP-issued application cookies and validate the Supabase session without a duplicate AMR gate');
  assert.doesNotMatch(serverAuth,/request\.headers\.get\('authorization'\)/,'arbitrary bearer tokens must not become FixIt application sessions');
 
  const syncIndex=login.indexOf('await syncBrowserSession');
