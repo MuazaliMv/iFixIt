@@ -15,11 +15,11 @@ test('provider portal access honors both provider role and approved provider ent
  const access=await read('lib/roleAccess.ts');
  const proxy=await read('proxy.ts');
  const guard=await read('app/RoleAccessGuard.tsx');
- const switcher=await read('app/GlobalModeSwitch.tsx');
+ const shell=await read('app/IOSWebAppShell.tsx');
  assert.match(access,/portal==='provider'\)return role==='PROVIDER'\|\|role==='ADMIN'\|\|providerApproved/);
  assert.match(proxy,/providerApproved:Boolean\(payload\?\.profile\?\.provider_approved\)/);
  assert.match(guard,/canAccessPortal\(role,'provider',providerApproved\)/);
- assert.match(switcher,/canAccessPortal\(accountRole,'provider',providerApproved\)/);
+ assert.match(shell,/canAccessPortal\(accountRole,'provider',providerApproved\)/);
  assert.match(proxy,/Service Provider permission required/);
  assert.match(proxy,/NextResponse\.redirect\(new URL\('\/home'/);
 });
