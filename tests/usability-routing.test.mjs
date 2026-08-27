@@ -31,6 +31,27 @@ test('customers get a provider application route instead of a blocked provider s
  assert.doesNotMatch(source,/href="\/login"[^>]*>\s*<span[^>]*>[^<]*Service Provider/s);
 });
 
+test('customer bottom navigation stays inside the customer workspace',async()=>{
+ const nav=await read('app/MobileNav.tsx');
+ const routeNav=await read('app/RouteMobileNav.tsx');
+ assert.match(nav,/href:'\/home',label:'Request Service'/);
+ assert.match(nav,/p==='\/home'\|\|p\.startsWith\('\/home\/'\)/);
+ assert.match(routeNav,/path==='\/home'\|\|path\.startsWith\('\/home\/'\)/);
+});
+
+test('provider application keeps customer navigation until provider approval',async()=>{
+ const routeNav=await read('app/RouteMobileNav.tsx');
+ assert.match(routeNav,/providerApplicationRoute=path==='\/provider\/onboarding'/);
+ assert.match(routeNav,/providerRoute=path\.startsWith\('\/provider'\)&&!providerApplicationRoute/);
+ assert.match(routeNav,/customerRoute\|\|providerApplicationRoute\)return <MobileNav role="customer"\/>/);
+});
+
+test('public provider CTA uses the canonical onboarding route',async()=>{
+ const landing=await read('app/page.tsx');
+ assert.match(landing,/href="\/provider\/onboarding"/);
+ assert.doesNotMatch(landing,/href="\/provider\/apply"/);
+});
+
 test('cancelled requests stay out of normal customer request views and counters',async()=>{
  const source=await read('app/requests/page.tsx');
  assert.match(source,/!\['COMPLETED','CANCELLED'\]\.includes\(r\.status\)/);

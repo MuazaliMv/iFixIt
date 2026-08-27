@@ -115,7 +115,7 @@ export default function IndexPage() {
               {t.trustPoints.map(point => <span key={point}><b>✓</b>{point}</span>)}
             </div>
           </div>
-          <a className="landingProviderTextLink" href="/provider/apply">{t.providerLink} <span>→</span></a>
+          <a className="landingProviderTextLink" href="/provider/onboarding">{t.providerLink} <span>→</span></a>
         </section>
       </main>
     </div>
