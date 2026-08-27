@@ -1,0 +1,224 @@
+/* iFixMV usability consolidation layer
+ * Loaded last. New UI work should target these shared tokens and patterns.
+ * This file intentionally neutralizes legacy visual conflicts without changing backend behavior.
+ */
+
+:root {
+  --ifix-bg: #f5f5f7;
+  --ifix-surface: #ffffff;
+  --ifix-surface-muted: #f8fafc;
+  --ifix-text: #111827;
+  --ifix-text-muted: #667085;
+  --ifix-border: #e5e7eb;
+  --ifix-primary: #2563eb;
+  --ifix-primary-pressed: #1d4ed8;
+  --ifix-danger: #dc2626;
+  --ifix-warning: #d97706;
+  --ifix-success: #15803d;
+  --ifix-radius-sm: 12px;
+  --ifix-radius-md: 16px;
+  --ifix-radius-lg: 20px;
+  --ifix-shadow: 0 8px 28px rgba(15, 23, 42, .08);
+  --ifix-tap: 48px;
+  --ifix-content-max: 720px;
+  --ifix-tabbar-height: 76px;
+}
+
+html,
+body {
+  background: var(--ifix-bg);
+  color: var(--ifix-text);
+}
+
+/* One predictable scrolling workspace between persistent navigation chrome. */
+.globalMainWorkspace {
+  width: 100%;
+  min-height: 100dvh;
+  overflow-x: clip;
+}
+
+.globalMainWorkspace > * {
+  box-sizing: border-box;
+}
+
+/* Prevent historical customer headers from duplicating global Profile/Language navigation. */
+.c4HeaderActions .c4LangCompact,
+.c4HeaderActions .c3Avatar {
+  display: none !important;
+}
+
+/* Primary mobile navigation is the bottom app bar; secondary top shortcuts create two competing hierarchies. */
+.globalMenuSecondary {
+  display: none !important;
+}
+
+/* Phone + OTP is the account security model. Legacy password routes must not be advertised in navigation. */
+.fixitModalRow[href='/change-password'] {
+  display: none !important;
+}
+
+.globalMenuHeader,
+.c4Main > header,
+.c3Page > header {
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Shared control family. */
+button,
+[role='button'],
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(.iosTabBar button),
+input,
+select {
+  min-height: var(--ifix-tap);
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, .24) !important;
+  outline-offset: 2px;
+}
+
+button:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: .52;
+}
+
+/* Keep forms readable and thumb-friendly regardless of older theme layers. */
+.c3Shell input,
+.c3Shell select,
+.c3Shell textarea,
+.fixitModalMenu input,
+.fixitModalMenu select,
+.fixitModalMenu textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--ifix-border);
+  border-radius: var(--ifix-radius-sm);
+  background: var(--ifix-surface);
+  color: var(--ifix-text);
+}
+
+.c3Shell textarea,
+.fixitModalMenu textarea {
+  min-height: 112px;
+  resize: vertical;
+}
+
+/* Stable card language across Customer / Provider / Admin surfaces. */
+.c3Shell section,
+.c3Shell article,
+.fixitModalCard {
+  border-color: var(--ifix-border);
+}
+
+/* Make interactive rows large enough for mobile use. */
+.fixitModalRow,
+.iosWorkspaceOptions button {
+  min-height: 56px;
+}
+
+/* Dialog ergonomics and safe-area behavior. */
+.fixitModalBackdrop,
+.iosWorkspaceOverlay {
+  overscroll-behavior: contain;
+}
+
+.fixitModalMenu,
+.iosWorkspaceSheet {
+  max-height: min(90dvh, 760px);
+}
+
+.fixitModalFooter,
+.iosWorkspaceSheet {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+/* Persistent bottom navigation must not cover the working area. */
+@media (max-width: 900px) {
+  body {
+    padding-bottom: calc(var(--ifix-tabbar-height) + env(safe-area-inset-bottom));
+  }
+
+  .globalMainWorkspace {
+    min-height: calc(100dvh - var(--ifix-tabbar-height));
+  }
+
+  .iosTabBar {
+    min-height: var(--ifix-tabbar-height);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .c3Shell,
+  .c4Main .c3Shell {
+    width: min(100%, var(--ifix-content-max));
+    margin-inline: auto;
+    padding-inline: 16px;
+  }
+}
+
+/* Desktop keeps the same information architecture instead of becoming a second product. */
+@media (min-width: 901px) {
+  .globalMainWorkspace {
+    width: min(100%, 1440px);
+    margin-inline: auto;
+  }
+
+  .c3Shell,
+  .c4Main .c3Shell {
+    width: min(100%, var(--ifix-content-max));
+    margin-inline: auto;
+  }
+}
+
+/* Status tokens for all new/migrated request surfaces. */
+.ifixStatus {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  line-height: 1;
+}
+.ifixStatus[data-status='NEW'],
+.ifixStatus[data-status='SEARCHING'],
+.ifixStatus[data-status='ACCEPTED'] { background: #eff6ff; color: #1d4ed8; }
+.ifixStatus[data-status='PENDING'],
+.ifixStatus[data-status='ON_HOLD'] { background: #fff7ed; color: #c2410c; }
+.ifixStatus[data-status='SCHEDULED'] { background: #f5f3ff; color: #6d28d9; }
+.ifixStatus[data-status='PROCESSING'] { background: #fefce8; color: #a16207; }
+.ifixStatus[data-status='COMPLETED'] { background: #f0fdf4; color: #15803d; }
+.ifixStatus[data-status='CANCELLED'],
+.ifixStatus[data-status='EXPIRED'] { background: #f3f4f6; color: #4b5563; }
+.ifixStatus[data-status='FAILED'] { background: #fef2f2; color: #b91c1c; }
+
+/* Motion should never be required to understand a state change. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
