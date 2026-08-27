@@ -54,3 +54,22 @@ test('unified control family is loaded after page-specific styles',async()=>{
  assert.match(styles,/\.badge,/);
  assert.match(styles,/\.pill,/);
 });
+
+test('frozen global navigation remains visible on customer, provider and admin routes',async()=>{
+ const[layout,menu,menuStyles,shellStyles,finalStyles]=await Promise.all([
+  read('app/layout.tsx'),
+  read('app/GlobalRoleMenu.tsx'),
+  read('app/global-role-menu.css'),
+  read('app/global-shell.css'),
+  read('app/usability-consolidation.css'),
+ ]);
+ assert.match(layout,/<GlobalRoleMenu\/>/);
+ assert.match(layout,/<IOSWebAppShell\/>/);
+ assert.match(menu,/className="globalMenuSecondary"/);
+ assert.doesNotMatch(menuStyles,/\.globalMenuSecondary\s*\{[^}]*display\s*:\s*none/i);
+ assert.doesNotMatch(finalStyles,/\.globalMenuSecondary\s*\{[^}]*display\s*:\s*none/i);
+ assert.match(shellStyles,/globalMenuHeaderWrap[\s\S]*?visibility:visible!important;[\s\S]*?opacity:1!important;/);
+ assert.match(shellStyles,/iosTabBar[\s\S]*?visibility:visible!important;[\s\S]*?opacity:1!important;/);
+ assert.match(shellStyles,/@media\(max-width:960px\)[\s\S]*?iosTabBar[\s\S]*?display:grid!important;/);
+ assert.match(shellStyles,/@media\(min-width:961px\)[\s\S]*?iosTabBar[\s\S]*?display:grid;/);
+});
