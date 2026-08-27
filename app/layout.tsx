@@ -41,6 +41,7 @@ import './customer-home-usability-v2.css';
 import './approved-customer-home.css';
 import './desktop-mobile-shell.css';
 import './frozen-request-flow.css';
+import './customer-action-dock-overlap-fix.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
