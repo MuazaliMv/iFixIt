@@ -40,7 +40,7 @@ function normalizeProfileResponse(payload:any){
  const primaryAddress=p.primaryAddress&&typeof p.primaryAddress==='object'?{...p.primaryAddress,country:FIXED_COUNTRY}:p.primaryAddress;
  const providerAddress=p.providerAddress&&typeof p.providerAddress==='object'?{...p.providerAddress,country:FIXED_COUNTRY}:p.providerAddress;
  const serviceAddresses=Array.isArray(p.serviceAddresses)?p.serviceAddresses.map((address:any)=>address&&typeof address==='object'?{...address,country:FIXED_COUNTRY}:address):[];
- return {...payload,profile:{...p,phone_number:localProfilePhone(p.phone_number),profile_photo_url:signedPhoto,photoUrl:signedPhoto,primaryAddress,providerAddress,serviceAddresses}};
+ return {...payload,profile:{...p,phone_number:localProfilePhone(p.phone_number),is_phone_verified:Boolean(p.phone_verified_at),profile_photo_url:signedPhoto,photoUrl:signedPhoto,primaryAddress,providerAddress,serviceAddresses}};
 }
 async function resolvePrimaryLocation(client:ReturnType<typeof adminClient>,address:PrimaryAddress):Promise<ResolvedLocation>{
  const atollName=String(address.stateRegion||'').trim();const islandName=String(address.city||'').trim();const wardName=String(address.ward||'').trim();
@@ -66,10 +66,22 @@ export async function GET(request:NextRequest){
  const auth=await resolveServerAuth(request);
  if(!auth)return NextResponse.json({error:'Authentication required.'},{status:401});
  try{
-  const response=await fetch(AUTH_API,{method:'POST',headers:{'Content-Type':'application/json',Authorization:auth.authorization},body:JSON.stringify({action:'profile_get'}),cache:'no-store',signal:AbortSignal.timeout(15000)});
-  const payload=await response.json().catch(()=>({error:'Unable to load your profile.'}));
-  return applyAuthCookies(NextResponse.json(normalizeProfileResponse(payload),{status:response.status}),auth);
- }catch(error){const timedOut=error instanceof Error&&(error.name==='TimeoutError'||error.name==='AbortError');return applyAuthCookies(NextResponse.json({error:timedOut?'Profile service timed out. Please refresh and try again.':error instanceof Error?error.message:'Unable to load your profile.'},{status:503}),auth);}
+  const client=adminClient();
+  const userResult=await client.auth.getUser(auth.accessToken);
+  if(userResult.error||!userResult.data.user)return applyAuthCookies(NextResponse.json({error:'Authentication required.'},{status:401}),auth);
+  const userId=userResult.data.user.id;
+  const {data:p,error}=await client.from('auth_profiles').select('user_id,email,full_name,role,provider_approved,profile_photo_url,phone_number,phone_verified_at,address_line1,address_line2,city,ward,state_region,postal_code,country,provider_address_line1,provider_address_line2,provider_city,provider_ward,provider_state_region,provider_postal_code,provider_country,default_service_address_id,created_at,updated_at').eq('user_id',userId).maybeSingle();
+  if(error)throw error;if(!p)return applyAuthCookies(NextResponse.json({error:'Profile not found.'},{status:404}),auth);
+  let photoUrl:string|null=null;
+  if(p.profile_photo_url){
+   if(/^https?:\/\//i.test(p.profile_photo_url))photoUrl=p.profile_photo_url;
+   else{const {data:signed}=await client.storage.from('profile-photos').createSignedUrl(p.profile_photo_url,3600);photoUrl=signed?.signedUrl||null;}
+  }
+  const {data:addresses,error:addressError}=await client.from('user_service_addresses').select('id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,created_at,updated_at').eq('user_id',userId).eq('is_active',true).order('is_default',{ascending:false}).order('updated_at',{ascending:false});
+  if(addressError)throw addressError;
+  const payload={ok:true,profile:{...p,photoUrl,primaryAddress:{line1:p.address_line1,line2:p.address_line2,city:p.city,ward:p.ward,stateRegion:p.state_region,postalCode:p.postal_code,country:p.country},providerAddress:{line1:p.provider_address_line1,line2:p.provider_address_line2,city:p.provider_city,ward:p.provider_ward,stateRegion:p.provider_state_region,postalCode:p.provider_postal_code,country:p.provider_country},serviceAddresses:addresses??[],defaultServiceAddress:(addresses??[]).find((a:any)=>a.is_default)||null}};
+  return applyAuthCookies(NextResponse.json(normalizeProfileResponse(payload),{status:200,headers:{'Cache-Control':'no-store'}}),auth);
+ }catch(error){const timedOut=error instanceof Error&&(error.name==='TimeoutError'||error.name==='AbortError');return applyAuthCookies(NextResponse.json({error:timedOut?'Profile service timed out. Please refresh and try again.':error instanceof Error?error.message:'Unable to load your profile.'},{status:503,headers:{'Cache-Control':'no-store'}}),auth);}
 }
 
 export async function PUT(request:NextRequest){
