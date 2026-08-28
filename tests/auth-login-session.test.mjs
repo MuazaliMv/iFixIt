@@ -21,7 +21,8 @@ test('phone OTP login creates the authoritative secure application session',asyn
  assert.doesNotMatch(route,/SUPABASE_SERVICE_ROLE_KEY/,'OTP login must persist the verified phone through the authenticated user session and RLS, not a service-role secret');
  assert.match(route,/next\.cookies\.set\(ACCESS_COOKIE/);
  assert.match(route,/next\.cookies\.set\(REFRESH_COOKIE/);
- assert.match(login,/supabase\.auth\.setSession\(\{access_token:accessToken,refresh_token:refreshToken\}\)/);
+ assert.match(login,/syncLegacyBrowserSessionBestEffort/);
+ assert.match(login,/void syncLegacyBrowserSessionBestEffort/,'legacy browser mirroring must never block a valid server login');
  assert.match(login,/invalidateProfileCache\(\)/);
  assert.match(login,/confirmServerSession\(\)/);
  assert.match(browserClient,/autoRefreshToken: false/,'legacy browser auth must not rotate the server-owned refresh token');
@@ -32,11 +33,26 @@ test('phone OTP login creates the authoritative secure application session',asyn
  assert.doesNotMatch(serverAuth,/request\.headers\.get\('authorization'\)/,'arbitrary bearer tokens must not become FixIt application sessions');
 
  const confirmIndex=login.indexOf('const confirmedProfile=await confirmServerSession');
- const syncIndex=login.indexOf('await syncBrowserSession',confirmIndex);
- const routeIndex=login.indexOf('await routeUser',syncIndex);
+ const compatIndex=login.indexOf('void syncLegacyBrowserSessionBestEffort',confirmIndex);
+ const routeIndex=login.indexOf('await routeUser',compatIndex);
  assert.ok(confirmIndex>=0,'secure server session confirmation is missing');
- assert.ok(syncIndex>confirmIndex,'legacy browser session handoff must happen only after server confirmation');
- assert.ok(routeIndex>syncIndex,'navigation must happen only after server confirmation and browser handoff');
+ assert.ok(compatIndex>confirmIndex,'legacy browser compatibility may run only after server confirmation');
+ assert.ok(routeIndex>compatIndex,'navigation follows authoritative server confirmation');
+});
+
+test('browser auth events cannot destroy an authoritative server session',async()=>{
+ const layout=await read('app/layout.tsx');
+ const sync=await read('app/ServerSessionSignOutSync.tsx');
+ assert.doesNotMatch(layout,/ServerSessionSignOutSync/,'legacy browser SIGNED_OUT events must not be mounted as a global logout authority');
+ assert.match(sync,/SIGNED_OUT/,'legacy component may remain in source temporarily but must not be mounted');
+});
+
+test('provider permission outages do not turn valid authentication into a logout',async()=>{
+ const sessionRoute=await read('app/api/auth/session/route.ts');
+ assert.match(sessionRoute,/Authentication is already proven by resolveServerAuth/);
+ assert.match(sessionRoute,/authenticated:true/);
+ assert.match(sessionRoute,/profile_degraded:true/);
+ assert.match(sessionRoute,/provider_suspended:true/,'degraded provider permissions must fail closed without invalidating authentication');
 });
 
 test('server refresh is single-flight so parallel protected requests cannot rotate the same refresh token twice',async()=>{
