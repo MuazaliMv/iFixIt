@@ -40,6 +40,19 @@ test('phone OTP login creates the authoritative secure application session',asyn
  assert.ok(routeIndex>compatIndex,'navigation must wait until the current customer compatibility handoff completes');
 });
 
+test('customer home uses the authoritative server session instead of browser Supabase as its auth gate',async()=>{
+ const customer=await read('app/CustomerPortal.tsx');
+ const effectStart=customer.indexOf('useEffect(()=>{let live=true');
+ const tokenStart=customer.indexOf('async function token()');
+ const initialAuthFlow=customer.slice(effectStart,tokenStart);
+ assert.match(initialAuthFlow,/fetch\('\/api\/auth\/session'/);
+ assert.match(initialAuthFlow,/sessionResponse\.status===401/);
+ assert.match(initialAuthFlow,/sessionPayload\?\.authenticated!==true/);
+ assert.doesNotMatch(initialAuthFlow,/supabase\.auth\.getSession\(\)/,'customer home must not depend on legacy browser auth state to load');
+ assert.match(customer,/if\(data\.session\)return data\.session\.access_token/);
+ assert.match(customer,/if\(response\.status===401\)\{window\.location\.replace\('\/login\?next=%2Fhome'\)/,'request actions may redirect to login only after the authoritative server session is actually 401');
+});
+
 test('browser auth events cannot destroy an authoritative server session',async()=>{
  const layout=await read('app/layout.tsx');
  const sync=await read('app/ServerSessionSignOutSync.tsx');
