@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { applyAuthCookies, resolveServerAuth } from '../../../../lib/serverAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,14 +35,15 @@ function getServerClient(token: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    const authorization = request.headers.get('authorization') || '';
-    const token = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
-    if (!token) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    const auth = await resolveServerAuth(request);
+    if (!auth) return NextResponse.json({ error: 'Authentication required.', code: 'OTP_LOGIN_REQUIRED' }, { status: 401 });
 
     const body = await request.json().catch(() => ({})) as Record<string, unknown>;
-    const supabase = getServerClient(token);
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !userData.user) return NextResponse.json({ error: 'Invalid or expired session.' }, { status: 401 });
+    const supabase = getServerClient(auth.accessToken);
+    const { data: userData, error: userError } = await supabase.auth.getUser(auth.accessToken);
+    if (userError || !userData.user) {
+      return applyAuthCookies(NextResponse.json({ error: 'Invalid or expired session.' }, { status: 401 }), auth);
+    }
 
     const severity = ['info', 'warning', 'error', 'critical'].includes(String(body.severity))
       ? String(body.severity)
@@ -73,10 +75,10 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       console.error('Client error report insert failed', insertError);
-      return NextResponse.json({ error: 'Unable to record error report.' }, { status: 500 });
+      return applyAuthCookies(NextResponse.json({ error: 'Unable to record error report.' }, { status: 500 }), auth);
     }
 
-    return NextResponse.json({ recorded: true }, { status: 201 });
+    return applyAuthCookies(NextResponse.json({ recorded: true }, { status: 201 }), auth);
   } catch (error) {
     console.error('Client error reporting API failed', error);
     return NextResponse.json({ error: 'Unable to record error report.' }, { status: 500 });
