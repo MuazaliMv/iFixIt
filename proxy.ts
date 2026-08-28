@@ -21,6 +21,14 @@ function loginUrl(request:NextRequest){
  return url;
 }
 
+function accessIssueUrl(request:NextRequest,portal:'admin'|'provider',reason:'unavailable'|'denied'){
+ const url=new URL('/access-status',request.url);
+ url.searchParams.set('portal',portal);
+ url.searchParams.set('reason',reason);
+ url.searchParams.set('next',`${request.nextUrl.pathname}${request.nextUrl.search}`);
+ return url;
+}
+
 function apiError(message:string,status:number,code?:string){
  return NextResponse.json({error:message,...(code?{code}:{})},{status,headers:{'Cache-Control':'no-store'}});
 }
@@ -100,28 +108,30 @@ export default async function proxy(request:NextRequest){
 
  const access=await resolveAccessProfile(auth.authorization);
  if(!access){
-  // Role-protected surfaces fail closed. A permission-service outage must never
-  // temporarily expose Admin or Service Provider interfaces or APIs.
+  // Never move a user into the Customer workspace merely because the permission
+  // service is unavailable. Preserve the selected workspace and show a neutral
+  // status surface instead, preventing /admin -> /home -> /admin redirect loops.
   if(adminApi||providerApi){
-   return applyAuthCookies(apiError('Unable to verify account permissions.',503),auth);
+   return applyAuthCookies(apiError('Unable to verify account permissions.',503,'PERMISSION_SERVICE_UNAVAILABLE'),auth);
   }
-  return applyAuthCookies(NextResponse.redirect(new URL('/home',request.url)),auth);
+  const portal=adminRoute?'admin':'provider';
+  return applyAuthCookies(NextResponse.redirect(accessIssueUrl(request,portal,'unavailable')),auth);
  }
 
  if((adminRoute||adminApi)&&!canAccessPortal(access.role,'admin',access.providerApproved)){
-  if(adminApi)return applyAuthCookies(apiError('Admin permission required.',403),auth);
-  return applyAuthCookies(NextResponse.redirect(new URL('/home',request.url)),auth);
+  if(adminApi)return applyAuthCookies(apiError('Admin permission required.',403,'ADMIN_PERMISSION_REQUIRED'),auth);
+  return applyAuthCookies(NextResponse.redirect(accessIssueUrl(request,'admin','denied')),auth);
  }
 
  if(providerRoute||providerApi){
   const providerSuspended=await resolveProviderSuspended(access.userId,access.providerApproved);
   if(providerSuspended===null){
-   if(providerApi)return applyAuthCookies(apiError('Unable to verify Service Provider permission.',503),auth);
-   return applyAuthCookies(NextResponse.redirect(new URL('/home',request.url)),auth);
+   if(providerApi)return applyAuthCookies(apiError('Unable to verify Service Provider permission.',503,'PERMISSION_SERVICE_UNAVAILABLE'),auth);
+   return applyAuthCookies(NextResponse.redirect(accessIssueUrl(request,'provider','unavailable')),auth);
   }
   if(!canAccessPortal(access.role,'provider',access.providerApproved,providerSuspended)){
-   if(providerApi)return applyAuthCookies(apiError(providerSuspended?'Service Provider account is suspended.':'Service Provider permission required.',403),auth);
-   return applyAuthCookies(NextResponse.redirect(new URL('/home',request.url)),auth);
+   if(providerApi)return applyAuthCookies(apiError(providerSuspended?'Service Provider account is suspended.':'Service Provider permission required.',403,providerSuspended?'PROVIDER_SUSPENDED':'PROVIDER_PERMISSION_REQUIRED'),auth);
+   return applyAuthCookies(NextResponse.redirect(accessIssueUrl(request,'provider','denied')),auth);
   }
  }
 
