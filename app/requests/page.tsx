@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CustomerHeader from '../components/customer/CustomerHeader';
 import ServiceIcon from '../components/customer/ServiceIcon';
@@ -38,7 +38,7 @@ async function post(url:string,body:Record<string,unknown>){
  return p;
 }
 
-export default function MyRequestsPage(){
+function MyRequestsPageContent(){
  const searchParams=useSearchParams();
  const bookingsMode=searchParams.get('view')==='bookings';
  const[requests,setRequests]=useState<RequestRow[]>([]);
@@ -111,4 +111,8 @@ export default function MyRequestsPage(){
   {viewer&&viewerItem?<div className="c3PhotoViewer" role="dialog" aria-modal="true" aria-label="Request photo"><button className="c3PhotoViewerClose" type="button" onClick={()=>setViewer(null)}>×</button><img src={viewerItem.url||''} alt={`Request photo ${viewer.index+1}`}/><div className="c3PhotoViewerNav"><button type="button" disabled={viewer.index===0} onClick={()=>setViewer(v=>v?{...v,index:Math.max(0,v.index-1)}:v)}>‹</button><span>{viewer.index+1} / {viewerItems.length}</span><button type="button" disabled={viewer.index>=viewerItems.length-1} onClick={()=>setViewer(v=>v?{...v,index:Math.min(viewerItems.length-1,v.index+1)}:v)}>›</button></div></div>:null}
   <p className="muted" role="status">{busy?'Refreshing…':''}</p>
  </div></main>;
+}
+
+export default function MyRequestsPage(){
+ return <Suspense fallback={<main className="c3Page"><div className="c3Shell c3Requests"><div className="c3Notice">Loading requests…</div></div></main>}><MyRequestsPageContent/></Suspense>;
 }
