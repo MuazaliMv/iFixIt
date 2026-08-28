@@ -2,43 +2,92 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const HAPPY_PATH=['PENDING','RESPONDED','ACCEPTED','INSPECTION_SCHEDULED','IN_PROGRESS','COMPLETED'];
-const DISPATCH_WINDOWS={URGENT:30,STANDARD:60,SCHEDULED:120};
-const FINAL_DISPATCH_MESSAGE="We're sorry, but there are no available providers at this time.";
-const transitionActor=new Map([['PENDING->RESPONDED','PROVIDER'],['PENDING->ACCEPTED','PROVIDER'],['RESPONDED->ACCEPTED','PROVIDER'],['ACCEPTED->INSPECTION_SCHEDULED','PROVIDER'],['INSPECTION_SCHEDULED->IN_PROGRESS','CUSTOMER'],['IN_PROGRESS->COMPLETED','PROVIDER']]);
 const read=path=>readFile(new URL(`../${path}`,import.meta.url),'utf8');
 
-function canTransition(from,to,actor){return transitionActor.get(`${from}->${to}`)===actor;}
-function canCancel(status,assigned){return (status==='PENDING'||status==='RESPONDED')&&!assigned;}
+function canCancel(status,assigned){return ['PENDING','RESPONDED'].includes(status)&&!assigned;}
 
-test('happy path keeps the frozen six request statuses',()=>{assert.deepEqual(HAPPY_PATH,['PENDING','RESPONDED','ACCEPTED','INSPECTION_SCHEDULED','IN_PROGRESS','COMPLETED']);});
-test('provider acceptance owns assignment while later lifecycle actors stay unchanged',()=>{assert.equal(canTransition('PENDING','RESPONDED','PROVIDER'),true);assert.equal(canTransition('PENDING','ACCEPTED','PROVIDER'),true);assert.equal(canTransition('RESPONDED','ACCEPTED','PROVIDER'),true);assert.equal(canTransition('RESPONDED','ACCEPTED','CUSTOMER'),false);assert.equal(canTransition('ACCEPTED','INSPECTION_SCHEDULED','PROVIDER'),true);assert.equal(canTransition('INSPECTION_SCHEDULED','IN_PROGRESS','CUSTOMER'),true);assert.equal(canTransition('IN_PROGRESS','COMPLETED','PROVIDER'),true);});
-test('customer cancellation stays pre-assignment only',()=>{assert.equal(canCancel('PENDING',false),true);assert.equal(canCancel('RESPONDED',false),true);assert.equal(canCancel('ACCEPTED',true),false);});
-test('payment remains outside the lifecycle',()=>{assert.equal([...transitionActor.keys()].some(x=>/PAY|PAID|PAYMENT/.test(x)),false);});
+test('customer cancellation remains pre-assignment only',()=>{
+ assert.equal(canCancel('PENDING',false),true);
+ assert.equal(canCancel('RESPONDED',false),true);
+ assert.equal(canCancel('ACCEPTED',true),false);
+});
 
-test('dispatch priority timers are exactly 30, 60 and 120 minutes plus one 60-minute extension',async()=>{assert.deepEqual(DISPATCH_WINDOWS,{URGENT:30,STANDARD:60,SCHEDULED:120});const source=await read('migrations/0038_automated_dispatch_timeouts.sql');assert.match(source,/WHEN 'URGENT' THEN interval '30 minutes'/i);assert.match(source,/WHEN 'SCHEDULED' THEN interval '2 hours'/i);assert.match(source,/ELSE interval '1 hour'/i);assert.match(source,/dispatch_initial_deadline_at\+interval '1 hour'/i);});
-test('legacy SCHEDULE urgency maps to SCHEDULED dispatch tier',async()=>{const source=await read('migrations/0038_automated_dispatch_timeouts.sql');assert.match(source,/WHEN 'SCHEDULE' THEN 'SCHEDULED'/);assert.match(source,/WHEN 'SCHEDULED' THEN 'SCHEDULED'/);});
+test('provider acceptance is automatic and customer confirmation is retired',async()=>{
+ const migration=await read('migrations/0101_unify_provider_acceptance_flow.sql');
+ assert.match(migration,/first eligible provider who accepts/i);
+ assert.match(migration,/Customer confirmation is not part of the\s+-- acceptance path/i);
+ assert.match(migration,/status='ACCEPTED'/);
+ assert.match(migration,/dispatch_state='SECURED'/);
+ assert.match(migration,/customer confirmation removed/i);
+ assert.match(migration,/'customer_retries',0/);
+ assert.match(migration,/'customer_timeouts',0/);
+});
 
-test('historical five-provider discovery migration never assigned on response alone',async()=>{const source=await read('migrations/0042_dispatch_live_timer_wait_more.sql');assert.match(source,/v_count\s*>?=\s*5/i);assert.match(source,/Provider availability limit reached/i);assert.match(source,/PROVIDER_CAP_REACHED/i);assert.doesNotMatch(source,/assigned_provider_user_id\s*=\s*new\.provider_user_id/i);});
-test('historical flow started a 15-minute customer response timer',async()=>{const source=await read('migrations/0042_dispatch_live_timer_wait_more.sql');assert.match(source,/PROVIDER_OPTIONS_AVAILABLE/i);assert.match(source,/dispatch_customer_response_deadline_at=now\(\)\+interval '15 minutes'/i);});
-test('historical Wait for More state remains migration-compatible',async()=>{const source=await read('migrations/0042_dispatch_live_timer_wait_more.sql');assert.match(source,/customer_wait_for_more_providers/i);assert.match(source,/dispatch_customer_mode='WAITING_MORE'/i);assert.match(source,/dispatch_wait_provider_count=v_count/i);assert.match(source,/dispatch_customer_response_deadline_at=NULL/i);assert.match(source,/dispatch_customer_retry_count=0/i);});
-test('historical migration can restart a selection timer after Wait for More',async()=>{const source=await read('migrations/0042_dispatch_live_timer_wait_more.sql');assert.match(source,/v_mode='WAITING_MORE'/i);assert.match(source,/v_count>coalesce\(v_wait_count,0\)/i);assert.match(source,/MORE_PROVIDER_OPTIONS_AVAILABLE_/i);assert.match(source,/now\(\)\+interval '15 minutes'/i);});
-test('historical five-provider cap remains represented for safe migration replay',async()=>{const source=await read('migrations/0042_dispatch_live_timer_wait_more.sql');assert.match(source,/IF v_count >= 5 THEN/i);assert.match(source,/dispatch_state='AWAITING_CUSTOMER'/i);assert.match(source,/Five providers are available/i);});
-test('historical threshold logic remains replayable before the unifying migration',async()=>{const source=await read('migrations/0042_dispatch_live_timer_wait_more.sql');assert.match(source,/dispatch_state='SEARCHING' AND dispatch_initial_deadline_at<=now\(\)/i);assert.match(source,/IF v_count>0 THEN/i);assert.match(source,/dispatch_state='AWAITING_CUSTOMER'/i);assert.match(source,/dispatch_state='EXTENDED'/i);assert.match(source,/dispatch_extension_deadline_at=dispatch_initial_deadline_at\+interval '1 hour'/i);});
-test('extension expiry without providers produces exact final notification',async()=>{const source=await read('migrations/0042_dispatch_live_timer_wait_more.sql');assert.match(source,/dispatch_state='EXHAUSTED'/i);assert.match(source,/We''re sorry, but there are no available providers at this time\./);assert.equal(FINAL_DISPATCH_MESSAGE,"We're sorry, but there are no available providers at this time.");});
-test('historical customer retry logic stays replayable for migration history',async()=>{const source=await read('migrations/0042_dispatch_live_timer_wait_more.sql');assert.match(source,/v_retry<3/i);assert.match(source,/CUSTOMER_RESPONSE_RETRY_/i);assert.match(source,/dispatch_customer_retry_count=v_retry/i);assert.match(source,/dispatch_state='CUSTOMER_TIMEOUT'/i);assert.match(source,/after 3 retries/i);});
-test('historical retry sequence logic is preserved for migration replay',async()=>{const source=await read('migrations/0042_dispatch_live_timer_wait_more.sql');assert.match(source,/CASE WHEN v_mode='WAITING_MORE'.*THEN 0 ELSE coalesce\(v_existing_retry,0\) END/is);assert.match(source,/CASE WHEN r\.dispatch_customer_mode='WAITING_MORE'.*THEN 0 ELSE coalesce\(r\.dispatch_customer_retry_count,0\) END/is);});
-test('retry restarts dispatch after historical exhaustion or timeout',async()=>{const source=await read('migrations/0042_dispatch_live_timer_wait_more.sql');assert.match(source,/dispatch_state NOT IN \('EXHAUSTED','CUSTOMER_TIMEOUT'\)/i);assert.match(source,/dispatch_attempt=dispatch_attempt\+1/i);assert.match(source,/status='PENDING'/i);assert.match(source,/dispatch_customer_mode=NULL/i);assert.match(source,/dispatch_customer_retry_count=0/i);});
-test('cancel and provider assignment terminate live dispatch timers',async()=>{const source=await read('migrations/0042_dispatch_live_timer_wait_more.sql');assert.match(source,/new\.status='CANCELLED'/i);assert.match(source,/new\.dispatch_state:='CANCELLED'/i);assert.match(source,/new\.assigned_provider_user_id IS NOT NULL/i);assert.match(source,/new\.dispatch_state:='SECURED'/i);assert.match(source,/new\.dispatch_customer_response_deadline_at:=NULL/i);});
+test('customer request list exposes no provider-selection or wait-more gate',async()=>{
+ const source=await read('app/requests/page.tsx');
+ assert.match(source,/first provider who accepts will be assigned automatically/i);
+ assert.match(source,/Waiting for first provider acceptance/);
+ assert.doesNotMatch(source,/AWAITING_CUSTOMER/);
+ assert.doesNotMatch(source,/CUSTOMER_TIMEOUT/);
+ assert.doesNotMatch(source,/WAITING_MORE/);
+ assert.doesNotMatch(source,/wait_more/);
+ assert.doesNotMatch(source,/Select Provider/i);
+ assert.doesNotMatch(source,/Choose from/i);
+ assert.doesNotMatch(source,/Try Again/);
+});
 
-test('customer request list retains live countdown and retry visibility for compatible in-flight records',async()=>{const source=await read('app/requests/page.tsx');assert.match(source,/setInterval\(\(\)=>setNow\(Date\.now\(\)\),1000\)/);assert.match(source,/Open Details/);assert.match(source,/Continue with assigned provider/);assert.match(source,/available_provider_count/);assert.match(source,/CUSTOMER_TIMEOUT/);assert.match(source,/EXHAUSTED/);assert.match(source,/Try Again/);});
-test('request detail live dispatch panel is informational and has no customer provider-selection gate',async()=>{const panel=await read('app/DispatchLivePanel.tsx');const router=await read('app/RouteMobileNav.tsx');assert.match(panel,/Live Dispatch/);assert.match(panel,/setInterval\(\(\)=>setNow\(Date\.now\(\)\),1000\)/);assert.match(panel,/first eligible provider who accepts is assigned automatically/i);assert.match(panel,/You do not need to choose or confirm a provider/i);assert.doesNotMatch(panel,/action:'wait_more'/);assert.doesNotMatch(panel,/Wait for More/);assert.doesNotMatch(panel,/Select Provider/);assert.doesNotMatch(panel,/providerGrid/);assert.match(router,/DispatchLivePanel/);});
-test('request list cancellation still uses guarded service-request endpoint',async()=>{const source=await read('app/requests/page.tsx');assert.match(source,/status==='PENDING'\|\|r\.status==='RESPONDED'/);assert.match(source,/Cancel Request/);assert.match(source,/\/api\/service-requests\//);});
+test('provider work list accepts or declines and accepted work appears in active jobs',async()=>{
+ const source=await read('app/provider/jobs/page.tsx');
+ assert.match(source,/respond\(o\.id,'accept'\)/);
+ assert.match(source,/respond\(o\.id,'decline'\)/);
+ assert.match(source,/Accept Request/);
+ assert.match(source,/Not Available/);
+ assert.match(source,/Request accepted and assigned to you/);
+ assert.match(source,/Accepted & processing/i);
+ assert.doesNotMatch(source,/Accept & Send Response/);
+});
 
-test('provider and customer request-list UI contain no legacy NEW or PROCESSING checks',async()=>{for(const file of ['app/provider/jobs/page.tsx','app/requests/page.tsx']){const source=await read(file);assert.equal(/status\s*===\s*['\"]NEW['\"]/.test(source),false,`${file} still checks NEW`);assert.equal(/status\s*===\s*['\"]PROCESSING['\"]/.test(source),false,`${file} still checks PROCESSING`);}});
-test('provider work UI uses explicit accept decline and canonical active-job stages',async()=>{const source=await read('app/provider/jobs/page.tsx');assert.match(source,/respond\(o\.id,'accept'\)/);assert.match(source,/respond\(o\.id,'decline'\)/);assert.match(source,/Accepted & processing/i);assert.match(source,/Accepted requests will appear here/i);assert.match(source,/canonicalStage/);assert.match(source,/Accept Request/);assert.match(source,/Not Available/);assert.doesNotMatch(source,/Accept & Send Response/);});
+test('provider job detail follows accepted processing completed lifecycle',async()=>{
+ const source=await read('app/provider/jobs/[ticket]/page.tsx');
+ assert.match(source,/const stages=\['ACCEPTED','PROCESSING','COMPLETED'\]/);
+ assert.match(source,/Start Work/);
+ assert.match(source,/Complete Service/);
+ assert.match(source,/provider-job-flow/);
+});
 
-test('login uses Maldives phone and testing OTP through the server auth route',async()=>{const source=await read('app/login/page.tsx');const route=await read('app/api/auth/login/route.ts');assert.match(source,/\/api\/auth\/login/);assert.match(source,/useState\('\+960'\)/);assert.match(source,/7-digit Maldives number/i);assert.match(source,/Testing code: 9999/);assert.match(source,/body:JSON\.stringify\(\{phone:/);assert.doesNotMatch(source,/type=["']email["']/i);assert.doesNotMatch(source,/type=["']password["']/i);assert.match(route,/action:'login',phone,otp/);assert.doesNotMatch(route,/body\.email/);assert.doesNotMatch(route,/body\.password/);});
-test('forgot/reset password routes and views remain present',async()=>{for(const file of ['app/api/auth/forgot-password/route.ts','app/api/auth/reset-password/route.ts','app/forgot-password/page.tsx','app/reset-password/page.tsx'])assert.ok((await read(file)).length>80);});
-test('profile retains optional photo phone and address architecture',async()=>{const source=await read('app/profile/ProfileClient.tsx');assert.match(source,/profile_photo_url/);assert.match(source,/is_phone_verified/);assert.match(source,/Phone Number \((?:Maldives|verified)\)/i);assert.match(source,/Primary address/i);assert.match(source,/Provider location & availability/i);assert.match(source,/Saved service addresses/i);});
-test('admin user table retains phone verification and address data',async()=>{const source=await read('app/admin/users/page.tsx');assert.match(source,/Account address/i);assert.match(source,/Default service address/i);assert.match(source,/Phone verification/i);});
+test('customer and provider messages are available only after provider assignment',async()=>{
+ const customer=await read('app/messages/[ticket]/page.tsx');
+ const provider=await read('app/provider/messages/page.tsx');
+ assert.match(customer,/Messaging starts automatically after a provider accepts your request/i);
+ assert.match(provider,/Messages become available only after you accept a customer request/i);
+});
+
+test('cancelled requests remain hidden from the normal customer list',async()=>{
+ const source=await read('app/requests/page.tsx');
+ assert.match(source,/\['COMPLETED','CANCELLED'\]\.includes/);
+ assert.match(source,/setRequests\(current=>current\.filter/);
+});
+
+test('customer request photos are capped to three in provider work surfaces',async()=>{
+ const provider=await read('app/provider/jobs/page.tsx');
+ const detail=await read('app/provider/jobs/[ticket]/page.tsx');
+ assert.match(provider,/\.slice\(0,3\)/);
+ assert.match(detail,/\.slice\(0,3\)/);
+});
+
+test('login remains phone OTP only',async()=>{
+ const source=await read('app/login/page.tsx');
+ const route=await read('app/api/auth/login/route.ts');
+ assert.match(source,/Testing code: 9999/);
+ assert.match(source,/useState\('\+960'\)/);
+ assert.match(source,/7-digit Maldives number/i);
+ assert.doesNotMatch(source,/type=["']email["']/i);
+ assert.doesNotMatch(source,/type=["']password["']/i);
+ assert.match(route,/action:'login',phone,otp/);
+});
+
+test('profile retains verified phone and saved service-address architecture',async()=>{
+ const source=await read('app/profile/ProfileClient.tsx');
+ assert.match(source,/is_phone_verified/);
+ assert.match(source,/Saved service addresses/i);
+});

@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '../../../lib/supabaseClient';
 import AppModeSwitch from '../../AppModeSwitch';
 import { useProviderMode } from '../useProviderMode';
 
-const OFFERS_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-offers';
-const MARKET_URL='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/provider-marketplace';
+const OFFERS_URL='/api/legacy-edge?service=provider-offers';
+const MARKET_URL='/api/legacy-edge?service=provider-marketplace';
 type Tab='new'|'active'|'completed';
 type RequestPhoto={id:string;url:string|null;sort_order?:number|null;created_at?:string|null};
 type Offer={id:string;response_deadline_at:string;request:{ticket_number:string;service_name:string;service_location_text:string;preferred_date?:string|null;problem_description?:string|null;urgency?:string|null;photos?:RequestPhoto[]}|null};
@@ -14,6 +13,13 @@ type Job={ticket_number:string;service_name:string;service_location_text:string;
 
 function left(value:string){const d=new Date(value);if(Number.isNaN(d.getTime()))return'';const m=Math.max(0,Math.ceil((d.getTime()-Date.now())/60000));return m>60?`${Math.floor(m/60)}h ${m%60}m left`:`${m}m left`;}
 function canonicalStage(status:string){const value=String(status||'').toUpperCase();if(value==='COMPLETED')return'COMPLETED';if(['PROCESSING','IN_PROGRESS','INSPECTION_SCHEDULED'].includes(value))return'PROCESSING';return'ACCEPTED';}
+async function post(url:string,body:Record<string,unknown>){
+ const r=await fetch(url,{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+ const p=await r.json().catch(()=>({}));
+ if(r.status===401){const next=`${window.location.pathname}${window.location.search}`;window.location.replace(`/login?next=${encodeURIComponent(next)}`);throw new Error('Authentication required.');}
+ if(!r.ok)throw new Error(p?.error||'Request failed');
+ return p;
+}
 
 export default function ProviderJobsPage(){
  const mode=useProviderMode(true);
@@ -27,41 +33,25 @@ export default function ProviderJobsPage(){
  useEffect(()=>{const requested=new URLSearchParams(window.location.search).get('tab');if(requested==='new'||requested==='active'||requested==='completed')setTab(requested);},[]);
  useEffect(()=>{if(mode.ready)void load();},[mode.ready]);
 
- async function auth(){const{data}=await supabase.auth.getSession();if(!data.session){window.location.href='/login';return null;}return data.session;}
  async function load(){
   setBusy(true);
   try{
-   const s=await auth();if(!s)return;
-   const headers={'Content-Type':'application/json','Authorization':`Bearer ${s.access_token}`};
-   const[or,mr]=await Promise.all([
-    fetch(OFFERS_URL,{method:'POST',headers,body:JSON.stringify({action:'list'})}),
-    fetch(MARKET_URL,{method:'POST',headers,body:JSON.stringify({action:'dashboard'})})
-   ]);
-   const op=await or.json().catch(()=>({})),mp=await mr.json().catch(()=>({}));
-   if(!or.ok)throw new Error(op?.error||'Unable to load new requests');
-   if(!mr.ok)throw new Error(mp?.error||'Unable to load jobs');
+   const[op,mp]=await Promise.all([post(OFFERS_URL,{action:'list'}),post(MARKET_URL,{action:'dashboard'})]);
    setOffers(op.offers||[]);
    setJobs((mp.requests||[]).filter((j:Job)=>['ACCEPTED','PROCESSING','IN_PROGRESS','INSPECTION_SCHEDULED','COMPLETED'].includes(String(j.status).toUpperCase())));
    setMessage('Customer work is up to date.');
-  }catch(e){setMessage(e instanceof Error?e.message:'Unable to load customer work.');}
+  }catch(e){if(!(e instanceof Error&&e.message==='Authentication required.'))setMessage(e instanceof Error?e.message:'Unable to load customer work.');}
   finally{setBusy(false);}
  }
 
  async function respond(offerId:string,action:'accept'|'decline'){
   setBusy(true);setActionOfferId(offerId);setMessage(action==='accept'?'Accepting request…':'Marking unavailable…');
   try{
-   const s=await auth();if(!s)return;
-   const r=await fetch(OFFERS_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${s.access_token}`},body:JSON.stringify({action,offerId})});
-   const p=await r.json().catch(()=>({}));if(!r.ok)throw new Error(p?.error||'Unable to respond');
+   await post(OFFERS_URL,{action,offerId});
    setOffers(current=>current.filter(o=>o.id!==offerId));
-   if(action==='accept'){
-    setMessage('Request accepted and assigned to you.');
-    await load();setTab('active');
-   }else{
-    setMessage('Request skipped. It remains available to another eligible provider.');
-    await load();setTab('new');
-   }
-  }catch(e){setMessage(e instanceof Error?e.message:'Unable to respond.');}
+   if(action==='accept'){setMessage('Request accepted and assigned to you.');await load();setTab('active');}
+   else{setMessage('Request skipped. It remains available to another eligible provider.');await load();setTab('new');}
+  }catch(e){if(!(e instanceof Error&&e.message==='Authentication required.'))setMessage(e instanceof Error?e.message:'Unable to respond.');}
   finally{setBusy(false);setActionOfferId(null);}
  }
 

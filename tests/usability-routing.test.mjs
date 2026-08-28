@@ -54,8 +54,8 @@ test('public provider CTA uses the canonical onboarding route',async()=>{
 
 test('cancelled requests stay out of normal customer request views and counters',async()=>{
  const source=await read('app/requests/page.tsx');
- assert.match(source,/!\['COMPLETED','CANCELLED'\]\.includes\(r\.status\)/);
- assert.match(source,/requests\.filter\(r=>!\['COMPLETED','CANCELLED'\]\.includes\(r\.status\)\)\.length/);
+ assert.match(source,/!\['COMPLETED','CANCELLED'\]\.includes\(String\(r\.status\)\.toUpperCase\(\)\)/);
+ assert.match(source,/requests\.filter\(r=>!\['COMPLETED','CANCELLED'\]\.includes\(String\(r\.status\)\.toUpperCase\(\)\)\)\.length/);
 });
 
 test('provider status actions disable the current state and lock during saves',async()=>{
