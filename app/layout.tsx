@@ -47,6 +47,7 @@ import './otp-only-ui.css';
 import './request-photos-premium.css';
 import './complete-application-suite.css';
 import './master-suite-live.css';
+import './master-role-workspaces.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
@@ -84,38 +85,35 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#f8fafc',
+  themeColor: '#ffffff',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body>
-        <ThemeRuntime/>
-        <ResponsiveRuntime/>
-        <CompactCopyRuntime/>
-        <ButtonUsabilityRuntime/>
-        <MobileSectionPager/>
-        <MobileKeyboardRuntime/>
-        <WorkspaceThemeRuntime/>
-        <SendRequestTapRuntime/>
-        <RequestWizardSmartRuntime/>
-        <RoleAccessGuard/>
-        <PreferredDateRuntime/>
-        <GlobalRoleMenuSSOT/>
-        <TopWorkspaceRoleLabel/>
-        <GlobalCardPagination/>
-        <MobileDateInputRuntime/>
-        <ApprovedCustomerHomeRuntime/>
-        <CompleteApplicationRuntime/>
-        <ErrorRuntime/>
-
-        <main id="main-content" className="globalMainWorkspace">
+        <IOSWebAppShell>
+          <ThemeRuntime />
+          <ModeToast />
+          <ResponsiveRuntime />
+          <MobileSectionPager />
+          <CompactCopyRuntime />
+          <ButtonUsabilityRuntime />
+          <RoleAccessGuard />
+          <GlobalRoleMenuSSOT />
+          <TopWorkspaceRoleLabel />
+          <GlobalCardPagination />
+          <MobileDateInputRuntime />
+          <MobileKeyboardRuntime />
+          <PreferredDateRuntime />
+          <SendRequestTapRuntime />
+          <RequestWizardSmartRuntime />
+          <WorkspaceThemeRuntime />
+          <ApprovedCustomerHomeRuntime />
+          <CompleteApplicationRuntime />
+          <ErrorRuntime />
           {children}
-        </main>
-
-        <IOSWebAppShell/>
-        <ModeToast/>
+        </IOSWebAppShell>
       </body>
     </html>
   );
