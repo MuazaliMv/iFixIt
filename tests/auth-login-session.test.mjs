@@ -13,6 +13,11 @@ test('phone OTP login creates the authoritative secure application session',asyn
  assert.match(login,/Testing code: 9999/);
  assert.match(route,/body:JSON\.stringify\(\{action:'login',phone,otp\}\)/);
  assert.match(route,/phone_verified_at/);
+ assert.match(route,/persistVerifiedPhone\(payload\.session\.access_token,userId,phone,phoneVerifiedAt\)/);
+ assert.match(route,/auth_profiles\?user_id=eq\./);
+ assert.match(route,/body:JSON\.stringify\(\{phone_number:phone,phone_verified_at:phoneVerifiedAt\}\)/);
+ assert.match(route,/Authorization:`Bearer \$\{accessToken\}`/);
+ assert.doesNotMatch(route,/SUPABASE_SERVICE_ROLE_KEY/,'OTP login must persist the verified phone through the authenticated user session and RLS, not a service-role secret');
  assert.match(route,/next\.cookies\.set\(ACCESS_COOKIE/);
  assert.match(route,/next\.cookies\.set\(REFRESH_COOKIE/);
  assert.match(login,/supabase\.auth\.setSession\(\{access_token:accessToken,refresh_token:refreshToken\}\)/);

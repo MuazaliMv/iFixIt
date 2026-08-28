@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ACCESS_COOKIE, REFRESH_COOKIE } from '../../../../lib/serverAuth';
 
-const AUTH_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/auth-security';
+const SUPABASE_URL=process.env.SUPABASE_URL?.trim()||process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()||'https://yzlhlilxiszefneshatm.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY=process.env.SUPABASE_ANON_KEY?.trim()||process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()||process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim()||'sb_publishable_1sZEZgz9k2JACE_WzHtbCw_reiQEik6';
+const AUTH_API=`${SUPABASE_URL}/functions/v1/auth-security`;
 
 function sameOrigin(request:NextRequest){
  const origin=request.headers.get('origin');
@@ -18,6 +20,18 @@ function sameOrigin(request:NextRequest){
 function secureCookie(request:NextRequest){
  const forwardedProto=(request.headers.get('x-forwarded-proto')||'').split(',')[0].trim();
  return forwardedProto?forwardedProto==='https':request.nextUrl.protocol==='https:';
+}
+
+async function persistVerifiedPhone(accessToken:string,userId:string,phone:string,phoneVerifiedAt:string){
+ const response=await fetch(`${SUPABASE_URL}/rest/v1/auth_profiles?user_id=eq.${encodeURIComponent(userId)}`,{
+  method:'PATCH',cache:'no-store',signal:AbortSignal.timeout(7000),
+  headers:{apikey:SUPABASE_PUBLISHABLE_KEY,Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json','Prefer':'return=minimal'},
+  body:JSON.stringify({phone_number:phone,phone_verified_at:phoneVerifiedAt}),
+ });
+ if(!response.ok){
+  const payload=await response.json().catch(()=>null);
+  throw new Error(payload?.message||payload?.error||'Verified phone could not be saved to your profile.');
+ }
 }
 
 export async function POST(request:NextRequest){
@@ -44,6 +58,10 @@ export async function POST(request:NextRequest){
   if(!verifiedPhone){
    return NextResponse.json({error:'Phone verification was not recorded. Please verify the OTP again.'},{status:500,headers:{'Cache-Control':'no-store'}});
   }
+
+  const userId=String(payload?.profile?.user_id||payload?.user?.id||'').trim();
+  if(!userId)return NextResponse.json({error:'Verified account profile could not be identified.'},{status:500,headers:{'Cache-Control':'no-store'}});
+  await persistVerifiedPhone(payload.session.access_token,userId,phone,phoneVerifiedAt);
 
   const role=String(payload?.profile?.role||payload?.user?.role||'CUSTOMER').toUpperCase();
   const normalizedRole=role==='ADMIN'?'ADMIN':role==='PROVIDER'?'PROVIDER':'CUSTOMER';

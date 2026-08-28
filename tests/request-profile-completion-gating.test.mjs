@@ -5,13 +5,18 @@ import { readFile } from 'node:fs/promises';
 const read=path=>readFile(new URL(`../${path}`,import.meta.url),'utf8');
 
 // Current contract: request-specific address selection must not silently replace the user's profile default.
-test('Service Address send requires profile name and an explicit selected address, not phone OTP verification',async()=>{
+test('Service Address send collects only missing profile name inline and requires an explicit selected address',async()=>{
  const source=await read('app/components/customer/RequestProfileCompletion.tsx');
  assert.doesNotMatch(source,/phone_confirmed_at/);
- assert.match(source,/const validContact=name\.trim\(\)\.length>=2/);
+ assert.match(source,/nameConfirmed&&name\.trim\(\)\.length>=2/);
+ assert.match(source,/saveMissingName/);
+ assert.match(source,/fetch\('\/api\/user\/profile',\{method:'PUT'/);
+ assert.match(source,/body:JSON\.stringify\(\{fullName\}\)/);
+ assert.match(source,/Save Name & Continue/);
+ assert.match(source,/We already have your verified phone\. Add only the missing name/);
+ assert.doesNotMatch(source,/Add your full name in Profile before sending the request/);
  assert.match(source,/disabled=\{saving\|\|!validContact\|\|!selectedAddress\}/);
  assert.match(source,/Choose a Service Address before continuing/);
- assert.match(source,/Add your full name in Profile before sending the request/);
  assert.match(source,/'Proceed'/);
 });
 
@@ -37,7 +42,7 @@ test('Service Address remediation is inline and supports multiple saved addresse
  assert.match(source,/Island \/ City/);
  assert.match(source,/>Ward /);
  assert.match(source,/Select Ward/);
- assert.doesNotMatch(source,/<label>Name<input/);
+ assert.match(source,/<label>Full Name<input/);
  assert.match(source,/Access Instructions/);
  assert.doesNotMatch(source,/Postal code <span/);
  assert.doesNotMatch(source,/href="\/profile#service-addresses"/);
