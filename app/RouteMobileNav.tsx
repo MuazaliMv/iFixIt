@@ -19,7 +19,8 @@ export default function RouteMobileNav(){
 
  useEffect(()=>subscribeToSelectedWorkspace(()=>setSelectedRole(readSelectedWorkspace())),[]);
 
- const role:NavRole|null=selectedRole||adminRoute?'admin':selectedRole||providerRoute?'provider':selectedRole||customerRoute||providerApplicationRoute?'customer':selectedRole;
+ const routeFallback:NavRole|null=adminRoute?'admin':providerRoute?'provider':customerRoute||providerApplicationRoute?'customer':null;
+ const role:NavRole|null=selectedRole??routeFallback;
 
  if(path.startsWith('/requests/'))return <><DispatchLivePanel/>{role?<MobileNav role={role}/>:null}</>;
  if((customerRoute||providerApplicationRoute||providerRoute||adminRoute||sharedRoute)&&role)return <MobileNav role={role}/>;
