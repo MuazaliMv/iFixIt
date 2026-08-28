@@ -20,12 +20,15 @@ async function collectTsFiles(dirUrl) {
 test('Supabase PostgREST builders are awaited instead of Promise catch-chained', async () => {
   const files = await collectTsFiles(apiRoot);
   const violations = [];
-  const builderCatch = /\.from\([^)]*\)[\s\S]{0,1800}?\.catch\s*\(/g;
+
+  // Match only a direct PostgREST builder chain ending in .catch(...), not an
+  // unrelated Promise catch later in the same function (for example request.json().catch()).
+  const directBuilderCatch = /\.from\([^\n;]*?\)(?:\.[A-Za-z_$][\w$]*\([^\n;]*?\))*\.catch\s*\(/g;
 
   for (const file of files) {
     const source = await readFile(file, 'utf8');
-    if (builderCatch.test(source)) violations.push(path.relative(process.cwd(), file));
-    builderCatch.lastIndex = 0;
+    if (directBuilderCatch.test(source)) violations.push(path.relative(process.cwd(), file));
+    directBuilderCatch.lastIndex = 0;
   }
 
   assert.deepEqual(
