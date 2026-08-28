@@ -1,0 +1,125 @@
+/* FixIt Maldives marketplace UI — final visual layer
+   Purpose: translate the approved mobile-first architecture specification into
+   a consistent Apple-HIG-inspired surface without changing routing, auth, role
+   state, request lifecycle, or data access behavior. */
+
+:root{
+  --fm-bg:#f5f5f7;
+  --fm-surface:#ffffff;
+  --fm-surface-soft:#f9fafb;
+  --fm-text:#111827;
+  --fm-muted:#667085;
+  --fm-line:#e5e7eb;
+  --fm-brand:#0a66d8;
+  --fm-brand-strong:#0757bb;
+  --fm-brand-soft:#eaf3ff;
+  --fm-green:#138a55;
+  --fm-green-soft:#eaf8f0;
+  --fm-amber:#b56b00;
+  --fm-amber-soft:#fff5df;
+  --fm-red:#c93838;
+  --fm-red-soft:#fff0f0;
+  --fm-radius:22px;
+  --fm-radius-sm:16px;
+  --fm-shadow:0 10px 30px rgba(15,23,42,.07);
+  --fm-shadow-soft:0 5px 18px rgba(15,23,42,.05);
+}
+
+html,body{background:var(--fm-bg);color:var(--fm-text)}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+/* Customer portal */
+.c3Page,.c4App,.c4Main{background:var(--fm-bg)!important;color:var(--fm-text)!important}
+.c3Shell{width:min(1080px,calc(100% - 28px))}
+.c3Home{gap:16px!important;padding-top:16px!important}
+.c3Header{background:rgba(255,255,255,.88)!important;border-bottom:1px solid rgba(229,231,235,.92)!important;backdrop-filter:saturate(180%) blur(22px)!important}
+.c3Welcome{background:linear-gradient(145deg,#0870e8 0%,#0a5fc7 65%,#084fa7 100%)!important;border-radius:26px!important;padding:24px!important;box-shadow:0 18px 46px rgba(10,102,216,.19)!important}
+.c3Welcome h1{font-weight:900!important;letter-spacing:-1.35px!important}
+.c3Welcome p{font-size:14px!important;line-height:1.55!important}
+.c3Section,.c3WizardCard,.c3RequestCard,.c3Empty{background:var(--fm-surface)!important;border:1px solid rgba(229,231,235,.72)!important;border-radius:22px!important;box-shadow:var(--fm-shadow-soft)!important}
+.c3SectionHead small,.c3Question small{color:var(--fm-brand)!important}
+.c3SectionHead h2,.c3Question h1{color:var(--fm-text)!important;font-weight:900!important}
+.c3SectionHead p,.c3Question p{color:var(--fm-muted)!important}
+.c3ServiceGrid{gap:11px!important}
+.c3ServiceTile{background:var(--fm-surface-soft)!important;border:1px solid var(--fm-line)!important;border-radius:19px!important;min-height:126px!important;transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease}
+.c3ServiceTile:hover,.c3ServiceTile.selected{background:var(--fm-brand-soft)!important;border-color:#a7cef7!important;color:var(--fm-brand)!important;box-shadow:0 8px 22px rgba(10,102,216,.10)!important}
+.c3ServiceTile:active{transform:scale(.985)}
+.c3Primary{background:var(--fm-brand)!important;border-radius:15px!important;box-shadow:none!important;font-weight:850!important}
+.c3Primary:hover{background:var(--fm-brand-strong)!important}
+.c3Secondary{border-color:var(--fm-line)!important;border-radius:15px!important;background:var(--fm-surface)!important}
+.c3Field input,.c3Field select,.c3Field textarea{border:1px solid #d8dee8!important;border-radius:15px!important;background:#fff!important;box-shadow:none!important}
+.c3Field input:focus,.c3Field select:focus,.c3Field textarea:focus{border-color:#7fb6ee!important;box-shadow:0 0 0 4px rgba(10,102,216,.08)!important}
+.c3PhotoDrop{background:#f8fbff!important;border-color:#b9cce0!important;border-radius:20px!important}
+.c3Chip{border-color:var(--fm-line)!important;background:#fff!important}
+.c3Chip.selected{background:var(--fm-brand)!important;border-color:var(--fm-brand)!important}
+.c3StepDot{background:#dfe5ec!important}.c3StepDot.active,.c3StepDot.done{background:var(--fm-brand)!important}
+.c3Status{background:var(--fm-brand-soft)!important;color:var(--fm-brand)!important}
+.c3Status.completed{background:var(--fm-green-soft)!important;color:var(--fm-green)!important}
+.c3ActionDock{background:rgba(245,245,247,.82)!important;backdrop-filter:saturate(180%) blur(22px)!important}
+
+/* Provider operations */
+.providerModePage{background:var(--fm-bg)!important;color:var(--fm-text)!important;min-height:100vh}
+.providerModeShell{width:min(980px,calc(100% - 28px))!important;margin:0 auto!important;padding-top:18px!important;padding-bottom:120px!important}
+.providerModeTop{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:14px!important;margin-bottom:18px!important}
+.providerModeTop h1{margin:7px 0 5px!important;font-size:clamp(30px,7vw,42px)!important;letter-spacing:-1.2px!important;font-weight:900!important}
+.providerModeTop p{margin:0!important;color:var(--fm-muted)!important}
+.providerModeCard{background:var(--fm-surface)!important;border:1px solid rgba(229,231,235,.78)!important;border-radius:22px!important;box-shadow:var(--fm-shadow-soft)!important}
+.providerSegmented{background:#e9edf3!important;border-radius:14px!important;padding:4px!important;gap:4px!important}
+.providerSegmented button{border:0!important;border-radius:11px!important;min-height:42px!important;background:transparent!important;color:#5d6878!important;font-weight:850!important}
+.providerSegmented button.active{background:#fff!important;color:var(--fm-text)!important;box-shadow:0 2px 8px rgba(15,23,42,.08)!important}
+.providerSectionHead small,.providerOfferTop small,.frozenRequestBlock small{color:var(--fm-brand)!important;font-weight:850!important;letter-spacing:.08em!important}
+.providerSectionHead h2{font-weight:900!important;letter-spacing:-.45px!important}
+.providerOfferGrid{gap:13px!important}
+.providerOfferCard,.providerOperationalCard{background:#fff!important;border:1px solid var(--fm-line)!important;border-radius:19px!important;box-shadow:none!important}
+.providerOfferCard{padding:17px!important}
+.providerOperationalCard{transition:background .16s ease,border-color .16s ease,transform .16s ease}
+.providerOperationalCard:hover{background:#fbfdff!important;border-color:#c9d9eb!important}
+.providerOperationalCard:active{transform:scale(.99)}
+.providerPrimaryAction{background:var(--fm-brand)!important;color:#fff!important;border-color:var(--fm-brand)!important}
+.modeBadge.provider{background:var(--fm-brand-soft)!important;color:var(--fm-brand)!important;border-color:#c9e0fb!important}
+.modeBadge.customer{background:var(--fm-green-soft)!important;color:var(--fm-green)!important}
+.providerEmptyState{background:var(--fm-surface-soft)!important;border:1px dashed #d6dde6!important;border-radius:18px!important}
+
+/* Admin control panel */
+.adminPage,.adminShell,.adminMain{background:var(--fm-bg)!important;color:var(--fm-text)!important}
+.adminPanel,.adminMarketPanel,.adminAttentionPanel,.statCard,.adminPlatformCard{background:#fff!important;border:1px solid rgba(229,231,235,.78)!important;border-radius:20px!important;box-shadow:var(--fm-shadow-soft)!important}
+.adminMarketTotal{color:var(--fm-brand)!important}
+.adminMarketPeriod,.adminRangeSelect,.adminCustomRange{border-color:var(--fm-line)!important;background:var(--fm-surface-soft)!important}
+.adminRangeApply{background:var(--fm-brand)!important}
+.adminPlatformIcon{background:var(--fm-brand-soft)!important;color:var(--fm-brand)!important}
+.adminPlatformCopy strong,.adminMarketLink{color:var(--fm-brand)!important}
+.adminMarketBar .other{background:var(--fm-brand)!important}
+.adminMarketMetric.other strong{color:var(--fm-brand)!important}.adminMarketDot.other{background:var(--fm-brand)!important}
+
+/* Shared status language from the approved workflow. */
+[class*="status"][class*="processing"],.statusProcessing{background:var(--fm-amber-soft)!important;color:var(--fm-amber)!important}
+[class*="status"][class*="completed"],.statusCompleted{background:var(--fm-green-soft)!important;color:var(--fm-green)!important}
+[class*="status"][class*="cancelled"],.statusCancelled{background:var(--fm-red-soft)!important;color:var(--fm-red)!important}
+
+/* Apple-HIG touch sizing and focus treatment */
+button,a,input,select,textarea{-webkit-tap-highlight-color:transparent}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(10,102,216,.28)!important;outline-offset:2px!important}
+button:not(.c3Avatar):not(.c3IconButton){min-height:44px}
+
+@media(max-width:760px){
+  .c3Shell,.providerModeShell{width:min(100% - 24px,620px)!important}
+  .c3Welcome{padding:20px!important;border-radius:22px!important}
+  .c3Welcome h1{font-size:30px!important;line-height:1.06!important}
+  .c3Section,.c3WizardCard,.c3RequestCard,.providerModeCard{border-radius:20px!important;box-shadow:none!important}
+  .c3ServiceGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .c3ServiceTile{min-height:112px!important;padding:15px!important}
+  .c3ActionDock{left:12px!important;right:12px!important;background:rgba(255,255,255,.92)!important;border:1px solid rgba(218,224,232,.92)!important;border-radius:17px!important;box-shadow:0 12px 30px rgba(15,23,42,.14)!important}
+  .providerModeTop{align-items:flex-start!important}
+  .providerModeTop h1{font-size:31px!important}
+  .providerSegmented{position:sticky!important;top:calc(8px + env(safe-area-inset-top))!important;z-index:20!important;backdrop-filter:blur(18px)!important}
+  .providerSegmented button{font-size:13px!important;padding-inline:8px!important}
+  .providerOfferCard{padding:15px!important}
+  .frozenProviderActions{display:grid!important;grid-template-columns:1fr 1.35fr!important;gap:8px!important}
+  .adminMarketPanel{border-radius:20px!important}
+}
+
+@media(max-width:420px){
+  .c3ServiceGrid{gap:9px!important}
+  .providerModeShell{width:calc(100% - 20px)!important}
+  .frozenProviderActions{grid-template-columns:1fr!important}
+}
