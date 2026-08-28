@@ -18,6 +18,8 @@ const ALLOWED_SERVICES=new Set([
  'provider-job-flow',
  'completion-media',
  'location-catalogue',
+ 'provider-setup-data',
+ 'provider-document-upload',
 ]);
 
 function sameOrigin(request:NextRequest){
