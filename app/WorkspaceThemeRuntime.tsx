@@ -1,16 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { useEffect, useState, useSyncExternalStore } from 'react';
+import { readSelectedWorkspace, subscribeToSelectedWorkspace } from '../lib/workspaceSelection';
 
 type Workspace='customer'|'provider'|null;
 type Appearance='light'|'dark';
 
-function workspaceFor(path:string):Workspace{
- if(path.startsWith('/provider'))return 'provider';
- if(path==='/home'||path.startsWith('/requests')||path.startsWith('/messages')||path.startsWith('/profile')||path.startsWith('/notifications')||path.startsWith('/change-password'))return 'customer';
- return null;
-}
+function getServerWorkspace(){return null;}
 
 function preferredAppearance(workspace:Exclude<Workspace,null>):Appearance{
  try{
@@ -22,28 +18,26 @@ function preferredAppearance(workspace:Exclude<Workspace,null>):Appearance{
 }
 
 export default function WorkspaceThemeRuntime(){
- const path=usePathname();
- const[workspace,setWorkspace]=useState<Workspace>(null);
+ const selectedWorkspace=useSyncExternalStore(subscribeToSelectedWorkspace,readSelectedWorkspace,getServerWorkspace);
+ const workspace:Workspace=selectedWorkspace==='customer'||selectedWorkspace==='provider'?selectedWorkspace:null;
  const[appearance,setAppearance]=useState<Appearance>('light');
 
  useEffect(()=>{
   const root=document.documentElement;
-  const nextWorkspace=workspaceFor(path);
-  setWorkspace(nextWorkspace);
-  if(!nextWorkspace){
+  if(!workspace){
    delete root.dataset.workspaceMode;
    delete root.dataset.workspaceAppearance;
    return;
   }
-  const nextAppearance=preferredAppearance(nextWorkspace);
+  const nextAppearance=preferredAppearance(workspace);
   setAppearance(nextAppearance);
-  root.dataset.workspaceMode=nextWorkspace;
+  root.dataset.workspaceMode=workspace;
   root.dataset.workspaceAppearance=nextAppearance;
   return()=>{
    delete root.dataset.workspaceMode;
    delete root.dataset.workspaceAppearance;
   };
- },[path]);
+ },[workspace]);
 
  function toggleAppearance(){
   if(!workspace)return;
