@@ -17,6 +17,7 @@ const ALLOWED_SERVICES=new Set([
  'provider-insights',
  'provider-job-flow',
  'completion-media',
+ 'location-catalogue',
 ]);
 
 function sameOrigin(request:NextRequest){
