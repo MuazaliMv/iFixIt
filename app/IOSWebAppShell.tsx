@@ -66,7 +66,14 @@ export default function IOSWebAppShell(){
  const [signedIn,setSignedIn]=useState(true);
  const browserReady=useSyncExternalStore(subscribeToBrowserReady,getBrowserReady,getServerBrowserReady);
  const selectedWorkspace=useSyncExternalStore(subscribeToSelectedWorkspace,readSelectedWorkspace,()=>null);
- const workspace=selectedWorkspace??'customer';
+ const selectedWorkspaceAllowed=selectedWorkspace?canAccessPortal(accountRole,selectedWorkspace,providerApproved):false;
+ const workspace:WorkspaceRole=selectedWorkspaceAllowed
+  ? selectedWorkspace!
+  : accountRole==='ADMIN'
+   ? 'admin'
+   : providerApproved
+    ? 'provider'
+    : 'customer';
  const hidden=hiddenPrefixes.some(prefix=>pathname===prefix||pathname.startsWith(prefix+'/'));
 
  useEffect(()=>{
@@ -131,16 +138,15 @@ export default function IOSWebAppShell(){
  // stays physically present, then hydrates directly into the saved workspace.
  if(!browserReady)return <nav className="iosTabBar iosTabBarPending" aria-label="App navigation" aria-busy="true" data-standalone={standalone?'true':'false'}/>;
 
- const adminSession=signedIn&&(accountRole==='ADMIN'||workspace==='admin');
+ const adminSession=signedIn&&accountRole==='ADMIN';
  const canUseProvider=signedIn&&canAccessPortal(accountRole,'provider',providerApproved);
- const canUseAdmin=adminSession||signedIn&&canAccessPortal(accountRole,'admin',providerApproved);
- const hasWorkspaceSwitch=adminSession||canUseProvider||canUseAdmin;
+ const canUseAdmin=signedIn&&canAccessPortal(accountRole,'admin',providerApproved);
+ const hasWorkspaceSwitch=canUseProvider||canUseAdmin;
  const tabs=tabsFor(workspace);
 
  function openWorkspace(next:PortalRole){
-  const routeAdminAccess=adminSession&&next==='admin';
-  if(!signedIn&&workspace!=='admin')return;
-  if(!routeAdminAccess&&!canAccessPortal(accountRole,next,providerApproved))return;
+  if(!signedIn)return;
+  if(!canAccessPortal(accountRole,next,providerApproved))return;
   persistSelectedWorkspace(next);
   try{
    const label=next==='provider'?'Service Provider':next==='admin'?'Admin':'Customer';
