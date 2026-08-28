@@ -1,22 +1,22 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
-
-function labelForPath(path:string){
-  if(path==='/provider/onboarding'||path.startsWith('/provider/onboarding/'))return 'Provider Application';
-  if(path.startsWith('/admin'))return 'Admin';
-  if(path.startsWith('/provider'))return 'Service Provider';
-  return 'Customer';
-}
+import { readSelectedWorkspace, subscribeToSelectedWorkspace } from '../lib/workspaceSelection';
 
 function hiddenRoute(path:string){
   return path.startsWith('/login')||path.startsWith('/register')||path.startsWith('/auth')||path.startsWith('/api/')||path.startsWith('/onboarding');
 }
 
+function getServerWorkspace(){return null;}
+
 export default function TopWorkspaceRoleLabel(){
   const path=usePathname()||'/';
+  const workspace=useSyncExternalStore(subscribeToSelectedWorkspace,readSelectedWorkspace,getServerWorkspace);
   if(hiddenRoute(path))return null;
-  const label=labelForPath(path);
+  const label=path==='/provider/onboarding'||path.startsWith('/provider/onboarding/')
+    ?'Provider Application'
+    :workspace==='admin'?'Admin':workspace==='provider'?'Service Provider':'Customer';
 
   return <>
     <span className="topWorkspaceRoleLabel" aria-live="polite">{label}</span>
