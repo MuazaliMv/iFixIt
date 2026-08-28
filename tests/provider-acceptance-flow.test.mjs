@@ -21,6 +21,8 @@ test('latest migration retires customer confirmation and customer response timeo
  assert.match(source,/'customer_timeouts',0/);
  assert.match(source,/dispatch_state='SECURED'/);
  assert.match(source,/status='ACCEPTED'/);
+ assert.match(source,/CREATE OR REPLACE FUNCTION public\.customer_select_marketplace_provider/);
+ assert.match(source,/A provider is already assigned to this request/);
 });
 
 test('provider job card explains immediate assignment and shows no more than three request photos',async()=>{
