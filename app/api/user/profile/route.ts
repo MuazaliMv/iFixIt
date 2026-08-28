@@ -6,6 +6,7 @@ const SUPABASE_URL=process.env.SUPABASE_URL?.trim()||process.env.NEXT_PUBLIC_SUP
 const AUTH_API=`${SUPABASE_URL}/functions/v1/auth-account`;
 const FIXED_COUNTRY='Maldives';
 const PRODUCTION_ORIGINS=new Set(['https://ifixmv.com','https://www.ifixmv.com']);
+const PROFILE_SELECT='user_id,email,full_name,role,provider_approved,profile_photo_url,phone_number,phone_verified_at,address_line1,address_line2,city,ward,state_region,postal_code,country,provider_address_line1,provider_address_line2,provider_city,provider_ward,provider_state_region,provider_postal_code,provider_country,default_service_address_id,created_at,updated_at';
 
 type PrimaryAddress={line1?:string|null;line2?:string|null;city?:string|null;ward?:string|null;stateRegion?:string|null;postalCode?:string|null;country?:string|null};
 type ResolvedLocation={atollId:string;islandId:string;locationUnitId:string|null};
@@ -61,6 +62,16 @@ async function savePrimaryLocationIds(client:ReturnType<typeof adminClient>,acce
  const result=await client.from('auth_profiles').update({primary_atoll_id:location.atollId,primary_island_id:location.islandId,primary_location_unit_id:location.locationUnitId}).eq('user_id',userResult.data.user.id);
  if(result.error)throw result.error;
 }
+async function ensureProfile(client:ReturnType<typeof adminClient>,user:any){
+ const existing=await client.from('auth_profiles').select(PROFILE_SELECT).eq('user_id',user.id).maybeSingle();
+ if(existing.error)throw existing.error;
+ if(existing.data)return existing.data;
+ const phone=String(user.phone||'').trim()||null;
+ const phoneVerifiedAt=phone?(user.phone_confirmed_at||user.confirmed_at||null):null;
+ const created=await client.from('auth_profiles').insert({user_id:user.id,email:user.email||null,phone_number:phone,phone_verified_at:phoneVerifiedAt,role:'CUSTOMER',provider_approved:false,account_status:'ACTIVE',country:FIXED_COUNTRY}).select(PROFILE_SELECT).single();
+ if(created.error)throw created.error;
+ return created.data;
+}
 
 export async function GET(request:NextRequest){
  const auth=await resolveServerAuth(request);
@@ -69,9 +80,9 @@ export async function GET(request:NextRequest){
   const client=adminClient();
   const userResult=await client.auth.getUser(auth.accessToken);
   if(userResult.error||!userResult.data.user)return applyAuthCookies(NextResponse.json({error:'Authentication required.'},{status:401}),auth);
-  const userId=userResult.data.user.id;
-  const {data:p,error}=await client.from('auth_profiles').select('user_id,email,full_name,role,provider_approved,profile_photo_url,phone_number,phone_verified_at,address_line1,address_line2,city,ward,state_region,postal_code,country,provider_address_line1,provider_address_line2,provider_city,provider_ward,provider_state_region,provider_postal_code,provider_country,default_service_address_id,created_at,updated_at').eq('user_id',userId).maybeSingle();
-  if(error)throw error;if(!p)return applyAuthCookies(NextResponse.json({error:'Profile not found.'},{status:404}),auth);
+  const user=userResult.data.user;
+  const userId=user.id;
+  const p=await ensureProfile(client,user);
 
   let photoUrl:string|null=null;
   if(p.profile_photo_url){
