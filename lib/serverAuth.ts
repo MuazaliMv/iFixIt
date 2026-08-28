@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const SUPABASE_URL='https://yzlhlilxiszefneshatm.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY='sb_publishable_1sZEZgz9k2JACE_WzHtbCw_reiQEik6';
+const SUPABASE_URL=process.env.SUPABASE_URL?.trim()||process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()||'https://yzlhlilxiszefneshatm.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY=process.env.SUPABASE_ANON_KEY?.trim()||process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()||process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim()||'sb_publishable_1sZEZgz9k2JACE_WzHtbCw_reiQEik6';
 export const ACCESS_COOKIE='ifixmv_access_token';
 export const REFRESH_COOKIE='ifixmv_refresh_token';
 
@@ -22,11 +22,26 @@ export type ServerAuthResult={
 };
 
 type CachedRefresh={session:RefreshSession;expiresAt:number};
+type CachedValidation={valid:boolean;expiresAt:number};
 const refreshInFlight=new Map<string,Promise<RefreshSession|null>>();
 const refreshCache=new Map<string,CachedRefresh>();
+const validationInFlight=new Map<string,Promise<boolean>>();
+const validationCache=new Map<string,CachedValidation>();
 const REFRESH_CACHE_MS=10_000;
+const VALIDATION_OK_CACHE_MS=10_000;
+const VALIDATION_FAIL_CACHE_MS=1_000;
+const MAX_VALIDATION_CACHE_ENTRIES=500;
 
-async function validateAccessToken(token:string){
+function rememberValidation(token:string,valid:boolean){
+ if(validationCache.size>=MAX_VALIDATION_CACHE_ENTRIES){
+  const firstKey=validationCache.keys().next().value as string|undefined;
+  if(firstKey)validationCache.delete(firstKey);
+ }
+ validationCache.set(token,{valid,expiresAt:Date.now()+(valid?VALIDATION_OK_CACHE_MS:VALIDATION_FAIL_CACHE_MS)});
+ return valid;
+}
+
+async function performAccessTokenValidation(token:string){
  for(let attempt=0;attempt<2;attempt+=1){
   try{
    const response=await fetch(`${SUPABASE_URL}/auth/v1/user`,{
@@ -39,6 +54,21 @@ async function validateAccessToken(token:string){
   if(attempt===0)await new Promise(resolve=>setTimeout(resolve,120));
  }
  return false;
+}
+
+async function validateAccessToken(token:string){
+ const cached=validationCache.get(token);
+ if(cached&&cached.expiresAt>Date.now())return cached.valid;
+ if(cached)validationCache.delete(token);
+
+ const existing=validationInFlight.get(token);
+ if(existing)return existing;
+
+ const promise=performAccessTokenValidation(token)
+  .then(valid=>rememberValidation(token,valid))
+  .finally(()=>validationInFlight.delete(token));
+ validationInFlight.set(token,promise);
+ return promise;
 }
 
 async function performRefresh(refreshToken:string):Promise<RefreshSession|null>{
@@ -65,7 +95,10 @@ async function refreshAccessToken(refreshToken:string):Promise<RefreshSession|nu
  if(existing)return existing;
 
  const promise=performRefresh(refreshToken).then(session=>{
-  if(session)refreshCache.set(refreshToken,{session,expiresAt:Date.now()+REFRESH_CACHE_MS});
+  if(session){
+   refreshCache.set(refreshToken,{session,expiresAt:Date.now()+REFRESH_CACHE_MS});
+   rememberValidation(session.access_token,true);
+  }
   return session;
  }).finally(()=>refreshInFlight.delete(refreshToken));
 
@@ -80,10 +113,10 @@ export async function resolveServerAuth(request:NextRequest):Promise<ServerAuthR
  // phone state has been confirmed. Once issued, validate the Supabase session itself
  // rather than requiring a second JWT AMR claim that the custom OTP auth flow may not emit.
  //
- // Important: multiple page/API requests can arrive together when Safari restores a
- // tab or when a route mounts. Supabase refresh tokens rotate, so all requests sharing
- // the same refresh cookie must reuse one refresh result instead of consuming the
- // refresh token concurrently and sending some requests back to /login.
+ // Important: a single Next.js navigation can invoke proxy + several API routes at once.
+ // Supabase token validation is therefore briefly cached and deduplicated per process,
+ // preventing dozens of identical /auth/v1/user requests during one mobile transition.
+ // Refreshes are also serialized because Supabase refresh tokens rotate.
  const accessToken=request.cookies.get(ACCESS_COOKIE)?.value||'';
  const refreshToken=request.cookies.get(REFRESH_COOKIE)?.value||'';
  if(accessToken&&await validateAccessToken(accessToken))return{authorization:`Bearer ${accessToken}`,accessToken,refreshToken:refreshToken||undefined,refreshed:false,expiresIn:3600};
