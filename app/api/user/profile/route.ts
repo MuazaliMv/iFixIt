@@ -72,14 +72,26 @@ export async function GET(request:NextRequest){
   const userId=userResult.data.user.id;
   const {data:p,error}=await client.from('auth_profiles').select('user_id,email,full_name,role,provider_approved,profile_photo_url,phone_number,phone_verified_at,address_line1,address_line2,city,ward,state_region,postal_code,country,provider_address_line1,provider_address_line2,provider_city,provider_ward,provider_state_region,provider_postal_code,provider_country,default_service_address_id,created_at,updated_at').eq('user_id',userId).maybeSingle();
   if(error)throw error;if(!p)return applyAuthCookies(NextResponse.json({error:'Profile not found.'},{status:404}),auth);
+
   let photoUrl:string|null=null;
   if(p.profile_photo_url){
-   if(/^https?:\/\//i.test(p.profile_photo_url))photoUrl=p.profile_photo_url;
-   else{const {data:signed}=await client.storage.from('profile-photos').createSignedUrl(p.profile_photo_url,3600);photoUrl=signed?.signedUrl||null;}
+   try{
+    if(/^https?:\/\//i.test(p.profile_photo_url))photoUrl=p.profile_photo_url;
+    else{const {data:signed,error:photoError}=await client.storage.from('profile-photos').createSignedUrl(p.profile_photo_url,3600);if(!photoError)photoUrl=signed?.signedUrl||null;}
+   }catch{photoUrl=null;}
   }
-  const {data:addresses,error:addressError}=await client.from('user_service_addresses').select('id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,created_at,updated_at').eq('user_id',userId).eq('is_active',true).order('is_default',{ascending:false}).order('updated_at',{ascending:false});
-  if(addressError)throw addressError;
-  const payload={ok:true,profile:{...p,photoUrl,primaryAddress:{line1:p.address_line1,line2:p.address_line2,city:p.city,ward:p.ward,stateRegion:p.state_region,postalCode:p.postal_code,country:p.country},providerAddress:{line1:p.provider_address_line1,line2:p.provider_address_line2,city:p.provider_city,ward:p.provider_ward,stateRegion:p.provider_state_region,postalCode:p.provider_postal_code,country:p.provider_country},serviceAddresses:addresses??[],defaultServiceAddress:(addresses??[]).find((a:any)=>a.is_default)||null}};
+
+  let addresses:any[]=[];
+  let relatedDataWarning:string|null=null;
+  try{
+   const addressResult=await client.from('user_service_addresses').select('id,label,address_line1,address_line2,city,state_region,postal_code,country,service_atoll_id,service_island_id,service_location_unit_id,access_instructions,is_default,is_active,created_at,updated_at').eq('user_id',userId).eq('is_active',true).order('is_default',{ascending:false}).order('updated_at',{ascending:false});
+   if(addressResult.error)throw addressResult.error;
+   addresses=addressResult.data??[];
+  }catch(error){
+   relatedDataWarning=error instanceof Error?error.message:'Service addresses could not be loaded.';
+  }
+
+  const payload={ok:true,warning:relatedDataWarning,profile:{...p,photoUrl,primaryAddress:{line1:p.address_line1,line2:p.address_line2,city:p.city,ward:p.ward,stateRegion:p.state_region,postalCode:p.postal_code,country:p.country},providerAddress:{line1:p.provider_address_line1,line2:p.provider_address_line2,city:p.provider_city,ward:p.provider_ward,stateRegion:p.provider_state_region,postalCode:p.provider_postal_code,country:p.provider_country},serviceAddresses:addresses,defaultServiceAddress:addresses.find((a:any)=>a.is_default)||null}};
   return applyAuthCookies(NextResponse.json(normalizeProfileResponse(payload),{status:200,headers:{'Cache-Control':'no-store'}}),auth);
  }catch(error){const timedOut=error instanceof Error&&(error.name==='TimeoutError'||error.name==='AbortError');return applyAuthCookies(NextResponse.json({error:timedOut?'Profile service timed out. Please refresh and try again.':error instanceof Error?error.message:'Unable to load your profile.'},{status:503,headers:{'Cache-Control':'no-store'}}),auth);}
 }
