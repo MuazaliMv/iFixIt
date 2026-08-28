@@ -5,7 +5,7 @@ import { canAccessPortal, normalizeAccountRole, type AccountRole } from './lib/r
 const SUPABASE_URL='https://yzlhlilxiszefneshatm.supabase.co';
 const AUTH_API=`${SUPABASE_URL}/functions/v1/auth-account`;
 
-type AccessProfile={role:AccountRole;providerApproved:boolean};
+type AccessProfile={userId:string;role:AccountRole;providerApproved:boolean};
 
 function isProviderApplicationRoute(path:string){
  return path==='/provider/onboarding'||path.startsWith('/provider/onboarding/');
@@ -45,10 +45,31 @@ async function resolveAccessProfile(authorization:string):Promise<AccessProfile|
   });
   if(!response.ok)return null;
   const payload=await response.json().catch(()=>null);
+  const userId=String(payload?.profile?.user_id||payload?.profile?.id||'').trim();
   return {
+   userId,
    role:normalizeAccountRole(payload?.profile?.role),
    providerApproved:Boolean(payload?.profile?.provider_approved),
   };
+ }catch{
+  return null;
+ }
+}
+
+async function resolveProviderSuspended(userId:string,providerApproved:boolean):Promise<boolean|null>{
+ if(!providerApproved)return false;
+ if(!userId)return null;
+ const serviceRole=process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+ if(!serviceRole)return null;
+ try{
+  const response=await fetch(`${SUPABASE_URL}/rest/v1/provider_onboarding_profiles?select=onboarding_status&user_id=eq.${encodeURIComponent(userId)}&limit=1`,{
+   headers:{apikey:serviceRole,Authorization:`Bearer ${serviceRole}`},
+   cache:'no-store',signal:AbortSignal.timeout(5000),
+  });
+  if(!response.ok)return null;
+  const rows=await response.json().catch(()=>[]);
+  const status=Array.isArray(rows)?String(rows[0]?.onboarding_status||'').toUpperCase():'';
+  return status==='SUSPENDED';
  }catch{
   return null;
  }
@@ -92,9 +113,16 @@ export default async function proxy(request:NextRequest){
   return applyAuthCookies(NextResponse.redirect(new URL('/home',request.url)),auth);
  }
 
- if((providerRoute||providerApi)&&!canAccessPortal(access.role,'provider',access.providerApproved)){
-  if(providerApi)return applyAuthCookies(apiError('Service Provider permission required.',403),auth);
-  return applyAuthCookies(NextResponse.redirect(new URL('/home',request.url)),auth);
+ if(providerRoute||providerApi){
+  const providerSuspended=await resolveProviderSuspended(access.userId,access.providerApproved);
+  if(providerSuspended===null){
+   if(providerApi)return applyAuthCookies(apiError('Unable to verify Service Provider permission.',503),auth);
+   return applyAuthCookies(NextResponse.redirect(new URL('/home',request.url)),auth);
+  }
+  if(!canAccessPortal(access.role,'provider',access.providerApproved,providerSuspended)){
+   if(providerApi)return applyAuthCookies(apiError(providerSuspended?'Service Provider account is suspended.':'Service Provider permission required.',403),auth);
+   return applyAuthCookies(NextResponse.redirect(new URL('/home',request.url)),auth);
+  }
  }
 
  const response=applyAuthCookies(NextResponse.next(),auth);
