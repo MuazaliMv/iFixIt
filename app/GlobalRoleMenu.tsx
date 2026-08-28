@@ -10,7 +10,7 @@ type Role='customer'|'provider'|'admin';
 type IconName='profile'|'key'|'bell'|'settings'|'requests'|'alert'|'location'|'users'|'reports'|'audit'|'jobs'|'calendar'|'services'|'messages';
 type MenuItem={href:string;label:string;icon:IconName;badge?:number};
 type MenuSection={title:string;items:MenuItem[]};
-type RoleMenu={label:string;roleLabel:string;home:string;secondary:{href:string;label:string};sections:MenuSection[]};
+type RoleMenu={label:string;roleLabel:string;home:string;secondary?:{href:string;label:string};sections:MenuSection[]};
 
 const menus:Record<Role,RoleMenu>={
   admin:{label:'Admin',roleLabel:'System Administrator',home:'/admin',secondary:{href:'/admin/reports',label:'Reports'},sections:[
@@ -23,7 +23,7 @@ const menus:Record<Role,RoleMenu>={
     {title:'WORK & FIELD OPERATIONS',items:[{href:'/provider/jobs',label:'My Jobs',icon:'jobs'},{href:'/provider/calendar',label:'Schedule',icon:'calendar'},{href:'/provider/services',label:'Services Provided',icon:'services'}]},
     {title:'COMMUNICATION & LOCATION',items:[{href:'/provider/messages',label:'Messages',icon:'messages'},{href:'/provider/availability',label:'Location',icon:'location'}]},
   ]},
-  customer:{label:'Customer',roleLabel:'Customer',home:'/',secondary:{href:'/messages',label:'Messages'},sections:[
+  customer:{label:'Customer',roleLabel:'Customer',home:'/',sections:[
     {title:'ACCOUNT & SETTINGS',items:[{href:'/profile',label:'My Profile',icon:'profile'},{href:'/change-password',label:'Change Password',icon:'key'},{href:'/notifications',label:'Notifications',icon:'bell'}]},
     {title:'MY ACTIVITY',items:[{href:'/requests',label:'Service Requests',icon:'requests'},{href:'/messages',label:'Messages',icon:'messages'}]},
     {title:'PROVIDER',items:[{href:'/provider/onboarding',label:'Become a Provider',icon:'services'}]},
@@ -52,7 +52,7 @@ export default function GlobalRoleMenu(){
  const menu=menus[role];
 
  return <>
-  <div className="globalMenuHeaderWrap"><header className="globalMenuHeader" aria-label={`${menu.label} navigation`}><Link href={menu.home} className="globalMenuBrand" onClick={()=>setOpen(false)}><span className="globalMenuBrandMark">F</span><span>FixIt</span></Link><div className="globalMenuHeaderActions"><Link className="globalMenuSecondary" href={menu.secondary.href}>{menu.secondary.label}</Link><button className="globalMenuToggle" type="button" aria-label={open?'Close menu':'Open menu'} aria-expanded={open} onClick={()=>setOpen(v=>!v)}>{open?<span className="globalMenuClose">×</span>:<span className="globalMenuBars"><i/><i/><i/></span>}</button></div></header></div>
+  <div className="globalMenuHeaderWrap"><header className="globalMenuHeader" aria-label={`${menu.label} navigation`}><Link href={menu.home} className="globalMenuBrand" onClick={()=>setOpen(false)}><span className="globalMenuBrandMark">F</span><span>FixIt</span></Link><div className="globalMenuHeaderActions">{menu.secondary?<Link className="globalMenuSecondary" href={menu.secondary.href}>{menu.secondary.label}</Link>:null}<button className="globalMenuToggle" type="button" aria-label={open?'Close menu':'Open menu'} aria-expanded={open} onClick={()=>setOpen(v=>!v)}>{open?<span className="globalMenuClose">×</span>:<span className="globalMenuBars"><i/><i/><i/></span>}</button></div></header></div>
   {open?<div className="fixitModalBackdrop" role="presentation" onMouseDown={e=>{if(e.currentTarget===e.target)setOpen(false);}}><section className="fixitModalMenu" role="dialog" aria-modal="true" aria-label={`${menu.label} menu`}><header className="fixitModalHead"><Link href={menu.home} className="fixitModalLogo" onClick={()=>setOpen(false)}>F</Link><div className="fixitModalIdentity"><strong>FixIt</strong><span>{userName}<em>{menu.roleLabel}</em></span></div><button className="fixitModalClose" type="button" aria-label="Close menu" onClick={()=>setOpen(false)}>×</button></header><div className="fixitModalScroll">{menu.sections.map(section=><section key={section.title} className="fixitModalSection"><div className="fixitModalCard"><div className="fixitModalSectionHead">{section.title}</div><div className="fixitModalRows">{section.items.map(item=><Link key={item.href+item.label} href={item.href} onClick={()=>setOpen(false)} className={`fixitModalRow${itemIsActive(path,item.href)?' active':''}`}><span className="fixitModalIcon"><MenuIcon name={item.icon}/></span><span className="fixitModalLabel">{item.label}</span>{item.badge?<span className="fixitModalBadge">{item.badge}</span>:null}<span className="fixitModalChevron"><Chevron/></span></Link>)}</div></div></section>)}</div><div className="fixitModalFooter"><button type="button" className="fixitModalSignOut" onClick={()=>void signOut()}><LogoutIcon/>Sign Out</button></div></section></div>:null}
   <style jsx global>{`
    .fixitModalBackdrop{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.30);backdrop-filter:blur(4px);animation:fixitFade .18s ease-out}@keyframes fixitFade{from{opacity:0}to{opacity:1}}
