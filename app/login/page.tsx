@@ -3,29 +3,13 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { apiFetch, invalidateProfileCache } from '../../lib/apiClient';
 import { resolvePostLoginDestination, type AuthProfileLike } from '../../lib/authRouting';
-import type { PortalRole } from '../../lib/roleAccess';
+import { readSelectedWorkspace, persistSelectedWorkspace } from '../../lib/workspaceSelection';
 import { supabase } from '../../lib/supabaseClient';
 import './login.css';
 
 type Step='phone'|'otp';
 type ExistingProfile=AuthProfileLike;
 type LoginSession={access_token?:string|null;refresh_token?:string|null};
-
-function rememberedWorkspace():PortalRole|null{
- try{
-  const value=localStorage.getItem('ifixmv-login-workspace');
-  return value==='customer'||value==='provider'||value==='admin'?value:null;
- }catch{return null;}
-}
-
-function rememberWorkspace(workspace:PortalRole,role:'CUSTOMER'|'PROVIDER'|'ADMIN'){
- try{
-  localStorage.setItem('ifixmv-login-workspace',workspace);
-  localStorage.setItem('fixit:mobile-nav-role',workspace);
-  localStorage.setItem('fixit:app-mode',workspace);
-  localStorage.setItem('fixit:account-role',role.toLowerCase());
- }catch{}
-}
 
 async function fetchWithTimeout(
  input:RequestInfo|URL,
@@ -103,8 +87,9 @@ export default function LoginPage(){
    }catch{}
   }
   const requested=new URLSearchParams(window.location.search).get('next')||'';
-  const decision=resolvePostLoginDestination(profile||{},requested,rememberedWorkspace());
-  rememberWorkspace(decision.workspace,decision.role);
+  const decision=resolvePostLoginDestination(profile||{},requested,readSelectedWorkspace());
+  persistSelectedWorkspace(decision.workspace);
+  try{localStorage.setItem('fixit:account-role',decision.role.toLowerCase());}catch{}
   window.location.replace(decision.destination);
  }
 
@@ -142,9 +127,6 @@ export default function LoginPage(){
    },16000);
    const payload=await response.json().catch(()=>({}));
    if(!response.ok||!payload?.ok){setMessage(payload?.error||'Unable to sign in.');return;}
-   // The HttpOnly server session remains the login authority. Some customer screens
-   // still use the legacy browser Supabase client for data access, so finish that
-   // compatibility handoff before navigation to avoid a post-login race on Safari.
    const confirmedProfile=await confirmServerSession();
    await syncLegacyBrowserSessionBestEffort(payload?.session as LoginSession|undefined);
    invalidateProfileCache();
