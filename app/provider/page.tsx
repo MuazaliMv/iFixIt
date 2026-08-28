@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import MasterProviderDashboard from './MasterProviderDashboard';
 
 export default function ProviderPage() {
-  redirect('/provider/today');
+  return <MasterProviderDashboard />;
 }
