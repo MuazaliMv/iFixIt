@@ -165,9 +165,12 @@ export default function LoginPage(){
    },16000);
    const payload=await response.json().catch(()=>({}));
    if(!response.ok||!payload?.ok){setMessage(payload?.error||'Unable to sign in.');return;}
+   // The secure HttpOnly cookie session is authoritative. Confirm it first so the
+   // legacy browser client cannot rotate the shared refresh token before the
+   // server has validated the newly issued session.
+   const confirmedProfile=await confirmServerSession();
    await syncBrowserSession(payload?.session as LoginSession|undefined);
    invalidateProfileCache();
-   const confirmedProfile=await confirmServerSession();
    await routeUser(confirmedProfile?.role?confirmedProfile:payload?.profile as ExistingProfile|undefined);
   }catch(error){
    if(error instanceof DOMException&&error.name==='AbortError'){
