@@ -15,6 +15,7 @@ const ALLOWED_SERVICES=new Set([
  'provider-onboarding',
  'provider-subscription',
  'provider-insights',
+ 'provider-job-flow',
 ]);
 
 function sameOrigin(request:NextRequest){
