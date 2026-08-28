@@ -22,15 +22,6 @@ function saveSelectedWorkspace(workspace:PortalRole,profile:AuthProfileLike){
   }catch{}
 }
 
-async function hasConfirmedSession(){
-  try{
-    const response=await apiFetch('/api/auth/session',{retryAuth:false});
-    return response.ok;
-  }catch{
-    return false;
-  }
-}
-
 export default function RoleAccessGuard(){
   const path=usePathname();
   const router=useRouter();
@@ -45,27 +36,22 @@ export default function RoleAccessGuard(){
       if(!roleControlled)return;
 
       try{
-        const response=await apiFetch('/api/user/profile');
+        // The secure session endpoint is the single client-side source of truth for
+        // authentication and workspace permissions, including provider suspension.
+        const response=await apiFetch('/api/auth/session',{retryAuth:false,cache:'no-store'});
         if(!active)return;
 
         if(response.status===401){
-          // Only the authoritative secure session is allowed to send the user
-          // back to Login. Profile/API failures alone are never logout signals.
-          const sessionAlive=await hasConfirmedSession();
-          if(!active)return;
-          if(sessionAlive){
-            router.refresh();
-            return;
-          }
           router.replace(`/login?next=${encodeURIComponent(path)}`);
           return;
         }
 
-        // 404/5xx/profile-service failures are data errors, not authentication
-        // transitions. Keep the current route and let its error UI offer retry.
+        // Permission-service/network failures are not logout events. The server
+        // proxy already fails protected provider/admin routes closed.
         if(!response.ok)return;
 
         const payload=await response.json().catch(()=>({}));
+        if(payload?.authenticated!==true)return;
         const profile=(payload?.profile||{}) as AuthProfileLike;
 
         if(providerApplicationRoute)return;
