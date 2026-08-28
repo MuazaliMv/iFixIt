@@ -1,33 +1,21 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import CustomerPortal from '../CustomerPortal';
+import MasterCustomerHome from '../MasterCustomerHome';
 
 export default function CustomerHomePage() {
+  const [requestMode, setRequestMode] = useState<boolean | null>(null);
+
   useEffect(() => {
-    const shouldOpen = new URLSearchParams(window.location.search).get('new') === '1';
-    if (!shouldOpen) return;
-
-    const openWizard = () => {
-      const button = document.querySelector<HTMLButtonElement>('.c3Welcome .c3Primary');
-      if (!button) return false;
-      button.click();
-      return true;
-    };
-
-    // Open immediately when the portal is already rendered.
-    if (openWizard()) return;
-
-    // The customer portal can take longer to render while auth/catalogue data loads.
-    // Watch the DOM until the New Request button actually exists instead of giving up
-    // after a fixed timeout.
-    const observer = new MutationObserver(() => {
-      if (openWizard()) observer.disconnect();
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
+    setRequestMode(new URLSearchParams(window.location.search).get('new') === '1');
   }, []);
 
-  return <CustomerPortal />;
+  if (requestMode === null) {
+    return <div className="masterHome masterHomeLoading" aria-busy="true" aria-label="Loading customer workspace" />;
+  }
+
+  // Keep the proven Supabase-backed five-step request workflow for ?new=1,
+  // but do not render the legacy CustomerPortal as the customer home screen.
+  return requestMode ? <CustomerPortal /> : <MasterCustomerHome />;
 }
