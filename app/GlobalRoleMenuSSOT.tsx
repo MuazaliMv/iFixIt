@@ -23,7 +23,7 @@ const menus:Record<PortalRole,RoleMenu>={
   {title:'Work & Field Operations',items:[{href:'/provider/jobs',label:'My Jobs'},{href:'/provider/calendar',label:'Schedule'},{href:'/provider/services',label:'Services Provided'}]},
   {title:'Communication & Location',items:[{href:'/provider/messages',label:'Messages'},{href:'/provider/availability',label:'Location'}]},
  ]},
- customer:{label:'Customer',roleLabel:'Customer',home:'/home',secondary:{href:'/messages',label:'Messages'},sections:[
+ customer:{label:'Customer',roleLabel:'Customer',home:'/home',sections:[
   {title:'Account & Settings',items:[{href:'/profile',label:'My Profile'},{href:'/notifications',label:'Notifications'}]},
   {title:'My Activity',items:[{href:'/requests',label:'Service Requests'},{href:'/messages',label:'Messages'}]},
   {title:'Provider',items:[{href:'/provider/onboarding',label:'Become a Provider'}]},
