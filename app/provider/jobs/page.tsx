@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import AppModeSwitch from '../../AppModeSwitch';
 import { useProviderMode } from '../useProviderMode';
 
@@ -21,8 +22,10 @@ async function post(url:string,body:Record<string,unknown>){
  return p;
 }
 
-export default function ProviderJobsPage(){
+function ProviderJobsContent(){
+ const searchParams=useSearchParams();
  const mode=useProviderMode(true);
+ const earningsMode=searchParams.get('view')==='earnings';
  const[tab,setTab]=useState<Tab>('active');
  const[offers,setOffers]=useState<Offer[]>([]);
  const[jobs,setJobs]=useState<Job[]>([]);
@@ -30,7 +33,7 @@ export default function ProviderJobsPage(){
  const[actionOfferId,setActionOfferId]=useState<string|null>(null);
  const[message,setMessage]=useState('Loading customer work…');
 
- useEffect(()=>{const requested=new URLSearchParams(window.location.search).get('tab');if(requested==='new'||requested==='active'||requested==='completed')setTab(requested);},[]);
+ useEffect(()=>{const requested=searchParams.get('tab');if(earningsMode)setTab('completed');else if(requested==='new'||requested==='active'||requested==='completed')setTab(requested);},[searchParams,earningsMode]);
  useEffect(()=>{if(mode.ready)void load();},[mode.ready]);
 
  async function load(){
@@ -60,10 +63,10 @@ export default function ProviderJobsPage(){
  if(mode.loading)return <main className="providerModePage"><div className="providerModeShell"><div className="providerModeCard">Checking provider access…</div></div></main>;
 
  return <main className="providerModePage frozenProviderFlow"><div className="providerModeShell">
-  <header className="providerModeTop"><div><span className="modeBadge provider"><span className="modeDot provider"/>Provider</span><h1>Customer Work</h1><p>New requests, active jobs and completed work.</p></div><AppModeSwitch mode="provider" compact/></header>
-  <div className="providerSegmented" role="tablist"><button className={tab==='new'?'active':''} onClick={()=>setTab('new')}>New <span>{offers.length}</span></button><button className={tab==='active'?'active':''} onClick={()=>setTab('active')}>Active <span>{active.length}</span></button><button className={tab==='completed'?'active':''} onClick={()=>setTab('completed')}>Completed <span>{completed.length}</span></button></div>
+  <header className="providerModeTop"><div><span className="modeBadge provider"><span className="modeDot provider"/>Provider</span><h1>{earningsMode?'Earnings':'Customer Work'}</h1><p>{earningsMode?'Completed work is your earnings reference. Customer repair payments remain directly between you and the customer.':'New requests, active jobs and completed work.'}</p></div><AppModeSwitch mode="provider" compact/></header>
+  {!earningsMode?<div className="providerSegmented" role="tablist"><button className={tab==='new'?'active':''} onClick={()=>setTab('new')}>New <span>{offers.length}</span></button><button className={tab==='active'?'active':''} onClick={()=>setTab('active')}>Active <span>{active.length}</span></button><button className={tab==='completed'?'active':''} onClick={()=>setTab('completed')}>Completed <span>{completed.length}</span></button></div>:<section className="providerModeCard frozenProviderSection"><div className="providerSectionHead"><div><small>EARNINGS REFERENCE</small><h2>Completed jobs</h2><p>{completed.length} completed {completed.length===1?'job':'jobs'}. iFixMV does not calculate or collect customer repair payments in the MVP.</p></div></div></section>}
 
-  {tab==='new'?<section className="providerModeCard frozenProviderSection"><div className="providerSectionHead"><div><small>NEW SERVICE REQUESTS</small><h2>Available requests</h2><p>Review the problem, photos and location before accepting.</p></div></div>{offers.length?<div className="providerOfferGrid providerOfferGridClean">{offers.map(o=><article className="providerOfferCard frozenOfferCard" key={o.id}>
+  {!earningsMode&&tab==='new'?<section className="providerModeCard frozenProviderSection"><div className="providerSectionHead"><div><small>NEW SERVICE REQUESTS</small><h2>Available requests</h2><p>Review the problem, photos and location before accepting.</p></div></div>{offers.length?<div className="providerOfferGrid providerOfferGridClean">{offers.map(o=><article className="providerOfferCard frozenOfferCard" key={o.id}>
    <div className="providerOfferTop"><div><small>NEW SERVICE REQUEST</small><strong>{o.request?.service_name||'Service request'}</strong><span className="frozenTicket">{o.request?.ticket_number||''}</span></div><span className="modeBadge provider">NEW</span></div>
    <div className="frozenRequestBlock"><small>PROBLEM</small><p className="providerOfferProblem">{o.request?.problem_description||'No problem description supplied.'}</p></div>
    {o.request?.photos?.some(photo=>photo.url)?<div className="frozenPhotoGrid">{o.request.photos.filter(photo=>photo.url).slice(0,3).map((photo,index)=><a key={photo.id} href={photo.url||'#'} target="_blank" rel="noreferrer" aria-label={`Open request photo ${index+1}`}><img src={photo.url||''} alt={`Customer request photo ${index+1}`} loading="lazy"/></a>)}</div>:null}
@@ -73,9 +76,13 @@ export default function ProviderJobsPage(){
    <p className="frozenHelper">Accepting assigns this request to you immediately and moves it to ACCEPTED. The customer does not need to choose or confirm you.</p>
   </article>)}</div>:<div className="providerEmptyState"><h3>No new requests</h3><p>Matched requests will appear here automatically.</p></div>}</section>:null}
 
-  {tab==='active'?<section className="providerModeCard frozenProviderSection"><div className="providerSectionHead"><div><small>ACTIVE WORK</small><h2>Accepted & processing</h2><p>Open a job to perform the next valid lifecycle action.</p></div></div>{active.length?<div className="providerOperationalList">{active.map(j=><a className="providerOperationalCard frozenOperationalCard" href={`/provider/jobs/${encodeURIComponent(j.ticket_number)}`} key={j.ticket_number}><div className="providerOperationalMain"><div className="providerOperationalTitle"><strong>{j.service_name}</strong><span className="modeBadge provider">{canonicalStage(j.status)}</span></div><p>{j.customer?.name||'Customer'} · {j.service_location_text}</p><small>{j.ticket_number}</small></div><b>Open →</b></a>)}</div>:<div className="providerEmptyState"><h3>No active jobs</h3><p>Accepted requests will appear here.</p></div>}</section>:null}
+  {!earningsMode&&tab==='active'?<section className="providerModeCard frozenProviderSection"><div className="providerSectionHead"><div><small>ACTIVE WORK</small><h2>Accepted & processing</h2><p>Open a job to perform the next valid lifecycle action.</p></div></div>{active.length?<div className="providerOperationalList">{active.map(j=><a className="providerOperationalCard frozenOperationalCard" href={`/provider/jobs/${encodeURIComponent(j.ticket_number)}`} key={j.ticket_number}><div className="providerOperationalMain"><div className="providerOperationalTitle"><strong>{j.service_name}</strong><span className="modeBadge provider">{canonicalStage(j.status)}</span></div><p>{j.customer?.name||'Customer'} · {j.service_location_text}</p><small>{j.ticket_number}</small></div><b>Open →</b></a>)}</div>:<div className="providerEmptyState"><h3>No active jobs</h3><p>Accepted requests will appear here.</p></div>}</section>:null}
 
-  {tab==='completed'?<section className="providerModeCard frozenProviderSection"><div className="providerSectionHead"><div><small>COMPLETED</small><h2>Finished jobs</h2><p>Completed service requests are kept here for reference.</p></div></div>{completed.length?<div className="providerOperationalList">{completed.map(j=><a className="providerOperationalCard frozenOperationalCard" href={`/provider/jobs/${encodeURIComponent(j.ticket_number)}`} key={j.ticket_number}><div className="providerOperationalMain"><div className="providerOperationalTitle"><strong>{j.service_name}</strong><span className="modeBadge customer">COMPLETED</span></div><p>{j.customer?.name||'Customer'} · {j.service_location_text}</p><small>{j.ticket_number}</small></div><b>Open →</b></a>)}</div>:<div className="providerEmptyState"><h3>No completed jobs</h3><p>Finished work will appear here.</p></div>}</section>:null}
+  {(earningsMode||tab==='completed')?<section className="providerModeCard frozenProviderSection"><div className="providerSectionHead"><div><small>{earningsMode?'COMPLETED EARNINGS REFERENCE':'COMPLETED'}</small><h2>Finished jobs</h2><p>{earningsMode?'Use completed work as your service-income reference; repair payments are settled off-platform.':'Completed service requests are kept here for reference.'}</p></div></div>{completed.length?<div className="providerOperationalList">{completed.map(j=><a className="providerOperationalCard frozenOperationalCard" href={`/provider/jobs/${encodeURIComponent(j.ticket_number)}`} key={j.ticket_number}><div className="providerOperationalMain"><div className="providerOperationalTitle"><strong>{j.service_name}</strong><span className="modeBadge customer">COMPLETED</span></div><p>{j.customer?.name||'Customer'} · {j.service_location_text}</p><small>{j.ticket_number}</small></div><b>Open →</b></a>)}</div>:<div className="providerEmptyState"><h3>No completed jobs</h3><p>Finished work will appear here.</p></div>}</section>:null}
   <p className="muted" role="status">{busy&&actionOfferId===null?'Refreshing…':message}</p>
  </div></main>;
+}
+
+export default function ProviderJobsPage(){
+ return <Suspense fallback={<main className="providerModePage"><div className="providerModeShell"><div className="providerModeCard">Loading provider work…</div></div></main>}><ProviderJobsContent/></Suspense>;
 }

@@ -2,17 +2,17 @@
 
 import Link from 'next/link';
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../lib/apiClient';
 import { canAccessPortal, normalizeAccountRole, type AccountRole, type PortalRole } from '../lib/roleAccess';
 import { persistSelectedWorkspace, readSelectedWorkspace, subscribeToSelectedWorkspace } from '../lib/workspaceSelection';
 
 const hiddenPrefixes=['/api'];
 
-type IconName='home'|'requests'|'new'|'switch'|'profile'|'customer'|'provider'|'admin'|'jobs'|'services'|'users';
+type IconName='home'|'requests'|'bookings'|'profile'|'customer'|'provider'|'admin'|'jobs'|'earnings'|'users'|'dispatch';
 type CachedAccess={role:AccountRole;providerApproved:boolean};
 type WorkspaceRole='customer'|'provider'|'admin';
-type Tab={href:string;label:string;icon:IconName;match:(path:string)=>boolean;accent?:boolean};
+type Tab={href:string;label:string;icon:IconName;match:(path:string,query:string)=>boolean};
 
 function subscribeToBrowserReady(){return()=>{};}
 function getBrowserReady(){return true;}
@@ -22,42 +22,44 @@ function Icon({name}:{name:IconName}){
  const paths={
   home:<><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/></>,
   requests:<><path d="M6 4h12v16H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></>,
-  new:<><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></>,
-  switch:<><path d="M7 7h11"/><path d="m15 4 3 3-3 3"/><path d="M17 17H6"/><path d="m9 14-3 3 3 3"/></>,
+  bookings:<><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="m9 15 2 2 4-4"/></>,
   profile:<><circle cx="12" cy="8" r="4"/><path d="M4.5 20c.9-4 3.5-6 7.5-6s6.6 2 7.5 6"/></>,
   customer:<><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 10h16M10 20V10"/></>,
   provider:<><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></>,
   admin:<><path d="M12 3 20 6v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3Z"/><path d="m9 12 2 2 4-4"/></>,
   jobs:<><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M9 5V3h6v2M4 10h16M9 14h6"/></>,
-  services:<><path d="M14.7 6.3a4 4 0 0 0-5 5L3 18l3 3 6.7-6.7a4 4 0 0 0 5-5l-3 3-3-3 3-3Z"/></>,
-  users:<><path d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20"/><circle cx="9" cy="7" r="4"/><path d="M22 20v-1.5a4 4 0 0 0-3-3.87M16 3.2a4 4 0 0 1 0 7.6"/></>
+  earnings:<><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5h-5a2 2 0 0 0 0 4h3a2 2 0 0 1 0 4h-5M12 6v12"/></>,
+  users:<><path d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20"/><circle cx="9" cy="7" r="4"/><path d="M22 20v-1.5a4 4 0 0 0-3-3.87M16 3.2a4 4 0 0 1 0 7.6"/></>,
+  dispatch:<><path d="M3 12h12"/><path d="m11 8 4 4-4 4"/><rect x="3" y="4" width="18" height="16" rx="3"/></>
  };
  return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
 }
 
 function tabsFor(role:WorkspaceRole):Tab[]{
  if(role==='provider')return [
-  {href:'/provider/today',label:'Today',icon:'home',match:p=>p==='/provider'||p.startsWith('/provider/today')},
-  {href:'/provider/jobs',label:'Jobs',icon:'jobs',match:p=>p.startsWith('/provider/jobs')},
-  {href:'/provider/services',label:'Services',icon:'services',match:p=>p.startsWith('/provider/services')},
-  {href:'/profile',label:'Profile',icon:'profile',match:p=>p.startsWith('/profile')||p.startsWith('/provider/profile')},
+  {href:'/provider/today',label:'Dashboard',icon:'home',match:(p)=>p==='/provider'||p.startsWith('/provider/today')},
+  {href:'/provider/jobs',label:'Jobs',icon:'jobs',match:(p,q)=>p.startsWith('/provider/jobs')&&!q.includes('view=earnings')},
+  {href:'/provider/jobs?tab=completed&view=earnings',label:'Earnings',icon:'earnings',match:(p,q)=>p.startsWith('/provider/jobs')&&q.includes('view=earnings')},
+  {href:'/profile',label:'Profile',icon:'profile',match:(p)=>p.startsWith('/profile')||p.startsWith('/provider/profile')},
  ];
  if(role==='admin')return [
-  {href:'/admin',label:'Overview',icon:'admin',match:p=>p==='/admin'},
-  {href:'/admin/requests',label:'Requests',icon:'requests',match:p=>p.startsWith('/admin/requests')},
-  {href:'/admin/users',label:'Users',icon:'users',match:p=>p.startsWith('/admin/users')||p.startsWith('/admin/providers')},
-  {href:'/profile',label:'Profile',icon:'profile',match:p=>p==='/profile'||p.startsWith('/profile/')},
+  {href:'/admin',label:'Overview',icon:'admin',match:(p)=>p==='/admin'},
+  {href:'/admin/users',label:'Users',icon:'users',match:(p)=>p.startsWith('/admin/users')||p.startsWith('/admin/providers')},
+  {href:'/admin/requests',label:'Dispatches',icon:'dispatch',match:(p)=>p.startsWith('/admin/requests')||p.startsWith('/admin/escalations')},
+  {href:'/profile',label:'Settings/Profile',icon:'profile',match:(p)=>p==='/profile'||p.startsWith('/profile/')||p.startsWith('/admin/settings')},
  ];
  return [
-  {href:'/home',label:'Home',icon:'home',match:p=>p==='/'||p==='/home'},
-  {href:'/requests',label:'Requests',icon:'requests',match:p=>p.startsWith('/requests')},
-  {href:'/home?new=1',label:'New',icon:'new',match:()=>false,accent:true},
-  {href:'/profile',label:'Profile',icon:'profile',match:p=>p.startsWith('/profile')},
+  {href:'/home',label:'Home',icon:'home',match:(p)=>p==='/'||p==='/home'},
+  {href:'/requests',label:'Requests',icon:'requests',match:(p,q)=>p.startsWith('/requests')&&!q.includes('view=bookings')},
+  {href:'/requests?view=bookings',label:'Bookings',icon:'bookings',match:(p,q)=>p.startsWith('/requests')&&q.includes('view=bookings')},
+  {href:'/profile',label:'Profile',icon:'profile',match:(p)=>p.startsWith('/profile')},
  ];
 }
 
 export default function IOSWebAppShell(){
  const pathname=usePathname()||'/';
+ const searchParams=useSearchParams();
+ const query=searchParams.toString();
  const router=useRouter();
  const [standalone,setStandalone]=useState(false);
  const [switchOpen,setSwitchOpen]=useState(false);
@@ -82,7 +84,13 @@ export default function IOSWebAppShell(){
   return()=>document.documentElement.classList.remove('ifix-customer-tabbar');
  },[hidden,workspace]);
 
- useEffect(()=>{setSwitchOpen(false);},[pathname]);
+ useEffect(()=>{setSwitchOpen(false);},[pathname,query]);
+
+ useEffect(()=>{
+  const openSwitch=()=>setSwitchOpen(true);
+  window.addEventListener('fixit:open-workspace-switch',openSwitch);
+  return()=>window.removeEventListener('fixit:open-workspace-switch',openSwitch);
+ },[]);
 
  useEffect(()=>{
   let active=true;
@@ -127,14 +135,11 @@ export default function IOSWebAppShell(){
 
  if(hidden)return null;
 
- // Never server-render a pathname-derived role menu. On a full reload the bar
- // stays physically present, then hydrates directly into the saved workspace.
  if(!browserReady)return <nav className="iosTabBar iosTabBarPending" aria-label="App navigation" aria-busy="true" data-standalone={standalone?'true':'false'}/>;
 
  const adminSession=signedIn&&(accountRole==='ADMIN'||workspace==='admin');
  const canUseProvider=signedIn&&canAccessPortal(accountRole,'provider',providerApproved);
  const canUseAdmin=adminSession||signedIn&&canAccessPortal(accountRole,'admin',providerApproved);
- const hasWorkspaceSwitch=adminSession||canUseProvider||canUseAdmin;
  const tabs=tabsFor(workspace);
 
  function openWorkspace(next:PortalRole){
@@ -163,9 +168,8 @@ export default function IOSWebAppShell(){
    </section>
   </div>:null}
 
-  <nav className={`iosTabBar${hasWorkspaceSwitch?' hasWorkspaceSwitch':''}`} aria-label={`${workspace} app navigation`} data-standalone={standalone?'true':'false'} data-workspace={workspace}>
-   {tabs.map(tab=><Link key={tab.href+tab.label} href={tab.href} className={`${tab.match(pathname)?'active ':''}${tab.accent?'iosTabNew':''}`.trim()}><Icon name={tab.icon}/><span>{tab.label}</span></Link>)}
-   {hasWorkspaceSwitch?<button type="button" className={`workspaceAvailable${switchOpen?' active':''}`} onClick={()=>setSwitchOpen(true)} aria-haspopup="dialog" aria-expanded={switchOpen} aria-label="Switch workspace"><Icon name="switch"/><span>Switch</span></button>:null}
+  <nav className="iosTabBar" aria-label={`${workspace} app navigation`} data-standalone={standalone?'true':'false'} data-workspace={workspace}>
+   {tabs.map(tab=><Link key={tab.href+tab.label} href={tab.href} className={tab.match(pathname,query)?'active':''}><Icon name={tab.icon}/><span>{tab.label}</span></Link>)}
   </nav>
  </>;
 }

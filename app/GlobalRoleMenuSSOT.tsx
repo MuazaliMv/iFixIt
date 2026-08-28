@@ -13,26 +13,26 @@ type MenuSection={title:string;items:MenuItem[]};
 type RoleMenu={label:string;roleLabel:string;home:string;secondary?:MenuItem;sections:MenuSection[]};
 
 const menus:Record<PortalRole,RoleMenu>={
- admin:{label:'Admin',roleLabel:'System Administrator',home:'/admin',secondary:{href:'/admin/reports',label:'Reports'},sections:[
+ admin:{label:'Admin',roleLabel:'System Administrator',home:'/admin',secondary:{href:'/notifications',label:'Notifications'},sections:[
   {title:'Account & Settings',items:[{href:'/profile',label:'My Profile'},{href:'/notifications',label:'Notifications'},{href:'/admin/settings',label:'Settings'}]},
-  {title:'Management & Operations',items:[{href:'/admin/requests',label:'Request Management'},{href:'/admin/escalations',label:'Attention / Escalations'},{href:'/admin/service-categories',label:'Service Categories'},{href:'/admin/locations',label:'Locations'},{href:'/admin/users',label:'User Management'}]},
+  {title:'Management & Operations',items:[{href:'/admin/requests',label:'Dispatches'},{href:'/admin/escalations',label:'Attention / Escalations'},{href:'/admin/service-categories',label:'Service Categories'},{href:'/admin/locations',label:'Locations'},{href:'/admin/users',label:'User Management'}]},
   {title:'System & Analytics',items:[{href:'/admin/reports',label:'Reports'},{href:'/admin/audit-logs',label:'Audit Logs'}]},
  ]},
- provider:{label:'Provider',roleLabel:'Service Provider',home:'/provider/today',secondary:{href:'/provider/availability',label:'Location'},sections:[
+ provider:{label:'Provider',roleLabel:'Service Provider',home:'/provider/today',secondary:{href:'/notifications',label:'Notifications'},sections:[
   {title:'Account & Settings',items:[{href:'/profile',label:'My Profile'},{href:'/notifications',label:'Notifications'}]},
   {title:'Work & Field Operations',items:[{href:'/provider/jobs',label:'My Jobs'},{href:'/provider/calendar',label:'Schedule'},{href:'/provider/services',label:'Services Provided'}]},
   {title:'Communication & Location',items:[{href:'/provider/messages',label:'Messages'},{href:'/provider/availability',label:'Location'}]},
  ]},
- customer:{label:'Customer',roleLabel:'Customer',home:'/home',secondary:{href:'/messages',label:'Messages'},sections:[
+ customer:{label:'Customer',roleLabel:'Customer',home:'/home',secondary:{href:'/notifications',label:'Notifications'},sections:[
   {title:'Account & Settings',items:[{href:'/profile',label:'My Profile'},{href:'/notifications',label:'Notifications'}]},
-  {title:'My Activity',items:[{href:'/requests',label:'Service Requests'},{href:'/messages',label:'Messages'}]},
+  {title:'My Activity',items:[{href:'/requests',label:'Service Requests'},{href:'/requests?view=bookings',label:'Bookings'},{href:'/messages',label:'Messages'}]},
   {title:'Provider',items:[{href:'/provider/onboarding',label:'Become a Provider'}]},
  ]},
 };
 
 function getServerWorkspace(){return null;}
 function isPublicOrAuth(path:string){return path.startsWith('/login')||path.startsWith('/register')||path.startsWith('/auth')||path.startsWith('/api/')||path.startsWith('/onboarding');}
-function itemIsActive(path:string,href:string){if(href==='/admin/users')return path.startsWith('/admin/users')||path.startsWith('/admin/providers');return path===href||path.startsWith(`${href}/`);}
+function itemIsActive(path:string,href:string){const base=href.split('?')[0];if(base==='/admin/users')return path.startsWith('/admin/users')||path.startsWith('/admin/providers');return path===base||path.startsWith(`${base}/`);}
 
 export default function GlobalRoleMenuSSOT(){
  const path=usePathname()||'/';
@@ -66,6 +66,11 @@ export default function GlobalRoleMenuSSOT(){
   return()=>{document.body.style.overflow=old;document.removeEventListener('keydown',onKey);};
  },[open]);
 
+ function openWorkspaceSwitcher(){
+  setOpen(false);
+  window.dispatchEvent(new Event('fixit:open-workspace-switch'));
+ }
+
  async function signOut(){
   if(loggingOut)return;
   setLoggingOut(true);
@@ -98,14 +103,17 @@ export default function GlobalRoleMenuSSOT(){
     <div className="ssotMenuScroll">
      {menu.sections.map(section=><section key={section.title} className="ssotSection"><h3>{section.title}</h3>{section.items.map(item=><Link key={item.href} href={item.href} className={itemIsActive(path,item.href)?'active':''} onClick={()=>setOpen(false)}>{item.label}<span aria-hidden="true">›</span></Link>)}</section>)}
     </div>
-    <footer className="ssotMenuFooter"><button type="button" disabled={loggingOut} onClick={()=>void signOut()}>{loggingOut?'Signing out…':'Sign Out'}</button></footer>
+    <footer className="ssotMenuFooter">
+     <button type="button" className="ssotWorkspaceSwitch" onClick={openWorkspaceSwitcher}>Switch Workspace</button>
+     <button type="button" className="ssotSignOut" disabled={loggingOut} onClick={()=>void signOut()}>{loggingOut?'Signing out…':'Sign Out'}</button>
+    </footer>
    </section>
   </div>:null}
   <style jsx global>{`
-   .ssotMenuHeader{position:fixed;left:0;right:0;top:0;z-index:1900;min-height:64px;padding:max(10px,env(safe-area-inset-top)) 16px 10px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(255,255,255,.96);border-bottom:1px solid #e5e7eb;backdrop-filter:blur(18px)}
-   .ssotBrand{display:inline-flex;align-items:center;gap:9px;color:#111827;text-decoration:none;font-weight:900}.ssotBrand b{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:#2563eb;color:#fff}.ssotHeaderActions{display:flex;align-items:center;gap:8px}.ssotSecondary{padding:9px 11px;border-radius:10px;color:#2563eb;text-decoration:none;font-size:13px;font-weight:800}.ssotMenuButton{width:42px;height:42px;border:1px solid #d1d5db;border-radius:13px;background:#fff;color:#111827;font-size:23px;line-height:1}
-   .ssotBackdrop{position:fixed;inset:0;z-index:2100;display:flex;justify-content:center;align-items:center;padding:16px;background:rgba(15,23,42,.3);backdrop-filter:blur(4px)}.ssotMenu{width:min(448px,100%);max-height:90dvh;display:flex;flex-direction:column;overflow:hidden;border-radius:24px;background:#f8fafc;box-shadow:0 30px 80px rgba(15,23,42,.24)}
-   .ssotMenuHead{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px;background:#fff;border-bottom:1px solid #eef2f7}.ssotMenuHead small{display:block;color:#64748b;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.ssotMenuHead h2{margin:4px 0 0;color:#0f172a;font-size:20px}.ssotMenuHead button{width:38px;height:38px;border:0;border-radius:12px;background:#f1f5f9;font-size:25px;color:#475569}.ssotMenuScroll{overflow:auto;padding:14px;display:grid;gap:12px}.ssotSection{overflow:hidden;border:1px solid #e5e7eb;border-radius:18px;background:#fff}.ssotSection h3{margin:0;padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#94a3b8;font-size:10px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}.ssotSection a{min-height:48px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#334155;text-decoration:none;font-size:14px;font-weight:750}.ssotSection a+a{border-top:1px solid #f1f5f9}.ssotSection a.active{background:#eff6ff;color:#1d4ed8}.ssotSection a span{font-size:22px;color:#94a3b8}.ssotMenuFooter{padding:0 14px max(14px,env(safe-area-inset-bottom));background:#f8fafc}.ssotMenuFooter button{width:100%;min-height:50px;border:0;border-radius:15px;background:#dc2626;color:#fff;font-size:14px;font-weight:900}.ssotMenuFooter button:disabled{opacity:.6}
+   .ssotMenuHeader{position:fixed;left:50%;transform:translateX(-50%);top:0;z-index:1900;width:min(100%,28rem);min-height:64px;padding:max(10px,env(safe-area-inset-top)) 16px 10px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(255,255,255,.96);border-bottom:1px solid #e5e7eb;backdrop-filter:blur(18px)}
+   .ssotBrand{display:inline-flex;align-items:center;gap:9px;color:#111827;text-decoration:none;font-weight:900}.ssotBrand b{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:#60a5fa;color:#fff}.ssotHeaderActions{display:flex;align-items:center;gap:8px}.ssotSecondary{padding:9px 11px;border-radius:10px;color:#2563eb;text-decoration:none;font-size:13px;font-weight:800}.ssotMenuButton{width:42px;height:42px;border:1px solid #d1d5db;border-radius:13px;background:#fff;color:#111827;font-size:23px;line-height:1}
+   .ssotBackdrop{position:fixed;inset:0;z-index:2100;display:flex;justify-content:center;align-items:center;padding:16px;background:rgba(15,23,42,.3);backdrop-filter:blur(4px)}.ssotMenu{width:min(28rem,100%);max-height:90dvh;display:flex;flex-direction:column;overflow:hidden;border-radius:24px;background:#f8fafc;box-shadow:0 30px 80px rgba(15,23,42,.24)}
+   .ssotMenuHead{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px;background:#fff;border-bottom:1px solid #eef2f7}.ssotMenuHead small{display:block;color:#64748b;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.ssotMenuHead h2{margin:4px 0 0;color:#0f172a;font-size:20px}.ssotMenuHead button{width:38px;height:38px;border:0;border-radius:12px;background:#f1f5f9;font-size:25px;color:#475569}.ssotMenuScroll{overflow:auto;padding:14px;display:grid;gap:12px}.ssotSection{overflow:hidden;border:1px solid #e5e7eb;border-radius:18px;background:#fff}.ssotSection h3{margin:0;padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#94a3b8;font-size:10px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}.ssotSection a{min-height:48px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#334155;text-decoration:none;font-size:14px;font-weight:750}.ssotSection a+a{border-top:1px solid #f1f5f9}.ssotSection a.active{background:#eff6ff;color:#1d4ed8}.ssotSection a span{font-size:22px;color:#94a3b8}.ssotMenuFooter{padding:0 14px max(14px,env(safe-area-inset-bottom));background:#f8fafc;display:grid;gap:8px}.ssotMenuFooter button{width:100%;min-height:50px;border:0;border-radius:15px;font-size:14px;font-weight:900}.ssotWorkspaceSwitch{background:#eaf3ff!important;color:#2563eb!important}.ssotSignOut{background:#dc2626!important;color:#fff!important}.ssotMenuFooter button:disabled{opacity:.6}
    @media(max-width:520px){.ssotBackdrop{align-items:flex-end;padding:0}.ssotMenu{width:100%;max-height:94dvh;border-radius:24px 24px 0 0}.ssotMenuHeader{padding-left:14px;padding-right:14px}}
   `}</style>
  </>;

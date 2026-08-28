@@ -1,16 +1,21 @@
-/* Global application shell: fixed top navigation + independently scrolling workspace + fixed bottom navigation. */
+/* iFixMV authoritative mobile application shell.
+   Contract: fixed top bar + one isolated scroll workspace + fixed four-item bottom bar. */
 :root{
-  --global-top-nav-height:82px;
-  --global-bottom-nav-height:58px;
+  --ifix-shell-max:28rem;
+  --global-top-nav-height:calc(64px + env(safe-area-inset-top,0px));
+  --global-bottom-nav-height:calc(64px + env(safe-area-inset-bottom,0px));
+  --ifix-bg:#f6f8fc;
+  --ifix-primary:#60a5fa;
+  --ifix-primary-strong:#2563eb;
+  --ifix-text:#0f172a;
+  --ifix-muted:#64748b;
 }
 
-.globalMainWorkspace{
-  min-width:0;
-  min-height:0;
-}
+html,body{overscroll-behavior:none}
+.globalMainWorkspace{min-width:0;min-height:0}
 
-/* The document never scrolls. Navigation is viewport-fixed; only the workspace scrolls. */
-body:has(.globalMenuHeaderWrap){
+/* The SSOT role header is mounted only on authenticated application routes. */
+body:has(>.ssotMenuHeader){
   width:100%;
   height:100dvh;
   min-height:100dvh;
@@ -19,224 +24,177 @@ body:has(.globalMenuHeaderWrap){
   padding:0!important;
   overflow:hidden!important;
   position:relative;
+  background:var(--ifix-bg);
 }
 
-/* Top navigation is permanently pinned to the visual viewport. */
-body:has(.globalMenuHeaderWrap)>.globalMenuHeaderWrap{
+body:has(>.ssotMenuHeader)>.ssotMenuHeader{
   position:fixed!important;
+  left:50%!important;
+  right:auto!important;
   top:0!important;
-  left:0!important;
-  right:0!important;
   bottom:auto!important;
-  inset:0 0 auto 0!important;
+  transform:translateX(-50%)!important;
   z-index:2000!important;
-  width:100%;
+  width:min(100%,var(--ifix-shell-max))!important;
   height:var(--global-top-nav-height)!important;
   min-height:var(--global-top-nav-height)!important;
   max-height:var(--global-top-nav-height)!important;
-  box-sizing:border-box;
+  box-sizing:border-box!important;
   margin:0!important;
-  transform:none!important;
   visibility:visible!important;
   opacity:1!important;
-  overflow:visible;
 }
 
-/* Unified workspace identity: the active route determines the centered top-panel label. */
-.globalMenuHeader[aria-label="Admin navigation"],
-.globalMenuHeader[aria-label="Customer navigation"],
-.globalMenuHeader[aria-label="Provider navigation"]{
-  position:relative;
-}
-
-.globalMenuHeader[aria-label="Admin navigation"]::after,
-.globalMenuHeader[aria-label="Customer navigation"]::after,
-.globalMenuHeader[aria-label="Provider navigation"]::after{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  z-index:2;
-  max-width:48vw;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  pointer-events:none;
-  color:#0f172a;
-  font:800 clamp(12px,3.8vw,15px)/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  letter-spacing:.01em;
-  text-align:center;
-}
-
-.globalMenuHeader[aria-label="Admin navigation"]::after{content:"Admin";}
-.globalMenuHeader[aria-label="Customer navigation"]::after{content:"Customer";}
-.globalMenuHeader[aria-label="Provider navigation"]::after{content:"Service Provider";}
-
-/* The Main Content Area is the only scroll container. It can never move either navigation bar. */
-body:has(.globalMenuHeaderWrap)>.globalMainWorkspace{
+/* Exactly one scroll container exists inside the authenticated app shell. */
+body:has(>.ssotMenuHeader)>.globalMainWorkspace{
   position:fixed!important;
   top:var(--global-top-nav-height)!important;
-  left:0!important;
-  right:0!important;
   bottom:var(--global-bottom-nav-height)!important;
-  width:auto!important;
+  left:50%!important;
+  right:auto!important;
+  transform:translateX(-50%)!important;
+  width:min(100%,var(--ifix-shell-max))!important;
   height:auto!important;
-  min-width:0;
-  min-height:0;
+  min-height:0!important;
   max-height:none!important;
   margin:0!important;
-  padding-bottom:0!important;
+  padding:0!important;
   overflow-x:hidden!important;
   overflow-y:auto!important;
-  overscroll-behavior:contain;
+  overscroll-behavior:contain!important;
   -webkit-overflow-scrolling:touch;
   isolation:isolate;
   z-index:1;
+  background:var(--ifix-bg);
 }
 
-/* Route content must not create another viewport over the shell. */
-body:has(.globalMenuHeaderWrap)>.globalMainWorkspace .providerModePage,
-body:has(.globalMenuHeaderWrap)>.globalMainWorkspace .c3Page,
-body:has(.globalMenuHeaderWrap)>.globalMainWorkspace .c4App{
-  min-height:100%;
+body:has(>.ssotMenuHeader)>.globalMainWorkspace>*{
+  max-width:100%!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
 }
 
-/* Bottom navigation is permanently pinned to the visual viewport. */
-body:has(.globalMenuHeaderWrap)>.iosTabBar{
+/* The bottom bar is always four workspace-specific destinations. */
+body:has(>.ssotMenuHeader)>.iosTabBar{
   position:fixed!important;
-  left:0!important;
-  right:0!important;
+  left:50%!important;
+  right:auto!important;
   top:auto!important;
   bottom:0!important;
-  inset:auto 0 0 0!important;
+  transform:translateX(-50%)!important;
   z-index:2000!important;
-  width:100%!important;
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  width:min(100%,var(--ifix-shell-max))!important;
   height:var(--global-bottom-nav-height)!important;
   min-height:var(--global-bottom-nav-height)!important;
   max-height:var(--global-bottom-nav-height)!important;
   margin:0!important;
-  transform:none!important;
+  padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))!important;
+  box-sizing:border-box!important;
+  background:rgba(255,255,255,.94)!important;
+  border-top:1px solid rgba(148,163,184,.22)!important;
+  box-shadow:0 -8px 24px rgba(15,23,42,.05)!important;
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
   visibility:visible!important;
   opacity:1!important;
 }
 
-/* Workspace switch stays fully usable without covering or being covered by the global dock. */
-body:has(.globalMenuHeaderWrap)>.iosWorkspaceOverlay{
+body:has(>.ssotMenuHeader)>.iosTabBar a,
+body:has(>.ssotMenuHeader)>.iosTabBar button{
+  min-width:0!important;
+  min-height:48px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:2px!important;
+  padding:2px 3px!important;
+  border:0!important;
+  border-radius:12px!important;
+  background:transparent!important;
+  color:#7c8798!important;
+  text-decoration:none!important;
+  font:700 10px/1.05 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif!important;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+body:has(>.ssotMenuHeader)>.iosTabBar svg{width:23px!important;height:23px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.9!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+body:has(>.ssotMenuHeader)>.iosTabBar .active{color:var(--ifix-primary-strong)!important;background:#eff6ff!important}
+body:has(>.ssotMenuHeader)>.iosTabBar a:active{transform:scale(.95)}
+
+/* Workspace switch is deliberate and lives in the account menu, never as a fifth tab. */
+body:has(>.ssotMenuHeader)>.iosWorkspaceOverlay{
   position:fixed!important;
   top:var(--global-top-nav-height)!important;
-  left:0!important;
-  right:0!important;
   bottom:var(--global-bottom-nav-height)!important;
-  inset:var(--global-top-nav-height) 0 var(--global-bottom-nav-height) 0!important;
+  left:50%!important;
+  right:auto!important;
+  transform:translateX(-50%)!important;
+  width:min(100%,var(--ifix-shell-max))!important;
   z-index:1990!important;
   padding:12px!important;
+  box-sizing:border-box!important;
   align-items:flex-end!important;
   overflow:hidden!important;
 }
-
-body:has(.globalMenuHeaderWrap)>.iosWorkspaceOverlay>.iosWorkspaceSheet{
+body:has(>.ssotMenuHeader)>.iosWorkspaceOverlay>.iosWorkspaceSheet{
+  width:100%!important;
   max-height:calc(100dvh - var(--global-top-nav-height) - var(--global-bottom-nav-height) - 24px)!important;
   overflow-y:auto!important;
-  overscroll-behavior:contain;
+  overscroll-behavior:contain!important;
   -webkit-overflow-scrolling:touch;
 }
 
-@media(max-width:960px){
-  :root{
-    --global-top-nav-height:calc(76px + env(safe-area-inset-top,0px));
-    --global-bottom-nav-height:calc(var(--ios-tab-height,64px) + env(safe-area-inset-bottom,0px));
-  }
+/* Long workflows use a pinned thumb-reach action dock above bottom navigation. */
+body:has(>.ssotMenuHeader) .c3ActionDock,
+body:has(>.ssotMenuHeader) .mobileActionDock,
+body:has(>.ssotMenuHeader) [data-mobile-action-bar="true"]{
+  position:fixed!important;
+  left:50%!important;
+  right:auto!important;
+  transform:translateX(-50%)!important;
+  width:min(calc(100% - 24px),calc(var(--ifix-shell-max) - 24px))!important;
+  top:auto!important;
+  bottom:calc(var(--global-bottom-nav-height) + 8px)!important;
+  z-index:1900!important;
+  margin:0!important;
+}
+body:has(>.ssotMenuHeader) .c3Wizard{padding-bottom:calc(var(--global-bottom-nav-height) + 136px)!important}
 
-  body:has(.globalMenuHeaderWrap)>.globalMenuHeaderWrap{
-    padding-top:calc(8px + env(safe-area-inset-top,0px))!important;
-  }
+/* Centralized, text-plus-color status language. */
+.c3Status{border:1px solid transparent!important}
+.c3Status.status-pending,.c3Status.status-searching,.c3Status.status-responded{background:#fff7ed!important;color:#c2410c!important;border-color:#fed7aa!important}
+.c3Status.status-accepted,.c3Status.status-assigned,.c3Status.status-scheduled{background:#eff6ff!important;color:#1d4ed8!important;border-color:#bfdbfe!important}
+.c3Status.status-processing,.c3Status.status-in_progress,.c3Status.status-onsite{background:#fefce8!important;color:#a16207!important;border-color:#fde68a!important}
+.c3Status.status-completed{background:#ecfdf5!important;color:#047857!important;border-color:#a7f3d0!important}
+.c3Status.status-cancelled,.c3Status.status-failed,.c3Status.status-expired{background:#fef2f2!important;color:#b91c1c!important;border-color:#fecaca!important}
+.c3Status.status-on_hold{background:#eff6ff!important;color:#1e40af!important;border-color:#bfdbfe!important}
 
-  body:has(.globalMenuHeaderWrap)>.iosTabBar{
-    display:grid!important;
-  }
-
-  /* Customer request wizard: keep Back / Continue / Submit permanently above the global nav. */
-  body:has(.globalMenuHeaderWrap) .c3ActionDock{
-    position:fixed!important;
-    left:12px!important;
-    right:12px!important;
-    top:auto!important;
-    bottom:calc(var(--global-bottom-nav-height) + 8px)!important;
-    z-index:1900!important;
-    margin:0!important;
-  }
-
-  /* Reserve enough scroll room so the last service/form card clears the fixed action dock. */
-  body:has(.globalMenuHeaderWrap) .c3Wizard{
-    padding-bottom:calc(var(--global-bottom-nav-height) + 128px)!important;
-  }
-
-  body:has(.globalMenuHeaderWrap) .c3WizardCard:last-child{
-    margin-bottom:12px;
-  }
+/* Prevent legacy route shells from creating a second viewport. */
+body:has(>.ssotMenuHeader)>.globalMainWorkspace .providerModePage,
+body:has(>.ssotMenuHeader)>.globalMainWorkspace .c3Page,
+body:has(>.ssotMenuHeader)>.globalMainWorkspace .c4App{
+  width:100%!important;
+  min-height:100%!important;
+  max-width:100%!important;
 }
 
-/* Desktop keeps the same fixed-shell contract. */
-@media(min-width:961px){
-  :root{
-    --global-bottom-nav-height:58px;
+/* Mobile-native form behavior. */
+body:has(>.ssotMenuHeader) input,
+body:has(>.ssotMenuHeader) textarea,
+body:has(>.ssotMenuHeader) select{font-size:16px!important}
+
+/* Customer request detail keeps navigation simple; data remains available in the detail page. */
+body:has(>.ssotMenuHeader) .requestAppPanel>.requestTabs{display:none!important}
+
+/* On desktop the product remains a centered mobile application rather than stretching into a second IA. */
+@media(min-width:29rem){
+  body:has(>.ssotMenuHeader){background:#eaf0f8}
+  body:has(>.ssotMenuHeader)>.globalMainWorkspace,
+  body:has(>.ssotMenuHeader)>.ssotMenuHeader,
+  body:has(>.ssotMenuHeader)>.iosTabBar{
+    box-shadow:0 0 0 1px rgba(148,163,184,.10),0 12px 40px rgba(15,23,42,.06);
   }
-
-  body:has(.globalMenuHeaderWrap)>.iosTabBar{
-    display:grid;
-    grid-auto-flow:column;
-    grid-auto-columns:minmax(110px,1fr);
-    align-items:center;
-    justify-content:center;
-    padding:5px max(18px,calc((100vw - 760px)/2));
-    background:rgba(255,255,255,.96);
-    border-top:1px solid rgba(148,163,184,.22);
-    box-shadow:0 -8px 24px rgba(15,23,42,.04);
-  }
-
-  body:has(.globalMenuHeaderWrap)>.iosTabBar a,
-  body:has(.globalMenuHeaderWrap)>.iosTabBar button{
-    min-height:46px;
-    display:flex;
-    flex-direction:row;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-    border:0;
-    border-radius:12px;
-    background:transparent;
-    color:#64748b;
-    text-decoration:none;
-    font:700 13px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  }
-
-  body:has(.globalMenuHeaderWrap)>.iosTabBar svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-  body:has(.globalMenuHeaderWrap)>.iosTabBar .active{color:#315ee7;background:#eef2ff}
-}
-
-/* The public landing page already provides its own top navigation. Do not reserve a second
-   global-header safe area above it; this removes the large blank band on iOS Safari. */
-body:has(>.globalMainWorkspace .landingPage)>.globalMenuHeaderWrap{
-  display:none!important;
-}
-
-body:has(>.globalMainWorkspace .landingPage)>.globalMainWorkspace{
-  top:0!important;
-}
-
-@media(max-width:960px){
-  body:has(>.globalMainWorkspace .landingPage)>.globalMainWorkspace{
-    top:0!important;
-  }
-
-  body:has(>.globalMainWorkspace .landingPage) .landingHeader{
-    top:0!important;
-    margin-top:0!important;
-  }
-}
-
-/* Customer request detail: remove the Overview / Messages / Cancel / Close button strip.
-   Messages remain reachable from the existing header message control; request data and flow are unchanged. */
-body:has(.globalMenuHeaderWrap) .requestAppPanel>.requestTabs{
-  display:none!important;
 }

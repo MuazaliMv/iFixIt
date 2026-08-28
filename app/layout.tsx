@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Suspense } from 'react';
 import './globals.css';
 import './design-system.css';
 import './ui-compat.css';
@@ -35,7 +36,6 @@ import './unified-control-family.css';
 import './mobile-section-pager.css';
 import './service-picker-ux.css';
 import './ios-web-app.css';
-import './global-shell.css';
 import './request-wizard-smart-fix.css';
 import './customer-home-usability-v2.css';
 import './approved-customer-home.css';
@@ -45,6 +45,8 @@ import './customer-action-dock-overlap-fix.css';
 import './usability-consolidation.css';
 import './otp-only-ui.css';
 import './request-photos-premium.css';
+/* Authoritative shell is intentionally last so legacy compatibility layers cannot override it. */
+import './global-shell.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
@@ -110,7 +112,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           {children}
         </main>
 
-        <IOSWebAppShell/>
+        <Suspense fallback={<nav className="iosTabBar iosTabBarPending" aria-label="App navigation" aria-busy="true"/>}>
+          <IOSWebAppShell/>
+        </Suspense>
         <ModeToast/>
       </body>
     </html>
