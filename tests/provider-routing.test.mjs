@@ -13,13 +13,15 @@ test('provider workspace never redirects an authorised provider to the public la
 
 test('provider portal access requires approved provider entitlement and rejects suspended providers',async()=>{
  const access=await read('lib/roleAccess.ts');
+ const routing=await read('lib/authRouting.ts');
  const proxy=await read('proxy.ts');
  const guard=await read('app/RoleAccessGuard.tsx');
  const switcher=await read('app/GlobalModeSwitch.tsx');
  assert.match(access,/portal==='provider'\)return providerApproved&&!providerSuspended/);
  assert.doesNotMatch(access,/role==='PROVIDER'\|\|providerApproved/);
+ assert.match(routing,/canAccessPortal\(role,portal,providerApproved\(profile\),providerSuspended\(profile\)\)/);
  assert.match(proxy,/providerApproved:Boolean\(payload\?\.profile\?\.provider_approved\)/);
- assert.match(guard,/canAccessPortal\(role,'provider',providerApproved/);
+ assert.match(guard,/canProfileAccessPortal\(profile,workspace\)/);
  assert.match(switcher,/canAccessPortal\(accountRole,'provider',providerApproved/);
  assert.match(proxy,/Service Provider permission required/);
  assert.match(proxy,/NextResponse\.redirect\(new URL\('\/home'/);
