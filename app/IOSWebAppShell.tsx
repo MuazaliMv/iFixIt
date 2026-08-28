@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { apiFetch } from '../lib/apiClient';
 import { canAccessPortal, normalizeAccountRole, type AccountRole, type PortalRole } from '../lib/roleAccess';
+import { persistSelectedWorkspace, readSelectedWorkspace, subscribeToSelectedWorkspace } from '../lib/workspaceSelection';
 
 const hiddenPrefixes=['/api'];
 
@@ -30,7 +31,9 @@ function Icon({name}:{name:IconName}){
  return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
 }
 
-function workspaceForPath(path:string):WorkspaceRole{
+// Used only when this browser has no saved workspace yet. Route changes after
+// mount must never replace the user's explicit workspace selection.
+function initialWorkspaceForPath(path:string):WorkspaceRole{
  if(path==='/provider/onboarding'||path.startsWith('/provider/onboarding/'))return 'customer';
  if(path.startsWith('/admin'))return 'admin';
  if(path.startsWith('/provider'))return 'provider';
@@ -66,8 +69,11 @@ export default function IOSWebAppShell(){
  const [accountRole,setAccountRole]=useState<AccountRole>('CUSTOMER');
  const [providerApproved,setProviderApproved]=useState(false);
  const [signedIn,setSignedIn]=useState(true);
+ const [accessResolved,setAccessResolved]=useState(false);
+ const [initialWorkspace]=useState<WorkspaceRole>(()=>initialWorkspaceForPath(pathname));
+ const selectedWorkspace=useSyncExternalStore(subscribeToSelectedWorkspace,readSelectedWorkspace,()=>null);
+ const workspace=selectedWorkspace??initialWorkspace;
  const hidden=hiddenPrefixes.some(prefix=>pathname===prefix||pathname.startsWith(prefix+'/'));
- const workspace=workspaceForPath(pathname);
 
  useEffect(()=>{
   const iosStandalone=(window.navigator as Navigator & {standalone?:boolean}).standalone===true;
@@ -103,7 +109,10 @@ export default function IOSWebAppShell(){
     const response=await apiFetch('/api/user/profile',{cache:'no-store'});
     if(!active)return;
     if(!response.ok){
-     if(response.status===401)setSignedIn(false);
+     if(response.status===401){
+      setSignedIn(false);
+      setAccessResolved(true);
+     }
      return;
     }
     const payload=await response.json().catch(()=>({}));
@@ -112,11 +121,18 @@ export default function IOSWebAppShell(){
     setAccountRole(role);
     setProviderApproved(approved);
     setSignedIn(true);
+    setAccessResolved(true);
     try{sessionStorage.setItem('fixit:mobile-access',JSON.stringify({role,providerApproved:approved} satisfies CachedAccess));}catch{}
    }catch{}
   })();
   return()=>{active=false;};
  },[]);
+
+ useEffect(()=>{
+  if(!accessResolved||!signedIn)return;
+  if(canAccessPortal(accountRole,workspace,providerApproved))return;
+  persistSelectedWorkspace('customer');
+ },[accessResolved,accountRole,providerApproved,signedIn,workspace]);
 
  useEffect(()=>{
   if(!switchOpen)return;
@@ -137,9 +153,8 @@ export default function IOSWebAppShell(){
   const routeAdminAccess=adminSession&&next==='admin';
   if(!signedIn&&workspace!=='admin')return;
   if(!routeAdminAccess&&!canAccessPortal(accountRole,next,providerApproved))return;
+  persistSelectedWorkspace(next);
   try{
-   localStorage.setItem('fixit:mobile-nav-role',next);
-   localStorage.setItem('fixit:app-mode',next);
    const label=next==='provider'?'Service Provider':next==='admin'?'Admin':'Customer';
    sessionStorage.setItem('fixit:mode-toast',`You're now viewing as ${label}.`);
   }catch{}
