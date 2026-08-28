@@ -22,7 +22,7 @@ test('phone OTP login creates the authoritative secure application session',asyn
  assert.match(route,/next\.cookies\.set\(ACCESS_COOKIE/);
  assert.match(route,/next\.cookies\.set\(REFRESH_COOKIE/);
  assert.match(login,/syncLegacyBrowserSessionBestEffort/);
- assert.match(login,/void syncLegacyBrowserSessionBestEffort/,'legacy browser mirroring must never block a valid server login');
+ assert.match(login,/await syncLegacyBrowserSessionBestEffort/,'legacy customer data compatibility must finish before post-login navigation to avoid a browser-session race');
  assert.match(login,/invalidateProfileCache\(\)/);
  assert.match(login,/confirmServerSession\(\)/);
  assert.match(browserClient,/autoRefreshToken: false/,'legacy browser auth must not rotate the server-owned refresh token');
@@ -33,11 +33,11 @@ test('phone OTP login creates the authoritative secure application session',asyn
  assert.doesNotMatch(serverAuth,/request\.headers\.get\('authorization'\)/,'arbitrary bearer tokens must not become FixIt application sessions');
 
  const confirmIndex=login.indexOf('const confirmedProfile=await confirmServerSession');
- const compatIndex=login.indexOf('void syncLegacyBrowserSessionBestEffort',confirmIndex);
+ const compatIndex=login.indexOf('await syncLegacyBrowserSessionBestEffort',confirmIndex);
  const routeIndex=login.indexOf('await routeUser',compatIndex);
  assert.ok(confirmIndex>=0,'secure server session confirmation is missing');
  assert.ok(compatIndex>confirmIndex,'legacy browser compatibility may run only after server confirmation');
- assert.ok(routeIndex>compatIndex,'navigation follows authoritative server confirmation');
+ assert.ok(routeIndex>compatIndex,'navigation must wait until the current customer compatibility handoff completes');
 });
 
 test('browser auth events cannot destroy an authoritative server session',async()=>{
