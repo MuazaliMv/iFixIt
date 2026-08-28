@@ -46,6 +46,20 @@ test('provider application keeps customer navigation until provider approval',as
  assert.match(routeNav,/customerRoute\|\|providerApplicationRoute\)return <MobileNav role="customer"\/>/);
 });
 
+test('bottom navigation changes only after an explicit workspace selection',async()=>{
+ const shell=await read('app/IOSWebAppShell.tsx');
+ const guard=await read('app/RoleAccessGuard.tsx');
+ const selection=await read('lib/workspaceSelection.ts');
+ assert.match(shell,/useSyncExternalStore\(subscribeToSelectedWorkspace,readSelectedWorkspace/);
+ assert.match(shell,/useState<WorkspaceRole>\(\(\)=>initialWorkspaceForPath\(pathname\)\)/);
+ assert.match(shell,/persistSelectedWorkspace\(next\)/);
+ assert.doesNotMatch(shell,/const workspace=initialWorkspaceForPath\(pathname\)/);
+ assert.match(guard,/if\(workspace&&!canProfileAccessPortal\(profile,workspace\)\)[\s\S]*persistSelectedWorkspace\(fallback\.workspace\)/);
+ assert.doesNotMatch(guard,/if\(workspace&&canProfileAccessPortal\(profile,workspace\)\)[\s\S]*persistSelectedWorkspace\(workspace\)/);
+ assert.match(selection,/WORKSPACE_SELECTED_EVENT='fixit:workspace-selected'/);
+ assert.match(selection,/window\.dispatchEvent\(new CustomEvent/);
+});
+
 test('public provider CTA uses the canonical onboarding route',async()=>{
  const landing=await read('app/page.tsx');
  assert.match(landing,/href="\/provider\/onboarding"/);

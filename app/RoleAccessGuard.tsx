@@ -10,15 +10,13 @@ import {
   resolvePostLoginDestination,
   type AuthProfileLike,
 } from '../lib/authRouting';
-import { normalizeAccountRole, type PortalRole } from '../lib/roleAccess';
+import { normalizeAccountRole } from '../lib/roleAccess';
+import { persistSelectedWorkspace } from '../lib/workspaceSelection';
 
-function saveSelectedWorkspace(workspace:PortalRole,profile:AuthProfileLike){
+function saveAccountRole(profile:AuthProfileLike){
   const role=normalizeAccountRole(profile.role);
   try{
     localStorage.setItem('fixit:account-role',role.toLowerCase());
-    localStorage.setItem('fixit:mobile-nav-role',workspace);
-    localStorage.setItem('fixit:app-mode',workspace);
-    localStorage.setItem('ifixmv-login-workspace',workspace);
   }catch{}
 }
 
@@ -53,18 +51,15 @@ export default function RoleAccessGuard(){
         const payload=await response.json().catch(()=>({}));
         if(payload?.authenticated!==true)return;
         const profile=(payload?.profile||{}) as AuthProfileLike;
+        saveAccountRole(profile);
 
         if(providerApplicationRoute)return;
 
         if(workspace&&!canProfileAccessPortal(profile,workspace)){
           const fallback=resolvePostLoginDestination(profile);
-          saveSelectedWorkspace(fallback.workspace,profile);
+          persistSelectedWorkspace(fallback.workspace);
           if(active&&fallback.destination!==path)router.replace(fallback.destination);
           return;
-        }
-
-        if(workspace&&canProfileAccessPortal(profile,workspace)){
-          saveSelectedWorkspace(workspace,profile);
         }
       }catch{}
     }
