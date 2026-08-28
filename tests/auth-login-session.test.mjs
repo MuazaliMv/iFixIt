@@ -83,3 +83,20 @@ test('login restore and post-OTP navigation use the authoritative server session
  assert.match(login,/async function confirmServerSession/);
  assert.match(login,/Your secure login session was not saved/);
 });
+
+test('post-login routing and role guard share one permission-aware resolver',async()=>{
+ const login=await read('app/login/page.tsx');
+ const guard=await read('app/RoleAccessGuard.tsx');
+ const routing=await read('lib/authRouting.ts');
+ const roles=await read('lib/roleAccess.ts');
+
+ assert.match(login,/resolvePostLoginDestination\(profile\|\|\{\},requested,rememberedWorkspace\(\)\)/);
+ assert.doesNotMatch(login,/function canHonorRequestedDestination/);
+ assert.doesNotMatch(login,/function defaultWorkspace/);
+ assert.match(guard,/resolvePostLoginDestination\(profile\)/);
+ assert.match(guard,/if\(!response\.ok\)return/,'profile service failures must not become logout redirects');
+ assert.match(routing,/isSafeInternalPath/);
+ assert.match(routing,/requestedPath&&canProfileAccessPath/);
+ assert.match(routing,/rememberedWorkspace&&canProfileAccessPortal/);
+ assert.match(roles,/if\(portal==='provider'\)return providerApproved&&!providerSuspended/,'provider role alone must not bypass approval');
+});

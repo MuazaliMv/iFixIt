@@ -2,42 +2,23 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { apiFetch, invalidateProfileCache } from '../../lib/apiClient';
+import { resolvePostLoginDestination, type AuthProfileLike } from '../../lib/authRouting';
+import type { PortalRole } from '../../lib/roleAccess';
 import { supabase } from '../../lib/supabaseClient';
 import './login.css';
 
 type Step='phone'|'otp';
-type ExistingProfile={role?:string|null};
-type AccountRole='CUSTOMER'|'PROVIDER'|'ADMIN';
-type Workspace='customer'|'provider'|'admin';
+type ExistingProfile=AuthProfileLike;
 type LoginSession={access_token?:string|null;refresh_token?:string|null};
 
-function normalizeRole(value:unknown):AccountRole{
- const role=String(value||'CUSTOMER').toUpperCase();
- if(role==='ADMIN')return 'ADMIN';
- if(role==='PROVIDER')return 'PROVIDER';
- return 'CUSTOMER';
+function rememberedWorkspace():PortalRole|null{
+ try{
+  const value=localStorage.getItem('ifixmv-login-workspace');
+  return value==='customer'||value==='provider'||value==='admin'?value:null;
+ }catch{return null;}
 }
 
-function defaultWorkspace(role:AccountRole):Workspace{
- if(role==='ADMIN')return 'admin';
- if(role==='PROVIDER')return 'provider';
- return 'customer';
-}
-
-function workspaceDestination(workspace:Workspace){
- if(workspace==='admin')return '/admin';
- if(workspace==='provider')return '/provider/today';
- return '/home';
-}
-
-function canHonorRequestedDestination(role:AccountRole,requested:string){
- if(!requested.startsWith('/')||requested.startsWith('//'))return false;
- if(role==='ADMIN')return requested==='/admin'||requested.startsWith('/admin/');
- if(role==='PROVIDER')return requested==='/provider'||requested.startsWith('/provider/');
- return !requested.startsWith('/admin')&&!requested.startsWith('/provider');
-}
-
-function rememberWorkspace(workspace:Workspace,role:AccountRole){
+function rememberWorkspace(workspace:PortalRole,role:'CUSTOMER'|'PROVIDER'|'ADMIN'){
  try{
   localStorage.setItem('ifixmv-login-workspace',workspace);
   localStorage.setItem('fixit:mobile-nav-role',workspace);
@@ -120,15 +101,10 @@ export default function LoginPage(){
     }
    }catch{}
   }
-  const role=normalizeRole(profile?.role);
-  const workspace=defaultWorkspace(role);
-  rememberWorkspace(workspace,role);
   const requested=new URLSearchParams(window.location.search).get('next')||'';
-  if(requested&&canHonorRequestedDestination(role,requested)){
-   window.location.replace(requested);
-   return;
-  }
-  window.location.replace(workspaceDestination(workspace));
+  const decision=resolvePostLoginDestination(profile||{},requested,rememberedWorkspace());
+  rememberWorkspace(decision.workspace,decision.role);
+  window.location.replace(decision.destination);
  }
 
  const phoneValid=/^\d{7}$/.test(phone);
