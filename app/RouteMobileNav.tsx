@@ -1,28 +1,45 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { useEffect, useSyncExternalStore } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import MobileNav from './MobileNav';
 import DispatchLivePanel from './DispatchLivePanel';
 import { readSelectedWorkspace, subscribeToSelectedWorkspace } from '../lib/workspaceSelection';
 
 type NavRole='customer'|'provider'|'admin';
 
+function getServerWorkspace():NavRole|null{return null;}
+
 export default function RouteMobileNav(){
- const path=usePathname();
- const[selectedRole,setSelectedRole]=useState<NavRole|null>(()=>readSelectedWorkspace());
+ const path=usePathname()||'/';
+ const router=useRouter();
+ const selectedWorkspace=useSyncExternalStore(
+  subscribeToSelectedWorkspace,
+  readSelectedWorkspace,
+  getServerWorkspace,
+ );
+ const role:NavRole=selectedWorkspace??'customer';
  const providerApplicationRoute=path==='/provider/onboarding'||path.startsWith('/provider/onboarding/');
  const customerRoute=path==='/'||path==='/home'||path.startsWith('/home/')||path==='/requests'||path.startsWith('/requests/');
- const providerRoute=path.startsWith('/provider')&&!providerApplicationRoute;
- const adminRoute=path.startsWith('/admin');
- const sharedRoute=path==='/messages'||path==='/profile';
+ const sharedRoute=path==='/messages'||path.startsWith('/messages/')||path==='/profile'||path.startsWith('/profile/');
 
- useEffect(()=>subscribeToSelectedWorkspace(()=>setSelectedRole(readSelectedWorkspace())),[]);
+ // The saved workspace is the single source of truth. Routes may guard access,
+ // but must never derive or persist a different workspace from the pathname.
+ useEffect(()=>{
+  if(providerApplicationRoute||!customerRoute||role==='customer')return;
+  if(role==='admin'){
+   router.replace(path.startsWith('/requests')?'/admin/requests':'/admin');
+   return;
+  }
+  router.replace(path.startsWith('/requests')?'/provider/jobs':'/provider/today');
+ },[customerRoute,path,providerApplicationRoute,role,router]);
 
- const routeFallback:NavRole|null=adminRoute?'admin':providerRoute?'provider':customerRoute||providerApplicationRoute?'customer':null;
- const role:NavRole|null=selectedRole??routeFallback;
-
- if(path.startsWith('/requests/'))return <><DispatchLivePanel/>{role?<MobileNav role={role}/>:null}</>;
- if((customerRoute||providerApplicationRoute||providerRoute||adminRoute||sharedRoute)&&role)return <MobileNav role={role}/>;
+ if(providerApplicationRoute)return <MobileNav role="customer"/>;
+ if(customerRoute&&role!=='customer')return null;
+ if(path.startsWith('/requests/')&&role==='customer')return <><DispatchLivePanel/><MobileNav role="customer"/></>;
+ if(customerRoute)return <MobileNav role="customer"/>;
+ if(path.startsWith('/provider'))return role==='provider'?<MobileNav role="provider"/>:null;
+ if(path.startsWith('/admin'))return role==='admin'?<MobileNav role="admin"/>:null;
+ if(sharedRoute)return <MobileNav role={role}/>;
  return null;
 }
