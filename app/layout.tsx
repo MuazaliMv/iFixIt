@@ -45,7 +45,7 @@ import './customer-action-dock-overlap-fix.css';
 import './usability-consolidation.css';
 import './otp-only-ui.css';
 import './request-photos-premium.css';
-import './fixit-maldives-marketplace-ui.css';
+import './complete-application-suite.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
@@ -64,6 +64,7 @@ import RequestWizardSmartRuntime from './RequestWizardSmartRuntime';
 import WorkspaceThemeRuntime from './WorkspaceThemeRuntime';
 import IOSWebAppShell from './IOSWebAppShell';
 import ApprovedCustomerHomeRuntime from './ApprovedCustomerHomeRuntime';
+import CompleteApplicationRuntime from './CompleteApplicationRuntime';
 import ErrorRuntime from './ErrorRuntime';
 
 export const metadata: Metadata = {
@@ -82,7 +83,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#f5f5f7',
+  themeColor: '#f8fafc',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -105,6 +106,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <GlobalCardPagination/>
         <MobileDateInputRuntime/>
         <ApprovedCustomerHomeRuntime/>
+        <CompleteApplicationRuntime/>
         <ErrorRuntime/>
 
         <main id="main-content" className="globalMainWorkspace">
