@@ -113,7 +113,8 @@ test('post-login routing and role guard share one permission-aware resolver',asy
  const guard=await read('app/RoleAccessGuard.tsx');
  const routing=await read('lib/authRouting.ts');
  const roles=await read('lib/roleAccess.ts');
- assert.match(login,/resolvePostLoginDestination\(profile\|\|\{\},requested,rememberedWorkspace\(\)\)/);
+ assert.match(login,/resolvePostLoginDestination\(profile\|\|\{\},requested,readSelectedWorkspace\(\)\)/);
+ assert.match(login,/persistSelectedWorkspace\(decision\.workspace\)/);
  assert.match(guard,/resolvePostLoginDestination\(profile\)/);
  assert.match(guard,/if\(!response\.ok\)return/);
  assert.match(routing,/isSafeInternalPath/);
