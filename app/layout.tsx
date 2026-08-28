@@ -47,6 +47,7 @@ import './otp-only-ui.css';
 import './request-photos-premium.css';
 import './complete-application-suite.css';
 import './master-suite-live.css';
+import './master-role-workspaces.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
