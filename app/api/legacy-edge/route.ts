@@ -16,6 +16,7 @@ const ALLOWED_SERVICES=new Set([
  'provider-subscription',
  'provider-insights',
  'provider-job-flow',
+ 'completion-media',
 ]);
 
 function sameOrigin(request:NextRequest){
