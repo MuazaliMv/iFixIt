@@ -52,7 +52,6 @@ import CompactCopyRuntime from './CompactCopyRuntime';
 import ButtonUsabilityRuntime from './ButtonUsabilityRuntime';
 import RoleAccessGuard from './RoleAccessGuard';
 import GlobalRoleMenu from './GlobalRoleMenu';
-import GlobalModeSwitch from './GlobalModeSwitch';
 import TopWorkspaceRoleLabel from './TopWorkspaceRoleLabel';
 import GlobalCardPagination from './GlobalCardPagination';
 import MobileDateInputRuntime from './MobileDateInputRuntime';
@@ -102,7 +101,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <RoleAccessGuard/>
         <PreferredDateRuntime/>
         <GlobalRoleMenu/>
-        <GlobalModeSwitch/>
         <TopWorkspaceRoleLabel/>
         <GlobalCardPagination/>
         <MobileDateInputRuntime/>
