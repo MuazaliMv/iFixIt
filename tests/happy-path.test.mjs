@@ -15,7 +15,7 @@ test('customer cancellation remains pre-assignment only',()=>{
 test('provider acceptance is automatic and customer confirmation is retired',async()=>{
  const migration=await read('migrations/0101_unify_provider_acceptance_flow.sql');
  assert.match(migration,/first eligible provider who accepts/i);
- assert.match(migration,/Customer confirmation is not part of the acceptance path/i);
+ assert.match(migration,/Customer confirmation is not part of the\s+-- acceptance path/i);
  assert.match(migration,/status='ACCEPTED'/);
  assert.match(migration,/dispatch_state='SECURED'/);
  assert.match(migration,/customer confirmation removed/i);
