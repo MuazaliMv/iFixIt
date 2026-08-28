@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
 import { apiFetch } from '../lib/apiClient';
 import { canAccessPortal, normalizeAccountRole, type AccountRole, type PortalRole } from '../lib/roleAccess';
+import { clearSelectedWorkspace, persistSelectedWorkspace, readSelectedWorkspace, subscribeToSelectedWorkspace } from '../lib/workspaceSelection';
 
 type Mode=PortalRole;
 
@@ -13,10 +14,8 @@ function isHiddenRoute(path:string){
  return path.startsWith('/login')||path.startsWith('/register')||path.startsWith('/auth')||path.startsWith('/api/')||path.startsWith('/onboarding');
 }
 
-function routeMode(path:string):Mode{
- if(path.startsWith('/admin'))return 'admin';
- if(path.startsWith('/provider')&&!path.startsWith('/provider/onboarding'))return 'provider';
- return 'customer';
+function routeMode():Mode{
+ return readSelectedWorkspace()??'customer';
 }
 
 function WorkspaceIcon({name}:{name:Mode}){
@@ -28,7 +27,7 @@ function WorkspaceIcon({name}:{name:Mode}){
 
 export default function GlobalModeSwitch(){
  const path=usePathname();
- const[mode,setMode]=useState<Mode>(()=>routeMode(path));
+ const[mode,setMode]=useState<Mode>(routeMode);
  const[signedIn,setSignedIn]=useState(false);
  const[accountRole,setAccountRole]=useState<AccountRole>('CUSTOMER');
  const[providerApproved,setProviderApproved]=useState(false);
@@ -36,8 +35,9 @@ export default function GlobalModeSwitch(){
  const[loggingOut,setLoggingOut]=useState(false);
  const wrapRef=useRef<HTMLDivElement|null>(null);
 
+ useEffect(()=>subscribeToSelectedWorkspace(()=>setMode(routeMode())),[]);
+
  useEffect(()=>{
-  setMode(routeMode(path));
   setOpen(false);
   let active=true;
 
@@ -88,11 +88,9 @@ export default function GlobalModeSwitch(){
 
  function rememberWorkspace(next:Mode,message?:string){
   if(!canAccessPortal(accountRole,next,providerApproved))return;
-  try{
-   localStorage.setItem('fixit:mobile-nav-role',next);
-   localStorage.setItem('fixit:app-mode',next);
-   if(message)sessionStorage.setItem('fixit:mode-toast',message);
-  }catch{}
+  persistSelectedWorkspace(next);
+  setMode(next);
+  try{if(message)sessionStorage.setItem('fixit:mode-toast',message);}catch{}
   setOpen(false);
  }
 
@@ -101,9 +99,8 @@ export default function GlobalModeSwitch(){
   setLoggingOut(true);
   try{
    setOpen(false);
+   clearSelectedWorkspace();
    try{
-    localStorage.removeItem('fixit:mobile-nav-role');
-    localStorage.removeItem('fixit:app-mode');
     localStorage.removeItem('fixit:account-role');
     sessionStorage.removeItem('fixit:mode-toast');
    }catch{}
