@@ -52,7 +52,7 @@ import MobileSectionPager from './MobileSectionPager';
 import CompactCopyRuntime from './CompactCopyRuntime';
 import ButtonUsabilityRuntime from './ButtonUsabilityRuntime';
 import RoleAccessGuard from './RoleAccessGuard';
-import GlobalRoleMenu from './GlobalRoleMenu';
+import GlobalRoleMenuSSOT from './GlobalRoleMenuSSOT';
 import TopWorkspaceRoleLabel from './TopWorkspaceRoleLabel';
 import GlobalCardPagination from './GlobalCardPagination';
 import MobileDateInputRuntime from './MobileDateInputRuntime';
@@ -99,7 +99,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <RequestWizardSmartRuntime/>
         <RoleAccessGuard/>
         <PreferredDateRuntime/>
-        <GlobalRoleMenu/>
+        <GlobalRoleMenuSSOT/>
         <TopWorkspaceRoleLabel/>
         <GlobalCardPagination/>
         <MobileDateInputRuntime/>
