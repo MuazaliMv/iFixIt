@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { readSelectedWorkspace } from '../../lib/workspaceSelection';
 
@@ -10,7 +11,7 @@ function workspaceHome(workspace:'admin'|'provider'|'customer'){
  return '/home';
 }
 
-export default function AccessStatusPage(){
+function AccessStatusContent(){
  const params=useSearchParams();
  const portal=params.get('portal')==='provider'?'provider':'admin';
  const reason=params.get('reason')==='denied'?'denied':'unavailable';
@@ -32,4 +33,16 @@ export default function AccessStatusPage(){
    </div>
   </section>
  </main>;
+}
+
+function AccessStatusFallback(){
+ return <main style={{minHeight:'100dvh',display:'grid',placeItems:'center',padding:'24px',background:'#f5f5f7'}}>
+  <section style={{width:'min(520px,100%)',padding:'24px',border:'1px solid #e5e7eb',borderRadius:'24px',background:'#fff'}}>
+   <p style={{margin:0,color:'#4b5563',fontWeight:700}}>Checking access status…</p>
+  </section>
+ </main>;
+}
+
+export default function AccessStatusPage(){
+ return <Suspense fallback={<AccessStatusFallback/>}><AccessStatusContent/></Suspense>;
 }
