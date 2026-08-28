@@ -15,7 +15,7 @@ test('customer dispatch UI has no provider-selection or wait-more action',async(
 
 test('latest migration retires customer confirmation and customer response timeouts',async()=>{
  const source=await read('migrations/0101_unify_provider_acceptance_flow.sql');
- assert.match(source,/customer confirmation is not part of the acceptance path/i);
+ assert.match(source,/customer confirmation is not part of the\s+--\s+acceptance path/i);
  assert.match(source,/Provider assignment is automatic after provider acceptance; customer selection is not required/);
  assert.match(source,/'customer_retries',0/);
  assert.match(source,/'customer_timeouts',0/);
