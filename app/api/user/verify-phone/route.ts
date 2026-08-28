@@ -62,8 +62,10 @@ export async function POST(request:NextRequest){
   if(updated.error)throw updated.error;
 
   const metadata={...(user.user_metadata||{}),phone_number:phone};
-  await client.auth.admin.updateUserById(user.id,{user_metadata:metadata}).catch(()=>null);
-  await client.from('activity_logs').insert({actor_user_id:user.id,subject_user_id:user.id,action:'LEGACY_PHONE_MIGRATION',module:'auth',entity_type:'user',entity_id:user.id,status:'SUCCESS',metadata:{phone_suffix:phone.slice(-4),source:'profile_verify_phone'}}).catch(()=>null);
+  try{await client.auth.admin.updateUserById(user.id,{user_metadata:metadata});}catch{}
+  try{
+   await client.from('activity_logs').insert({actor_user_id:user.id,subject_user_id:user.id,action:'LEGACY_PHONE_MIGRATION',module:'auth',entity_type:'user',entity_id:user.id,status:'SUCCESS',metadata:{phone_suffix:phone.slice(-4),source:'profile_verify_phone'}});
+  }catch{}
 
   return applyAuthCookies(NextResponse.json({ok:true,phone_number:local,phone_verified_at:verifiedAt}),auth);
  }catch(error){
