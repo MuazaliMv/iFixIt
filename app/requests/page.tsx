@@ -1,57 +1,104 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
 import CustomerHeader from '../components/customer/CustomerHeader';
 import ServiceIcon from '../components/customer/ServiceIcon';
 import '../customer-v3.css';
 import './requests-redesign.css';
 import './request-photos.css';
 
-const API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/customer-requests';
-const DISPATCH_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/dispatch-control';
-const MEDIA_API='https://yzlhlilxiszefneshatm.supabase.co/functions/v1/request-media';
-const NO_PROVIDER_MESSAGE="We're sorry, but there are no available providers at this time.";
+const API='/api/legacy-edge?service=customer-requests';
+const DISPATCH_API='/api/legacy-edge?service=dispatch-control';
+const MEDIA_API='/api/legacy-edge?service=request-media';
 
-type RequestRow={id:string;ticket_number:string;service_name:string;service_category_code:string;service_location_text:string;preferred_date:string;problem_description:string;status:string;assigned_provider_label?:string|null;cancelled_at?:string|null;cancellation_reason?:string|null;created_at:string;updated_at:string};
-type DispatchState='SEARCHING'|'EXTENDED'|'AWAITING_CUSTOMER'|'SECURED'|'EXHAUSTED'|'CUSTOMER_TIMEOUT'|'CANCELLED'|'NOT_REQUIRED';
-type DispatchRow={id:string;ticket_number:string;status:string;urgency?:string|null;assigned_provider_user_id?:string|null;dispatch_tier?:'URGENT'|'STANDARD'|'SCHEDULED'|null;dispatch_state?:DispatchState|null;dispatch_attempt:number;dispatch_started_at?:string|null;dispatch_initial_deadline_at?:string|null;dispatch_extended_at?:string|null;dispatch_extension_deadline_at?:string|null;dispatch_secured_at?:string|null;dispatch_exhausted_at?:string|null;dispatch_customer_contact_started_at?:string|null;dispatch_customer_response_deadline_at?:string|null;dispatch_customer_retry_count:number;dispatch_customer_last_contact_at?:string|null;dispatch_customer_failed_at?:string|null;dispatch_customer_mode?:'WAITING_MORE'|null;dispatch_wait_provider_count?:number|null;dispatch_waiting_since?:string|null;available_provider_count:number};
-type NotificationRow={id:string;request_id?:string|null;notification_type:string;title:string;message:string;dispatch_attempt?:number|null;created_at:string;read_at?:string|null};
+type RequestRow={id:string;ticket_number:string;service_name:string;service_category_code:string;service_location_text:string;preferred_date?:string|null;problem_description:string;status:string;assigned_provider_label?:string|null;assigned_provider_user_id?:string|null;created_at:string;updated_at:string};
+type DispatchState='SEARCHING'|'EXTENDED'|'SECURED'|'EXHAUSTED'|'CANCELLED'|'NOT_REQUIRED';
+type DispatchRow={ticket_number:string;status:string;assigned_provider_user_id?:string|null;dispatch_state?:DispatchState|null;dispatch_started_at?:string|null;dispatch_initial_deadline_at?:string|null;dispatch_extension_deadline_at?:string|null;dispatch_secured_at?:string|null;dispatch_exhausted_at?:string|null};
+type NotificationRow={id:string;message:string;created_at:string;read_at?:string|null};
 type RequestMedia={id:string;request_id:string;media_type:string;sort_order:number;created_at:string;url?:string|null};
 type Filter='ACTIVE'|'COMPLETED';
 
-function pretty(v:string){return v.replaceAll('_',' ').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());}
-function dateLabel(v:string,plainDate=false){const d=new Date(plainDate?`${v}T00:00:00`:v);if(Number.isNaN(d.getTime()))return v;const day=String(d.getDate()).padStart(2,'0');const month=d.toLocaleDateString('en-US',{month:'short'});return `${day} - ${month} - ${d.getFullYear()}`;}
-function countdown(v:string|undefined|null,now:number){if(!v)return'—';const end=new Date(v).getTime();if(!Number.isFinite(end))return'—';const total=Math.max(0,Math.floor((end-now)/1000));const h=Math.floor(total/3600);const m=Math.floor((total%3600)/60);const s=total%60;return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
-function actionFor(r:RequestRow){if(r.status==='PENDING')return'Waiting for provider responses';if(r.status==='RESPONDED')return'Compare provider responses';if(r.status==='ACCEPTED')return'Continue with selected provider';if(r.status==='INSPECTION_SCHEDULED')return'View inspection schedule';if(r.status==='IN_PROGRESS')return'Track work in progress';if(r.status==='COMPLETED')return'View completion';if(r.status==='CANCELLED')return'Request cancelled';return'Open request';}
-function actionLabel(r:RequestRow,secured:boolean,d?:DispatchRow){if(secured)return'Continue';if(r.status==='RESPONDED'||d?.available_provider_count)return'Take Action';if(r.status==='COMPLETED')return'View Details';return'Open Details';}
-function canCancel(r:RequestRow){return (r.status==='PENDING'||r.status==='RESPONDED')&&!r.assigned_provider_label;}
-function searchDeadline(d?:DispatchRow){if(!d)return null;return d.dispatch_state==='EXTENDED'?d.dispatch_extension_deadline_at:d.dispatch_initial_deadline_at;}
-function dispatchText(d:DispatchRow|undefined,now:number){if(!d)return null;const count=Math.min(5,d.available_provider_count||0);const searchTimer=countdown(searchDeadline(d),now);const responseTimer=countdown(d.dispatch_customer_response_deadline_at,now);if(d.dispatch_state==='SEARCHING'){if(d.dispatch_customer_mode==='WAITING_MORE')return{title:`Waiting for more providers · ${count}/5`,body:'We are keeping your request open to find more available providers.',timer:searchTimer,tone:'search'};if(count>0)return{title:`${count} provider${count===1?'':'s'} available`,body:'You can choose now or keep searching for more options.',timer:responseTimer,tone:'secured'};return{title:'Searching for available providers',body:'This request is scheduled and will be sent to matching providers.',timer:searchTimer,tone:'search'};}if(d.dispatch_state==='EXTENDED'){if(d.dispatch_customer_mode==='WAITING_MORE')return{title:`Waiting for more providers · ${count}/5`,body:'The provider search has been extended.',timer:searchTimer,tone:'extended'};if(count>0)return{title:`${count} provider${count===1?'':'s'} available`,body:'Choose now or wait while the extended search continues.',timer:responseTimer,tone:'secured'};return{title:'Search extended by 1 hour',body:'We are continuing to look for an available provider.',timer:searchTimer,tone:'extended'};}if(d.dispatch_state==='AWAITING_CUSTOMER')return{title:`Choose from ${count} available provider${count===1?'':'s'}`,body:'Provider search is complete. Select a provider before the timer expires.',timer:responseTimer,tone:'secured'};if(d.dispatch_state==='CUSTOMER_TIMEOUT')return{title:'Provider selection timed out',body:"We couldn't complete provider assignment because we didn't receive your response after 3 retries.",timer:null,tone:'exhausted'};if(d.dispatch_state==='EXHAUSTED')return{title:'No providers available',body:NO_PROVIDER_MESSAGE,timer:null,tone:'exhausted'};if(d.dispatch_state==='SECURED')return{title:'Provider assigned',body:'A service provider has accepted your request. Open the request to continue.',timer:null,tone:'secured'};return null;}
+function pretty(value:string){return value.replaceAll('_',' ').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());}
+function dateLabel(value?:string|null,plainDate=false){if(!value)return'—';const d=new Date(plainDate?`${value}T00:00:00`:value);if(Number.isNaN(d.getTime()))return value;const day=String(d.getDate()).padStart(2,'0');const month=d.toLocaleDateString('en-US',{month:'short'});return `${day} - ${month} - ${d.getFullYear()}`;}
+function canCancel(r:RequestRow,assigned:boolean){return !assigned&&['PENDING','RESPONDED'].includes(String(r.status).toUpperCase());}
+function displayStatus(r:RequestRow,assigned:boolean){const status=String(r.status||'PENDING').toUpperCase();if(assigned&&['PENDING','RESPONDED'].includes(status))return'ACCEPTED';if(status==='RESPONDED')return'SEARCHING';return status;}
+function dispatchCopy(d:DispatchRow|undefined,assigned:boolean){
+ if(assigned||d?.dispatch_state==='SECURED')return{title:'Provider assigned',body:'A service provider has accepted your request. Open the request to continue.',tone:'secured'};
+ if(d?.dispatch_state==='EXHAUSTED')return{title:'No provider available yet',body:'No eligible provider accepted this request. You can cancel it or leave it open while availability changes.',tone:'exhausted'};
+ if(d?.dispatch_state==='EXTENDED')return{title:'Provider search continuing',body:'We are continuing to match this request with eligible providers. The first provider who accepts will be assigned automatically.',tone:'extended'};
+ return{title:'Searching for a provider',body:'Eligible providers are being notified. The first provider who accepts will be assigned automatically.',tone:'search'};
+}
+async function post(url:string,body:Record<string,unknown>){
+ const r=await fetch(url,{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+ const p=await r.json().catch(()=>({}));
+ if(r.status===401){const next=`${window.location.pathname}${window.location.search}`;window.location.replace(`/login?next=${encodeURIComponent(next)}`);throw new Error('Authentication required.');}
+ if(!r.ok)throw new Error(p?.error||'Request failed');
+ return p;
+}
 
 export default function MyRequestsPage(){
- const[requests,setRequests]=useState<RequestRow[]>([]);const[dispatch,setDispatch]=useState<Record<string,DispatchRow>>({});const[media,setMedia]=useState<Record<string,RequestMedia[]>>({});const[notifications,setNotifications]=useState<NotificationRow[]>([]);const[filter,setFilter]=useState<Filter>('ACTIVE');const[busy,setBusy]=useState(false);const[cancelling,setCancelling]=useState('');const[retrying,setRetrying]=useState('');const[waiting,setWaiting]=useState('');const[message,setMessage]=useState('Loading…');const[now,setNow]=useState(()=>Date.now());const[viewer,setViewer]=useState<{ticket:string;index:number}|null>(null);
- useEffect(()=>{let active=true;let poll:number|undefined;void(async()=>{try{await token();if(!active)return;await load();poll=window.setInterval(()=>void load(true),3000);}catch(e){if(active)setMessage(e instanceof Error?e.message:'Unable to load requests');}})();return()=>{active=false;if(poll)window.clearInterval(poll);};},[]);
- useEffect(()=>{const id=window.setInterval(()=>setNow(Date.now()),1000);return()=>window.clearInterval(id);},[]);
- async function token(){const{data,error}=await supabase.auth.getSession();if(error)throw error;if(data.session)return data.session.access_token;await new Promise<void>(resolve=>{const timer=window.setTimeout(resolve,1200);const{data:listener}=supabase.auth.onAuthStateChange((_event,session)=>{if(session){window.clearTimeout(timer);listener.subscription.unsubscribe();resolve();}});});const{data:retry,error:retryError}=await supabase.auth.getSession();if(retryError)throw retryError;if(retry.session)return retry.session.access_token;const next=`${window.location.pathname}${window.location.search}${window.location.hash}`;window.location.replace(`/login?next=${encodeURIComponent(next)}`);return '';}
- async function post(url:string,body:Record<string,unknown>){const t=await token();if(!t)throw new Error('Sign in required');const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify(body)});const p=await r.json();if(!r.ok)throw new Error(p?.error||'Request failed');return p;}
- async function call(body:Record<string,unknown>){return post(API,body);}async function dispatchCall(body:Record<string,unknown>){return post(DISPATCH_API,body);}
- async function load(silent=false){if(!silent)setBusy(true);try{const[p,d]=await Promise.all([call({action:'list'}),dispatchCall({action:'status'})]);const rows:RequestRow[]=p.requests||[];setRequests(rows);const map:Record<string,DispatchRow>={};for(const row of d.requests||[])map[row.ticket_number]=row;setDispatch(map);setNotifications(d.notifications||[]);try{const m=await post(MEDIA_API,{action:'list',ticketNumbers:rows.map(r=>r.ticket_number)});setMedia(m.mediaByTicket||{});}catch{}if(!silent)setMessage(rows.length?'Up to date':'No requests yet');}catch(e){if(!silent)setMessage(e instanceof Error?e.message:'Unable to load requests');}finally{if(!silent)setBusy(false);}}
- async function retrySearch(r:RequestRow){const d=dispatch[r.ticket_number];if(!['EXHAUSTED','CUSTOMER_TIMEOUT'].includes(String(d?.dispatch_state)))return;setRetrying(r.ticket_number);setMessage('Restarting provider search…');try{await dispatchCall({action:'retry',ticketNumber:r.ticket_number});setMessage(`Provider search restarted for ${r.ticket_number}.`);await load();}catch(e){setMessage(e instanceof Error?e.message:'Unable to restart provider search.');}finally{setRetrying('');}}
- async function waitForMore(r:RequestRow){const d=dispatch[r.ticket_number];if(!d||!['SEARCHING','EXTENDED'].includes(String(d.dispatch_state))||d.available_provider_count<1||d.available_provider_count>=5)return;setWaiting(r.ticket_number);setMessage('Continuing the provider search…');try{await dispatchCall({action:'wait_more',ticketNumber:r.ticket_number});setMessage(`Continuing search for more providers for ${r.ticket_number}.`);await load();}catch(e){setMessage(e instanceof Error?e.message:'Unable to continue the provider search.');}finally{setWaiting('');}}
- async function cancelRequest(r:RequestRow){if(!canCancel(r))return;if(!window.confirm(`Cancel request ${r.ticket_number}? This ends the provider search and cannot be retried.`))return;setCancelling(r.ticket_number);setMessage('Cancelling request…');try{const t=await token();const response=await fetch(`/api/service-requests/${encodeURIComponent(r.ticket_number)}`,{method:'DELETE',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify({reason:'Cancelled by customer before provider selection'})});const p=await response.json();if(!response.ok)throw new Error(p?.error||'Unable to cancel request.');setMessage(`${r.ticket_number} cancelled.`);await load();}catch(e){setMessage(e instanceof Error?e.message:'Unable to cancel request.');}finally{setCancelling('');}}
- async function markNotificationRead(id:string){try{await dispatchCall({action:'mark_read',notificationId:id});setNotifications(v=>v.map(n=>n.id===id?{...n,read_at:new Date().toISOString()}:n));}catch{}}
- const visible=useMemo(()=>requests.filter(r=>filter==='COMPLETED'?r.status==='COMPLETED':!['COMPLETED','CANCELLED'].includes(r.status)),[requests,filter]);const counts=useMemo(()=>({active:requests.filter(r=>!['COMPLETED','CANCELLED'].includes(r.status)).length,completed:requests.filter(r=>r.status==='COMPLETED').length}),[requests]);const unreadNotifications=notifications.filter(n=>!n.read_at);const viewerItems=viewer?(media[viewer.ticket]||[]):[];const viewerItem=viewer?viewerItems[viewer.index]:null;
+ const[requests,setRequests]=useState<RequestRow[]>([]);
+ const[dispatch,setDispatch]=useState<Record<string,DispatchRow>>({});
+ const[media,setMedia]=useState<Record<string,RequestMedia[]>>({});
+ const[notifications,setNotifications]=useState<NotificationRow[]>([]);
+ const[filter,setFilter]=useState<Filter>('ACTIVE');
+ const[busy,setBusy]=useState(false);
+ const[cancelling,setCancelling]=useState('');
+ const[message,setMessage]=useState('Loading…');
+ const[viewer,setViewer]=useState<{ticket:string;index:number}|null>(null);
+
+ useEffect(()=>{let active=true;let poll:number|undefined;void(async()=>{await load(false);if(active)poll=window.setInterval(()=>void load(true),5000);})();return()=>{active=false;if(poll)window.clearInterval(poll);};},[]);
+
+ async function load(silent=false){
+  if(!silent)setBusy(true);
+  try{
+   const[p,d]=await Promise.all([post(API,{action:'list'}),post(DISPATCH_API,{action:'status'})]);
+   const rows:RequestRow[]=p.requests||[];
+   setRequests(rows);
+   const map:Record<string,DispatchRow>={};for(const row of d.requests||[])map[row.ticket_number]=row;setDispatch(map);
+   setNotifications((d.notifications||[]).filter((n:NotificationRow)=>!String(n.message||'').toLowerCase().includes('choose provider')));
+   try{const m=await post(MEDIA_API,{action:'list',ticketNumbers:rows.map(r=>r.ticket_number)});setMedia(m.mediaByTicket||{});}catch{}
+   if(!silent)setMessage(rows.length?'Up to date':'No requests yet');
+  }catch(e){if(!silent&&!(e instanceof Error&&e.message==='Authentication required.'))setMessage(e instanceof Error?e.message:'Unable to load requests');}
+  finally{if(!silent)setBusy(false);}
+ }
+
+ async function cancelRequest(r:RequestRow,assigned:boolean){
+  if(!canCancel(r,assigned))return;
+  if(!window.confirm(`Cancel request ${r.ticket_number}?`))return;
+  setCancelling(r.ticket_number);setMessage('Cancelling request…');
+  try{
+   const response=await fetch(`/api/service-requests/${encodeURIComponent(r.ticket_number)}`,{method:'DELETE',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:'Cancelled by customer before provider assignment'})});
+   const p=await response.json().catch(()=>({}));
+   if(response.status===401){window.location.replace(`/login?next=${encodeURIComponent('/requests')}`);return;}
+   if(!response.ok)throw new Error(p?.error||'Unable to cancel request.');
+   setRequests(current=>current.filter(item=>item.ticket_number!==r.ticket_number));
+   setMessage(`${r.ticket_number} cancelled.`);
+  }catch(e){setMessage(e instanceof Error?e.message:'Unable to cancel request.');}
+  finally{setCancelling('');}
+ }
+
+ async function markNotificationRead(id:string){try{await post(DISPATCH_API,{action:'mark_read',notificationId:id});setNotifications(v=>v.map(n=>n.id===id?{...n,read_at:new Date().toISOString()}:n));}catch{}}
+
+ const visible=useMemo(()=>requests.filter(r=>filter==='COMPLETED'?String(r.status).toUpperCase()==='COMPLETED':!['COMPLETED','CANCELLED'].includes(String(r.status).toUpperCase())),[requests,filter]);
+ const counts=useMemo(()=>({active:requests.filter(r=>!['COMPLETED','CANCELLED'].includes(String(r.status).toUpperCase())).length,completed:requests.filter(r=>String(r.status).toUpperCase()==='COMPLETED').length}),[requests]);
+ const unreadNotifications=notifications.filter(n=>!n.read_at);
+ const viewerItems=viewer?(media[viewer.ticket]||[]).filter(x=>x.url):[];
+ const viewerItem=viewer?viewerItems[viewer.index]:null;
+
  return <main className="c3Page"><CustomerHeader title="Requests" backHref="/"/><div className="c3Shell c3Requests">
-  {unreadNotifications.length?<section className="c3Notice c3DispatchNotice" aria-label="Dispatch notifications"><strong>Provider search update</strong>{unreadNotifications.slice(0,3).map(n=><div key={n.id}><span>{n.message}</span><button className="c3Secondary" type="button" onClick={()=>void markNotificationRead(n.id)}>Dismiss</button></div>)}</section>:null}
-  <div className="c3Filters"><button className={filter==='ACTIVE'?'active':''} onClick={()=>setFilter('ACTIVE')}>Active {counts.active}</button><button className={filter==='COMPLETED'?'active':''} onClick={()=>setFilter('COMPLETED')}>Completed {counts.completed}</button><a className="c3NewRequest" href="/home?new=1" aria-label="Create a new service request"><span aria-hidden="true">+</span> New Request</a></div>{message&&message!=='Up to date'?<div className="c3Notice">{message}</div>:null}
-  <section className="c3RequestList">{visible.map(r=>{const d=dispatch[r.ticket_number];const secured=Boolean(r.assigned_provider_label||d?.assigned_provider_user_id||d?.dispatch_state==='SECURED');const info=dispatchText(d,now);const retryable=['EXHAUSTED','CUSTOMER_TIMEOUT'].includes(String(d?.dispatch_state));const canWait=Boolean(!secured&&d&&['SEARCHING','EXTENDED'].includes(String(d.dispatch_state))&&d.available_provider_count>0&&d.available_provider_count<5&&d.dispatch_customer_mode!=='WAITING_MORE');const photos=(media[r.ticket_number]||[]).filter(x=>x.url);const detailsHref=`/requests/${encodeURIComponent(r.ticket_number)}`;return <article key={r.id} className={`c3RequestCard ${r.status==='COMPLETED'?'completed':''}`}>
-   <div className="c3RequestMain"><div className="c3RequestIcon"><ServiceIcon name={r.service_name}/></div><div className="c3RequestIdentity"><span className={`c3Status ${r.status==='COMPLETED'?'completed':''}`}>{pretty(secured&&r.status==='PENDING'?'ACCEPTED':r.status)}</span><h2>{r.service_name}</h2><p className="c3ProviderLine">{r.status==='CANCELLED'?'Cancelled before provider selection':r.assigned_provider_label||(secured?'Provider assigned':'Provider not selected yet')}</p><p className="c3Ticket">Request ID: <strong>{r.ticket_number}</strong></p></div></div>
-   {info?<div className={`c3SearchPanel ${info.tone}`}><div className="c3SearchCopy"><strong>{info.title}</strong><p>{info.body}</p></div>{info.timer?<div className="c3Countdown"><strong>{info.timer}</strong></div>:null}</div>:null}
+  {unreadNotifications.length?<section className="c3Notice c3DispatchNotice" aria-label="Provider updates"><strong>Request update</strong>{unreadNotifications.slice(0,3).map(n=><div key={n.id}><span>{n.message}</span><button className="c3Secondary" type="button" onClick={()=>void markNotificationRead(n.id)}>Dismiss</button></div>)}</section>:null}
+  <div className="c3Filters"><button className={filter==='ACTIVE'?'active':''} onClick={()=>setFilter('ACTIVE')}>Active {counts.active}</button><button className={filter==='COMPLETED'?'active':''} onClick={()=>setFilter('COMPLETED')}>Completed {counts.completed}</button><a className="c3NewRequest" href="/home?new=1"><span aria-hidden="true">+</span> New Request</a></div>
+  {message&&message!=='Up to date'?<div className="c3Notice" role="status">{message}</div>:null}
+  <section className="c3RequestList">{visible.map(r=>{const d=dispatch[r.ticket_number];const assigned=Boolean(r.assigned_provider_label||r.assigned_provider_user_id||d?.assigned_provider_user_id||d?.dispatch_state==='SECURED');const info=dispatchCopy(d,assigned);const status=displayStatus(r,assigned);const photos=(media[r.ticket_number]||[]).filter(x=>x.url);return <article key={r.id} className={`c3RequestCard ${status==='COMPLETED'?'completed':''}`}>
+   <div className="c3RequestMain"><div className="c3RequestIcon"><ServiceIcon name={r.service_name}/></div><div className="c3RequestIdentity"><span className={`c3Status ${status==='COMPLETED'?'completed':''}`}>{pretty(status)}</span><h2>{r.service_name}</h2><p className="c3ProviderLine">{r.assigned_provider_label||(assigned?'Provider assigned':'Waiting for first provider acceptance')}</p><p className="c3Ticket">Request ID: <strong>{r.ticket_number}</strong></p></div></div>
+   {status!=='COMPLETED'?<div className={`c3SearchPanel ${info.tone}`}><div className="c3SearchCopy"><strong>{info.title}</strong><p>{info.body}</p></div></div>:null}
    <div className="c3RequestMeta"><div><div><small>Location</small><strong>{r.service_location_text}</strong></div></div><div><div><small>Preferred date</small><strong>{dateLabel(r.preferred_date,true)}</strong></div></div><div><div><small>Created on</small><strong>{dateLabel(r.created_at)}</strong></div></div></div>
    {photos.length?<section className="c3PhotoCard"><div className="c3PhotoHead"><div><strong>Attached Photos ({photos.length})</strong><span>Photos uploaded with this request</span></div><button type="button" onClick={()=>setViewer({ticket:r.ticket_number,index:0})}>View All</button></div><div className={`c3PhotoGrid count${photos.length}`}>{photos.slice(0,3).map((photo,index)=><button type="button" key={photo.id} className="c3PhotoThumb" onClick={()=>setViewer({ticket:r.ticket_number,index})}><img src={photo.url||''} alt={`Request photo ${index+1}`}/><span>{index+1} / {photos.length}</span></button>)}</div></section>:null}
-   <a className="c3NextPanel" href={detailsHref} aria-label={`Open action for ${r.ticket_number}`}><div><small>Action</small><strong>{secured?'Continue with assigned provider':retryable?'Retry provider search or cancel the request':d?.dispatch_customer_mode==='WAITING_MORE'?'Waiting for another provider':d?.available_provider_count>0?'Provider responses received':actionFor(r)}</strong></div><span aria-hidden="true">›</span></a>
-   <div className="c3RequestAction"><div className="c3ActionButtons">{retryable?<button className="c3Primary" type="button" disabled={retrying===r.ticket_number} onClick={()=>void retrySearch(r)}>{retrying===r.ticket_number?'Restarting…':'Try Again'}</button>:null}{canWait?<button className="c3Secondary" type="button" disabled={waiting===r.ticket_number} onClick={()=>void waitForMore(r)}>{waiting===r.ticket_number?'Waiting…':'Wait for More Providers'}</button>:null}<a className="c3Primary c3OpenDetails" href={detailsHref}>{actionLabel(r,secured,d)}<span>›</span></a>{!secured&&canCancel(r)?<button className="c3Danger c3CancelVisible" type="button" disabled={cancelling===r.ticket_number} onClick={()=>void cancelRequest(r)}>{cancelling===r.ticket_number?'Cancelling…':'Cancel Request'}</button>:null}</div></div>
-   {!secured&&r.status==='PENDING'?<div className="c3NotifyStrip"><div><strong>We’re finding the best provider for you.</strong><p>You’ll be notified as soon as the status changes.</p></div></div>:null}
-  </article>})}</section></div>{viewer&&viewerItem?.url?<div className="c3PhotoViewer" role="dialog" aria-modal="true" onClick={()=>setViewer(null)}><button className="c3ViewerClose" type="button" onClick={()=>setViewer(null)}>×</button><div className="c3ViewerBody" onClick={e=>e.stopPropagation()}><img src={viewerItem.url} alt={`Request photo ${viewer.index+1}`}/><div className="c3ViewerControls"><button disabled={viewer.index===0} onClick={()=>setViewer(v=>v?{...v,index:Math.max(0,v.index-1)}:v)}>‹</button><span>{viewer.index+1} / {viewerItems.length}</span><button disabled={viewer.index>=viewerItems.length-1} onClick={()=>setViewer(v=>v?{...v,index:Math.min(viewerItems.length-1,v.index+1)}:v)}>›</button></div></div></div>:null}</main>;
+   <a className="c3NextPanel" href={`/requests/${encodeURIComponent(r.ticket_number)}`}><div><small>Action</small><strong>{status==='COMPLETED'?'View completed request':assigned?'Continue with assigned provider':'View request details'}</strong></div><span aria-hidden="true">›</span></a>
+   {canCancel(r,assigned)?<div className="c3RequestAction"><button className="c3Secondary" type="button" disabled={cancelling===r.ticket_number} onClick={()=>void cancelRequest(r,assigned)}>{cancelling===r.ticket_number?'Cancelling…':'Cancel Request'}</button></div>:null}
+  </article>})}{!visible.length?<div className="c3Notice">{filter==='COMPLETED'?'No completed requests yet.':'No active requests.'}</div>:null}</section>
+  {viewer&&viewerItem?<div className="c3PhotoViewer" role="dialog" aria-modal="true" aria-label="Request photo"><button className="c3PhotoViewerClose" type="button" onClick={()=>setViewer(null)}>×</button><img src={viewerItem.url||''} alt={`Request photo ${viewer.index+1}`}/><div className="c3PhotoViewerNav"><button type="button" disabled={viewer.index===0} onClick={()=>setViewer(v=>v?{...v,index:Math.max(0,v.index-1)}:v)}>‹</button><span>{viewer.index+1} / {viewerItems.length}</span><button type="button" disabled={viewer.index>=viewerItems.length-1} onClick={()=>setViewer(v=>v?{...v,index:Math.min(viewerItems.length-1,v.index+1)}:v)}>›</button></div></div>:null}
+  <p className="muted" role="status">{busy?'Refreshing…':''}</p>
+ </div></main>;
 }
