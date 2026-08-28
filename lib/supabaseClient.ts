@@ -13,11 +13,17 @@ import { createClient } from '@supabase/supabase-js';
  * This client remains temporarily for legacy data/realtime paths while those
  * screens are migrated. Password-recovery is the only intentional exception
  * where a Supabase recovery session/token may exist in the browser.
+ *
+ * IMPORTANT: autoRefreshToken stays disabled. The same OTP session is mirrored
+ * temporarily into this legacy browser client after login, but the secure
+ * HttpOnly server session is authoritative and owns refresh-token rotation.
+ * Allowing the browser client to auto-refresh the same refresh token can rotate
+ * it out from under the server cookie and cause a login -> app -> login loop.
  */
 export const supabase = createClient(
   'https://yzlhlilxiszefneshatm.supabase.co',
   'sb_publishable_1sZEZgz9k2JACE_WzHtbCw_reiQEik6',
-  { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } },
+  { auth: { persistSession: true, autoRefreshToken: false, detectSessionInUrl: false } },
 );
 
 // Legacy customer screens still call three Supabase Edge Function URLs directly.
