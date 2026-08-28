@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { applyAuthCookies, resolveServerAuth } from '../../../../../lib/serverAuth';
+import { applyAuthCookies, resolveServerAuth } from '../../../../lib/serverAuth';
 
 const SUPABASE_URL=process.env.SUPABASE_URL?.trim()||process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()||'https://yzlhlilxiszefneshatm.supabase.co';
 const PRODUCTION_ORIGINS=new Set(['https://ifixmv.com','https://www.ifixmv.com']);
