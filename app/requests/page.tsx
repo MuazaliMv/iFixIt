@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import CustomerHeader from '../components/customer/CustomerHeader';
 import ServiceIcon from '../components/customer/ServiceIcon';
 import '../customer-v3.css';
@@ -22,6 +23,7 @@ function pretty(value:string){return value.replaceAll('_',' ').toLowerCase().rep
 function dateLabel(value?:string|null,plainDate=false){if(!value)return'—';const d=new Date(plainDate?`${value}T00:00:00`:value);if(Number.isNaN(d.getTime()))return value;const day=String(d.getDate()).padStart(2,'0');const month=d.toLocaleDateString('en-US',{month:'short'});return `${day} - ${month} - ${d.getFullYear()}`;}
 function canCancel(r:RequestRow,assigned:boolean){return !assigned&&['PENDING','RESPONDED'].includes(String(r.status).toUpperCase());}
 function displayStatus(r:RequestRow,assigned:boolean){const status=String(r.status||'PENDING').toUpperCase();if(assigned&&['PENDING','RESPONDED'].includes(status))return'ACCEPTED';if(status==='RESPONDED')return'SEARCHING';return status;}
+function statusClass(status:string){return `status-${status.toLowerCase().replace(/[^a-z0-9_]+/g,'_')}`;}
 function dispatchCopy(d:DispatchRow|undefined,assigned:boolean){
  if(assigned||d?.dispatch_state==='SECURED')return{title:'Provider assigned',body:'A service provider has accepted your request. Open the request to continue.',tone:'secured'};
  if(d?.dispatch_state==='EXHAUSTED')return{title:'No provider available yet',body:'No eligible provider accepted this request. You can cancel it or leave it open while availability changes.',tone:'exhausted'};
@@ -37,6 +39,8 @@ async function post(url:string,body:Record<string,unknown>){
 }
 
 export default function MyRequestsPage(){
+ const searchParams=useSearchParams();
+ const bookingsMode=searchParams.get('view')==='bookings';
  const[requests,setRequests]=useState<RequestRow[]>([]);
  const[dispatch,setDispatch]=useState<Record<string,DispatchRow>>({});
  const[media,setMedia]=useState<Record<string,RequestMedia[]>>({});
@@ -58,7 +62,7 @@ export default function MyRequestsPage(){
    const map:Record<string,DispatchRow>={};for(const row of d.requests||[])map[row.ticket_number]=row;setDispatch(map);
    setNotifications((d.notifications||[]).filter((n:NotificationRow)=>!String(n.message||'').toLowerCase().includes('choose provider')));
    try{const m=await post(MEDIA_API,{action:'list',ticketNumbers:rows.map(r=>r.ticket_number)});setMedia(m.mediaByTicket||{});}catch{}
-   if(!silent)setMessage(rows.length?'Up to date':'No requests yet');
+   if(!silent)setMessage(rows.length?'Up to date':bookingsMode?'No bookings yet':'No requests yet');
   }catch(e){if(!silent&&!(e instanceof Error&&e.message==='Authentication required.'))setMessage(e instanceof Error?e.message:'Unable to load requests');}
   finally{if(!silent)setBusy(false);}
  }
@@ -80,24 +84,30 @@ export default function MyRequestsPage(){
 
  async function markNotificationRead(id:string){try{await post(DISPATCH_API,{action:'mark_read',notificationId:id});setNotifications(v=>v.map(n=>n.id===id?{...n,read_at:new Date().toISOString()}:n));}catch{}}
 
- const visible=useMemo(()=>requests.filter(r=>filter==='COMPLETED'?String(r.status).toUpperCase()==='COMPLETED':!['COMPLETED','CANCELLED'].includes(String(r.status).toUpperCase())),[requests,filter]);
- const counts=useMemo(()=>({active:requests.filter(r=>!['COMPLETED','CANCELLED'].includes(String(r.status).toUpperCase())).length,completed:requests.filter(r=>String(r.status).toUpperCase()==='COMPLETED').length}),[requests]);
+ function assignedFor(r:RequestRow){const d=dispatch[r.ticket_number];return Boolean(r.assigned_provider_label||r.assigned_provider_user_id||d?.assigned_provider_user_id||d?.dispatch_state==='SECURED');}
+ const visible=useMemo(()=>requests.filter(r=>{
+  const status=String(r.status).toUpperCase();
+  if(status==='CANCELLED')return false;
+  if(bookingsMode)return assignedFor(r);
+  return filter==='COMPLETED'?status==='COMPLETED':status!=='COMPLETED';
+ }),[requests,dispatch,filter,bookingsMode]);
+ const counts=useMemo(()=>({active:requests.filter(r=>!['COMPLETED','CANCELLED'].includes(String(r.status).toUpperCase())).length,completed:requests.filter(r=>String(r.status).toUpperCase()==='COMPLETED').length,bookings:requests.filter(r=>String(r.status).toUpperCase()!=='CANCELLED'&&assignedFor(r)).length}),[requests,dispatch]);
  const unreadNotifications=notifications.filter(n=>!n.read_at);
  const viewerItems=viewer?(media[viewer.ticket]||[]).filter(x=>x.url):[];
  const viewerItem=viewer?viewerItems[viewer.index]:null;
 
- return <main className="c3Page"><CustomerHeader title="Requests" backHref="/"/><div className="c3Shell c3Requests">
+ return <main className="c3Page"><CustomerHeader title={bookingsMode?'Bookings':'Requests'} backHref="/"/><div className="c3Shell c3Requests">
   {unreadNotifications.length?<section className="c3Notice c3DispatchNotice" aria-label="Provider updates"><strong>Request update</strong>{unreadNotifications.slice(0,3).map(n=><div key={n.id}><span>{n.message}</span><button className="c3Secondary" type="button" onClick={()=>void markNotificationRead(n.id)}>Dismiss</button></div>)}</section>:null}
-  <div className="c3Filters"><button className={filter==='ACTIVE'?'active':''} onClick={()=>setFilter('ACTIVE')}>Active {counts.active}</button><button className={filter==='COMPLETED'?'active':''} onClick={()=>setFilter('COMPLETED')}>Completed {counts.completed}</button><a className="c3NewRequest" href="/home?new=1"><span aria-hidden="true">+</span> New Request</a></div>
+  {bookingsMode?<div className="c3Notice" role="status"><strong>Bookings {counts.bookings}</strong><span>Requests with an assigned provider appear here.</span></div>:<div className="c3Filters"><button className={filter==='ACTIVE'?'active':''} onClick={()=>setFilter('ACTIVE')}>Active {counts.active}</button><button className={filter==='COMPLETED'?'active':''} onClick={()=>setFilter('COMPLETED')}>Completed {counts.completed}</button><a className="c3NewRequest" href="/home?new=1"><span aria-hidden="true">+</span> New Request</a></div>}
   {message&&message!=='Up to date'?<div className="c3Notice" role="status">{message}</div>:null}
-  <section className="c3RequestList">{visible.map(r=>{const d=dispatch[r.ticket_number];const assigned=Boolean(r.assigned_provider_label||r.assigned_provider_user_id||d?.assigned_provider_user_id||d?.dispatch_state==='SECURED');const info=dispatchCopy(d,assigned);const status=displayStatus(r,assigned);const photos=(media[r.ticket_number]||[]).filter(x=>x.url);return <article key={r.id} className={`c3RequestCard ${status==='COMPLETED'?'completed':''}`}>
-   <div className="c3RequestMain"><div className="c3RequestIcon"><ServiceIcon name={r.service_name}/></div><div className="c3RequestIdentity"><span className={`c3Status ${status==='COMPLETED'?'completed':''}`}>{pretty(status)}</span><h2>{r.service_name}</h2><p className="c3ProviderLine">{r.assigned_provider_label||(assigned?'Provider assigned':'Waiting for first provider acceptance')}</p><p className="c3Ticket">Request ID: <strong>{r.ticket_number}</strong></p></div></div>
+  <section className="c3RequestList">{visible.map(r=>{const d=dispatch[r.ticket_number];const assigned=assignedFor(r);const info=dispatchCopy(d,assigned);const status=displayStatus(r,assigned);const photos=(media[r.ticket_number]||[]).filter(x=>x.url);return <article key={r.id} className={`c3RequestCard ${status==='COMPLETED'?'completed':''}`}>
+   <div className="c3RequestMain"><div className="c3RequestIcon"><ServiceIcon name={r.service_name}/></div><div className="c3RequestIdentity"><span className={`c3Status ${statusClass(status)}`}>{pretty(status)}</span><h2>{r.service_name}</h2><p className="c3ProviderLine">{r.assigned_provider_label||(assigned?'Provider assigned':'Waiting for first provider acceptance')}</p><p className="c3Ticket">Request ID: <strong>{r.ticket_number}</strong></p></div></div>
    {status!=='COMPLETED'?<div className={`c3SearchPanel ${info.tone}`}><div className="c3SearchCopy"><strong>{info.title}</strong><p>{info.body}</p></div></div>:null}
    <div className="c3RequestMeta"><div><div><small>Location</small><strong>{r.service_location_text}</strong></div></div><div><div><small>Preferred date</small><strong>{dateLabel(r.preferred_date,true)}</strong></div></div><div><div><small>Created on</small><strong>{dateLabel(r.created_at)}</strong></div></div></div>
    {photos.length?<section className="c3PhotoCard"><div className="c3PhotoHead"><div><strong>Attached Photos ({photos.length})</strong><span>Photos uploaded with this request</span></div><button type="button" onClick={()=>setViewer({ticket:r.ticket_number,index:0})}>View All</button></div><div className={`c3PhotoGrid count${photos.length}`}>{photos.slice(0,3).map((photo,index)=><button type="button" key={photo.id} className="c3PhotoThumb" onClick={()=>setViewer({ticket:r.ticket_number,index})}><img src={photo.url||''} alt={`Request photo ${index+1}`}/><span>{index+1} / {photos.length}</span></button>)}</div></section>:null}
    <a className="c3NextPanel" href={`/requests/${encodeURIComponent(r.ticket_number)}`}><div><small>Action</small><strong>{status==='COMPLETED'?'View completed request':assigned?'Continue with assigned provider':'View request details'}</strong></div><span aria-hidden="true">›</span></a>
    {canCancel(r,assigned)?<div className="c3RequestAction"><button className="c3Secondary" type="button" disabled={cancelling===r.ticket_number} onClick={()=>void cancelRequest(r,assigned)}>{cancelling===r.ticket_number?'Cancelling…':'Cancel Request'}</button></div>:null}
-  </article>})}{!visible.length?<div className="c3Notice">{filter==='COMPLETED'?'No completed requests yet.':'No active requests.'}</div>:null}</section>
+  </article>})}{!visible.length?<div className="c3Notice">{bookingsMode?'No provider bookings yet.':filter==='COMPLETED'?'No completed requests yet.':'No active requests.'}</div>:null}</section>
   {viewer&&viewerItem?<div className="c3PhotoViewer" role="dialog" aria-modal="true" aria-label="Request photo"><button className="c3PhotoViewerClose" type="button" onClick={()=>setViewer(null)}>×</button><img src={viewerItem.url||''} alt={`Request photo ${viewer.index+1}`}/><div className="c3PhotoViewerNav"><button type="button" disabled={viewer.index===0} onClick={()=>setViewer(v=>v?{...v,index:Math.max(0,v.index-1)}:v)}>‹</button><span>{viewer.index+1} / {viewerItems.length}</span><button type="button" disabled={viewer.index>=viewerItems.length-1} onClick={()=>setViewer(v=>v?{...v,index:Math.min(viewerItems.length-1,v.index+1)}:v)}>›</button></div></div>:null}
   <p className="muted" role="status">{busy?'Refreshing…':''}</p>
  </div></main>;
