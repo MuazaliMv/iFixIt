@@ -65,10 +65,21 @@ async function savePrimaryLocationIds(client:ReturnType<typeof adminClient>,acce
 async function ensureProfile(client:ReturnType<typeof adminClient>,user:any){
  const existing=await client.from('auth_profiles').select(PROFILE_SELECT).eq('user_id',user.id).maybeSingle();
  if(existing.error)throw existing.error;
- if(existing.data)return existing.data;
- const phone=String(user.phone||'').trim()||null;
- const phoneVerifiedAt=phone?(user.phone_confirmed_at||user.confirmed_at||null):null;
- const created=await client.from('auth_profiles').insert({user_id:user.id,email:user.email||null,phone_number:phone,phone_verified_at:phoneVerifiedAt,role:'CUSTOMER',provider_approved:false,account_status:'ACTIVE',country:FIXED_COUNTRY}).select(PROFILE_SELECT).single();
+ const authPhone=String(user.phone||'').trim()||null;
+ const authPhoneVerifiedAt=authPhone?(user.phone_confirmed_at||user.confirmed_at||null):null;
+ if(existing.data){
+  const storedPhone=String(existing.data.phone_number||'').trim();
+  const shouldBackfillPhone=Boolean(authPhone&&!storedPhone);
+  const shouldBackfillVerification=Boolean(authPhoneVerifiedAt&&!existing.data.phone_verified_at);
+  if(!shouldBackfillPhone&&!shouldBackfillVerification)return existing.data;
+  const updates:{phone_number?:string;phone_verified_at?:string}={};
+  if(shouldBackfillPhone&&authPhone)updates.phone_number=authPhone;
+  if(shouldBackfillVerification&&authPhoneVerifiedAt)updates.phone_verified_at=authPhoneVerifiedAt;
+  const synced=await client.from('auth_profiles').update(updates).eq('user_id',user.id).select(PROFILE_SELECT).single();
+  if(synced.error)throw synced.error;
+  return synced.data;
+ }
+ const created=await client.from('auth_profiles').insert({user_id:user.id,email:user.email||null,phone_number:authPhone,phone_verified_at:authPhoneVerifiedAt,role:'CUSTOMER',provider_approved:false,account_status:'ACTIVE',country:FIXED_COUNTRY}).select(PROFILE_SELECT).single();
  if(created.error)throw created.error;
  return created.data;
 }
