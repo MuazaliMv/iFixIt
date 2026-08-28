@@ -86,12 +86,15 @@ export default function ProfileClient(){
  async function refreshProviderData(){const nextProvider=await providerRequest();setProviderData(nextProvider);}
 
  async function load(){
-  setLoading(true);setMessage('Loading profile…');
+  const isInitialLoad=!profile;
+  if(isInitialLoad)setLoading(true);
+  setMessage(isInitialLoad?'Loading profile…':'Refreshing profile…');
   try{
    const next=await profileRequest();const normalized={...next,phone_number:localPhone(next.phone_number)};
-   setProfile(normalized);populate(normalized);setMessage('Profile is up to date.');setLoading(false);
+   setProfile(normalized);populate(normalized);setMessage('Profile is up to date.');
    if(normalized.role==='PROVIDER')void refreshProviderData();else setProviderData(null);
-  }catch(error:any){if(error?.status===401){window.location.replace('/login?next=%2Fprofile');return;}const timedOut=error instanceof Error&&(error.name==='AbortError'||error.name==='TimeoutError');setMessage(timedOut?'Profile service is taking longer than expected. Tap Refresh to retry.':error instanceof Error?error.message:'Unable to load profile details.');setLoading(false);}
+  }catch(error:any){if(error?.status===401){window.location.replace('/login?next=%2Fprofile');return;}const timedOut=error instanceof Error&&(error.name==='AbortError'||error.name==='TimeoutError');setMessage(timedOut?'Profile service is taking longer than expected. Tap Refresh to retry.':error instanceof Error?error.message:'Unable to load profile details.');}
+  finally{if(isInitialLoad)setLoading(false);}
  }
 
  async function saveProfile(){
@@ -121,7 +124,7 @@ export default function ProfileClient(){
  const initial=(profile?.full_name||profile?.email||'U').slice(0,1).toUpperCase();const serviceAddresses=profile?.serviceAddresses||[];const pp=providerData?.profile;const selectedNames=(providerData?.categories||[]).filter(c=>(providerData?.selectedCategoryIds||[]).includes(c.id)).map(c=>c.name);const areas=providerData?.serviceAreas||[];const hours=providerData?.hours||[];const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
  return <main className="profileRedesignPage"><div className="profileRedesignShell"><div className="profileRedesignGrid">
-  <aside className="profileSidebar"><section className="profileSummaryCard"><div className="profileSummaryAvatarWrap">{profile?.profile_photo_url?<img className="profileSummaryAvatar" src={profile.profile_photo_url} alt="Profile"/>:<div className="profileSummaryAvatar profileInitial">{initial}</div>}</div><h2>{loading?'Loading…':profile?.full_name||'Your profile'}</h2><p>{loading?'Loading account…':profile?.email||'Email not provided'}</p><div className="profileRoleRow"><span>{profile?.role||'ACCOUNT'}</span><span>Maldives</span></div></section></aside>
+  <aside className="profileSidebar"><section className="profileSummaryCard"><div className="profileSummaryAvatarWrap">{profile?.profile_photo_url?<img className="profileSummaryAvatar" src={profile.profile_photo_url} alt="Profile"/>:<div className="profileSummaryAvatar profileInitial">{initial}</div>}</div><h2>{loading&&!profile?'Loading…':profile?.full_name||'Your profile'}</h2><p>{loading&&!profile?'Loading account…':profile?.email||'Email not provided'}</p><div className="profileRoleRow"><span>{profile?.role||'ACCOUNT'}</span><span>Maldives</span></div></section></aside>
   <div className="profileContentColumn">
    <section className="profileEditCard" id="profile"><form onSubmit={event=>{event.preventDefault();void saveProfile();}} className="profileEditForm">
     <div className="profileFormSection"><h3>Personal Information</h3><div className="profileFormGrid"><label>Full Name<input value={name} onChange={e=>setName(e.target.value)} autoComplete="name" placeholder="Add full name (optional)" disabled={loading}/><small>Optional. You can complete this later.</small></label><label>Email Address<input type="email" value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email" placeholder="Add email address (optional)" maxLength={320} disabled={loading}/><small>Optional. Edit it here, or clear the field and save to remove it.</small></label></div></div>
