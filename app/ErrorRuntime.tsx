@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
 
 type Notice = { id: number; kind: 'warning' | 'error' | 'success'; message: string };
 
@@ -36,12 +35,13 @@ export default function ErrorRuntime() {
       notify('error', userMessage(normalized.message));
 
       try {
-        const { data } = await supabase.auth.getSession();
-        const token = data.session?.access_token;
-        if (!token) return;
+        // Runtime reporting uses the same authoritative, cookie-bound FixIt session
+        // as the rest of the app. A missing legacy browser Supabase session must not
+        // suppress telemetry for a valid signed-in user.
         await fetch('/api/system/errors', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: normalized.message,
             stack: normalized.stack,
