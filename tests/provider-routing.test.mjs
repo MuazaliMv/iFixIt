@@ -31,16 +31,20 @@ test('provider portal access requires approved provider entitlement and rejects 
  assert.match(guard,/canProfileAccessPortal\(profile,workspace\)/);
  assert.match(proxy,/Service Provider permission required/);
  assert.match(proxy,/Service Provider account is suspended/);
- assert.match(proxy,/NextResponse\.redirect\(new URL\('\/home'/);
+ assert.match(proxy,/accessIssueUrl\(request,'provider','denied'\)/);
+ assert.doesNotMatch(proxy,/NextResponse\.redirect\(new URL\('\/home'/,'provider authorization must not switch the active workspace');
 });
 
-test('role-protected routes fail closed and all matched APIs reject missing OTP-backed sessions',async()=>{
+test('role-protected routes fail closed and preserve the selected workspace on permission outages',async()=>{
  const proxy=await read('proxy.ts');
  assert.match(proxy,/const apiRoute=path==='\/api'\|\|path\.startsWith\('\/api\/'\)/);
  assert.match(proxy,/if\(apiRoute\)return apiError\('OTP-verified authentication required\.',401,'OTP_LOGIN_REQUIRED'\)/);
- assert.match(proxy,/Unable to verify account permissions\.',503/);
- assert.match(proxy,/Unable to verify Service Provider permission\.',503/);
- assert.match(proxy,/NextResponse\.redirect\(new URL\('\/home',request\.url\)\)/);
+ assert.match(proxy,/Unable to verify account permissions\.',503,'PERMISSION_SERVICE_UNAVAILABLE'/);
+ assert.match(proxy,/Unable to verify Service Provider permission\.',503,'PERMISSION_SERVICE_UNAVAILABLE'/);
+ assert.match(proxy,/new URL\('\/access-status',request\.url\)/);
+ assert.match(proxy,/accessIssueUrl\(request,portal,'unavailable'\)/);
+ assert.match(proxy,/accessIssueUrl\(request,'provider','unavailable'\)/);
+ assert.doesNotMatch(proxy,/NextResponse\.redirect\(new URL\('\/home',request\.url\)\)/,'permission outages must not force Customer workspace');
  assert.match(proxy,/api\/auth/);
  assert.match(proxy,/api\/health/);
 });
