@@ -44,12 +44,14 @@ test('customer bottom navigation stays inside the customer workspace',async()=>{
 test('provider application keeps customer navigation until provider approval',async()=>{
  const routeNav=await read('app/RouteMobileNav.tsx');
  assert.match(routeNav,/providerApplicationRoute=path==='\/provider\/onboarding'/);
- assert.match(routeNav,/providerRoute=path\.startsWith\('\/provider'\)&&!providerApplicationRoute/);
- assert.match(routeNav,/customerRoute\|\|providerApplicationRoute\)return <MobileNav role="customer"\/>/);
+ assert.match(routeNav,/if\(providerApplicationRoute\)return <MobileNav role="customer"\/>/);
+ assert.doesNotMatch(routeNav,/providerApplicationRoute\?'customer'/);
 });
 
 test('bottom navigation changes only after an explicit workspace selection',async()=>{
  const shell=await read('app/IOSWebAppShell.tsx');
+ const routeNav=await read('app/RouteMobileNav.tsx');
+ const globalSwitch=await read('app/GlobalModeSwitch.tsx');
  const guard=await read('app/RoleAccessGuard.tsx');
  const selection=await read('lib/workspaceSelection.ts');
  assert.match(shell,/useSyncExternalStore\(subscribeToSelectedWorkspace,readSelectedWorkspace/);
@@ -59,9 +61,23 @@ test('bottom navigation changes only after an explicit workspace selection',asyn
  assert.equal(shell.match(/persistSelectedWorkspace\(/g)?.length,1);
  assert.doesNotMatch(shell,/initialWorkspaceForPath/);
  assert.doesNotMatch(shell,/persistSelectedWorkspace\('customer'\)/);
+ assert.doesNotMatch(routeNav,/localStorage\.setItem/);
+ assert.doesNotMatch(routeNav,/adminRoute\?'admin'/);
+ assert.doesNotMatch(globalSwitch,/path\.startsWith\('\/admin'\).*return 'admin'/s);
+ assert.match(globalSwitch,/readSelectedWorkspace\(\)\?\?'customer'/);
  assert.doesNotMatch(guard,/persistSelectedWorkspace/);
  assert.match(selection,/WORKSPACE_SELECTED_EVENT='fixit:workspace-selected'/);
+ assert.match(selection,/WORKSPACE_STORAGE_KEY='fixit:selected-workspace'/);
  assert.match(selection,/window\.dispatchEvent\(new CustomEvent/);
+});
+
+test('customer-only routes guard without mutating active workspace',async()=>{
+ const routeNav=await read('app/RouteMobileNav.tsx');
+ assert.match(routeNav,/if\(role==='admin'\)/);
+ assert.match(routeNav,/router\.replace\(path\.startsWith\('\/requests'\)\?'\/admin\/requests':'\/admin'\)/);
+ assert.match(routeNav,/router\.replace\(path\.startsWith\('\/requests'\)\?'\/provider\/jobs':'\/provider\/today'\)/);
+ assert.doesNotMatch(routeNav,/persistSelectedWorkspace/);
+ assert.doesNotMatch(routeNav,/localStorage\.setItem/);
 });
 
 test('public provider CTA uses the canonical onboarding route',async()=>{
