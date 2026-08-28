@@ -1,0 +1,2 @@
+/* OTP-only authentication: legacy password navigation is not part of the active product UI. */
+a.fixitModalRow[href="/change-password"]{display:none!important}
