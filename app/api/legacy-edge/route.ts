@@ -4,7 +4,17 @@ import { applyAuthCookies, resolveServerAuth } from '../../../lib/serverAuth';
 export const dynamic='force-dynamic';
 
 const SUPABASE_URL='https://yzlhlilxiszefneshatm.supabase.co';
-const ALLOWED_SERVICES=new Set(['customer-requests','dispatch-control','request-media']);
+const ALLOWED_SERVICES=new Set([
+ 'customer-requests',
+ 'dispatch-control',
+ 'request-media',
+ 'submit-request',
+ 'provider-offers',
+ 'provider-marketplace',
+ 'provider-onboarding',
+ 'provider-subscription',
+ 'provider-insights',
+]);
 
 function sameOrigin(request:NextRequest){
  const origin=request.headers.get('origin');
@@ -24,14 +34,16 @@ export async function POST(request:NextRequest){
  if(!ALLOWED_SERVICES.has(service))return NextResponse.json({error:'Unsupported service.'},{status:400});
  const auth=await resolveServerAuth(request);
  if(!auth)return NextResponse.json({error:'Authentication required.'},{status:401});
- const body=await request.text();
+
  try{
+  const body=await request.arrayBuffer();
+  const contentType=request.headers.get('content-type')||'application/json';
   const response=await fetch(`${SUPABASE_URL}/functions/v1/${service}`,{
    method:'POST',
-   headers:{'Content-Type':'application/json',Authorization:auth.authorization},
+   headers:{'Content-Type':contentType,Authorization:auth.authorization},
    body,
    cache:'no-store',
-   signal:AbortSignal.timeout(12000),
+   signal:AbortSignal.timeout(15000),
   });
   const text=await response.text();
   const next=new NextResponse(text,{status:response.status,headers:{'Content-Type':response.headers.get('content-type')||'application/json','Cache-Control':'no-store'}});
