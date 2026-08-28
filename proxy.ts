@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { applyAuthCookies, resolveServerAuth } from './lib/serverAuth';
 import { canAccessPortal, normalizeAccountRole, type AccountRole } from './lib/roleAccess';
 
-const SUPABASE_URL='https://yzlhlilxiszefneshatm.supabase.co';
+const SUPABASE_URL=process.env.SUPABASE_URL?.trim()||process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()||'https://yzlhlilxiszefneshatm.supabase.co';
 const AUTH_API=`${SUPABASE_URL}/functions/v1/auth-account`;
 
 type AccessProfile={userId:string;role:AccountRole;providerApproved:boolean};
+type CachedAccess={profile:AccessProfile|null;expiresAt:number};
+const accessCache=new Map<string,CachedAccess>();
+const accessInFlight=new Map<string,Promise<AccessProfile|null>>();
+const ACCESS_OK_CACHE_MS=10_000;
+const ACCESS_FAIL_CACHE_MS=1_000;
+const MAX_ACCESS_CACHE_ENTRIES=500;
 
 function isProviderApplicationRoute(path:string){
  return path==='/provider/onboarding'||path.startsWith('/provider/onboarding/');
@@ -42,7 +48,20 @@ function applyProviderNoStore(response:NextResponse,path:string){
  return response;
 }
 
-async function resolveAccessProfile(authorization:string):Promise<AccessProfile|null>{
+function accessCacheKey(authorization:string){
+ return authorization.startsWith('Bearer ')?authorization.slice(7):authorization;
+}
+
+function rememberAccess(key:string,profile:AccessProfile|null){
+ if(accessCache.size>=MAX_ACCESS_CACHE_ENTRIES){
+  const firstKey=accessCache.keys().next().value as string|undefined;
+  if(firstKey)accessCache.delete(firstKey);
+ }
+ accessCache.set(key,{profile,expiresAt:Date.now()+(profile?ACCESS_OK_CACHE_MS:ACCESS_FAIL_CACHE_MS)});
+ return profile;
+}
+
+async function fetchAccessProfile(authorization:string):Promise<AccessProfile|null>{
  try{
   const response=await fetch(AUTH_API,{
    method:'POST',
@@ -62,6 +81,22 @@ async function resolveAccessProfile(authorization:string):Promise<AccessProfile|
  }catch{
   return null;
  }
+}
+
+async function resolveAccessProfile(authorization:string):Promise<AccessProfile|null>{
+ const key=accessCacheKey(authorization);
+ const cached=accessCache.get(key);
+ if(cached&&cached.expiresAt>Date.now())return cached.profile;
+ if(cached)accessCache.delete(key);
+
+ const existing=accessInFlight.get(key);
+ if(existing)return existing;
+
+ const promise=fetchAccessProfile(authorization)
+  .then(profile=>rememberAccess(key,profile))
+  .finally(()=>accessInFlight.delete(key));
+ accessInFlight.set(key,promise);
+ return promise;
 }
 
 async function resolveProviderSuspended(userId:string,providerApproved:boolean):Promise<boolean|null>{
@@ -106,6 +141,9 @@ export default async function proxy(request:NextRequest){
   return applyAuthCookies(NextResponse.next(),auth);
  }
 
+ // One navigation can request several admin/provider resources concurrently. Cache
+ // the same account permission result briefly so every resource does not invoke the
+ // auth-account Edge Function again during that route transition.
  const access=await resolveAccessProfile(auth.authorization);
  if(!access){
   // Never move a user into the Customer workspace merely because the permission
