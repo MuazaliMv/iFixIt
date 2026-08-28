@@ -18,9 +18,9 @@ concurrency:
 
 jobs:
   verify:
-    name: Test and build
+    name: Test, build and browser smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -44,3 +44,9 @@ jobs:
 
       - name: Build application
         run: npm run build
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run browser regression smoke tests
+        run: npm run test:e2e
