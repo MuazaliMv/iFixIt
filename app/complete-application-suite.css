@@ -1,0 +1,167 @@
+/* FixIt Maldives — Complete Application Suite GUI
+   Source of truth: user-supplied mobile application handover.
+   This file intentionally styles the existing production React/data flows rather
+   than reintroducing the prototype's in-memory users, requests, addresses or
+   provider approvals. */
+
+:root{
+  --suite-primary:#0ea5e9;
+  --suite-primary-strong:#0284c7;
+  --suite-success:#10b981;
+  --suite-warning:#f59e0b;
+  --suite-danger:#f43f5e;
+  --suite-text:#0f172a;
+  --suite-muted:#64748b;
+  --suite-line:#e2e8f0;
+  --suite-bg:#f8fafc;
+  --suite-card:#ffffff;
+  --suite-radius:16px;
+  --suite-shadow:0 1px 3px rgba(15,23,42,.08),0 1px 2px rgba(15,23,42,.04);
+}
+
+html,body{background:var(--suite-bg)!important;color:var(--suite-text)!important}
+body{-webkit-font-smoothing:antialiased;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important}
+
+/* Remove the rejected visual skin as an effective presentation layer. */
+.c3Page,.c4App,.c4Main,.providerModePage,.adminPage,.adminShell,.adminMain{
+  background:var(--suite-bg)!important;
+  color:var(--suite-text)!important;
+}
+
+/* Production app surface should feel like the supplied 410px reference on mobile,
+   while remaining fluid on tablets/desktops. */
+.c3Shell,.providerModeShell{
+  width:min(100% - 24px,920px)!important;
+  margin-inline:auto!important;
+}
+
+/* Customer header / top bar */
+.c3Header{
+  background:rgba(255,255,255,.96)!important;
+  border-bottom:1px solid #f1f5f9!important;
+  box-shadow:none!important;
+  backdrop-filter:blur(14px)!important;
+  min-height:60px!important;
+}
+.c3Avatar{background:var(--suite-primary)!important;color:#fff!important;border:0!important}
+
+/* Supplied blue hero */
+.c3Welcome{
+  background:linear-gradient(90deg,#0ea5e9 0%,#2563eb 100%)!important;
+  color:#fff!important;
+  border:0!important;
+  border-radius:16px!important;
+  padding:20px!important;
+  box-shadow:0 10px 24px rgba(14,165,233,.14)!important;
+}
+.c3Welcome small{display:inline-flex!important;background:rgba(255,255,255,.2)!important;color:#fff!important;border-radius:999px!important;padding:3px 10px!important;font-size:10px!important;font-weight:600!important;letter-spacing:0!important;text-transform:none!important}
+.c3Welcome h1{font-size:18px!important;line-height:1.25!important;font-weight:800!important;letter-spacing:-.3px!important;margin:9px 0 5px!important;color:#fff!important}
+.c3Welcome p{font-size:12px!important;line-height:1.55!important;color:#e0f2fe!important;max-width:560px!important}
+.c3Welcome .c3Primary,.c3Primary{
+  background:var(--suite-primary)!important;
+  color:#fff!important;
+  border:0!important;
+  border-radius:12px!important;
+  min-height:44px!important;
+  box-shadow:0 5px 14px rgba(14,165,233,.18)!important;
+  font-weight:800!important;
+}
+.c3Welcome .c3Primary{background:#fff!important;color:#0284c7!important;box-shadow:var(--suite-shadow)!important}
+.c3Primary:hover{background:var(--suite-primary-strong)!important}
+.c3Welcome .c3Primary:hover{background:#f0f9ff!important}
+
+/* White cards from the supplied screens */
+.c3Section,.c3WizardCard,.c3RequestCard,.c3Empty,.providerModeCard,
+.adminPanel,.adminMarketPanel,.adminAttentionPanel,.statCard,.adminPlatformCard{
+  background:var(--suite-card)!important;
+  border:1px solid #f1f5f9!important;
+  border-radius:16px!important;
+  box-shadow:var(--suite-shadow)!important;
+}
+.c3SectionHead small,.c3Question small,.providerSectionHead small{color:#94a3b8!important;font-size:10px!important;font-weight:800!important;letter-spacing:.08em!important;text-transform:uppercase!important}
+.c3SectionHead h2,.c3Question h1,.providerSectionHead h2{color:var(--suite-text)!important;font-size:14px!important;font-weight:800!important;letter-spacing:0!important}
+.c3SectionHead p,.c3Question p{color:var(--suite-muted)!important;font-size:12px!important}
+
+/* Service cards */
+.c3ServiceGrid{gap:10px!important}
+.c3ServiceTile{
+  background:#fff!important;
+  border:1px solid var(--suite-line)!important;
+  border-radius:14px!important;
+  min-height:108px!important;
+  padding:14px!important;
+  box-shadow:none!important;
+  color:var(--suite-text)!important;
+}
+.c3ServiceTile:hover,.c3ServiceTile.selected{border-color:#7dd3fc!important;background:#f0f9ff!important;color:#0369a1!important}
+
+/* Forms / wizard */
+.c3Field input,.c3Field select,.c3Field textarea,
+input,select,textarea{
+  border-color:var(--suite-line)!important;
+  border-radius:12px!important;
+  background:#fff!important;
+}
+.c3Field input:focus,.c3Field select:focus,.c3Field textarea:focus,
+input:focus,select:focus,textarea:focus{
+  border-color:var(--suite-primary)!important;
+  box-shadow:0 0 0 3px rgba(14,165,233,.1)!important;
+  outline:0!important;
+}
+.c3PhotoDrop{background:#fff!important;border:2px dashed var(--suite-line)!important;border-radius:12px!important;color:var(--suite-muted)!important}
+.c3Chip{background:#fff!important;border-color:var(--suite-line)!important;border-radius:999px!important}
+.c3Chip.selected{background:#e0f2fe!important;color:#0369a1!important;border-color:#7dd3fc!important}
+.c3Secondary{background:#fff!important;border:1px solid var(--suite-line)!important;border-radius:12px!important;color:#334155!important;min-height:44px!important}
+
+/* Bottom action dock and app shell follow the supplied fixed mobile navigation. */
+.c3ActionDock{
+  background:rgba(255,255,255,.96)!important;
+  border:1px solid var(--suite-line)!important;
+  border-radius:16px!important;
+  box-shadow:0 10px 30px rgba(15,23,42,.12)!important;
+  backdrop-filter:blur(14px)!important;
+}
+.iosBottomNav,.globalBottomNav,[data-bottom-nav]{
+  background:rgba(255,255,255,.96)!important;
+  border-top:1px solid var(--suite-line)!important;
+  backdrop-filter:blur(14px)!important;
+  box-shadow:none!important;
+}
+
+/* Provider operations */
+.providerModeTop h1{font-size:18px!important;font-weight:800!important;letter-spacing:-.25px!important}
+.providerModeTop p{font-size:11px!important;color:var(--suite-success)!important;font-weight:700!important}
+.providerSegmented{background:#f1f5f9!important;border-radius:12px!important;padding:4px!important}
+.providerSegmented button{min-height:40px!important;border-radius:10px!important;font-size:11px!important;font-weight:800!important;color:#64748b!important}
+.providerSegmented button.active{background:#fff!important;color:#0f172a!important;box-shadow:var(--suite-shadow)!important}
+.providerOfferCard,.providerOperationalCard{background:#fff!important;border:1px solid var(--suite-line)!important;border-radius:16px!important;box-shadow:var(--suite-shadow)!important}
+.providerPrimaryAction{background:var(--suite-primary)!important;color:#fff!important;border-color:var(--suite-primary)!important;border-radius:12px!important}
+.modeBadge.provider{background:#ecfdf5!important;color:#047857!important;border-color:#a7f3d0!important}
+
+/* Admin controls */
+.adminMarketTotal,.adminMarketLink,.adminPlatformCopy strong{color:var(--suite-primary)!important}
+.adminRangeApply{background:var(--suite-primary)!important;border-radius:10px!important}
+.adminPlatformIcon{background:#f0f9ff!important;color:#0284c7!important}
+
+/* Status palette from handover */
+[class*="status"][class*="new"],.statusNew{background:#f0f9ff!important;color:#0369a1!important}
+[class*="status"][class*="accepted"],.statusAccepted{background:#ecfdf5!important;color:#047857!important}
+[class*="status"][class*="route"],.statusEnRoute{background:#fffbeb!important;color:#b45309!important}
+[class*="status"][class*="processing"],.statusProcessing{background:#fffbeb!important;color:#b45309!important}
+[class*="status"][class*="completed"],.statusCompleted{background:#ecfdf5!important;color:#047857!important}
+[class*="status"][class*="cancelled"],.statusCancelled{background:#fff1f2!important;color:#be123c!important}
+
+button,a,input,select,textarea{-webkit-tap-highlight-color:transparent}
+button{min-height:44px}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(14,165,233,.22)!important;outline-offset:2px!important}
+
+@media(max-width:760px){
+  .c3Shell,.providerModeShell{width:calc(100% - 24px)!important}
+  .c3Home{gap:14px!important;padding-top:14px!important}
+  .c3Welcome{padding:20px!important;border-radius:16px!important}
+  .c3Welcome h1{font-size:17px!important}
+  .c3Section,.c3WizardCard,.c3RequestCard,.providerModeCard{border-radius:16px!important;box-shadow:var(--suite-shadow)!important}
+  .c3ServiceGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .c3ServiceTile{min-height:104px!important}
+  .c3ActionDock{left:12px!important;right:12px!important;bottom:calc(72px + env(safe-area-inset-bottom))!important}
+}
