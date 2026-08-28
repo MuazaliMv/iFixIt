@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import CustomerPortal from '../CustomerPortal';
 import MasterCustomerHome from '../MasterCustomerHome';
+import './master-customer-wizard.css';
 
 export default function CustomerHomePage() {
   const [requestMode, setRequestMode] = useState<boolean | null>(null);
@@ -16,6 +17,6 @@ export default function CustomerHomePage() {
   }
 
   // Keep the proven Supabase-backed five-step request workflow for ?new=1,
-  // but do not render the legacy CustomerPortal as the customer home screen.
-  return requestMode ? <CustomerPortal /> : <MasterCustomerHome />;
+  // but present it inside the Master Suite customer workspace.
+  return requestMode ? <div className="masterCustomerWizard"><CustomerPortal /></div> : <MasterCustomerHome />;
 }
