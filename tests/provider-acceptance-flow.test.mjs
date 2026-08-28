@@ -22,3 +22,10 @@ test('latest migration retires customer confirmation and customer response timeo
  assert.match(source,/dispatch_state='SECURED'/);
  assert.match(source,/status='ACCEPTED'/);
 });
+
+test('provider job card explains immediate assignment and shows no more than three request photos',async()=>{
+ const source=await read('app/provider/jobs/page.tsx');
+ assert.match(source,/assigns this request to you immediately/i);
+ assert.match(source,/slice\(0,3\)/);
+ assert.doesNotMatch(source,/slice\(0,5\)/);
+});
