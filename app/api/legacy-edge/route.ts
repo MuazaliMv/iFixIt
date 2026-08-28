@@ -8,6 +8,7 @@ const ALLOWED_SERVICES=new Set([
  'customer-requests',
  'dispatch-control',
  'request-media',
+ 'request-messages',
  'submit-request',
  'provider-offers',
  'provider-marketplace',
