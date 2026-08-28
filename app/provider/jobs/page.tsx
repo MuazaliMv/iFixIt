@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import AppModeSwitch from '../../AppModeSwitch';
 import { useProviderMode } from '../useProviderMode';
 
@@ -21,17 +22,18 @@ async function post(url:string,body:Record<string,unknown>){
  return p;
 }
 
-export default function ProviderJobsPage(){
+function ProviderJobsContent(){
+ const searchParams=useSearchParams();
  const mode=useProviderMode(true);
+ const earningsMode=searchParams.get('view')==='earnings';
  const[tab,setTab]=useState<Tab>('active');
- const[earningsMode,setEarningsMode]=useState(false);
  const[offers,setOffers]=useState<Offer[]>([]);
  const[jobs,setJobs]=useState<Job[]>([]);
  const[busy,setBusy]=useState(true);
  const[actionOfferId,setActionOfferId]=useState<string|null>(null);
  const[message,setMessage]=useState('Loading customer work…');
 
- useEffect(()=>{const params=new URLSearchParams(window.location.search);const requested=params.get('tab');const earnings=params.get('view')==='earnings';setEarningsMode(earnings);if(earnings)setTab('completed');else if(requested==='new'||requested==='active'||requested==='completed')setTab(requested);},[]);
+ useEffect(()=>{const requested=searchParams.get('tab');if(earningsMode)setTab('completed');else if(requested==='new'||requested==='active'||requested==='completed')setTab(requested);},[searchParams,earningsMode]);
  useEffect(()=>{if(mode.ready)void load();},[mode.ready]);
 
  async function load(){
@@ -79,4 +81,8 @@ export default function ProviderJobsPage(){
   {(earningsMode||tab==='completed')?<section className="providerModeCard frozenProviderSection"><div className="providerSectionHead"><div><small>{earningsMode?'COMPLETED EARNINGS REFERENCE':'COMPLETED'}</small><h2>Finished jobs</h2><p>{earningsMode?'Use completed work as your service-income reference; repair payments are settled off-platform.':'Completed service requests are kept here for reference.'}</p></div></div>{completed.length?<div className="providerOperationalList">{completed.map(j=><a className="providerOperationalCard frozenOperationalCard" href={`/provider/jobs/${encodeURIComponent(j.ticket_number)}`} key={j.ticket_number}><div className="providerOperationalMain"><div className="providerOperationalTitle"><strong>{j.service_name}</strong><span className="modeBadge customer">COMPLETED</span></div><p>{j.customer?.name||'Customer'} · {j.service_location_text}</p><small>{j.ticket_number}</small></div><b>Open →</b></a>)}</div>:<div className="providerEmptyState"><h3>No completed jobs</h3><p>Finished work will appear here.</p></div>}</section>:null}
   <p className="muted" role="status">{busy&&actionOfferId===null?'Refreshing…':message}</p>
  </div></main>;
+}
+
+export default function ProviderJobsPage(){
+ return <Suspense fallback={<main className="providerModePage"><div className="providerModeShell"><div className="providerModeCard">Loading provider work…</div></div></main>}><ProviderJobsContent/></Suspense>;
 }
