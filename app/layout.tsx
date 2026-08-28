@@ -64,6 +64,7 @@ import RequestWizardSmartRuntime from './RequestWizardSmartRuntime';
 import WorkspaceThemeRuntime from './WorkspaceThemeRuntime';
 import IOSWebAppShell from './IOSWebAppShell';
 import ApprovedCustomerHomeRuntime from './ApprovedCustomerHomeRuntime';
+import CompleteApplicationRuntime from './CompleteApplicationRuntime';
 import ErrorRuntime from './ErrorRuntime';
 
 export const metadata: Metadata = {
@@ -105,6 +106,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <GlobalCardPagination/>
         <MobileDateInputRuntime/>
         <ApprovedCustomerHomeRuntime/>
+        <CompleteApplicationRuntime/>
         <ErrorRuntime/>
 
         <main id="main-content" className="globalMainWorkspace">
