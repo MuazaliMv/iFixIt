@@ -9,6 +9,7 @@ test('phone OTP login creates the authoritative secure application session',asyn
  const route=await read('app/api/auth/login/route.ts');
  const proxy=await read('proxy.ts');
  const serverAuth=await read('lib/serverAuth.ts');
+ const browserClient=await read('lib/supabaseClient.ts');
 
  assert.match(login,/Testing code: 9999/);
  assert.match(route,/body:JSON\.stringify\(\{action:'login',phone,otp\}\)/);
@@ -23,17 +24,19 @@ test('phone OTP login creates the authoritative secure application session',asyn
  assert.match(login,/supabase\.auth\.setSession\(\{access_token:accessToken,refresh_token:refreshToken\}\)/);
  assert.match(login,/invalidateProfileCache\(\)/);
  assert.match(login,/confirmServerSession\(\)/);
+ assert.match(browserClient,/autoRefreshToken: false/,'legacy browser auth must not rotate the server-owned refresh token');
+ assert.match(browserClient,/detectSessionInUrl: false/);
  assert.match(proxy,/const auth=await resolveServerAuth\(request\)/);
  assert.match(serverAuth,/auth\/v1\/user/);
  assert.doesNotMatch(serverAuth,/hasOtpAuthenticationMethod/,'server auth must trust only OTP-issued application cookies and validate the Supabase session without a duplicate AMR gate');
  assert.doesNotMatch(serverAuth,/request\.headers\.get\('authorization'\)/,'arbitrary bearer tokens must not become FixIt application sessions');
 
- const syncIndex=login.indexOf('await syncBrowserSession');
- const confirmIndex=login.indexOf('await confirmServerSession',syncIndex);
- const routeIndex=login.indexOf('await routeUser',confirmIndex);
- assert.ok(syncIndex>=0,'browser session handoff is missing');
- assert.ok(confirmIndex>syncIndex,'server session must be confirmed after the browser handoff');
- assert.ok(routeIndex>confirmIndex,'navigation must happen only after the server session is confirmed');
+ const confirmIndex=login.indexOf('const confirmedProfile=await confirmServerSession');
+ const syncIndex=login.indexOf('await syncBrowserSession',confirmIndex);
+ const routeIndex=login.indexOf('await routeUser',syncIndex);
+ assert.ok(confirmIndex>=0,'secure server session confirmation is missing');
+ assert.ok(syncIndex>confirmIndex,'legacy browser session handoff must happen only after server confirmation');
+ assert.ok(routeIndex>syncIndex,'navigation must happen only after server confirmation and browser handoff');
 });
 
 test('legacy browser sessions cannot be promoted into secure application cookies',async()=>{
