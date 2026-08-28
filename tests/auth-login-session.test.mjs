@@ -39,6 +39,17 @@ test('phone OTP login creates the authoritative secure application session',asyn
  assert.ok(routeIndex>syncIndex,'navigation must happen only after server confirmation and browser handoff');
 });
 
+test('server refresh is single-flight so parallel protected requests cannot rotate the same refresh token twice',async()=>{
+ const serverAuth=await read('lib/serverAuth.ts');
+ assert.match(serverAuth,/const refreshInFlight=new Map/);
+ assert.match(serverAuth,/const refreshCache=new Map/);
+ assert.match(serverAuth,/const existing=refreshInFlight\.get\(refreshToken\)/);
+ assert.match(serverAuth,/if\(existing\)return existing/);
+ assert.match(serverAuth,/refreshInFlight\.set\(refreshToken,promise\)/);
+ assert.match(serverAuth,/refreshCache\.set\(refreshToken/);
+ assert.match(serverAuth,/REFRESH_CACHE_MS=10_000/);
+});
+
 test('legacy browser sessions cannot be promoted into secure application cookies',async()=>{
  const syncRoute=await read('app/api/auth/session/sync/route.ts');
  const apiClient=await read('lib/apiClient.ts');
