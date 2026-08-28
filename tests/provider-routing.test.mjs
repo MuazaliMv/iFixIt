@@ -11,16 +11,16 @@ test('provider workspace never redirects an authorised provider to the public la
  assert.match(source,/ready:true/);
 });
 
-test('provider portal access requires provider role or approved provider entitlement',async()=>{
+test('provider portal access requires approved provider entitlement and rejects suspended providers',async()=>{
  const access=await read('lib/roleAccess.ts');
  const proxy=await read('proxy.ts');
  const guard=await read('app/RoleAccessGuard.tsx');
  const switcher=await read('app/GlobalModeSwitch.tsx');
- assert.match(access,/portal==='provider'\)return role==='PROVIDER'\|\|providerApproved/);
- assert.doesNotMatch(access,/role==='PROVIDER'\|\|role==='ADMIN'\|\|providerApproved/);
+ assert.match(access,/portal==='provider'\)return providerApproved&&!providerSuspended/);
+ assert.doesNotMatch(access,/role==='PROVIDER'\|\|providerApproved/);
  assert.match(proxy,/providerApproved:Boolean\(payload\?\.profile\?\.provider_approved\)/);
- assert.match(guard,/canAccessPortal\(role,'provider',providerApproved\)/);
- assert.match(switcher,/canAccessPortal\(accountRole,'provider',providerApproved\)/);
+ assert.match(guard,/canAccessPortal\(role,'provider',providerApproved/);
+ assert.match(switcher,/canAccessPortal\(accountRole,'provider',providerApproved/);
  assert.match(proxy,/Service Provider permission required/);
  assert.match(proxy,/NextResponse\.redirect\(new URL\('\/home'/);
 });
@@ -39,6 +39,6 @@ test('admin and provider APIs return explicit 403 permission errors',async()=>{
  const proxy=await read('proxy.ts');
  assert.match(proxy,/Admin permission required\.',403/);
  assert.match(proxy,/Service Provider permission required\.',403/);
- assert.match(proxy,/canAccessPortal\(access\.role,'admin',access\.providerApproved\)/);
- assert.match(proxy,/canAccessPortal\(access\.role,'provider',access\.providerApproved\)/);
+ assert.match(proxy,/canAccessPortal\(access\.role,'admin',access\.providerApproved/);
+ assert.match(proxy,/canAccessPortal\(access\.role,'provider',access\.providerApproved/);
 });
