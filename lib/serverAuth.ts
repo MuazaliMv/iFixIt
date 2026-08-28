@@ -21,17 +21,27 @@ export type ServerAuthResult={
  expiresIn:number;
 };
 
+type CachedRefresh={session:RefreshSession;expiresAt:number};
+const refreshInFlight=new Map<string,Promise<RefreshSession|null>>();
+const refreshCache=new Map<string,CachedRefresh>();
+const REFRESH_CACHE_MS=10_000;
+
 async function validateAccessToken(token:string){
- try{
-  const response=await fetch(`${SUPABASE_URL}/auth/v1/user`,{
-   headers:{apikey:SUPABASE_PUBLISHABLE_KEY,Authorization:`Bearer ${token}`},
-   cache:'no-store',signal:AbortSignal.timeout(5000),
-  });
-  return response.ok;
- }catch{return false;}
+ for(let attempt=0;attempt<2;attempt+=1){
+  try{
+   const response=await fetch(`${SUPABASE_URL}/auth/v1/user`,{
+    headers:{apikey:SUPABASE_PUBLISHABLE_KEY,Authorization:`Bearer ${token}`},
+    cache:'no-store',signal:AbortSignal.timeout(5000),
+   });
+   if(response.ok)return true;
+   if(response.status===401||response.status===403)return false;
+  }catch{}
+  if(attempt===0)await new Promise(resolve=>setTimeout(resolve,120));
+ }
+ return false;
 }
 
-async function refreshAccessToken(refreshToken:string):Promise<RefreshSession|null>{
+async function performRefresh(refreshToken:string):Promise<RefreshSession|null>{
  try{
   const response=await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,{
    method:'POST',
@@ -46,12 +56,34 @@ async function refreshAccessToken(refreshToken:string):Promise<RefreshSession|nu
  }catch{return null;}
 }
 
+async function refreshAccessToken(refreshToken:string):Promise<RefreshSession|null>{
+ const cached=refreshCache.get(refreshToken);
+ if(cached&&cached.expiresAt>Date.now())return cached.session;
+ if(cached)refreshCache.delete(refreshToken);
+
+ const existing=refreshInFlight.get(refreshToken);
+ if(existing)return existing;
+
+ const promise=performRefresh(refreshToken).then(session=>{
+  if(session)refreshCache.set(refreshToken,{session,expiresAt:Date.now()+REFRESH_CACHE_MS});
+  return session;
+ }).finally(()=>refreshInFlight.delete(refreshToken));
+
+ refreshInFlight.set(refreshToken,promise);
+ return promise;
+}
+
 export async function resolveServerAuth(request:NextRequest):Promise<ServerAuthResult|null>{
  // FixIt authentication is intentionally cookie-bound. A caller cannot promote an
  // arbitrary Supabase bearer token into an application session. These cookies are
  // issued by /api/auth/login only after successful OTP verification and verified
  // phone state has been confirmed. Once issued, validate the Supabase session itself
  // rather than requiring a second JWT AMR claim that the custom OTP auth flow may not emit.
+ //
+ // Important: multiple page/API requests can arrive together when Safari restores a
+ // tab or when a route mounts. Supabase refresh tokens rotate, so all requests sharing
+ // the same refresh cookie must reuse one refresh result instead of consuming the
+ // refresh token concurrently and sending some requests back to /login.
  const accessToken=request.cookies.get(ACCESS_COOKIE)?.value||'';
  const refreshToken=request.cookies.get(REFRESH_COOKIE)?.value||'';
  if(accessToken&&await validateAccessToken(accessToken))return{authorization:`Bearer ${accessToken}`,accessToken,refreshToken:refreshToken||undefined,refreshed:false,expiresIn:3600};
