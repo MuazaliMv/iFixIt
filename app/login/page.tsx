@@ -142,10 +142,11 @@ export default function LoginPage(){
    },16000);
    const payload=await response.json().catch(()=>({}));
    if(!response.ok||!payload?.ok){setMessage(payload?.error||'Unable to sign in.');return;}
-   // The HttpOnly server session is the login authority. Browser Supabase state is
-   // legacy compatibility only and must never block a successful OTP login.
+   // The HttpOnly server session remains the login authority. Some customer screens
+   // still use the legacy browser Supabase client for data access, so finish that
+   // compatibility handoff before navigation to avoid a post-login race on Safari.
    const confirmedProfile=await confirmServerSession();
-   void syncLegacyBrowserSessionBestEffort(payload?.session as LoginSession|undefined);
+   await syncLegacyBrowserSessionBestEffort(payload?.session as LoginSession|undefined);
    invalidateProfileCache();
    await routeUser(confirmedProfile?.role?confirmedProfile:payload?.profile as ExistingProfile|undefined);
   }catch(error){
