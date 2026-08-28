@@ -1,7 +1,6 @@
 'use client';
 
 import type { FixitLanguage } from './useFixitLocale';
-import AppModeSwitch from '../../AppModeSwitch';
 
 type Props={language:FixitLanguage;setLanguage:(lang:FixitLanguage)=>void;profileName?:string|null;onNewRequest:()=>void;onSignOut?:()=>void};
 
@@ -23,7 +22,6 @@ export default function CustomerSidebar({language,setLanguage,profileName,onNewR
   <div className="c4NavLabel">{l('account')}</div>
   <nav className="c4Nav">
    <a href="/profile"><span>○</span>{l('profile')}</a>
-   <AppModeSwitch mode="customer" className="c4ModeSwitch"/>
   </nav>
   <div className="c4SidebarFoot"><div className="c4Identity"><span>{(profileName||'CU').slice(0,2).toUpperCase()}</span><strong>{profileName||l('account')}</strong></div>{onSignOut?<button className="c4Logout" onClick={onSignOut}>{l('logout')}</button>:null}</div>
  </aside>;
