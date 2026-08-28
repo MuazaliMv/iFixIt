@@ -41,12 +41,13 @@ async function fetchWithTimeout(
  }
 }
 
-async function syncBrowserSession(session:LoginSession|undefined){
+async function syncLegacyBrowserSessionBestEffort(session:LoginSession|undefined){
  const accessToken=String(session?.access_token||'').trim();
  const refreshToken=String(session?.refresh_token||'').trim();
- if(!accessToken||!refreshToken)throw new Error('Unable to create the browser login session.');
- const {data,error}=await supabase.auth.setSession({access_token:accessToken,refresh_token:refreshToken});
- if(error||!data.session?.access_token)throw new Error(error?.message||'Unable to create the browser login session.');
+ if(!accessToken||!refreshToken)return;
+ try{
+  await supabase.auth.setSession({access_token:accessToken,refresh_token:refreshToken});
+ }catch{}
 }
 
 async function confirmServerSession(attempts=3):Promise<ExistingProfile>{
@@ -141,11 +142,10 @@ export default function LoginPage(){
    },16000);
    const payload=await response.json().catch(()=>({}));
    if(!response.ok||!payload?.ok){setMessage(payload?.error||'Unable to sign in.');return;}
-   // The secure HttpOnly cookie session is authoritative. Confirm it first so the
-   // legacy browser client cannot rotate the shared refresh token before the
-   // server has validated the newly issued session.
+   // The HttpOnly server session is the login authority. Browser Supabase state is
+   // legacy compatibility only and must never block a successful OTP login.
    const confirmedProfile=await confirmServerSession();
-   await syncBrowserSession(payload?.session as LoginSession|undefined);
+   void syncLegacyBrowserSessionBestEffort(payload?.session as LoginSession|undefined);
    invalidateProfileCache();
    await routeUser(confirmedProfile?.role?confirmedProfile:payload?.profile as ExistingProfile|undefined);
   }catch(error){
