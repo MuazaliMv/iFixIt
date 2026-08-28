@@ -45,7 +45,7 @@ import './customer-action-dock-overlap-fix.css';
 import './usability-consolidation.css';
 import './otp-only-ui.css';
 import './request-photos-premium.css';
-import './fixit-maldives-marketplace-ui.css';
+import './complete-application-suite.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
@@ -82,7 +82,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#f5f5f7',
+  themeColor: '#f8fafc',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
