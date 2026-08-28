@@ -45,6 +45,7 @@ import './customer-action-dock-overlap-fix.css';
 import './usability-consolidation.css';
 import './otp-only-ui.css';
 import './request-photos-premium.css';
+import './fixit-maldives-marketplace-ui.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
