@@ -55,7 +55,7 @@ export default function ProviderJobsPage(){
    const p=await r.json().catch(()=>({}));if(!r.ok)throw new Error(p?.error||'Unable to respond');
    setOffers(current=>current.filter(o=>o.id!==offerId));
    if(action==='accept'){
-    setMessage('Request accepted. Status is now ACCEPTED.');
+    setMessage('Request accepted and assigned to you.');
     await load();setTab('active');
    }else{
     setMessage('Request skipped. It remains available to another eligible provider.');
@@ -76,11 +76,11 @@ export default function ProviderJobsPage(){
   {tab==='new'?<section className="providerModeCard frozenProviderSection"><div className="providerSectionHead"><div><small>NEW SERVICE REQUESTS</small><h2>Available requests</h2><p>Review the problem, photos and location before accepting.</p></div></div>{offers.length?<div className="providerOfferGrid providerOfferGridClean">{offers.map(o=><article className="providerOfferCard frozenOfferCard" key={o.id}>
    <div className="providerOfferTop"><div><small>NEW SERVICE REQUEST</small><strong>{o.request?.service_name||'Service request'}</strong><span className="frozenTicket">{o.request?.ticket_number||''}</span></div><span className="modeBadge provider">NEW</span></div>
    <div className="frozenRequestBlock"><small>PROBLEM</small><p className="providerOfferProblem">{o.request?.problem_description||'No problem description supplied.'}</p></div>
-   {o.request?.photos?.some(photo=>photo.url)?<div className="frozenPhotoGrid">{o.request.photos.filter(photo=>photo.url).slice(0,5).map((photo,index)=><a key={photo.id} href={photo.url||'#'} target="_blank" rel="noreferrer" aria-label={`Open request photo ${index+1}`}><img src={photo.url||''} alt={`Customer request photo ${index+1}`} loading="lazy"/></a>)}</div>:null}
+   {o.request?.photos?.some(photo=>photo.url)?<div className="frozenPhotoGrid">{o.request.photos.filter(photo=>photo.url).slice(0,3).map((photo,index)=><a key={photo.id} href={photo.url||'#'} target="_blank" rel="noreferrer" aria-label={`Open request photo ${index+1}`}><img src={photo.url||''} alt={`Customer request photo ${index+1}`} loading="lazy"/></a>)}</div>:null}
    <div className="frozenRequestBlock"><small>SERVICE LOCATION</small><strong>{o.request?.service_location_text||'Location not specified'}</strong></div>
    <div className="providerOfferDeadline">⏱ {left(o.response_deadline_at)}</div>
    <div className="frozenProviderActions"><button className="secondary" disabled={busy} onClick={()=>void respond(o.id,'decline')}>{actionOfferId===o.id&&busy?'Working…':'Not Available'}</button><button className="primary providerPrimaryAction" disabled={busy} onClick={()=>void respond(o.id,'accept')}>{actionOfferId===o.id&&busy?'Accepting…':'Accept Request'}</button></div>
-   <p className="frozenHelper">Accepting moves the request directly from NEW to ACCEPTED. No customer confirmation is required.</p>
+   <p className="frozenHelper">Accepting assigns this request to you immediately and moves it to ACCEPTED. The customer does not need to choose or confirm you.</p>
   </article>)}</div>:<div className="providerEmptyState"><h3>No new requests</h3><p>Matched requests will appear here automatically.</p></div>}</section>:null}
 
   {tab==='active'?<section className="providerModeCard frozenProviderSection"><div className="providerSectionHead"><div><small>ACTIVE WORK</small><h2>Accepted & processing</h2><p>Open a job to perform the next valid lifecycle action.</p></div></div>{active.length?<div className="providerOperationalList">{active.map(j=><a className="providerOperationalCard frozenOperationalCard" href={`/provider/jobs/${encodeURIComponent(j.ticket_number)}`} key={j.ticket_number}><div className="providerOperationalMain"><div className="providerOperationalTitle"><strong>{j.service_name}</strong><span className="modeBadge provider">{canonicalStage(j.status)}</span></div><p>{j.customer?.name||'Customer'} · {j.service_location_text}</p><small>{j.ticket_number}</small></div><b>Open →</b></a>)}</div>:<div className="providerEmptyState"><h3>No active jobs</h3><p>Accepted requests will appear here.</p></div>}</section>:null}
