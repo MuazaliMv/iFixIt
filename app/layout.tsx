@@ -85,35 +85,38 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#ffffff',
+  themeColor: '#f8fafc',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body>
-        <IOSWebAppShell>
-          <ThemeRuntime />
-          <ModeToast />
-          <ResponsiveRuntime />
-          <MobileSectionPager />
-          <CompactCopyRuntime />
-          <ButtonUsabilityRuntime />
-          <RoleAccessGuard />
-          <GlobalRoleMenuSSOT />
-          <TopWorkspaceRoleLabel />
-          <GlobalCardPagination />
-          <MobileDateInputRuntime />
-          <MobileKeyboardRuntime />
-          <PreferredDateRuntime />
-          <SendRequestTapRuntime />
-          <RequestWizardSmartRuntime />
-          <WorkspaceThemeRuntime />
-          <ApprovedCustomerHomeRuntime />
-          <CompleteApplicationRuntime />
-          <ErrorRuntime />
+        <ThemeRuntime/>
+        <ResponsiveRuntime/>
+        <CompactCopyRuntime/>
+        <ButtonUsabilityRuntime/>
+        <MobileSectionPager/>
+        <MobileKeyboardRuntime/>
+        <WorkspaceThemeRuntime/>
+        <SendRequestTapRuntime/>
+        <RequestWizardSmartRuntime/>
+        <RoleAccessGuard/>
+        <PreferredDateRuntime/>
+        <GlobalRoleMenuSSOT/>
+        <TopWorkspaceRoleLabel/>
+        <GlobalCardPagination/>
+        <MobileDateInputRuntime/>
+        <ApprovedCustomerHomeRuntime/>
+        <CompleteApplicationRuntime/>
+        <ErrorRuntime/>
+
+        <main id="main-content" className="globalMainWorkspace">
           {children}
-        </IOSWebAppShell>
+        </main>
+
+        <IOSWebAppShell/>
+        <ModeToast/>
       </body>
     </html>
   );
