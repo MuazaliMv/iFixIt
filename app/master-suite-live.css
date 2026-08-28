@@ -1,0 +1,123 @@
+/* Master Application Suite — live production override
+   Applies to the existing Supabase-backed customer/provider/admin screens.
+   Loaded LAST so legacy visual layers cannot win the cascade. */
+
+:root{
+  --ms-blue:#0ea5e9;
+  --ms-blue-2:#2563eb;
+  --ms-bg:#f8fafc;
+  --ms-card:#fff;
+  --ms-text:#0f172a;
+  --ms-muted:#64748b;
+  --ms-line:#e2e8f0;
+  --ms-success:#10b981;
+  --ms-warning:#f59e0b;
+  --ms-danger:#ef4444;
+  --ms-radius:16px;
+  --ms-shadow:0 1px 3px rgba(15,23,42,.08),0 8px 28px rgba(15,23,42,.05);
+}
+
+html,body{background:var(--ms-bg)!important;color:var(--ms-text)!important}
+body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;-webkit-font-smoothing:antialiased}
+.globalMainWorkspace{background:var(--ms-bg)!important}
+
+/* Kill legacy desktop framing on mobile; the iOS shell owns navigation. */
+@media(max-width:820px){
+  .customerSidebar,.c4Sidebar,.providerSidebar,.adminSidebar,[class*="Sidebar"]{display:none!important}
+  .c4Main,.c3Page,.providerModePage,.providerModeMain,.adminPage,.adminMain{margin:0!important;width:100%!important;max-width:none!important}
+}
+
+/* CUSTOMER */
+body[data-fixit-workspace="customer"] .c4App,
+body[data-fixit-workspace="customer"] .c4Main,
+body[data-fixit-workspace="customer"] .c3Page{background:var(--ms-bg)!important}
+body[data-fixit-workspace="customer"] .c3Shell{width:min(100% - 24px,900px)!important;margin:0 auto!important;padding:14px 0 110px!important}
+body[data-fixit-workspace="customer"] .c3Home{display:grid!important;gap:14px!important}
+body[data-fixit-workspace="customer"] .c3Welcome{
+  background:linear-gradient(110deg,var(--ms-blue),var(--ms-blue-2))!important;
+  color:white!important;border:0!important;border-radius:18px!important;padding:20px!important;
+  box-shadow:0 14px 32px rgba(37,99,235,.16)!important
+}
+body[data-fixit-workspace="customer"] .c3Welcome small{display:inline-flex!important;background:rgba(255,255,255,.18)!important;color:#fff!important;border-radius:999px!important;padding:5px 9px!important;font-size:10px!important;font-weight:800!important;letter-spacing:.05em!important;text-transform:uppercase!important}
+body[data-fixit-workspace="customer"] .c3Welcome h1{color:#fff!important;font-size:21px!important;line-height:1.18!important;letter-spacing:-.03em!important;margin:10px 0 6px!important}
+body[data-fixit-workspace="customer"] .c3Welcome p{color:#e0f2fe!important;font-size:13px!important;line-height:1.55!important}
+body[data-fixit-workspace="customer"] .c3Welcome .c3Primary{background:#fff!important;color:#0369a1!important;border:0!important;border-radius:12px!important;min-height:46px!important;font-weight:800!important;box-shadow:0 5px 14px rgba(2,132,199,.12)!important}
+
+body[data-fixit-workspace="customer"] .c3Section,
+body[data-fixit-workspace="customer"] .c3WizardCard,
+body[data-fixit-workspace="customer"] .c3RequestCard,
+body[data-fixit-workspace="customer"] .c3Empty{
+  background:var(--ms-card)!important;border:1px solid #eef2f7!important;border-radius:16px!important;box-shadow:var(--ms-shadow)!important
+}
+body[data-fixit-workspace="customer"] .c3Section{padding:16px!important}
+body[data-fixit-workspace="customer"] .c3SectionHead small,
+body[data-fixit-workspace="customer"] .c3Question small{font-size:10px!important;font-weight:800!important;letter-spacing:.08em!important;color:#94a3b8!important;text-transform:uppercase!important}
+body[data-fixit-workspace="customer"] .c3SectionHead h2,
+body[data-fixit-workspace="customer"] .c3Question h1{color:var(--ms-text)!important;font-size:16px!important;font-weight:800!important;letter-spacing:-.02em!important}
+body[data-fixit-workspace="customer"] .c3ServiceGrid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+body[data-fixit-workspace="customer"] .c3ServiceTile{background:#fff!important;color:var(--ms-text)!important;border:1px solid var(--ms-line)!important;border-radius:14px!important;min-height:108px!important;padding:14px!important;box-shadow:none!important;justify-content:flex-start!important;text-align:left!important}
+body[data-fixit-workspace="customer"] .c3ServiceTile:hover,
+body[data-fixit-workspace="customer"] .c3ServiceTile.selected{background:#f0f9ff!important;border-color:#7dd3fc!important;color:#0369a1!important}
+
+body[data-fixit-workspace="customer"] input,
+body[data-fixit-workspace="customer"] select,
+body[data-fixit-workspace="customer"] textarea{background:#fff!important;border:1px solid var(--ms-line)!important;border-radius:12px!important;min-height:46px!important;color:var(--ms-text)!important;box-shadow:none!important}
+body[data-fixit-workspace="customer"] textarea{min-height:110px!important}
+body[data-fixit-workspace="customer"] input:focus,
+body[data-fixit-workspace="customer"] select:focus,
+body[data-fixit-workspace="customer"] textarea:focus{border-color:var(--ms-blue)!important;outline:0!important;box-shadow:0 0 0 3px rgba(14,165,233,.12)!important}
+body[data-fixit-workspace="customer"] .c3Primary{background:var(--ms-blue)!important;color:#fff!important;border:0!important;border-radius:12px!important;min-height:46px!important;font-weight:800!important}
+body[data-fixit-workspace="customer"] .c3Secondary{background:#fff!important;color:#334155!important;border:1px solid var(--ms-line)!important;border-radius:12px!important;min-height:46px!important}
+body[data-fixit-workspace="customer"] .c3PhotoDrop{background:#fff!important;border:2px dashed var(--ms-line)!important;border-radius:14px!important}
+body[data-fixit-workspace="customer"] .c3ActionDock{background:rgba(255,255,255,.98)!important;border:1px solid var(--ms-line)!important;border-radius:16px!important;box-shadow:0 12px 30px rgba(15,23,42,.14)!important;backdrop-filter:blur(16px)!important}
+
+/* PROVIDER */
+body[data-fixit-workspace="provider"] .providerModePage,
+body[data-fixit-workspace="provider"] .providerModeMain{background:var(--ms-bg)!important;color:var(--ms-text)!important}
+body[data-fixit-workspace="provider"] .providerModeShell{width:min(100% - 24px,900px)!important;margin:0 auto!important;padding-bottom:110px!important}
+body[data-fixit-workspace="provider"] .providerModeTop{background:linear-gradient(110deg,#0f172a,#1e293b)!important;color:#fff!important;border-radius:18px!important;padding:18px!important;margin:14px 0!important}
+body[data-fixit-workspace="provider"] .providerModeTop h1{color:#fff!important;font-size:20px!important;font-weight:800!important;letter-spacing:-.03em!important}
+body[data-fixit-workspace="provider"] .providerModeTop p{color:#86efac!important;font-size:11px!important;font-weight:800!important}
+body[data-fixit-workspace="provider"] .providerModeCard,
+body[data-fixit-workspace="provider"] .providerOfferCard,
+body[data-fixit-workspace="provider"] .providerOperationalCard{background:#fff!important;border:1px solid #eef2f7!important;border-radius:16px!important;box-shadow:var(--ms-shadow)!important}
+body[data-fixit-workspace="provider"] .providerSegmented{background:#e2e8f0!important;border-radius:12px!important;padding:4px!important}
+body[data-fixit-workspace="provider"] .providerSegmented button{border-radius:10px!important;min-height:40px!important;color:#64748b!important;font-weight:800!important}
+body[data-fixit-workspace="provider"] .providerSegmented button.active{background:#fff!important;color:#0f172a!important;box-shadow:0 1px 4px rgba(15,23,42,.1)!important}
+body[data-fixit-workspace="provider"] .providerPrimaryAction{background:var(--ms-blue)!important;color:#fff!important;border:0!important;border-radius:12px!important;min-height:46px!important}
+
+/* ADMIN */
+body[data-fixit-workspace="admin"] .adminPage,
+body[data-fixit-workspace="admin"] .adminShell,
+body[data-fixit-workspace="admin"] .adminMain{background:var(--ms-bg)!important;color:var(--ms-text)!important}
+body[data-fixit-workspace="admin"] .adminMain{padding-bottom:110px!important}
+body[data-fixit-workspace="admin"] .adminPanel,
+body[data-fixit-workspace="admin"] .adminMarketPanel,
+body[data-fixit-workspace="admin"] .adminAttentionPanel,
+body[data-fixit-workspace="admin"] .statCard,
+body[data-fixit-workspace="admin"] .adminPlatformCard{background:#fff!important;border:1px solid #eef2f7!important;border-radius:16px!important;box-shadow:var(--ms-shadow)!important}
+body[data-fixit-workspace="admin"] h1,body[data-fixit-workspace="admin"] h2{color:var(--ms-text)!important;letter-spacing:-.025em!important}
+body[data-fixit-workspace="admin"] .adminRangeApply{background:var(--ms-blue)!important;color:#fff!important;border:0!important;border-radius:11px!important}
+body[data-fixit-workspace="admin"] .adminPlatformIcon{background:#e0f2fe!important;color:#0284c7!important;border-radius:12px!important}
+body[data-fixit-workspace="admin"] .adminMarketTotal,
+body[data-fixit-workspace="admin"] .adminMarketLink{color:#0284c7!important}
+
+/* Shared shell */
+.iosBottomNav,.globalBottomNav,[data-bottom-nav]{background:rgba(255,255,255,.98)!important;border-top:1px solid var(--ms-line)!important;backdrop-filter:blur(18px)!important;box-shadow:0 -8px 28px rgba(15,23,42,.05)!important}
+button{min-height:44px}
+button,a{-webkit-tap-highlight-color:transparent}
+
+/* Explicit status palette from the handover. */
+.statusCompleted,[class*="status"][class*="completed"]{background:#ecfdf5!important;color:#047857!important}
+.statusProcessing,[class*="status"][class*="processing"]{background:#fffbeb!important;color:#b45309!important}
+.statusCancelled,[class*="status"][class*="cancelled"]{background:#fff1f2!important;color:#be123c!important}
+.statusNew,[class*="status"][class*="new"],[class*="status"][class*="pending"]{background:#fef2f2!important;color:#b91c1c!important}
+
+@media(max-width:520px){
+  body[data-fixit-workspace="customer"] .c3Shell,
+  body[data-fixit-workspace="provider"] .providerModeShell{width:calc(100% - 20px)!important}
+  body[data-fixit-workspace="customer"] .c3Welcome{padding:18px!important}
+  body[data-fixit-workspace="customer"] .c3Welcome h1{font-size:19px!important}
+  body[data-fixit-workspace="customer"] .c3ServiceGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body[data-fixit-workspace="customer"] .c3ServiceTile{min-height:100px!important;padding:12px!important}
+}
