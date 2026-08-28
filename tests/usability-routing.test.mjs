@@ -6,7 +6,9 @@ const read=path=>readFile(new URL(`../${path}`,import.meta.url),'utf8');
 
 test('provider profile resolves to the shared account profile',async()=>{
  const source=await read('app/provider/profile/page.tsx');
+ const menu=await read('app/GlobalRoleMenu.tsx');
  assert.match(source,/redirect\('\/profile'\)/);
+ assert.doesNotMatch(menu,/window\.location\.replace\('\/provider\/profile'\)/);
 });
 
 test('provider verification remains available separately',async()=>{
@@ -51,11 +53,13 @@ test('bottom navigation changes only after an explicit workspace selection',asyn
  const guard=await read('app/RoleAccessGuard.tsx');
  const selection=await read('lib/workspaceSelection.ts');
  assert.match(shell,/useSyncExternalStore\(subscribeToSelectedWorkspace,readSelectedWorkspace/);
- assert.match(shell,/useState<WorkspaceRole>\(\(\)=>initialWorkspaceForPath\(pathname\)\)/);
+ assert.match(shell,/useSyncExternalStore\(subscribeToBrowserReady,getBrowserReady,getServerBrowserReady\)/);
+ assert.match(shell,/if\(!browserReady\)return <nav className="iosTabBar iosTabBarPending"/);
  assert.match(shell,/persistSelectedWorkspace\(next\)/);
- assert.doesNotMatch(shell,/const workspace=initialWorkspaceForPath\(pathname\)/);
- assert.match(guard,/if\(workspace&&!canProfileAccessPortal\(profile,workspace\)\)[\s\S]*persistSelectedWorkspace\(fallback\.workspace\)/);
- assert.doesNotMatch(guard,/if\(workspace&&canProfileAccessPortal\(profile,workspace\)\)[\s\S]*persistSelectedWorkspace\(workspace\)/);
+ assert.equal(shell.match(/persistSelectedWorkspace\(/g)?.length,1);
+ assert.doesNotMatch(shell,/initialWorkspaceForPath/);
+ assert.doesNotMatch(shell,/persistSelectedWorkspace\('customer'\)/);
+ assert.doesNotMatch(guard,/persistSelectedWorkspace/);
  assert.match(selection,/WORKSPACE_SELECTED_EVENT='fixit:workspace-selected'/);
  assert.match(selection,/window\.dispatchEvent\(new CustomEvent/);
 });

@@ -14,6 +14,10 @@ type CachedAccess={role:AccountRole;providerApproved:boolean};
 type WorkspaceRole='customer'|'provider'|'admin';
 type Tab={href:string;label:string;icon:IconName;match:(path:string)=>boolean;accent?:boolean};
 
+function subscribeToBrowserReady(){return()=>{};}
+function getBrowserReady(){return true;}
+function getServerBrowserReady(){return false;}
+
 function Icon({name}:{name:IconName}){
  const paths={
   home:<><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/></>,
@@ -31,21 +35,12 @@ function Icon({name}:{name:IconName}){
  return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
 }
 
-// Used only when this browser has no saved workspace yet. Route changes after
-// mount must never replace the user's explicit workspace selection.
-function initialWorkspaceForPath(path:string):WorkspaceRole{
- if(path==='/provider/onboarding'||path.startsWith('/provider/onboarding/'))return 'customer';
- if(path.startsWith('/admin'))return 'admin';
- if(path.startsWith('/provider'))return 'provider';
- return 'customer';
-}
-
 function tabsFor(role:WorkspaceRole):Tab[]{
  if(role==='provider')return [
   {href:'/provider/today',label:'Today',icon:'home',match:p=>p==='/provider'||p.startsWith('/provider/today')},
   {href:'/provider/jobs',label:'Jobs',icon:'jobs',match:p=>p.startsWith('/provider/jobs')},
   {href:'/provider/services',label:'Services',icon:'services',match:p=>p.startsWith('/provider/services')},
-  {href:'/provider/profile',label:'Profile',icon:'profile',match:p=>p.startsWith('/provider/profile')},
+  {href:'/profile',label:'Profile',icon:'profile',match:p=>p.startsWith('/profile')||p.startsWith('/provider/profile')},
  ];
  if(role==='admin')return [
   {href:'/admin',label:'Overview',icon:'admin',match:p=>p==='/admin'},
@@ -69,10 +64,9 @@ export default function IOSWebAppShell(){
  const [accountRole,setAccountRole]=useState<AccountRole>('CUSTOMER');
  const [providerApproved,setProviderApproved]=useState(false);
  const [signedIn,setSignedIn]=useState(true);
- const [accessResolved,setAccessResolved]=useState(false);
- const [initialWorkspace]=useState<WorkspaceRole>(()=>initialWorkspaceForPath(pathname));
+ const browserReady=useSyncExternalStore(subscribeToBrowserReady,getBrowserReady,getServerBrowserReady);
  const selectedWorkspace=useSyncExternalStore(subscribeToSelectedWorkspace,readSelectedWorkspace,()=>null);
- const workspace=selectedWorkspace??initialWorkspace;
+ const workspace=selectedWorkspace??'customer';
  const hidden=hiddenPrefixes.some(prefix=>pathname===prefix||pathname.startsWith(prefix+'/'));
 
  useEffect(()=>{
@@ -109,10 +103,7 @@ export default function IOSWebAppShell(){
     const response=await apiFetch('/api/user/profile',{cache:'no-store'});
     if(!active)return;
     if(!response.ok){
-     if(response.status===401){
-      setSignedIn(false);
-      setAccessResolved(true);
-     }
+     if(response.status===401)setSignedIn(false);
      return;
     }
     const payload=await response.json().catch(()=>({}));
@@ -121,18 +112,11 @@ export default function IOSWebAppShell(){
     setAccountRole(role);
     setProviderApproved(approved);
     setSignedIn(true);
-    setAccessResolved(true);
     try{sessionStorage.setItem('fixit:mobile-access',JSON.stringify({role,providerApproved:approved} satisfies CachedAccess));}catch{}
    }catch{}
   })();
   return()=>{active=false;};
  },[]);
-
- useEffect(()=>{
-  if(!accessResolved||!signedIn)return;
-  if(canAccessPortal(accountRole,workspace,providerApproved))return;
-  persistSelectedWorkspace('customer');
- },[accessResolved,accountRole,providerApproved,signedIn,workspace]);
 
  useEffect(()=>{
   if(!switchOpen)return;
@@ -142,6 +126,10 @@ export default function IOSWebAppShell(){
  },[switchOpen]);
 
  if(hidden)return null;
+
+ // Never server-render a pathname-derived role menu. On a full reload the bar
+ // stays physically present, then hydrates directly into the saved workspace.
+ if(!browserReady)return <nav className="iosTabBar iosTabBarPending" aria-label="App navigation" aria-busy="true" data-standalone={standalone?'true':'false'}/>;
 
  const adminSession=signedIn&&(accountRole==='ADMIN'||workspace==='admin');
  const canUseProvider=signedIn&&canAccessPortal(accountRole,'provider',providerApproved);

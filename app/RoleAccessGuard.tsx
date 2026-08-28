@@ -11,7 +11,6 @@ import {
   type AuthProfileLike,
 } from '../lib/authRouting';
 import { normalizeAccountRole } from '../lib/roleAccess';
-import { persistSelectedWorkspace } from '../lib/workspaceSelection';
 
 function saveAccountRole(profile:AuthProfileLike){
   const role=normalizeAccountRole(profile.role);
@@ -57,7 +56,6 @@ export default function RoleAccessGuard(){
 
         if(workspace&&!canProfileAccessPortal(profile,workspace)){
           const fallback=resolvePostLoginDestination(profile);
-          persistSelectedWorkspace(fallback.workspace);
           if(active&&fallback.destination!==path)router.replace(fallback.destination);
           return;
         }
