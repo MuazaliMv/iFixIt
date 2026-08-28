@@ -25,7 +25,8 @@ test('provider portal access requires approved provider entitlement and rejects 
  assert.match(proxy,/status==='SUSPENDED'/);
  assert.match(proxy,/canAccessPortal\(access\.role,'provider',access\.providerApproved,providerSuspended\)/);
  assert.match(session,/provider_onboarding_profiles\?select=onboarding_status/);
- assert.match(session,/provider_suspended:providerSuspended/);
+ assert.match(session,/provider_suspended:providerPermission\.suspended/);
+ assert.match(session,/provider_permission_verified:providerPermission\.verified/);
  assert.match(guard,/apiFetch\('\/api\/auth\/session'/);
  assert.match(guard,/canProfileAccessPortal\(profile,workspace\)/);
  assert.match(proxy,/Service Provider permission required/);

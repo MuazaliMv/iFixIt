@@ -61,7 +61,6 @@ import PreferredDateRuntime from './PreferredDateRuntime';
 import SendRequestTapRuntime from './SendRequestTapRuntime';
 import RequestWizardSmartRuntime from './RequestWizardSmartRuntime';
 import WorkspaceThemeRuntime from './WorkspaceThemeRuntime';
-import ServerSessionSignOutSync from './ServerSessionSignOutSync';
 import IOSWebAppShell from './IOSWebAppShell';
 import ApprovedCustomerHomeRuntime from './ApprovedCustomerHomeRuntime';
 import ErrorRuntime from './ErrorRuntime';
@@ -96,7 +95,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <MobileSectionPager/>
         <MobileKeyboardRuntime/>
         <WorkspaceThemeRuntime/>
-        <ServerSessionSignOutSync/>
         <SendRequestTapRuntime/>
         <RequestWizardSmartRuntime/>
         <RoleAccessGuard/>
