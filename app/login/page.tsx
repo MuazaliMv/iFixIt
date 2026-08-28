@@ -68,6 +68,23 @@ async function syncBrowserSession(session:LoginSession|undefined){
  if(error||!data.session?.access_token)throw new Error(error?.message||'Unable to create the browser login session.');
 }
 
+async function confirmServerSession(attempts=3):Promise<ExistingProfile>{
+ let lastStatus=0;
+ for(let attempt=0;attempt<attempts;attempt+=1){
+  try{
+   const response=await fetchWithTimeout('/api/auth/session',{retryAuth:false},5000);
+   lastStatus=response.status;
+   const payload=await response.json().catch(()=>({}));
+   if(response.ok&&payload?.authenticated===true)return payload?.profile as ExistingProfile|undefined||{};
+   if(response.status!==401&&response.status!==503)break;
+  }catch(error){
+   if(!(error instanceof DOMException&&error.name==='AbortError')&&attempt===attempts-1)throw error;
+  }
+  if(attempt<attempts-1)await new Promise(resolve=>window.setTimeout(resolve,250*(attempt+1)));
+ }
+ throw new Error(lastStatus===401?'Your secure login session was not saved. Please verify the code again.':'Your login was verified, but the secure session could not be confirmed. Please try again.');
+}
+
 export default function LoginPage(){
  const[step,setStep]=useState<Step>('phone');
  const[phone,setPhone]=useState('');
@@ -81,10 +98,10 @@ export default function LoginPage(){
 
   void(async()=>{
    try{
-    const profileResponse=await fetchWithTimeout('/api/user/profile',{},4500);
-    if(!active||!profileResponse.ok)return;
-    const payload=await profileResponse.json().catch(()=>({}));
-    if(!active)return;
+    const response=await fetchWithTimeout('/api/auth/session',{retryAuth:false},4500);
+    if(!active||!response.ok)return;
+    const payload=await response.json().catch(()=>({}));
+    if(!active||payload?.authenticated!==true)return;
     await routeUser(payload?.profile as ExistingProfile|undefined);
    }catch{}
   })();
@@ -96,10 +113,10 @@ export default function LoginPage(){
   let profile=knownProfile;
   if(!profile?.role){
    try{
-    const response=await fetchWithTimeout('/api/user/profile',{},6000);
+    const response=await fetchWithTimeout('/api/auth/session',{retryAuth:false},6000);
     if(response.ok){
      const payload=await response.json().catch(()=>({}));
-     profile=payload?.profile as ExistingProfile|undefined;
+     if(payload?.authenticated===true)profile=payload?.profile as ExistingProfile|undefined;
     }
    }catch{}
   }
@@ -150,7 +167,8 @@ export default function LoginPage(){
    if(!response.ok||!payload?.ok){setMessage(payload?.error||'Unable to sign in.');return;}
    await syncBrowserSession(payload?.session as LoginSession|undefined);
    invalidateProfileCache();
-   await routeUser(payload?.profile as ExistingProfile|undefined);
+   const confirmedProfile=await confirmServerSession();
+   await routeUser(confirmedProfile?.role?confirmedProfile:payload?.profile as ExistingProfile|undefined);
   }catch(error){
    if(error instanceof DOMException&&error.name==='AbortError'){
     setMessage('Sign in timed out. Please try again.');
