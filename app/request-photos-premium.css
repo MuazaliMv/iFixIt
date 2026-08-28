@@ -1,0 +1,152 @@
+/* Premium compact styling for the customer request problem + photo step. */
+.c3WizardCard:has(.frozenSelectedService){
+  max-width:760px;
+  margin-inline:auto;
+  padding:18px;
+  border:1px solid #e8edf4;
+  border-radius:24px;
+  box-shadow:0 10px 28px rgba(20,36,68,.07);
+}
+.c3WizardCard:has(.frozenSelectedService) .c3Question{
+  margin-bottom:14px;
+}
+.c3WizardCard:has(.frozenSelectedService) .c3Question small{
+  display:none;
+}
+.c3WizardCard:has(.frozenSelectedService) .c3Question h1{
+  margin:0 0 4px;
+  font-size:22px;
+  line-height:1.15;
+  letter-spacing:-.5px;
+}
+.c3WizardCard:has(.frozenSelectedService) .c3Question p{
+  font-size:13px;
+  line-height:1.4;
+}
+.c3WizardCard:has(.frozenSelectedService) .frozenSelectedService{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px 14px;
+  margin:0 0 12px;
+  border:1px solid #e8edf4;
+  border-radius:18px;
+  background:#fbfcfe;
+}
+.c3WizardCard:has(.frozenSelectedService) .frozenSelectedService .c3ServiceIcon{
+  width:38px;
+  height:38px;
+  padding:9px;
+  border-radius:12px;
+  background:#edf4ff;
+  color:#1769e0;
+}
+.c3WizardCard:has(.frozenSelectedService) .frozenSelectedService small{
+  display:block;
+  margin-bottom:2px;
+  color:#768198;
+  font-size:11px;
+  font-weight:700;
+}
+.c3WizardCard:has(.frozenSelectedService) .frozenSelectedService strong{
+  font-size:15px;
+}
+.c3WizardCard:has(.frozenSelectedService) .c3Form{
+  margin-top:0;
+}
+.c3WizardCard:has(.frozenSelectedService) .c3Field{
+  gap:6px;
+}
+.c3WizardCard:has(.frozenSelectedService) .c3Field textarea{
+  min-height:92px;
+  border-radius:16px;
+  background:#fff;
+}
+.c3WizardCard:has(.frozenSelectedService) .frozenFieldHelp{
+  font-size:11px;
+  color:#8a94a6;
+}
+.c3WizardCard:has(.frozenSelectedService) .c3PhotoDrop{
+  margin-top:14px;
+  padding:0;
+  border:0;
+  background:transparent;
+  text-align:left;
+}
+.c3WizardCard:has(.frozenSelectedService) .c3PhotoDrop>label.c3Secondary{
+  width:100%;
+  min-height:58px;
+  border:1.5px dashed #b9c9df;
+  border-radius:17px;
+  background:#f8fbff;
+  color:#1769e0;
+  box-shadow:none;
+  font-size:14px;
+}
+.c3WizardCard:has(.frozenSelectedService) .c3PhotoDrop>p{
+  margin:7px 3px 10px;
+  font-size:11px;
+  color:#7c8799;
+  text-align:center;
+}
+.c3WizardCard:has(.frozenSelectedService) .c3PhotoGrid{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+  margin-top:0;
+}
+.c3WizardCard:has(.frozenSelectedService) .c3Photo{
+  aspect-ratio:1/1;
+  border-radius:16px;
+  border:1px solid #e4eaf2;
+  box-shadow:0 5px 16px rgba(31,50,81,.06);
+}
+.c3WizardCard:has(.frozenSelectedService) .c3Photo button{
+  width:28px;
+  height:28px;
+  right:6px;
+  top:6px;
+  background:rgba(255,255,255,.94);
+  color:#172033;
+  border:1px solid rgba(23,32,51,.08);
+  box-shadow:0 3px 10px rgba(0,0,0,.12);
+  font-size:18px;
+}
+.c3WizardCard:has(.frozenSelectedService) .c3Photo::after{
+  content:'Photo';
+  position:absolute;
+  left:7px;
+  bottom:7px;
+  padding:4px 7px;
+  border-radius:999px;
+  background:rgba(15,23,42,.78);
+  color:#fff;
+  font-size:10px;
+  font-weight:800;
+}
+.c3WizardCard:has(.frozenSelectedService)::after{
+  content:'Photos are private and only shared with the provider handling your request.';
+  display:block;
+  margin-top:12px;
+  padding:11px 13px;
+  border-radius:15px;
+  background:#f3f7ff;
+  color:#53637a;
+  font-size:11px;
+  line-height:1.4;
+}
+.c3Wizard:has(.frozenSelectedService) .c3ActionDock{
+  max-width:760px;
+  margin-inline:auto;
+}
+@media(max-width:760px){
+  .c3WizardCard:has(.frozenSelectedService){
+    padding:14px;
+    border-radius:20px;
+    box-shadow:none;
+  }
+  .c3WizardCard:has(.frozenSelectedService) .c3Question h1{font-size:20px}
+  .c3WizardCard:has(.frozenSelectedService) .c3Question p{font-size:12px}
+  .c3WizardCard:has(.frozenSelectedService) .c3Field textarea{min-height:84px}
+  .c3WizardCard:has(.frozenSelectedService) .c3PhotoDrop>label.c3Secondary{min-height:54px}
+  .c3WizardCard:has(.frozenSelectedService) .c3PhotoGrid{gap:7px}
+}
