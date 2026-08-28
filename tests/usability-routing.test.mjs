@@ -41,6 +41,14 @@ test('customer bottom navigation stays inside the customer workspace',async()=>{
  assert.match(routeNav,/path==='\/home'\|\|path\.startsWith\('\/home\/'\)/);
 });
 
+test('customer header does not render the messages shortcut',async()=>{
+ const menu=await read('app/GlobalRoleMenu.tsx');
+ assert.match(menu,/secondary\?:\{href:string;label:string\}/);
+ assert.match(menu,/customer:\{label:'Customer',roleLabel:'Customer',home:'\/',sections:/);
+ assert.doesNotMatch(menu,/customer:\{[^\n]*secondary:\{href:'\/messages',label:'Messages'\}/);
+ assert.match(menu,/menu\.secondary\?<Link className="globalMenuSecondary"/);
+});
+
 test('provider application keeps customer navigation until provider approval',async()=>{
  const routeNav=await read('app/RouteMobileNav.tsx');
  assert.match(routeNav,/providerApplicationRoute=path==='\/provider\/onboarding'/);
