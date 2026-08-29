@@ -120,6 +120,14 @@ async function resolveProviderSuspended(userId:string,providerApproved:boolean):
 
 export default async function proxy(request:NextRequest){
  const path=request.nextUrl.pathname;
+
+ // Playwright runs against the local Next.js development server and replaces the
+ // authenticated APIs in the browser. Permit page delivery only in that explicit
+ // E2E development process. Production builds can never activate this bypass.
+ if(process.env.NODE_ENV!=='production'&&process.env.PLAYWRIGHT_E2E==='1'){
+  return NextResponse.next();
+ }
+
  const providerApplicationRoute=isProviderApplicationRoute(path);
  const providerRoute=!providerApplicationRoute&&(path==='/provider'||path.startsWith('/provider/'));
  const adminRoute=path==='/admin'||path.startsWith('/admin/');
