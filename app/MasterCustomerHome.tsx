@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import ServiceIcon from './components/customer/ServiceIcon';
 import './master-customer-home.css';
 
@@ -21,21 +21,34 @@ export default function MasterCustomerHome(){
   const[services,setServices]=useState<Service[]>([]);
   const[lastRequest,setLastRequest]=useState<LastRequest|null>(null);
   const[ready,setReady]=useState(false);
+  const[loadError,setLoadError]=useState('');
+  const[reloadKey,setReloadKey]=useState(0);
 
   useEffect(()=>{let live=true;void(async()=>{
+    setReady(false);
+    setLoadError('');
     try{
-      const[profilePayload,servicePayload]=await Promise.all([getJson('/api/user/profile'),getJson('/api/services/catalog')]);
+      const[profileResult,serviceResult]=await Promise.allSettled([getJson('/api/user/profile'),getJson('/api/services/catalog')]);
       if(!live)return;
-      setProfile(profilePayload?.profile||null);
-      setServices(servicePayload?.services||[]);
+
+      if(profileResult.status==='fulfilled')setProfile(profileResult.value?.profile||null);
+      if(serviceResult.status==='fulfilled')setServices(serviceResult.value?.services||[]);
+
+      const errors=[profileResult,serviceResult]
+        .filter((result):result is PromiseRejectedResult=>result.status==='rejected')
+        .map(result=>result.reason instanceof Error?result.reason.message:'Unable to load customer workspace.')
+        .filter(message=>message!=='Authentication required.');
+      if(errors.length)setLoadError(errors[0]);
+
       try{const raw=localStorage.getItem('fixit:last-request');if(raw)setLastRequest(JSON.parse(raw));}catch{}
     }finally{if(live)setReady(true);}
-  })();return()=>{live=false;};},[]);
+  })();return()=>{live=false;};},[reloadKey]);
 
   const firstName=(profile?.full_name||'there').split(' ')[0];
   const start=()=>window.location.assign('/home?new=1');
+  const retry=useCallback(()=>setReloadKey(value=>value+1),[]);
 
-  if(!ready)return <div className="masterHome masterHomeLoading" aria-busy="true"/>;
+  if(!ready)return <div className="masterHome masterHomeLoading" aria-busy="true" aria-label="Loading customer workspace"/>;
 
   return <div className="masterHome">
     <header className="masterTopbar">
@@ -45,6 +58,11 @@ export default function MasterCustomerHome(){
       </div>
       <button className="masterAvatar" onClick={()=>window.location.assign('/profile')} aria-label="Profile">{(profile?.full_name||profile?.role||'U').slice(0,2).toUpperCase()}</button>
     </header>
+
+    {loadError?<section className="masterRequestCard" role="alert">
+      <div><span>Connection issue</span><h3>Some home information could not be loaded</h3><p>{loadError}</p></div>
+      <button className="masterPrimary" onClick={retry}>Try again</button>
+    </section>:null}
 
     <section className="masterHero">
       <div>
@@ -60,13 +78,16 @@ export default function MasterCustomerHome(){
         <div><span>Services</span><h3>Choose a service</h3></div>
         <button onClick={start}>View all</button>
       </div>
-      <div className="masterServiceGrid">
+      {services.length?<div className="masterServiceGrid">
         {services.slice(0,8).map(service=><button key={service.id} className="masterServiceCard" onClick={start}>
           <div className="masterServiceIcon"><ServiceIcon name={service.name}/></div>
           <strong>{service.name}</strong>
           <span>Request service</span>
         </button>)}
-      </div>
+      </div>:<div className="masterRequestCard">
+        <div><span>Services</span><h3>No services are available right now</h3><p>You can retry loading the catalogue or continue to the request flow.</p></div>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}><button onClick={retry}>Retry</button><button className="masterPrimary" onClick={start}>Continue</button></div>
+      </div>}
     </section>
 
     <section className="masterQuickGrid">
@@ -74,7 +95,7 @@ export default function MasterCustomerHome(){
       <button onClick={()=>window.location.assign('/profile')}><span>Account</span><strong>Profile & settings</strong></button>
     </section>
 
-    {lastRequest?.id?<section className="masterRequestCard" onClick={()=>window.location.assign(`/requests/${encodeURIComponent(String(lastRequest.id))}`)}>
+    {lastRequest?.id?<section className="masterRequestCard" onClick={()=>window.location.assign(`/requests/${encodeURIComponent(String(lastRequest.id))}`)} role="link" tabIndex={0} onKeyDown={event=>{if(event.key==='Enter'||event.key===' ')window.location.assign(`/requests/${encodeURIComponent(String(lastRequest.id))}`)}}>
       <div><span>Latest request</span><h3>{lastRequest.service||'Service request'}</h3><p>{lastRequest.location||'Open request details'}</p></div>
       <div className="masterStatus">{String(lastRequest.status||'NEW').replaceAll('_',' ')}</div>
     </section>:null}
