@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import AdminNav from '../../AdminNav';
 
-const API='/api/legacy-edge?service=admin-request-oversight';
+const API='/api/legacy-edge?service=admin-request-detail';
 
 type History={from_status?:string|null;to_status:string;actor_type?:string|null;note?:string|null;created_at:string};
 type DispatchOffer={id:string;provider_user_id:string;sequence_no:number;rank_score?:number|null;status:string;offered_at?:string|null;response_deadline_at?:string|null;responded_at?:string|null;provider?:{full_name?:string|null;email?:string|null}|null};
@@ -21,8 +21,8 @@ export default function AdminRequestDetailPage(){
  const params=useParams<{ticket:string}>();const router=useRouter();const ticket=decodeURIComponent(String(params.ticket||'')).toUpperCase();
  const[data,setData]=useState<Detail|null>(null);const[busy,setBusy]=useState(true);const[message,setMessage]=useState('Loading request…');
  useEffect(()=>{if(ticket)void load();},[ticket]);
- async function load(){setBusy(true);try{const p=await post({action:'request_detail',ticketNumber:ticket});setData(p as Detail);setMessage('');}catch(e){setMessage(e instanceof Error?e.message:'Unable to load request.');}finally{setBusy(false);}}
- async function transition(){if(!data)return;const current=String(data.request.status||'').toUpperCase();const target=current==='ACCEPTED'?'PROCESSING':current==='PROCESSING'||current==='IN_PROGRESS'?'COMPLETED':'';if(!target)return;if(!window.confirm(`Move ${ticket} to ${target}?`))return;setBusy(true);try{await post({action:'transition_request',ticketNumber:ticket,targetStatus:target});await load();}catch(e){setMessage(e instanceof Error?e.message:'Unable to update request.');setBusy(false);}}
+ async function load(){setBusy(true);try{const p=await post({action:'detail',ticketNumber:ticket});setData(p as Detail);setMessage('');}catch(e){setMessage(e instanceof Error?e.message:'Unable to load request.');}finally{setBusy(false);}}
+ async function transition(){if(!data)return;const current=String(data.request.status||'').toUpperCase();const target=current==='ACCEPTED'?'PROCESSING':current==='PROCESSING'||current==='IN_PROGRESS'?'COMPLETED':'';if(!target)return;if(!window.confirm(`Move ${ticket} to ${target}?`))return;setBusy(true);try{await post({action:'transition',ticketNumber:ticket,targetStatus:target});await load();}catch(e){setMessage(e instanceof Error?e.message:'Unable to update request.');setBusy(false);}}
  if(!data)return <main className="shell"><AdminNav/><section className="panel"><p role="status">{busy?'Loading request…':message}</p><button className="secondary" onClick={()=>router.push('/admin/requests')}>Back to requests</button></section></main>;
  const r=data.request;const canTransition=['ACCEPTED','PROCESSING','IN_PROGRESS'].includes(String(r.status).toUpperCase());
  return <main className="shell adminRequestDetailPage"><header className="topbar"><div><p className="eyebrow">ADMIN · REQUEST OVERSIGHT</p><h1>{r.ticket_number}</h1><p className="tagline">{r.service_name} · {r.service_location_text}</p></div><button className="secondary" onClick={()=>router.push('/admin/requests')}>← Requests</button></header><AdminNav/>
