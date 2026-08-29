@@ -11,7 +11,15 @@ test('admin dashboard renders operational controls for an Admin session', async 
       token_type: 'bearer',
       expires_in: 3600,
       expires_at: now + 3600,
-      user: { id: 'admin-test-user', aud: 'authenticated', role: 'authenticated', email: 'admin@example.test' },
+      user: {
+        id: 'admin-test-user',
+        aud: 'authenticated',
+        role: 'authenticated',
+        email: 'admin@example.test',
+        app_metadata: {},
+        user_metadata: {},
+        created_at: new Date().toISOString(),
+      },
     }));
   }, { key: `sb-${projectRef}-auth-token` });
 
@@ -21,11 +29,12 @@ test('admin dashboard renders operational controls for an Admin session', async 
     body: JSON.stringify({ authenticated: true, profile: { role: 'ADMIN', full_name: 'Test Admin', provider_approved: true } }),
   }));
 
+  // .maybeSingle() asks PostgREST for an object response, so mirror the real
+  // singleton response shape rather than returning a one-item array.
   await page.route('**/rest/v1/auth_profiles**', route => route.fulfill({
     status: 200,
-    contentType: 'application/json',
-    headers: { 'content-range': '0-0/1' },
-    body: JSON.stringify([{ role: 'ADMIN', full_name: 'Test Admin' }]),
+    contentType: 'application/vnd.pgrst.object+json',
+    body: JSON.stringify({ role: 'ADMIN', full_name: 'Test Admin' }),
   }));
 
   await page.route('**/functions/v1/admin-operations', route => route.fulfill({
