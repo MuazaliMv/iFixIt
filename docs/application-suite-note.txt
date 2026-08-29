@@ -1,0 +1,1 @@
+Approved UI reference: FixIt Maldives Complete Application Suite. Production app must implement this presentation with live Next.js/Supabase data; no hard-coded demo customer/provider/admin data, simulated escrow, or client-only status toggles.
