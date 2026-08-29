@@ -80,10 +80,10 @@ test('customer-only routes guard without mutating active workspace',async()=>{
  assert.doesNotMatch(routeNav,/localStorage\.setItem/);
 });
 
-test('public provider CTA uses the canonical onboarding route',async()=>{
- const landing=await read('app/page.tsx');
- assert.match(landing,/href="\/provider\/onboarding"/);
- assert.doesNotMatch(landing,/href="\/provider\/apply"/);
+test('public index resolves to the canonical customer home',async()=>{
+ const index=await read('app/page.tsx');
+ assert.match(index,/redirect\('\/home'\)/);
+ assert.doesNotMatch(index,/href="\/provider\/apply"/);
 });
 
 test('cancelled requests stay out of normal customer request views and counters',async()=>{
