@@ -21,6 +21,7 @@ const ALLOWED_SERVICES=new Set([
  'location-catalogue',
  'provider-setup-data',
  'provider-document-upload',
+ 'admin-request-oversight',
 ]);
 
 function sameOrigin(request:NextRequest){
