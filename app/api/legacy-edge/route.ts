@@ -13,6 +13,7 @@ const ALLOWED_SERVICES=new Set([
  'provider-offers',
  'provider-marketplace',
  'provider-onboarding',
+ 'provider-review',
  'provider-subscription',
  'provider-insights',
  'provider-job-flow',
