@@ -1,0 +1,3 @@
+Force production redeploy from latest main.
+Triggered: 2026-08-29
+Reason: live ifixmv.com appeared to serve an older UI despite green Railway checks.
