@@ -18,7 +18,10 @@ export default defineConfig({
     { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] } },
   ],
   webServer: {
-    command: 'npm run dev -- --hostname 127.0.0.1',
+    // Browser smoke tests mock same-origin APIs in Playwright. Start the Next.js
+    // dev server with an explicit E2E flag so the server proxy can allow those
+    // mocked page requests through without requiring real production sessions.
+    command: 'PLAYWRIGHT_E2E=1 npm run dev -- --hostname 127.0.0.1',
     url: 'http://127.0.0.1:3000/login',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
