@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabaseClient';
 import { apiFetch, invalidateProfileCache } from '../lib/apiClient';
 import { clearSelectedWorkspace, readSelectedWorkspace, subscribeToSelectedWorkspace } from '../lib/workspaceSelection';
 import type { PortalRole } from '../lib/roleAccess';
+import { useI18n, type TranslationKey } from './i18n/I18nProvider';
 
 type MenuItem={href:string;label:string};
 type MenuSection={title:string;items:MenuItem[]};
@@ -30,6 +31,37 @@ const menus:Record<PortalRole,RoleMenu>={
  ]},
 };
 
+const menuKeyByEnglish:Record<string,TranslationKey>={
+ 'Admin':'menu_admin',
+ 'Provider':'menu_provider',
+ 'Customer':'menu_customer',
+ 'System Administrator':'role_system_administrator',
+ 'Service Provider':'role_service_provider',
+ 'Account & Settings':'section_account_settings',
+ 'Management & Operations':'section_management_operations',
+ 'System & Analytics':'section_system_analytics',
+ 'Work & Field Operations':'section_work_field_operations',
+ 'Communication & Location':'section_communication_location',
+ 'My Activity':'section_my_activity',
+ 'My Profile':'menu_my_profile',
+ 'Notifications':'menu_notifications',
+ 'Settings':'menu_settings',
+ 'Request Management':'menu_request_management',
+ 'Attention / Escalations':'menu_attention_escalations',
+ 'Service Categories':'menu_service_categories',
+ 'Locations':'menu_locations',
+ 'User Management':'menu_user_management',
+ 'Reports':'nav_reports',
+ 'Audit Logs':'menu_audit_logs',
+ 'My Jobs':'menu_my_jobs',
+ 'Schedule':'menu_schedule',
+ 'Services Provided':'menu_services_provided',
+ 'Messages':'menu_messages',
+ 'Location':'menu_location',
+ 'Service Requests':'menu_service_requests',
+ 'Become a Provider':'menu_become_provider',
+};
+
 function getServerWorkspace(){return null;}
 function isPublicOrAuth(path:string){return path.startsWith('/login')||path.startsWith('/register')||path.startsWith('/auth')||path.startsWith('/api/')||path.startsWith('/onboarding');}
 function itemIsActive(path:string,href:string){if(href==='/admin/users')return path.startsWith('/admin/users')||path.startsWith('/admin/providers');return path===href||path.startsWith(`${href}/`);}
@@ -40,6 +72,8 @@ export default function GlobalRoleMenuSSOT(){
  const[open,setOpen]=useState(false);
  const[userName,setUserName]=useState('User');
  const[loggingOut,setLoggingOut]=useState(false);
+ const{language,setLanguage,t}=useI18n();
+ const tx=(value:string)=>{const key=menuKeyByEnglish[value];return key?t(key):value;};
 
  useEffect(()=>{
   if(isPublicOrAuth(path)){setOpen(false);return;}
@@ -88,25 +122,29 @@ export default function GlobalRoleMenuSSOT(){
   <div className="ssotMenuHeader">
    <Link href={menu.home} className="ssotBrand" onClick={()=>setOpen(false)}><b>F</b><span>FixIt</span></Link>
    <div className="ssotHeaderActions">
-    {menu.secondary?<Link href={menu.secondary.href} className="ssotSecondary">{menu.secondary.label}</Link>:null}
-    <button type="button" className="ssotMenuButton" onClick={()=>setOpen(value=>!value)} aria-expanded={open} aria-haspopup="dialog" aria-label={open?'Close menu':'Open menu'}>{open?'×':'☰'}</button>
+    {menu.secondary?<Link href={menu.secondary.href} className="ssotSecondary">{tx(menu.secondary.label)}</Link>:null}
+    <div className="i18nLanguageSwitch" role="group" aria-label={t('language')}>
+     <button type="button" aria-pressed={language==='en'} onClick={()=>setLanguage('en')}>EN</button>
+     <button type="button" aria-pressed={language==='dv'} onClick={()=>setLanguage('dv')}>ދވ</button>
+    </div>
+    <button type="button" className="ssotMenuButton" onClick={()=>setOpen(value=>!value)} aria-expanded={open} aria-haspopup="dialog" aria-label={open?t('close_menu'):t('open_menu')}>{open?'×':'☰'}</button>
    </div>
   </div>
   {open?<div className="ssotBackdrop" role="presentation" onMouseDown={event=>{if(event.currentTarget===event.target)setOpen(false);}}>
-   <section className="ssotMenu" role="dialog" aria-modal="true" aria-label={`${menu.label} menu`}>
-    <header className="ssotMenuHead"><div><small>{menu.roleLabel}</small><h2>{userName}</h2></div><button type="button" onClick={()=>setOpen(false)} aria-label="Close menu">×</button></header>
+   <section className="ssotMenu" role="dialog" aria-modal="true" aria-label={`${tx(menu.label)} menu`}>
+    <header className="ssotMenuHead"><div><small>{tx(menu.roleLabel)}</small><h2>{userName}</h2></div><button type="button" onClick={()=>setOpen(false)} aria-label={t('close_menu')}>×</button></header>
     <div className="ssotMenuScroll">
-     {menu.sections.map(section=><section key={section.title} className="ssotSection"><h3>{section.title}</h3>{section.items.map(item=><Link key={item.href} href={item.href} className={itemIsActive(path,item.href)?'active':''} onClick={()=>setOpen(false)}>{item.label}<span aria-hidden="true">›</span></Link>)}</section>)}
+     {menu.sections.map(section=><section key={section.title} className="ssotSection"><h3>{tx(section.title)}</h3>{section.items.map(item=><Link key={item.href} href={item.href} className={itemIsActive(path,item.href)?'active':''} onClick={()=>setOpen(false)}>{tx(item.label)}<span aria-hidden="true">›</span></Link>)}</section>)}
     </div>
-    <footer className="ssotMenuFooter"><button type="button" disabled={loggingOut} onClick={()=>void signOut()}>{loggingOut?'Signing out…':'Sign Out'}</button></footer>
+    <footer className="ssotMenuFooter"><button type="button" disabled={loggingOut} onClick={()=>void signOut()}>{loggingOut?t('signing_out'):t('sign_out')}</button></footer>
    </section>
   </div>:null}
   <style jsx global>{`
    .ssotMenuHeader{position:fixed;left:0;right:0;top:0;z-index:1900;min-height:64px;padding:max(10px,env(safe-area-inset-top)) 16px 10px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(255,255,255,.96);border-bottom:1px solid #e5e7eb;backdrop-filter:blur(18px)}
-   .ssotBrand{display:inline-flex;align-items:center;gap:9px;color:#111827;text-decoration:none;font-weight:900}.ssotBrand b{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:#2563eb;color:#fff}.ssotHeaderActions{display:flex;align-items:center;gap:8px}.ssotSecondary{padding:9px 11px;border-radius:10px;color:#2563eb;text-decoration:none;font-size:13px;font-weight:800}.ssotMenuButton{width:42px;height:42px;border:1px solid #d1d5db;border-radius:13px;background:#fff;color:#111827;font-size:23px;line-height:1}
+   .ssotBrand{display:inline-flex;align-items:center;gap:9px;color:#111827;text-decoration:none;font-weight:900}.ssotBrand b{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:#2563eb;color:#fff}.ssotHeaderActions{display:flex;align-items:center;gap:8px;min-width:0}.ssotSecondary{padding:9px 11px;border-radius:10px;color:#2563eb;text-decoration:none;font-size:13px;font-weight:800}.ssotMenuButton{width:42px;height:42px;border:1px solid #d1d5db;border-radius:13px;background:#fff;color:#111827;font-size:23px;line-height:1;flex:0 0 auto}
    .ssotBackdrop{position:fixed;inset:0;z-index:2100;display:flex;justify-content:center;align-items:center;padding:16px;background:rgba(15,23,42,.3);backdrop-filter:blur(4px)}.ssotMenu{width:min(448px,100%);max-height:90dvh;display:flex;flex-direction:column;overflow:hidden;border-radius:24px;background:#f8fafc;box-shadow:0 30px 80px rgba(15,23,42,.24)}
    .ssotMenuHead{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px;background:#fff;border-bottom:1px solid #eef2f7}.ssotMenuHead small{display:block;color:#64748b;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.ssotMenuHead h2{margin:4px 0 0;color:#0f172a;font-size:20px}.ssotMenuHead button{width:38px;height:38px;border:0;border-radius:12px;background:#f1f5f9;font-size:25px;color:#475569}.ssotMenuScroll{overflow:auto;padding:14px;display:grid;gap:12px}.ssotSection{overflow:hidden;border:1px solid #e5e7eb;border-radius:18px;background:#fff}.ssotSection h3{margin:0;padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#94a3b8;font-size:10px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}.ssotSection a{min-height:48px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#334155;text-decoration:none;font-size:14px;font-weight:750}.ssotSection a+a{border-top:1px solid #f1f5f9}.ssotSection a.active{background:#eff6ff;color:#1d4ed8}.ssotSection a span{font-size:22px;color:#94a3b8}.ssotMenuFooter{padding:0 14px max(14px,env(safe-area-inset-bottom));background:#f8fafc}.ssotMenuFooter button{width:100%;min-height:50px;border:0;border-radius:15px;background:#dc2626;color:#fff;font-size:14px;font-weight:900}.ssotMenuFooter button:disabled{opacity:.6}
-   @media(max-width:520px){.ssotBackdrop{align-items:flex-end;padding:0}.ssotMenu{width:100%;max-height:94dvh;border-radius:24px 24px 0 0}.ssotMenuHeader{padding-left:14px;padding-right:14px}}
+   @media(max-width:520px){.ssotBackdrop{align-items:flex-end;padding:0}.ssotMenu{width:100%;max-height:94dvh;border-radius:24px 24px 0 0}.ssotMenuHeader{padding-left:14px;padding-right:14px}.ssotSecondary{display:none}}
   `}</style>
  </>;
 }
