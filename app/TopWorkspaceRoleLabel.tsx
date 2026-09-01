@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
 import { readSelectedWorkspace, subscribeToSelectedWorkspace } from '../lib/workspaceSelection';
+import { useI18n } from './i18n/I18nProvider';
 
 function hiddenRoute(path:string){
   return path.startsWith('/login')||path.startsWith('/register')||path.startsWith('/auth')||path.startsWith('/api/')||path.startsWith('/onboarding');
@@ -13,10 +14,11 @@ function getServerWorkspace(){return null;}
 export default function TopWorkspaceRoleLabel(){
   const path=usePathname()||'/';
   const workspace=useSyncExternalStore(subscribeToSelectedWorkspace,readSelectedWorkspace,getServerWorkspace);
+  const{t}=useI18n();
   if(hiddenRoute(path))return null;
   const label=path==='/provider/onboarding'||path.startsWith('/provider/onboarding/')
-    ?'Provider Application'
-    :workspace==='admin'?'Admin':workspace==='provider'?'Service Provider':'Customer';
+    ?t('provider_application')
+    :workspace==='admin'?t('workspace_admin'):workspace==='provider'?t('workspace_provider'):t('workspace_customer');
 
   return <>
     <span className="topWorkspaceRoleLabel" aria-live="polite">{label}</span>
@@ -40,6 +42,7 @@ export default function TopWorkspaceRoleLabel(){
         text-align:center;
         border-radius:8px;
       }
+      html[lang="dv"] .topWorkspaceRoleLabel{font-family:"Faruma","MV Waheed","Noto Sans Thaana",system-ui,sans-serif;line-height:1.6;}
       @media(max-width:960px){
         .topWorkspaceRoleLabel{top:calc(env(safe-area-inset-top,0px) + 38px);}
       }
