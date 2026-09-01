@@ -1,0 +1,125 @@
+/* iFixMV English / Dhivehi localisation and RTL usability hardening. */
+
+html[lang="dv"] body{
+  font-family:"Faruma","MV Waheed","Noto Sans Thaana",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.65;
+}
+
+html[dir="rtl"] body{
+  direction:rtl;
+  text-align:start;
+}
+
+html[dir="rtl"] input:not([type="tel"]):not([type="number"]),
+html[dir="rtl"] textarea,
+html[dir="rtl"] select{
+  direction:rtl;
+  text-align:right;
+}
+
+/* Keep phone numbers, numeric values, codes and timestamps stable inside RTL copy. */
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[type="number"],
+html[dir="rtl"] time,
+html[dir="rtl"] .i18nLtr,
+html[dir="rtl"] [data-i18n-ltr="true"]{
+  direction:ltr;
+  unicode-bidi:isolate;
+  text-align:left;
+}
+
+/* Directional affordances must point with the reading direction. */
+html[dir="rtl"] .i18nDirectional,
+html[dir="rtl"] .ssotSection a>span[aria-hidden="true"]{
+  transform:scaleX(-1);
+}
+
+/* Existing fixed-shell components keep their physical placement, while copy flows RTL. */
+html[dir="rtl"] .ssotMenu,
+html[dir="rtl"] .iosWorkspaceSheet,
+html[dir="rtl"] .globalMainWorkspace{
+  text-align:start;
+}
+
+html[dir="rtl"] .ssotSection a,
+html[dir="rtl"] .iosWorkspaceOptions button{
+  text-align:start;
+}
+
+html[dir="rtl"] .ssotMenuHead,
+html[dir="rtl"] .iosWorkspaceHead{
+  direction:rtl;
+}
+
+/* Compact language selector; short labels avoid crowding the persistent mobile header. */
+.i18nLanguageSwitch{
+  display:inline-flex;
+  align-items:center;
+  gap:2px;
+  padding:2px;
+  border:1px solid #dbe3ec;
+  border-radius:11px;
+  background:#f8fafc;
+}
+
+.i18nLanguageSwitch button{
+  min-width:38px;
+  min-height:34px;
+  padding:6px 8px;
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  color:#64748b;
+  font:800 12px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  cursor:pointer;
+}
+
+.i18nLanguageSwitch button[aria-pressed="true"]{
+  background:#2563eb;
+  color:#fff;
+}
+
+.i18nLanguageSwitch button:focus-visible{
+  outline:2px solid #2563eb;
+  outline-offset:2px;
+}
+
+html[lang="dv"] .i18nLanguageSwitch button{
+  font-family:"Faruma","MV Waheed","Noto Sans Thaana",system-ui,sans-serif;
+}
+
+/* Dhivehi labels may be wider. Let action clusters wrap instead of clipping. */
+html[lang="dv"] button,
+html[lang="dv"] a,
+html[lang="dv"] label,
+html[lang="dv"] .status,
+html[lang="dv"] .badge{
+  line-height:1.55;
+}
+
+html[lang="dv"] .ssotHeaderActions,
+html[lang="dv"] .iosWorkspaceOptions,
+html[lang="dv"] .c3ActionDock,
+html[lang="dv"] .buttonRow,
+html[lang="dv"] .actions{
+  min-width:0;
+}
+
+html[lang="dv"] .ssotSection a,
+html[lang="dv"] .iosWorkspaceOptions button{
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+
+@media(max-width:520px){
+  .i18nLanguageSwitch button{
+    min-width:34px;
+    min-height:32px;
+    padding:5px 7px;
+    font-size:11px;
+  }
+
+  html[lang="dv"] .ssotBrand span{
+    display:none;
+  }
+}

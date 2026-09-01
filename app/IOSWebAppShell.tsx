@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { apiFetch } from '../lib/apiClient';
 import { canAccessPortal, normalizeAccountRole, type AccountRole, type PortalRole } from '../lib/roleAccess';
 import { persistSelectedWorkspace, readSelectedWorkspace, subscribeToSelectedWorkspace } from '../lib/workspaceSelection';
+import { useI18n, type TranslationKey } from './i18n/I18nProvider';
 
 const hiddenPrefixes=['/api'];
 
@@ -13,6 +14,10 @@ type IconName='home'|'requests'|'new'|'switch'|'profile'|'customer'|'provider'|'
 type CachedAccess={role:AccountRole;providerApproved:boolean};
 type WorkspaceRole='customer'|'provider'|'admin';
 type Tab={href:string;label:string;icon:IconName;match:(path:string)=>boolean;accent?:boolean};
+
+const tabKeyByEnglish:Record<string,TranslationKey>={
+ Home:'nav_home',Requests:'nav_requests',New:'nav_new',Profile:'nav_profile',Switch:'nav_switch',Today:'nav_today',Jobs:'nav_jobs',Services:'nav_services',Overview:'nav_overview',Users:'nav_users'
+};
 
 function subscribeToBrowserReady(){return()=>{};}
 function getBrowserReady(){return true;}
@@ -59,6 +64,8 @@ function tabsFor(role:WorkspaceRole):Tab[]{
 export default function IOSWebAppShell(){
  const pathname=usePathname()||'/';
  const router=useRouter();
+ const{t}=useI18n();
+ const tx=(label:string)=>{const key=tabKeyByEnglish[label];return key?t(key):label;};
  const [standalone,setStandalone]=useState(false);
  const [switchOpen,setSwitchOpen]=useState(false);
  const [accountRole,setAccountRole]=useState<AccountRole>('CUSTOMER');
@@ -134,23 +141,21 @@ export default function IOSWebAppShell(){
 
  if(hidden)return null;
 
- // Never server-render a pathname-derived role menu. On a full reload the bar
- // stays physically present, then hydrates directly into the saved workspace.
  if(!browserReady)return <nav className="iosTabBar iosTabBarPending" aria-label="App navigation" aria-busy="true" data-standalone={standalone?'true':'false'}/>;
 
- const adminSession=signedIn&&accountRole==='ADMIN';
  const canUseProvider=signedIn&&canAccessPortal(accountRole,'provider',providerApproved);
  const canUseAdmin=signedIn&&canAccessPortal(accountRole,'admin',providerApproved);
  const hasWorkspaceSwitch=canUseProvider||canUseAdmin;
  const tabs=tabsFor(workspace);
+ const workspaceLabel=workspace==='provider'?t('workspace_provider'):workspace==='admin'?t('workspace_admin'):t('workspace_customer');
 
  function openWorkspace(next:PortalRole){
   if(!signedIn)return;
   if(!canAccessPortal(accountRole,next,providerApproved))return;
   persistSelectedWorkspace(next);
   try{
-   const label=next==='provider'?'Service Provider':next==='admin'?'Admin':'Customer';
-   sessionStorage.setItem('fixit:mode-toast',`You're now viewing as ${label}.`);
+   const message=next==='provider'?t('workspace_switched_provider'):next==='admin'?t('workspace_switched_admin'):t('workspace_switched_customer');
+   sessionStorage.setItem('fixit:mode-toast',message);
   }catch{}
   setSwitchOpen(false);
   router.push(next==='provider'?'/provider/today':next==='admin'?'/admin':'/home');
@@ -158,20 +163,20 @@ export default function IOSWebAppShell(){
 
  return <>
   {switchOpen?<div className="iosWorkspaceOverlay" role="presentation" onClick={()=>setSwitchOpen(false)}>
-   <section className="iosWorkspaceSheet" role="dialog" aria-modal="true" aria-label="Switch workspace" onClick={event=>event.stopPropagation()}>
+   <section className="iosWorkspaceSheet" role="dialog" aria-modal="true" aria-label={t('switch_workspace')} onClick={event=>event.stopPropagation()}>
     <div className="iosWorkspaceHandle" aria-hidden="true"/>
-    <div className="iosWorkspaceHead"><div><small>Workspace</small><h2>Switch view</h2></div><button type="button" onClick={()=>setSwitchOpen(false)} aria-label="Close workspace switch">×</button></div>
+    <div className="iosWorkspaceHead"><div><small>{t('workspace')}</small><h2>{t('workspace_switch_view')}</h2></div><button type="button" onClick={()=>setSwitchOpen(false)} aria-label={t('close')}>×</button></div>
     <div className="iosWorkspaceOptions">
-     <button type="button" className={workspace==='customer'?'selected':''} onClick={()=>openWorkspace('customer')}><span className="iosWorkspaceIcon"><Icon name="customer"/></span><span><strong>Customer</strong><small>Request and track services</small></span><b>{workspace==='customer'?'Current':'Open'}</b></button>
-     {canUseProvider?<button type="button" className={workspace==='provider'?'selected':''} onClick={()=>openWorkspace('provider')}><span className="iosWorkspaceIcon"><Icon name="provider"/></span><span><strong>Service Provider</strong><small>Jobs, services and availability</small></span><b>{workspace==='provider'?'Current':'Open'}</b></button>:null}
-     {canUseAdmin?<button type="button" className={workspace==='admin'?'selected':''} onClick={()=>openWorkspace('admin')}><span className="iosWorkspaceIcon"><Icon name="admin"/></span><span><strong>Admin</strong><small>Platform administration</small></span><b>{workspace==='admin'?'Current':'Open'}</b></button>:null}
+     <button type="button" className={workspace==='customer'?'selected':''} onClick={()=>openWorkspace('customer')}><span className="iosWorkspaceIcon"><Icon name="customer"/></span><span><strong>{t('workspace_customer')}</strong><small>{t('workspace_customer_description')}</small></span><b>{workspace==='customer'?t('workspace_current'):t('workspace_open')}</b></button>
+     {canUseProvider?<button type="button" className={workspace==='provider'?'selected':''} onClick={()=>openWorkspace('provider')}><span className="iosWorkspaceIcon"><Icon name="provider"/></span><span><strong>{t('workspace_provider')}</strong><small>{t('workspace_provider_description')}</small></span><b>{workspace==='provider'?t('workspace_current'):t('workspace_open')}</b></button>:null}
+     {canUseAdmin?<button type="button" className={workspace==='admin'?'selected':''} onClick={()=>openWorkspace('admin')}><span className="iosWorkspaceIcon"><Icon name="admin"/></span><span><strong>{t('workspace_admin')}</strong><small>{t('workspace_admin_description')}</small></span><b>{workspace==='admin'?t('workspace_current'):t('workspace_open')}</b></button>:null}
     </div>
    </section>
   </div>:null}
 
-  <nav className={`iosTabBar${hasWorkspaceSwitch?' hasWorkspaceSwitch':''}`} aria-label={`${workspace} app navigation`} data-standalone={standalone?'true':'false'} data-workspace={workspace}>
-   {tabs.map(tab=><Link key={tab.href+tab.label} href={tab.href} className={`${tab.match(pathname)?'active ':''}${tab.accent?'iosTabNew':''}`.trim()}><Icon name={tab.icon}/><span>{tab.label}</span></Link>)}
-   {hasWorkspaceSwitch?<button type="button" className={`workspaceAvailable${switchOpen?' active':''}`} onClick={()=>setSwitchOpen(true)} aria-haspopup="dialog" aria-expanded={switchOpen} aria-label="Switch workspace"><Icon name="switch"/><span>Switch</span></button>:null}
+  <nav className={`iosTabBar${hasWorkspaceSwitch?' hasWorkspaceSwitch':''}`} aria-label={`${workspaceLabel} app navigation`} data-standalone={standalone?'true':'false'} data-workspace={workspace}>
+   {tabs.map(tab=><Link key={tab.href+tab.label} href={tab.href} className={`${tab.match(pathname)?'active ':''}${tab.accent?'iosTabNew':''}`.trim()}><Icon name={tab.icon}/><span>{tx(tab.label)}</span></Link>)}
+   {hasWorkspaceSwitch?<button type="button" className={`workspaceAvailable${switchOpen?' active':''}`} onClick={()=>setSwitchOpen(true)} aria-haspopup="dialog" aria-expanded={switchOpen} aria-label={t('switch_workspace')}><Icon name="switch"/><span>{t('nav_switch')}</span></button>:null}
   </nav>
  </>;
 }

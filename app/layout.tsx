@@ -48,6 +48,7 @@ import './request-photos-premium.css';
 import './complete-application-suite.css';
 import './master-suite-live.css';
 import './master-role-workspaces.css';
+import './localization.css';
 import ThemeRuntime from './ThemeRuntime';
 import ModeToast from './ModeToast';
 import ResponsiveRuntime from './ResponsiveRuntime';
@@ -68,6 +69,7 @@ import IOSWebAppShell from './IOSWebAppShell';
 import ApprovedCustomerHomeRuntime from './ApprovedCustomerHomeRuntime';
 import CompleteApplicationRuntime from './CompleteApplicationRuntime';
 import ErrorRuntime from './ErrorRuntime';
+import I18nProvider from './i18n/I18nProvider';
 
 export const metadata: Metadata = {
   title: 'FixIt Maldives',
@@ -90,33 +92,35 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <body>
-        <ThemeRuntime/>
-        <ResponsiveRuntime/>
-        <CompactCopyRuntime/>
-        <ButtonUsabilityRuntime/>
-        <MobileSectionPager/>
-        <MobileKeyboardRuntime/>
-        <WorkspaceThemeRuntime/>
-        <SendRequestTapRuntime/>
-        <RequestWizardSmartRuntime/>
-        <RoleAccessGuard/>
-        <PreferredDateRuntime/>
-        <GlobalRoleMenuSSOT/>
-        <TopWorkspaceRoleLabel/>
-        <GlobalCardPagination/>
-        <MobileDateInputRuntime/>
-        <ApprovedCustomerHomeRuntime/>
-        <CompleteApplicationRuntime/>
-        <ErrorRuntime/>
+        <I18nProvider>
+          <ThemeRuntime/>
+          <ResponsiveRuntime/>
+          <CompactCopyRuntime/>
+          <ButtonUsabilityRuntime/>
+          <MobileSectionPager/>
+          <MobileKeyboardRuntime/>
+          <WorkspaceThemeRuntime/>
+          <SendRequestTapRuntime/>
+          <RequestWizardSmartRuntime/>
+          <RoleAccessGuard/>
+          <PreferredDateRuntime/>
+          <GlobalRoleMenuSSOT/>
+          <TopWorkspaceRoleLabel/>
+          <GlobalCardPagination/>
+          <MobileDateInputRuntime/>
+          <ApprovedCustomerHomeRuntime/>
+          <CompleteApplicationRuntime/>
+          <ErrorRuntime/>
 
-        <main id="main-content" className="globalMainWorkspace">
-          {children}
-        </main>
+          <main id="main-content" className="globalMainWorkspace">
+            {children}
+          </main>
 
-        <IOSWebAppShell/>
-        <ModeToast/>
+          <IOSWebAppShell/>
+          <ModeToast/>
+        </I18nProvider>
       </body>
     </html>
   );
